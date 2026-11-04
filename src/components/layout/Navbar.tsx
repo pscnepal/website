@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, Menu, MessageSquareText, X } from 'lucide-react';
+import { ChevronRight, Menu, X } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { openPscChat } from '../chat/chatEvents';
 
 const DESKTOP_NAV_ITEMS = [
   { to: '/syllabus', label: 'Syllabus', end: false },
@@ -123,17 +122,8 @@ export function Navbar() {
             ))}
           </nav>
 
-          {/* Zone 3: Study Assistant + Primary Exam Simulator action on desktop/tablet + touch menu toggle on mobile */}
+          {/* Zone 3: Primary Exam Simulator action on desktop/tablet + touch menu toggle on mobile */}
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => openPscChat()}
-              className="hidden md:inline-flex items-center justify-center gap-1.5 h-9 px-3 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
-              <MessageSquareText className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400 shrink-0" />
-              <span>Assistant</span>
-            </button>
-
             <Link
               to="/simulate"
               className="hidden md:inline-flex items-center justify-center h-9 px-4 text-xs font-medium rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 shadow-2xs transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
@@ -222,19 +212,7 @@ export function Navbar() {
                   </NavLink>
                 ))}
 
-                <div className="mt-2 pt-3 border-t border-zinc-200/80 dark:border-zinc-800/80 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeMobileMenu();
-                      openPscChat();
-                    }}
-                    className="inline-flex items-center justify-center gap-2 w-full min-h-11 px-4 text-sm font-medium rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100 transition-colors whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                  >
-                    <MessageSquareText className="w-4 h-4 text-blue-700 dark:text-blue-400 shrink-0" />
-                    <span>Ask Study Assistant</span>
-                  </button>
-
+                <div className="mt-2 pt-3 border-t border-zinc-200/80 dark:border-zinc-800/80">
                   <Link
                     to="/simulate"
                     onClick={closeMobileMenu}

@@ -18,7 +18,7 @@ import {
 } from '../services/storageService';
 import { formatRelativeDate } from '../utils/pdfHelpers';
 
-const SUPPORT_EMAIL = 'alamayub85@gmail.com';
+const SUPPORT_EMAIL = 'info.pscnepal@gmail.com';
 
 const CATEGORY_OPTIONS: Array<{
   value: InquiryCategory;

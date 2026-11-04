@@ -1,2 +1,4 @@
 User-agent: *
 Allow: /
+
+Sitemap: https://pscnepal.pages.dev/sitemap.xml

@@ -12,6 +12,7 @@ import {
   WRITTEN_QUESTIONS,
 } from '../../data/writtenQuestionsData';
 
+export const BASE_SITE_URL = 'https://pscnepal.pages.dev';
 const BRAND_NAME = 'PSC Nepal';
 const DEFAULT_TITLE = 'PSC Nepal | Lok Sewa Syllabus, Mock Exams & Study Hub';
 const DEFAULT_DESCRIPTION =
@@ -781,10 +782,9 @@ export function SeoManager() {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
-    const origin = window.location.origin;
-    const seo = resolveRouteSeo(pathname, search, origin);
-    const canonicalUrl = `${origin}${seo.canonicalPath}`;
-    const ogImageUrl = `${origin}${OG_IMAGE_PATH}`;
+    const seo = resolveRouteSeo(pathname, search, BASE_SITE_URL);
+    const canonicalUrl = `${BASE_SITE_URL}${seo.canonicalPath}`;
+    const ogImageUrl = `${BASE_SITE_URL}${OG_IMAGE_PATH}`;
 
     document.title = seo.title;
 

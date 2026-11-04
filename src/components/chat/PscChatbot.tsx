@@ -24,6 +24,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/hooks';
 import { ChatMarkdown } from './ChatMarkdown';
 import { PSC_OPEN_CHAT_EVENT, type OpenChatDetail } from './chatEvents';
+import { generatePscChatResponse } from '../../services/pscChatEngine';
 
 interface ChatMessage {
   id: string;
@@ -38,7 +39,7 @@ const WELCOME_MESSAGE: ChatMessage = {
   id: 'welcome-psc-assistant',
   role: 'assistant',
   content:
-    'Namaste! I am the **PSC Nepal Study Assistant** (लोक सेवा तयारी सहायक). Ask me anything in **English** or **नेपाली** about:\n\n- **Official Syllabi**: Section Officer, Nayab Subba & Kharidar phases, papers, chapters, topics, marks & `-20%` negative marking\n- **Questions & Answers**: Objective MCQs, verified answers, explanations & bilingual (`EN` / `नेपाली`) 5M/10M written model answers\n- **Mock Exams & Simulator**: Phase I OMR Screening Hall, Phase II Timed Written Hall & Merit Strategy Lab\n- **Materials & Contact**: Authentic `psc.gov.np` PDFs, 3D Flipbook Reader shortcuts & editorial support (`alamayub85@gmail.com`)',
+    'Namaste! I am the **PSC Nepal Study Assistant** (लोक सेवा तयारी सहायक). Ask me anything in **English** or **नेपाली** about:\n\n- **Official Syllabi**: Section Officer, Nayab Subba & Kharidar phases, papers, chapters, topics, marks & `-20%` negative marking\n- **Questions & Answers**: Objective MCQs, verified answers, explanations & bilingual (`EN` / `नेपाली`) 5M/10M written model answers\n- **Mock Exams & Simulator**: Phase I OMR Screening Hall, Phase II Timed Written Hall & Merit Strategy Lab\n- **Materials & Contact**: Authentic `psc.gov.np` PDFs, 3D Flipbook Reader shortcuts & editorial support (`info.pscnepal@gmail.com`)',
 };
 
 const STARTER_PROMPTS: Array<{ label: string; prompt: string }> = [
@@ -160,7 +161,6 @@ export function PscChatbot() {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Typewriter streaming buffers (code-point safe for Devanagari & symbols)
   const fullCodePointsRef = useRef<string[]>([]);
@@ -228,21 +228,26 @@ export function PscChatbot() {
   useEffect(() => {
     return () => {
       clearTypingTimer();
-      abortControllerRef.current?.abort();
     };
   }, [clearTypingTimer]);
 
   const stopGeneration = useCallback(() => {
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = null;
     networkDoneRef.current = true;
     clearTypingTimer();
+    if (activeTypingId && fullCodePointsRef.current.length > 0) {
+      const fullText = fullCodePointsRef.current.join('');
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === activeTypingId ? { ...m, content: fullText } : m
+        )
+      );
+    }
     setIsNetworkStreaming(false);
     setActiveTypingId(null);
-  }, [clearTypingTimer]);
+  }, [clearTypingTimer, activeTypingId]);
 
   const sendPrompt = useCallback(
-    async (rawPrompt: string) => {
+    (rawPrompt: string) => {
       const trimmed = rawPrompt.trim();
       if (!trimmed || isGenerating) return;
 
@@ -258,38 +263,33 @@ export function PscChatbot() {
         content: '',
       };
 
-      const historyForApi = [...messages, userMsg]
-        .filter((m) => m.id !== WELCOME_MESSAGE.id && !m.error)
-        .map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
-
       setInputValue('');
       setUserScrolledUp(false);
       setMessages((prev) => [...prev, userMsg, placeholderAssistant]);
       setActiveTypingId(assistantId);
-      setIsNetworkStreaming(true);
+      setIsNetworkStreaming(false);
 
-      fullCodePointsRef.current = [];
+      // Generate the authoritative answer from PSC Nepal website content
+      const generatedAnswer = generatePscChatResponse(trimmed, clientContext);
+      fullCodePointsRef.current = Array.from(generatedAnswer);
       displayedCodePointCountRef.current = 0;
-      networkDoneRef.current = false;
+      networkDoneRef.current = true;
       clearTypingTimer();
 
-      // Smooth adaptive character/code-point typewriter pacer (20ms tick)
+      // Smooth adaptive character/code-point typewriter pacer (16ms tick)
       typingIntervalRef.current = window.setInterval(() => {
         const total = fullCodePointsRef.current.length;
         const shown = displayedCodePointCountRef.current;
 
         if (shown < total) {
           const backlog = total - shown;
-          let step = 1;
-          if (backlog > 160) {
-            step = Math.ceil(backlog / 14);
-          } else if (backlog > 75) {
+          let step = 2;
+          if (backlog > 200) {
+            step = Math.ceil(backlog / 10);
+          } else if (backlog > 80) {
+            step = 6;
+          } else if (backlog > 30) {
             step = 4;
-          } else if (backlog > 28) {
-            step = 2;
           }
 
           const nextCount = Math.min(total, shown + step);
@@ -303,119 +303,13 @@ export function PscChatbot() {
               m.id === assistantId ? { ...m, content: nextSlice } : m
             )
           );
-        } else if (networkDoneRef.current) {
+        } else {
           clearTypingTimer();
           setActiveTypingId(null);
         }
-      }, 20);
-
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-
-      try {
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: historyForApi,
-            clientContext,
-          }),
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          let errText = `Request failed (${response.status})`;
-          try {
-            const errJson = (await response.json()) as { error?: string };
-            if (errJson?.error) errText = errJson.error;
-          } catch {
-            // Keep status fallback
-          }
-          throw new Error(errText);
-        }
-
-        if (!response.body) {
-          throw new Error('Streaming response is unavailable in this browser.');
-        }
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let sseBuffer = '';
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          sseBuffer += decoder.decode(value, { stream: true });
-          const frames = sseBuffer.split('\n\n');
-          sseBuffer = frames.pop() ?? '';
-
-          for (const frame of frames) {
-            const lines = frame.split('\n');
-            for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (!trimmedLine.startsWith('data:')) continue;
-              const rawJson = trimmedLine.slice(5).trim();
-              if (!rawJson) continue;
-
-              let parsed: {
-                type?: string;
-                text?: string;
-                error?: string;
-              } | null = null;
-
-              try {
-                parsed = JSON.parse(rawJson) as {
-                  type?: string;
-                  text?: string;
-                  error?: string;
-                };
-              } catch {
-                continue;
-              }
-
-              if (parsed?.type === 'delta' && parsed.text) {
-                const incomingPoints = Array.from(parsed.text);
-                fullCodePointsRef.current.push(...incomingPoints);
-              } else if (parsed?.type === 'error') {
-                throw new Error(
-                  parsed.error ||
-                    'An error occurred while generating the answer.'
-                );
-              } else if (parsed?.type === 'done') {
-                networkDoneRef.current = true;
-              }
-            }
-          }
-        }
-
-        networkDoneRef.current = true;
-        setIsNetworkStreaming(false);
-      } catch (err) {
-        if ((err as Error)?.name === 'AbortError') {
-          networkDoneRef.current = true;
-          setIsNetworkStreaming(false);
-          return;
-        }
-
-        const errMsg =
-          err instanceof Error
-            ? err.message
-            : 'Unable to reach the PSC Nepal Study Assistant. Please try again.';
-
-        networkDoneRef.current = true;
-        clearTypingTimer();
-        setIsNetworkStreaming(false);
-        setActiveTypingId(null);
-
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantId ? { ...m, error: errMsg } : m
-          )
-        );
-      }
+      }, 16);
     },
-    [clientContext, clearTypingTimer, isGenerating, messages]
+    [clientContext, clearTypingTimer, isGenerating]
   );
 
   // Listen for global open-chat custom events (e.g. Navbar button) and Escape key

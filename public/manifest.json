@@ -1,0 +1,33 @@
+{
+  "name": "PSC Nepal — Lok Sewa Preparation Hub",
+  "short_name": "PSC Nepal",
+  "description": "Prepare for Nepal Lok Sewa Aayog exams with official syllabi, OMR & written simulations, timed MCQs, bilingual answers, and PDF flipbooks.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060f22",
+  "theme_color": "#003893",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

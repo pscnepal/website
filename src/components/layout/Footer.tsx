@@ -136,6 +136,12 @@ export function Footer() {
               >
                 Terms of Service
               </Link>
+              <a
+                href="mailto:info.pscnepal@gmail.com"
+                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors whitespace-nowrap text-[11px] font-mono pt-1"
+              >
+                info.pscnepal@gmail.com
+              </a>
             </nav>
           </div>
         </div>
