@@ -1,0 +1,6 @@
+{
+  "name": "PSC Nepal",
+  "description": "Prepare for Nepal Lok Sewa Aayog exams on PSC Nepal with official syllabi, OMR & written simulations, timed MCQs, bilingual answers, and PDF flipbooks.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

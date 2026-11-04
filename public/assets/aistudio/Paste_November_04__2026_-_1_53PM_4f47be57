@@ -1,0 +1,381 @@
+subject: "Biology",
+      branches: [
+        {
+          id: "BIO11-B01",
+          branchNumber: 1,
+          branchName: "Introduction and Biological Diversity",
+          chapters: [
+            {
+              id: "BIO11-CH01",
+              chapterNumber: 1,
+              chapterName: "Introduction to Biology",
+              topics: [
+                {
+                  id: "BIO11-CH01-T01",
+                  topicNumber: 1,
+                  topic: "Definition and scope of biology",
+                  brief:
+                    "Biology is the scientific study of life and living organisms. Its scope includes the study of their structure, functions, growth, reproduction, evolution, classification, and interactions with the environment. It ranges from microscopic cells to entire ecosystems.",
+                },
+                {
+                  id: "BIO11-CH01-T02",
+                  topicNumber: 2,
+                  topic: "Characteristics of living organisms",
+                  brief:
+                    "Living organisms exhibit features such as cellular organization, metabolism, growth, reproduction, response to stimuli, homeostasis, adaptation, and evolution. These characteristics help distinguish living things from non-living objects, although no single feature alone defines life in every case.",
+                },
+                {
+                  id: "BIO11-CH01-T03",
+                  topicNumber: 3,
+                  topic: "Branches of biology",
+                  brief:
+                    "Biology is divided into specialized branches according to the organisms studied or the biological processes investigated. Major branches include botany (plants), zoology (animals), microbiology (microorganisms), anatomy (structure), physiology (functions), genetics (heredity), ecology (organism-environment relationships), and taxonomy (classification).",
+                },
+                {
+                  id: "BIO11-CH01-T04",
+                  topicNumber: 4,
+                  topic: "Importance of biology",
+                  brief:
+                    "Biology helps us understand living organisms and their relationship with the environment. It contributes to medicine, agriculture, food production, disease prevention, biotechnology, biodiversity conservation, and environmental protection. Biological knowledge also supports decisions about health and sustainable resource use.",
+                },
+                {
+                  id: "BIO11-CH01-T05",
+                  topicNumber: 5,
+                  topic: "Biology and other sciences",
+                  brief:
+                    "Biology is closely related to other scientific disciplines. Biochemistry combines biology and chemistry to study chemical processes in organisms; biophysics applies physics to biological systems; biostatistics uses mathematics and statistics to analyze biological data; and bioinformatics uses computing to study biological information.",
+                },
+                {
+                  id: "BIO11-CH01-T06",
+                  topicNumber: 6,
+                  topic: "Scientific method",
+                  brief:
+                    "The scientific method is a systematic approach to investigating questions about the natural world. It commonly involves identifying a problem, making observations, proposing a hypothesis, testing it through investigation or experimentation, analyzing evidence, and drawing a conclusion. Scientific explanations may be revised when new evidence becomes available.",
+                },
+                {
+                  id: "BIO11-CH01-T07",
+                  topicNumber: 7,
+                  topic: "Observation and hypothesis",
+                  brief:
+                    "Observation involves collecting information using the senses or scientific instruments. A hypothesis is a tentative, testable explanation for an observation or a proposed answer to a scientific question. A useful hypothesis can be examined using evidence and may be supported or rejected after investigation.",
+                },
+                {
+                  id: "BIO11-CH01-T08",
+                  topicNumber: 8,
+                  topic: "Scientific experimentation",
+                  brief:
+                    "Scientific experimentation is a planned procedure used to test a hypothesis under defined conditions. An experiment involves selecting suitable materials, following a method, recording observations, and analyzing results. Repeating experiments helps assess the reliability of findings.",
+                },
+                {
+                  id: "BIO11-CH01-T09",
+                  topicNumber: 9,
+                  topic: "Variables and controls",
+                  brief:
+                    "Variables are factors that may change during an investigation. The independent variable is the factor deliberately changed, the dependent variable is the outcome measured, and controlled variables are factors kept constant. A control group or control condition provides a basis for comparison when appropriate.",
+                },
+                {
+                  id: "BIO11-CH01-T10",
+                  topicNumber: 10,
+                  topic: "Collection and interpretation of biological data",
+                  brief:
+                    "Biological data are collected through observation, measurement, experiments, surveys, and field studies. Data may be qualitative, describing characteristics, or quantitative, expressed numerically. Tables, graphs, averages, and comparisons help identify patterns and draw evidence-based conclusions.",
+                },
+                {
+                  id: "BIO11-CH01-T11",
+                  topicNumber: 11,
+                  topic: "Biological drawing and labelling",
+                  brief:
+                    "Biological drawing is a clear, accurate representation of a biological specimen or structure observed directly or through a microscope. A good scientific drawing uses clean outlines, correct proportions, and clearly identified labels. It should represent observable features rather than artistic decoration.",
+                },
+                {
+                  id: "BIO11-CH01-T12",
+                  topicNumber: 12,
+                  topic: "Laboratory safety",
+                  brief:
+                    "Laboratory safety involves following procedures that prevent injuries, contamination, and damage to equipment. Important practices include wearing appropriate protective equipment, handling chemicals and biological specimens carefully, using instruments correctly, keeping the workspace clean, and following instructions for waste disposal and emergencies.",
+                },
+                {
+                  id: "BIO11-CH01-T13",
+                  topicNumber: 13,
+                  topic:
+                    "Applications of biology in agriculture, medicine and industry",
+                  brief:
+                    "Biology has practical applications in many fields. In agriculture, it supports crop improvement, pest management, and soil health; in medicine, it contributes to understanding diseases, diagnosis, vaccines, and treatments; and in industry, it supports fermentation, food processing, biotechnology, and the production of useful biological materials.",
+                },
+              ],
+            },
+            {
+              id: "BIO11-CH02",
+              chapterNumber: 2,
+              chapterName: "Classification of Living Organisms",
+              topics: [
+                {
+                  id: "BIO11-CH02-T01",
+                  topicNumber: 1,
+                  topic: "Need for biological classification",
+                  brief:
+                    "Biological classification is the systematic arrangement of living organisms into groups based on their similarities and differences. It helps identify organisms, organize biological knowledge, understand relationships among organisms, and study biodiversity more efficiently. Classification is particularly important because of the enormous diversity of living organisms.",
+                },
+                {
+                  id: "BIO11-CH02-T02",
+                  topicNumber: 2,
+                  topic: "Taxonomy and systematics",
+                  brief:
+                    "Taxonomy is the branch of biology concerned with the identification, naming, and classification of organisms. Systematics is the broader study of organismal diversity and evolutionary relationships. Taxonomy provides a standardized way to organize organisms, while systematics helps explain how different groups are related through evolution.",
+                },
+                {
+                  id: "BIO11-CH02-T03",
+                  topicNumber: 3,
+                  topic: "Taxonomic hierarchy",
+                  brief:
+                    "Taxonomic hierarchy is the arrangement of organisms into successive classification categories, from broader groups to more specific ones. The main categories are domain, kingdom, phylum (division in plants), class, order, family, genus, and species. Each lower category generally contains organisms with more characteristics in common.",
+                },
+                {
+                  id: "BIO11-CH02-T04",
+                  topicNumber: 4,
+                  topic: "Species and binomial nomenclature",
+                  brief:
+                    "A species is commonly described as a group of similar organisms capable of interbreeding naturally and producing fertile offspring, although this definition does not apply equally to all organisms. Binomial nomenclature is the scientific naming system introduced by Carolus Linnaeus in which each species has a two-part name: the genus name followed by the specific epithet, such as Homo sapiens.",
+                },
+                {
+                  id: "BIO11-CH02-T05",
+                  topicNumber: 5,
+                  topic: "Rules of scientific naming",
+                  brief:
+                    "Scientific names follow internationally accepted conventions to ensure consistency across languages and regions. In binomial nomenclature, the genus name begins with a capital letter, while the specific epithet begins with a lowercase letter. Both words are italicized when printed or underlined separately when handwritten. Scientific names are generally Latin or Latinized.",
+                },
+                {
+                  id: "BIO11-CH02-T06",
+                  topicNumber: 6,
+                  topic: "Artificial and natural classification",
+                  brief:
+                    "Artificial classification groups organisms using a limited number of easily observed characteristics, such as habitat, colour, or overall appearance. Natural classification uses a broader range of characteristics, including structural, reproductive, and other biological features, to group organisms more comprehensively. Natural classification generally reflects similarities among organisms more accurately than classification based on a single feature.",
+                },
+                {
+                  id: "BIO11-CH02-T07",
+                  topicNumber: 7,
+                  topic: "Phylogenetic classification",
+                  brief:
+                    "Phylogenetic classification groups organisms according to their evolutionary history and common ancestry. It uses evidence from fossils, anatomy, embryology, and molecular biology, including DNA comparisons. Organisms that share a more recent common ancestor are generally placed in more closely related groups.",
+                },
+                {
+                  id: "BIO11-CH02-T08",
+                  topicNumber: 8,
+                  topic: "Three-domain system",
+                  brief:
+                    "The three-domain system classifies cellular life into Bacteria, Archaea, and Eukarya. Bacteria and Archaea consist of prokaryotic cells, which lack a membrane-bound nucleus, but they differ in important genetic and biochemical features. Eukarya includes organisms with eukaryotic cells, such as protists, fungi, plants, and animals.",
+                },
+                {
+                  id: "BIO11-CH02-T09",
+                  topicNumber: 9,
+                  topic: "Five-kingdom classification",
+                  brief:
+                    "The five-kingdom classification system proposed by R. H. Whittaker divides organisms into Monera, Protista, Fungi, Plantae, and Animalia. It considers features such as cell type, body organization, mode of nutrition, and evolutionary relationships. Monera includes prokaryotes, Protista includes diverse eukaryotes, Fungi are absorptive heterotrophs, Plantae are mainly photosynthetic, and Animalia are multicellular ingestive heterotrophs. This is a traditional system; modern classification recognizes that Monera contains distinct evolutionary lineages.",
+                },
+                {
+                  id: "BIO11-CH02-T10",
+                  topicNumber: 10,
+                  topic: "Characteristics of Monera",
+                  brief:
+                    "In the traditional five-kingdom system, Monera includes prokaryotic organisms such as bacteria and cyanobacteria. Their cells lack a membrane-bound nucleus and other membrane-bound organelles. Most are unicellular, reproduce mainly by binary fission, and show varied modes of nutrition, including autotrophic and heterotrophic nutrition. In modern classification, these organisms are distributed mainly between Bacteria and Archaea.",
+                },
+                {
+                  id: "BIO11-CH02-T11",
+                  topicNumber: 11,
+                  topic: "Characteristics of Protista",
+                  brief:
+                    "Protista is a traditional kingdom containing diverse eukaryotic organisms, most of which are unicellular, although some are colonial or multicellular. They possess a true nucleus and membrane-bound organelles. Their nutrition may be autotrophic, heterotrophic, or both. Examples include Amoeba, Paramecium, Euglena, and many algae. The traditional kingdom is not considered a single natural evolutionary group in modern classification.",
+                },
+                {
+                  id: "BIO11-CH02-T12",
+                  topicNumber: 12,
+                  topic: "Characteristics of Fungi",
+                  brief:
+                    "Fungi are eukaryotic organisms that obtain nutrients by absorption rather than ingestion or photosynthesis. Their cell walls generally contain chitin, and their bodies commonly consist of thread-like structures called hyphae that form a mycelium. Many reproduce through spores. Fungi may be saprophytic, parasitic, or symbiotic, and they play important roles in decomposition, food production, and disease.",
+                },
+                {
+                  id: "BIO11-CH02-T13",
+                  topicNumber: 13,
+                  topic: "Characteristics of Plantae",
+                  brief:
+                    "Plants are multicellular eukaryotic organisms whose cells generally contain cellulose cell walls and chloroplasts with chlorophyll. Most plants make food through photosynthesis and store carbohydrates mainly as starch. They show varied body structures and reproductive methods. Plants provide food, oxygen, habitats, medicines, and raw materials for humans and other organisms.",
+                },
+                {
+                  id: "BIO11-CH02-T14",
+                  topicNumber: 14,
+                  topic: "Characteristics of Animalia",
+                  brief:
+                    "Animals are multicellular eukaryotic organisms that lack cell walls and obtain nutrients by ingesting food. Most can move during at least one stage of their life cycle and respond to stimuli through specialized cells or tissues. Animals show diverse body forms, levels of organization, and reproductive strategies. They play important roles in food chains, pollination, decomposition, and ecosystem balance.",
+                },
+                {
+                  id: "BIO11-CH02-T15",
+                  topicNumber: 15,
+                  topic: "Viruses and their characteristics",
+                  brief:
+                    "Viruses are acellular infectious agents consisting of genetic material, either DNA or RNA, enclosed in a protein coat; some also possess a lipid envelope. They lack cellular structures and independent metabolic machinery and can reproduce only inside suitable host cells. Their placement outside the traditional kingdoms of cellular organisms reflects their distinctive organization. Viruses can infect animals, plants, fungi, and bacteria.",
+                },
+                {
+                  id: "BIO11-CH02-T16",
+                  topicNumber: 16,
+                  topic: "Importance of classification",
+                  brief:
+                    "Classification provides a universal framework for identifying and naming organisms. It simplifies the study of biodiversity, helps reveal similarities and differences, supports communication among scientists, and contributes to conservation, agriculture, medicine, and evolutionary research. Classification systems may change when new evidence about organismal relationships becomes available.",
+                },
+                {
+                  id: "BIO11-CH02-T17",
+                  topicNumber: 17,
+                  topic: "Dichotomous keys",
+                  brief:
+                    "A dichotomous key is an identification tool that guides the user through a sequence of paired, contrasting statements about observable characteristics. At each step, the user selects the statement that best matches the specimen and follows the indicated path until an identification is reached. Accurate observations and clearly distinguishable characteristics are essential for correct identification.",
+                },
+                {
+                  id: "BIO11-CH02-T18",
+                  topicNumber: 18,
+                  topic: "Taxonomic identification",
+                  brief:
+                    "Taxonomic identification is the process of determining the identity of an organism and assigning it to an appropriate taxonomic group. It involves observing characteristics, comparing specimens with descriptions or reference materials, and using identification keys where available. Features such as morphology, anatomy, reproductive structures, and molecular evidence may help establish an organism's identity.",
+                },
+              ],
+            },
+            {
+              id: "BIO11-CH03",
+              chapterNumber: 3,
+              chapterName: "Biodiversity and Conservation",
+              topics: [
+                {
+                  id: "BIO11-CH03-T01",
+                  topicNumber: 1,
+                  topic: "Concept of biodiversity",
+                  brief:
+                    "Biodiversity refers to the variety and variability of living organisms and the ecological systems in which they live. It includes genetic diversity, species diversity, and ecosystem diversity. Biodiversity occurs at local, regional, and global levels and helps maintain the stability and functioning of natural ecosystems.",
+                },
+                {
+                  id: "BIO11-CH03-T02",
+                  topicNumber: 2,
+                  topic: "Genetic diversity",
+                  brief:
+                    "Genetic diversity is the variation in genes and inherited characteristics among individuals of the same species or population. It produces differences in traits such as size, colour, disease resistance, and adaptability. High genetic diversity improves a population's ability to survive environmental changes and resist diseases.",
+                },
+                {
+                  id: "BIO11-CH03-T03",
+                  topicNumber: 3,
+                  topic: "Species diversity",
+                  brief:
+                    "Species diversity refers to the variety of species in a particular habitat or region and their relative abundance. It includes species richness, which is the number of species present, and species evenness, which describes how evenly individuals are distributed among those species. Greater species diversity can contribute to ecosystem stability and resilience.",
+                },
+                {
+                  id: "BIO11-CH03-T04",
+                  topicNumber: 4,
+                  topic: "Ecosystem diversity",
+                  brief:
+                    "Ecosystem diversity is the variety of habitats, biological communities, and ecological processes found in a region. Examples include forests, grasslands, wetlands, rivers, lakes, and alpine ecosystems. Different ecosystems provide different resources and support different organisms, contributing to overall biodiversity.",
+                },
+                {
+                  id: "BIO11-CH03-T05",
+                  topicNumber: 5,
+                  topic: "Importance of biodiversity",
+                  brief:
+                    "Biodiversity supports ecosystem processes such as pollination, nutrient cycling, soil formation, decomposition, and water purification. It provides food, medicines, fuel, timber, and other useful resources. Biodiversity also has economic, cultural, scientific, recreational, and aesthetic value, making its conservation important for present and future generations.",
+                },
+                {
+                  id: "BIO11-CH03-T06",
+                  topicNumber: 6,
+                  topic: "Biodiversity of Nepal",
+                  brief:
+                    "Nepal has rich biodiversity because of its wide variation in altitude, climate, landforms, and habitats, extending from the Terai plains to the Himalayan mountains. Its ecosystems include tropical and subtropical forests, temperate forests, alpine meadows, wetlands, and high-altitude environments. Nepal supports diverse plants, animals, and microorganisms, including species of conservation importance such as the Bengal tiger, greater one-horned rhinoceros, red panda, and snow leopard.",
+                },
+                {
+                  id: "BIO11-CH03-T07",
+                  topicNumber: 7,
+                  topic: "Endemic species",
+                  brief:
+                    "Endemic species are organisms naturally restricted to a particular geographical area and not found naturally elsewhere. Their restricted distribution makes them especially vulnerable to habitat loss, environmental changes, and other threats. Identifying and protecting their habitats is important for conserving unique regional biodiversity.",
+                },
+                {
+                  id: "BIO11-CH03-T08",
+                  topicNumber: 8,
+                  topic: "Threatened and endangered species",
+                  brief:
+                    "Threatened species are species at risk of becoming extinct, while endangered species face a very high risk of extinction in the wild. Conservation assessments consider factors such as population size, population decline, geographical range, and threats. The IUCN Red List uses categories including Vulnerable, Endangered, and Critically Endangered to describe different levels of extinction risk.",
+                },
+                {
+                  id: "BIO11-CH03-T09",
+                  topicNumber: 9,
+                  topic: "Causes of biodiversity loss",
+                  brief:
+                    "Biodiversity loss occurs when the variety of genes, species, or ecosystems decreases. Major causes include habitat destruction, pollution, overexploitation, invasive species, climate change, and unsustainable land use. These pressures may reduce populations, disrupt food webs, damage ecosystems, and eventually lead to extinction.",
+                },
+                {
+                  id: "BIO11-CH03-T10",
+                  topicNumber: 10,
+                  topic: "Habitat destruction and fragmentation",
+                  brief:
+                    "Habitat destruction occurs when a natural environment is damaged or converted for activities such as agriculture, urban development, mining, or road construction. Habitat fragmentation divides a large, continuous habitat into smaller, isolated patches. Both processes can reduce available resources, restrict movement and breeding, isolate populations, and increase the risk of local extinction.",
+                },
+                {
+                  id: "BIO11-CH03-T11",
+                  topicNumber: 11,
+                  topic: "Invasive species",
+                  brief:
+                    "Invasive species are organisms introduced outside their natural range that establish and spread, causing or potentially causing harm to native biodiversity, ecosystems, the economy, or human well-being. They may compete with native species, prey on them, spread diseases, or alter habitats. Preventing accidental introductions and controlling established invasive populations are important conservation measures.",
+                },
+                {
+                  id: "BIO11-CH03-T12",
+                  topicNumber: 12,
+                  topic: "Overexploitation of biological resources",
+                  brief:
+                    "Overexploitation occurs when organisms or biological resources are harvested faster than they can naturally recover. Examples include excessive hunting, overfishing, illegal wildlife trade, and unsustainable collection of medicinal plants and timber. It can cause population declines, disrupt food chains, and threaten species with extinction. Sustainable harvesting and effective regulation help reduce these impacts.",
+                },
+                {
+                  id: "BIO11-CH03-T13",
+                  topicNumber: 13,
+                  topic: "Climate change and biodiversity",
+                  brief:
+                    "Climate change affects biodiversity through changes in temperature, rainfall, seasonal patterns, extreme weather, and the distribution of suitable habitats. Species may need to shift their geographical ranges or adapt to changing conditions. Those unable to adapt or move may decline, while warming can also alter mountain ecosystems, wetlands, forests, and species interactions.",
+                },
+                {
+                  id: "BIO11-CH03-T14",
+                  topicNumber: 14,
+                  topic: "In-situ conservation",
+                  brief:
+                    "In-situ conservation means protecting species within their natural habitats so that they can survive, reproduce, and continue interacting with other organisms in their ecosystems. Methods include establishing national parks, wildlife reserves, conservation areas, and community-managed forests. This approach protects not only individual species but also their habitats and natural ecological processes.",
+                },
+                {
+                  id: "BIO11-CH03-T15",
+                  topicNumber: 15,
+                  topic: "Ex-situ conservation",
+                  brief:
+                    "Ex-situ conservation involves protecting organisms outside their natural habitats. Examples include zoos, botanical gardens, seed banks, gene banks, tissue culture laboratories, and captive-breeding programmes. It is especially useful when species face serious threats in the wild, although conserving and restoring their natural habitats remains important for long-term survival.",
+                },
+                {
+                  id: "BIO11-CH03-T16",
+                  topicNumber: 16,
+                  topic: "National parks and protected areas",
+                  brief:
+                    "National parks and other protected areas are geographically defined places managed to conserve biodiversity, natural habitats, and ecological or cultural values. Depending on their designation, they may restrict hunting, resource extraction, settlement, or other activities. In Nepal, protected areas include national parks, wildlife reserves, conservation areas, and other recognized conservation sites.",
+                },
+                {
+                  id: "BIO11-CH03-T17",
+                  topicNumber: 17,
+                  topic: "Wildlife conservation",
+                  brief:
+                    "Wildlife conservation involves protecting wild animals, plants, and their habitats to maintain healthy populations and prevent extinction. Measures include habitat restoration, anti-poaching activities, wildlife research, protection of migration routes, enforcement of conservation laws, and management of human-wildlife conflict. Effective conservation considers the needs of both wildlife and nearby communities.",
+                },
+                {
+                  id: "BIO11-CH03-T18",
+                  topicNumber: 18,
+                  topic: "Community-based conservation",
+                  brief:
+                    "Community-based conservation involves local people in the planning, management, and protection of biodiversity and natural resources. Communities may participate through community forestry, local conservation groups, sustainable harvesting, habitat restoration, and wildlife monitoring. Their knowledge and participation can improve conservation outcomes, particularly when local communities receive fair benefits and have meaningful decision-making roles.",
+                },
+                {
+                  id: "BIO11-CH03-T19",
+                  topicNumber: 19,
+                  topic: "Sustainable use of biological resources",
+                  brief:
+                    "Sustainable use means using biological resources at a rate and in a manner that allows their populations and ecosystems to remain viable over time. It includes responsible harvesting of forest products, sustainable fishing, biodiversity-friendly agriculture, and regulated use of medicinal plants. Sustainable practices balance present needs with the conservation of resources for future generations.",
+                },
+              ],
+            },
+          ],
+        },

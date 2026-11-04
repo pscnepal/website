@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#060F22" />
+      <stop offset="58%" stop-color="#0A1D42" />
+      <stop offset="100%" stop-color="#002B73" />
+    </linearGradient>
+    <linearGradient id="flagRibbon" x1="44" y1="44" x2="1156" y2="44" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#DC143C" />
+      <stop offset="65%" stop-color="#C01033" />
+      <stop offset="100%" stop-color="#003893" />
+    </linearGradient>
+    <pattern id="gridPattern" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#1E3A6E" stroke-width="0.75" stroke-opacity="0.55" />
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bgGrad)" />
+  <rect width="1200" height="630" fill="url(#gridPattern)" />
+
+  <rect x="44" y="44" width="1112" height="542" rx="20" fill="#060F22" fill-opacity="0.82" stroke="#1E3A6E" stroke-width="1.5" />
+  <path d="M64 44H1136C1147.05 44 1156 52.9543 1156 64V49H44V64C44 52.9543 52.9543 44 64 44Z" fill="url(#flagRibbon)" />
+
+  <!-- Top Eyebrow -->
+  <g transform="translate(96, 108)">
+    <rect x="0" y="0" width="44" height="44" rx="10" fill="#DC143C" stroke="#003893" stroke-width="2" />
+    <path d="M11 13.5C11 12.67 11.67 12 12.5 12H19.5C20.88 12 22 13.12 22 14.5V32C21 31.1 19.7 30.5 18.2 30.5H12.5C11.67 30.5 11 29.83 11 29V13.5Z" fill="#FFFFFF" />
+    <path d="M33 13.5C33 12.67 32.33 12 31.5 12H24.5C23.12 12 22 13.12 22 14.5V32C23 31.1 24.3 30.5 25.8 30.5H31.5C32.33 30.5 33 29.83 33 29V13.5Z" fill="#EEF4FF" />
+    <text x="62" y="20" fill="#93A8CC" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="500" letter-spacing="1.5">
+      LOK SEWA AAYOG PREPARATION WORKSPACE · NEPAL
+    </text>
+    <text x="62" y="40" fill="#FF758F" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="600">
+      Section Officer · Nayab Subba · Kharidar
+    </text>
+  </g>
+
+  <!-- Brand & Headline -->
+  <text x="96" y="256" fill="#FFFFFF" font-family="Georgia, Cambria, Times New Roman, serif" font-size="78" font-weight="700" letter-spacing="-1.5">
+    PSC Nepal
+  </text>
+
+  <text x="96" y="324" fill="#EEF4FF" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="32" font-weight="600" letter-spacing="-0.4">
+    Official Syllabi, Mock Exam Hall, Timed MCQs &amp; Study PDFs
+  </text>
+
+  <text x="96" y="374" fill="#B6C7E2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="21" font-weight="400">
+    Chapter-wise curriculum checklists, digital OMR &amp; written simulations, bilingual
+  </text>
+  <text x="96" y="406" fill="#B6C7E2" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="21" font-weight="400">
+    English/Nepali long-answer models, and a realistic two-page PDF flipbook reader.
+  </text>
+
+  <!-- Nepal Flag Dual Divider -->
+  <line x1="96" y1="456" x2="420" y2="456" stroke="#DC143C" stroke-width="2.5" />
+  <line x1="420" y1="456" x2="1104" y2="456" stroke="#1E3A6E" stroke-width="1.5" />
+
+  <!-- Bottom Pillar Metrics -->
+  <g transform="translate(96, 502)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">
+    <text x="0" y="0" fill="#FFFFFF" font-size="22" font-weight="600">01 · SYLLABUS</text>
+    <text x="0" y="28" fill="#8EA4C8" font-size="15">Stages I–III + Original PDFs</text>
+
+    <text x="268" y="0" fill="#FFFFFF" font-size="22" font-weight="600">02 · OMR &amp; HALL</text>
+    <text x="268" y="28" fill="#8EA4C8" font-size="15">-20% Negative · 45% Gate</text>
+
+    <text x="548" y="0" fill="#FFFFFF" font-size="22" font-weight="600">03 · BILINGUAL Q&amp;A</text>
+    <text x="548" y="28" fill="#8EA4C8" font-size="15">Papers II–IV (EN + नेपाली)</text>
+
+    <text x="842" y="0" fill="#FFFFFF" font-size="22" font-weight="600">04 · PDF FLIPBOOK</text>
+    <text x="842" y="28" fill="#8EA4C8" font-size="15">Acts, Plans &amp; Parichaya</text>
+  </g>
+</svg>
