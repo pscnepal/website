@@ -294,6 +294,21 @@ export function generatePscChatResponse(
   const keywords = extractKeywords(query);
 
   // 1. Starter Prompts & High-Priority Direct Patterns
+  if (/about( psc nepal)?|who are you|mission|हाम्रो बारेमा/i.test(query)) {
+    return `### About PSC Nepal (हाम्रो बारेमा)
+
+**PSC Nepal** is an independent digital study workspace engineered to empower Nepal's civil service aspirants across all 7 Provinces and 77 districts with open, structured, and rigorous preparation.
+
+#### Core Pillars:
+- **Official Syllabi**: Comprehensive phase, paper, and topic checklists for Section Officer, Nayab Subba, and Kharidar.
+- **Realistic Exam Hall Simulator**: Phase I OMR screening with -20% negative marking and Phase II Timed Written Hall (1.8 mins/mark) with rubric self-evaluation.
+- **Bilingual Model Answers**: Structured 5M and 10M subjective answers formatted in English and नेपाली.
+- **3D Flipbook Reader**: Two-page spread viewing of the Constitution 2072, Civil Service Act 2049, Local Government Operation Act 2074, and Nepal Parichaya.
+- **Local-First Privacy**: 100% of study progress, quiz scores, and bookmarks remain private in your browser.
+
+Read more about our mission on the [About PSC Nepal Page](/about) or reach our editorial desk at \`info.pscnepal@gmail.com\`.`;
+  }
+
   if (
     /syllabus.*(-20%|negative|marking|rules|scheme|pass|compare)/i.test(query) ||
     /(-20%|negative marking|माइनस मार्किङ)/i.test(query)

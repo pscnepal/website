@@ -19,6 +19,7 @@ const MOBILE_NAV_ITEMS = [
   { to: '/progress', label: 'Study Progress', end: false },
   { to: '/library', label: 'Personal Library', end: false },
   { to: '/read', label: 'PDF Flipbook Reader', end: false },
+  { to: '/about', label: 'About PSC Nepal', end: false },
 ];
 
 export function Navbar() {

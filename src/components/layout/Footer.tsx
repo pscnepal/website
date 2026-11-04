@@ -119,6 +119,12 @@ export function Footer() {
               className="flex flex-col gap-2 text-xs"
             >
               <Link
+                to="/about"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
+              >
+                About PSC Nepal
+              </Link>
+              <Link
                 to="/contact"
                 className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
               >

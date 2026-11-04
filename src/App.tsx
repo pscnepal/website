@@ -16,6 +16,7 @@ import { useAppSelector } from './app/hooks';
 import { PscChatbot } from './components/chat/PscChatbot';
 import { ScrollToTopButton } from './components/layout/ScrollToTopButton';
 import { SeoManager } from './components/seo/SeoManager';
+import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { FeaturesPage } from './pages/FeaturesPage';
 import { HomePage } from './pages/HomePage';
@@ -130,6 +131,7 @@ export default function App() {
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/read" element={<ReaderPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route

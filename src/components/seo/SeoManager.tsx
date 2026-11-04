@@ -761,7 +761,43 @@ function resolveRouteSeo(
     };
   }
 
-  // 14. Fallback 404 Not Found
+  // 14. About Page (/about)
+  if (normalizedPath === '/about') {
+    const title = `About PSC Nepal | Independent Lok Sewa Preparation Workspace`;
+    const description =
+      'Learn about PSC Nepal’s mission to democratize Lok Sewa Aayog preparation across all 7 Provinces with open syllabi, OMR & written simulations, and 3D PDF flipbooks.';
+    return {
+      title,
+      description,
+      canonicalPath: '/about',
+      robots: 'index, follow, max-image-preview:large',
+      ogType: 'website',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          buildBreadcrumbList(origin, [
+            { name: 'Home', path: '/' },
+            { name: 'About', path: '/about' },
+          ]),
+          {
+            '@type': 'AboutPage',
+            name: title,
+            description,
+            url: `${origin}/about`,
+            mainEntity: {
+              '@type': 'EducationalOrganization',
+              name: BRAND_NAME,
+              url: origin,
+              email: 'info.pscnepal@gmail.com',
+              areaServed: 'Nepal',
+            },
+          },
+        ],
+      },
+    };
+  }
+
+  // 15. Fallback 404 Not Found
   return {
     title: `Page Not Found (404) | ${BRAND_NAME}`,
     description:

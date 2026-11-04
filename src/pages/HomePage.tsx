@@ -621,85 +621,166 @@ export function HomePage() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-            <table className="w-full text-left border-collapse text-xs sm:text-sm">
-              <thead>
-                <tr className="border-b border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500 dark:text-zinc-400">
-                  <th className="py-3.5 px-4 font-medium">Stage / Paper</th>
-                  <th className="py-3.5 px-4 font-medium">Subject &amp; Format</th>
-                  <th className="py-3.5 px-4 font-medium text-right">
-                    Full / Pass
-                  </th>
-                  <th className="py-3.5 px-4 font-medium text-right">
-                    Duration
-                  </th>
-                  <th className="py-3.5 px-4 font-medium text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {activeCadre.phases.flatMap((phase) =>
-                  phase.papers.map((paper) => {
-                    const actionHref =
-                      paper.examFormat === 'Objective MCQ (OMR)'
-                        ? `/simulate?preset=${encodeURIComponent(
-                            activeCadre.defaultSimulationPreset
-                          )}&launch=1`
-                        : paper.examFormat === 'Subjective Analytical & Case'
-                          ? '/written'
-                          : `/syllabus/${activeCadre.id}`;
-                    const actionLabel =
-                      paper.examFormat === 'Objective MCQ (OMR)'
-                        ? 'Simulate OMR'
-                        : paper.examFormat === 'Subjective Analytical & Case'
-                          ? 'Practice Written'
-                          : 'View Units';
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+            {/* Mobile Responsive View (< 768px): Stage/Paper + Marks top justify-between, Subject/Format, Duration & Action vertical */}
+            <div className="md:hidden divide-y divide-zinc-200 dark:divide-zinc-800">
+              {activeCadre.phases.flatMap((phase) =>
+                phase.papers.map((paper) => {
+                  const actionHref =
+                    paper.examFormat === 'Objective MCQ (OMR)'
+                      ? `/simulate?preset=${encodeURIComponent(
+                          activeCadre.defaultSimulationPreset
+                        )}&launch=1`
+                      : paper.examFormat === 'Subjective Analytical & Case'
+                        ? '/written'
+                        : `/syllabus/${activeCadre.id}`;
+                  const actionLabel =
+                    paper.examFormat === 'Objective MCQ (OMR)'
+                      ? 'Simulate OMR'
+                      : paper.examFormat === 'Subjective Analytical & Case'
+                        ? 'Practice Written'
+                        : 'View Units';
 
-                    return (
-                      <tr
-                        key={paper.id}
-                        className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors"
-                      >
-                        <td className="py-3.5 px-4 font-mono tabular-nums text-xs font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
+                  return (
+                    <div
+                      key={`mob-${paper.id}`}
+                      className="p-4 space-y-3 hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 transition-colors"
+                    >
+                      {/* Top: Stage / Paper + Full / Pass marks in justify-between */}
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100">
                           Phase {phase.phaseNumber} · {paper.code}
-                        </td>
-                        <td className="py-3.5 px-4">
-                          <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                            {paper.title}{' '}
-                            <span
-                              lang="ne"
-                              className="text-xs font-normal text-zinc-500 dark:text-zinc-400"
-                            >
-                              ({paper.nepaliTitle})
-                            </span>
-                          </p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {paper.examFormat} · {paper.questionBreakdown}
-                          </p>
-                        </td>
-                        <td className="py-3.5 px-4 text-right font-mono tabular-nums text-xs whitespace-nowrap">
+                        </span>
+                        <span className="font-mono tabular-nums text-xs font-semibold text-zinc-900 dark:text-zinc-100">
                           {paper.fullMarks}M /{' '}
                           {paper.passMarks !== null
                             ? `${paper.passMarks}M`
                             : 'Merit'}
-                        </td>
-                        <td className="py-3.5 px-4 text-right font-mono tabular-nums text-xs text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-                          {paper.durationLabel}
-                        </td>
-                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        </span>
+                      </div>
+
+                      {/* Middle: Subject / Format */}
+                      <div className="space-y-1">
+                        <p className="font-medium text-sm text-zinc-900 dark:text-zinc-100 leading-snug">
+                          {paper.title}{' '}
+                          <span
+                            lang="ne"
+                            className="text-xs font-normal text-zinc-500 dark:text-zinc-400"
+                          >
+                            ({paper.nepaliTitle})
+                          </span>
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                          {paper.examFormat} · {paper.questionBreakdown}
+                        </p>
+                      </div>
+
+                      {/* Bottom: Duration and Action Vertically */}
+                      <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-800/60">
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                          <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                          <span>Duration:</span>
+                          <span className="font-mono font-medium text-zinc-900 dark:text-zinc-200">
+                            {paper.durationLabel}
+                          </span>
+                        </div>
+                        <div>
                           <Link
                             to={actionHref}
-                            className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline"
+                            className="inline-flex items-center justify-center gap-1.5 w-full h-9 px-3.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-xs font-semibold text-blue-700 dark:text-blue-300 transition-colors shadow-2xs"
                           >
                             <span>{actionLabel}</span>
-                            <ArrowRight className="w-3 h-3" />
+                            <ArrowRight className="w-3.5 h-3.5" />
                           </Link>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Desktop / Tablet View (>= 768px): Full Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500 dark:text-zinc-400">
+                    <th className="py-3.5 px-4 font-medium">Stage / Paper</th>
+                    <th className="py-3.5 px-4 font-medium">Subject &amp; Format</th>
+                    <th className="py-3.5 px-4 font-medium text-right">
+                      Full / Pass
+                    </th>
+                    <th className="py-3.5 px-4 font-medium text-right">
+                      Duration
+                    </th>
+                    <th className="py-3.5 px-4 font-medium text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {activeCadre.phases.flatMap((phase) =>
+                    phase.papers.map((paper) => {
+                      const actionHref =
+                        paper.examFormat === 'Objective MCQ (OMR)'
+                          ? `/simulate?preset=${encodeURIComponent(
+                              activeCadre.defaultSimulationPreset
+                            )}&launch=1`
+                          : paper.examFormat === 'Subjective Analytical & Case'
+                            ? '/written'
+                            : `/syllabus/${activeCadre.id}`;
+                      const actionLabel =
+                        paper.examFormat === 'Objective MCQ (OMR)'
+                          ? 'Simulate OMR'
+                          : paper.examFormat === 'Subjective Analytical & Case'
+                            ? 'Practice Written'
+                            : 'View Units';
+
+                      return (
+                        <tr
+                          key={paper.id}
+                          className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors"
+                        >
+                          <td className="py-3.5 px-4 font-mono tabular-nums text-xs font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
+                            Phase {phase.phaseNumber} · {paper.code}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                              {paper.title}{' '}
+                              <span
+                                lang="ne"
+                                className="text-xs font-normal text-zinc-500 dark:text-zinc-400"
+                              >
+                                ({paper.nepaliTitle})
+                              </span>
+                            </p>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                              {paper.examFormat} · {paper.questionBreakdown}
+                            </p>
+                          </td>
+                          <td className="py-3.5 px-4 text-right font-mono tabular-nums text-xs whitespace-nowrap">
+                            {paper.fullMarks}M /{' '}
+                            {paper.passMarks !== null
+                              ? `${paper.passMarks}M`
+                              : 'Merit'}
+                          </td>
+                          <td className="py-3.5 px-4 text-right font-mono tabular-nums text-xs text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                            {paper.durationLabel}
+                          </td>
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                            <Link
+                              to={actionHref}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline"
+                            >
+                              <span>{actionLabel}</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 
