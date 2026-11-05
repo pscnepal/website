@@ -41,6 +41,7 @@ import {
 } from '../features/settings/settingsSlice';
 import { soundService } from '../services/soundService';
 import { formatCompactDuration } from '../utils/pdfHelpers';
+import { HimalayanLandscapeVector } from '../components/vectors/HimalayanLandscapeVector';
 
 const PAIRED_STUDY_TRACKS = [
   {
@@ -233,7 +234,12 @@ export function HomePage() {
       <PageTransition>
         <main className="flex-1 flex flex-col justify-between">
         {/* Hero & Target Post Command Section */}
-        <section className="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-12 space-y-10">
+        <section className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-12 space-y-10 overflow-hidden">
+          {/* Ambient Topographic Himalayan Mountain Silhouette Vector */}
+          <div className="absolute top-0 left-0 right-0 h-44 sm:h-56 pointer-events-none opacity-30 dark:opacity-15 text-zinc-900 dark:text-zinc-100 overflow-hidden -z-10">
+            <HimalayanLandscapeVector variant="subtle" />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
             {/* Left Dominant Anchor */}
             <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
@@ -371,6 +377,47 @@ export function HomePage() {
                 >
                   Merit Calculator →
                 </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Architectural Heritage & Civil Service Anchor Banner */}
+          <div className="relative rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-950 text-white shadow-sm">
+            <div className="relative h-48 sm:h-64 lg:h-72 w-full overflow-hidden">
+              <img
+                src="/src/assets/images/nepal_singha_durbar_1793889770945.jpg"
+                alt="Singha Durbar and snow-capped Himalayan mountain peaks, Kathmandu, Nepal"
+                className="w-full h-full object-cover object-center filter brightness-[0.88] hover:scale-105 transition-transform duration-700 ease-out"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+
+              <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                <div className="space-y-1.5 max-w-xl">
+                  <div className="flex items-center gap-2 text-xs font-mono text-amber-300">
+                    <span>सिंहदरबार · काठमाडौँ</span>
+                    <span aria-hidden="true">·</span>
+                    <span>Elevation 1,400m</span>
+                  </div>
+                  <h3 className="font-serif text-lg sm:text-2xl font-bold text-white tracking-tight">
+                    From Preliminary Screening to Singha Durbar.
+                  </h3>
+                  <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
+                    The constitutional seat of the Federal Civil Service of Nepal. Master your syllabus with official past questions, legal gazettes, and timed mock simulations.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <Link
+                    to={`/simulate?preset=${encodeURIComponent(
+                      activeCadre.defaultSimulationPreset
+                    )}&launch=1`}
+                    className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-white text-zinc-950 hover:bg-zinc-100 text-xs font-semibold transition-colors shadow-sm"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Enter Exam Hall</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

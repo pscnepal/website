@@ -1001,7 +1001,52 @@ function OmrHallDialogInner({
                 <h4 className="font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-100">
                   Subject-Wise Net Marks Breakdown
                 </h4>
-                <div className="overflow-x-auto border-y border-zinc-200 dark:border-zinc-800">
+                {/* Mobile Responsive View (< 640px): Subject + Net Marks at top in justify-between, items/accuracy middle, correct/wrong vertically */}
+                <div className="sm:hidden divide-y divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800">
+                  {resultDiagnostic.subjectRows.map((row) => (
+                    <div
+                      key={`mob-${row.subject}`}
+                      className="py-3 px-1 space-y-2 font-mono tabular-nums"
+                    >
+                      {/* Top: Subject + Net Marks in justify-between */}
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-sans font-semibold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
+                          {row.subject}
+                        </span>
+                        <span className="text-xs sm:text-sm font-bold text-zinc-950 dark:text-zinc-50">
+                          {row.net.toFixed(2)} Marks
+                        </span>
+                      </div>
+
+                      {/* Middle: Total Items & Accuracy */}
+                      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                        <span>Total Items: {row.total}</span>
+                        <span>
+                          {row.total > 0
+                            ? Math.round((row.correct / row.total) * 100)
+                            : 0}
+                          % Accuracy
+                        </span>
+                      </div>
+
+                      {/* Bottom: Breakdown Vertically/Horizontally */}
+                      <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-zinc-100 dark:border-zinc-800/60 text-xs">
+                        <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium">
+                          ✓ {row.correct} Correct
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-medium">
+                          ✗ {row.wrong} Wrong
+                        </span>
+                        <span className="text-zinc-500 dark:text-zinc-400">
+                          Net: {row.net.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop / Tablet View (>= 640px): Full Table */}
+                <div className="hidden sm:block overflow-x-auto border-y border-zinc-200 dark:border-zinc-800">
                   <table className="w-full text-xs text-left border-collapse">
                     <thead>
                       <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400">

@@ -870,7 +870,64 @@ export function SimulationPage() {
                     </span>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* Mobile Responsive View (< 640px): Key metrics in justify-between cards */}
+                  <div className="sm:hidden divide-y divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800 text-xs">
+                    <div className="py-2.5 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-sans font-medium text-zinc-800 dark:text-zinc-200">
+                          Phase II Written Papers
+                        </span>
+                        <span className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
+                          {meritSimulation.writtenTotal} /{' '}
+                          {meritSimulation.writtenMax}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        Main written papers (0% Stage I Carryover)
+                      </p>
+                    </div>
+
+                    <div className="py-2.5 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-sans font-medium text-zinc-800 dark:text-zinc-200">
+                          Final Stage Assessment
+                        </span>
+                        <span className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
+                          {meritSimulation.phase3Total} /{' '}
+                          {meritSimulation.phase3Max}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+                        Computer
+                        {labCadre === 'section-officer'
+                          ? ', Group Test'
+                          : ''}{' '}
+                        &amp; Oral Interview
+                      </p>
+                    </div>
+
+                    <div className="py-2.5 space-y-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-sans font-medium text-zinc-800 dark:text-zinc-200">
+                          Standing Assessment
+                        </span>
+                        <span className="font-sans font-semibold text-xs text-zinc-900 dark:text-zinc-100 text-right">
+                          {!meritSimulation.phase1Clears
+                            ? 'Filtered at Phase I (<45%)'
+                            : !meritSimulation.writtenAllPass
+                              ? 'Below 40M Written Minimum'
+                              : meritSimulation.finalMeritPct >= 66
+                                ? 'Strong Merit Contender'
+                                : meritSimulation.finalMeritPct >= 56
+                                  ? 'Competitive Selection Zone'
+                                  : 'Pass Zone — Raise Depth'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Desktop / Tablet View (>= 640px): Full Table */}
+                  <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-xs border-collapse">
                       <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 font-mono tabular-nums">
                         <tr>

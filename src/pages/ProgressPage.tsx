@@ -1031,24 +1031,23 @@ export function ProgressPage() {
               {writtenMastery.paperRows.map((row) => (
                 <div
                   key={row.paper}
-                  className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="py-3.5 space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3"
                 >
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-baseline justify-between sm:justify-start gap-2.5">
+                    <div className="flex items-center justify-between sm:justify-start gap-2.5">
                       <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                         {row.paper}
                       </h3>
                       <span className="text-xs font-mono tabular-nums text-zinc-500 dark:text-zinc-400">
-                        {row.mastered}/{row.totalInPaper} mastered (
-                        {row.masteryPct}%)
+                        {row.mastered}/{row.totalInPaper} ({row.masteryPct}%)
                         {row.practicing > 0
-                          ? ` · ${row.practicing} in practice`
+                          ? ` · ${row.practicing} practicing`
                           : ''}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 shrink-0">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-4 shrink-0">
                     <div className="w-full sm:w-32 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                       <div
                         className="h-full bg-emerald-600 dark:bg-emerald-400 rounded-full transition-transform duration-300 origin-left"
@@ -1063,7 +1062,7 @@ export function ProgressPage() {
 
                     <Link
                       to={`/written/${row.firstQuestionId}`}
-                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap shrink-0"
+                      className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap shrink-0"
                     >
                       <span>Study ({row.totalInPaper})</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -1084,7 +1083,7 @@ export function ProgressPage() {
               {deckProgressRows.map((row) => (
                 <div
                   key={row.deck.id}
-                  className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="py-3.5 space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -1109,7 +1108,7 @@ export function ProgressPage() {
 
                   <Link
                     to={`/quiz/${row.deck.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-700 hover:text-blue-700 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors whitespace-nowrap shrink-0"
+                    className="inline-flex items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto h-8 px-3 rounded-lg sm:rounded-none sm:h-auto sm:p-0 border sm:border-0 border-zinc-200 dark:border-zinc-800 bg-white sm:bg-transparent dark:bg-zinc-900 sm:dark:bg-transparent text-xs font-medium text-zinc-700 hover:text-blue-700 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors whitespace-nowrap shrink-0"
                   >
                     <span>
                       {row.attemptsCount > 0 ? 'Retake Set' : 'Start Timed Set'}

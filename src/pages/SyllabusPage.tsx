@@ -1130,7 +1130,27 @@ export function SyllabusPage() {
                             {/* Paper Header */}
                             <div className="p-4 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                               <div className="space-y-1.5 min-w-0">
-                                <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
+                                {/* Mobile Layout (< 640px): Paper Code + Marks in justify-between, Format & Duration stacked */}
+                                <div className="sm:hidden space-y-1">
+                                  <div className="flex items-center justify-between gap-3 text-xs font-mono tabular-nums">
+                                    <span className="font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100">
+                                      {paper.code}
+                                    </span>
+                                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                      Full: {paper.fullMarks}M
+                                      {paper.passMarks !== null
+                                        ? ` · Pass: ${paper.passMarks}M`
+                                        : ' · Merit'}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                                    <span>{paper.examFormat}</span>
+                                    <span className="font-mono tabular-nums">{paper.durationLabel}</span>
+                                  </div>
+                                </div>
+
+                                {/* Desktop / Tablet View (>= 640px): Inline Metadata */}
+                                <div className="hidden sm:flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
                                   <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                                     {paper.code}
                                   </span>

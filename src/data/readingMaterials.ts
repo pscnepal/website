@@ -156,11 +156,158 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
   },
   {
     id: 'nepal-parichaya',
-    name: 'Nepal Parichaya',
-    subtitle: 'Geography, History, Culture & Federal Governance',
+    name: 'Nepal Parichaya (नेपाल परिचय)',
+    subtitle: 'All 13 Official Editions & Curated Syllabus Volumes',
     description:
-      'Foundational national reference volumes covering ecological belts, river basins, historical eras, Census 2078 demographics, UNESCO sites, and federal structure.',
+      'Official compendiums published by the Department of Information and Broadcasting (सूचना तथा प्रसारण विभाग), Government of Nepal, covering geography, history, culture, constitution, 2078 census demographics, and federal governance across all 13 editions.',
     items: [
+      {
+        id: 'nepal-parichaya-13th-edition-2082',
+        title: 'नेपाल परिचय (१३ औं संस्करण), २०८२',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '13th Edition · 2082 BS (2025 AD)',
+        pages: 428,
+        path: '/materials/nepal-parichaya-13th-edition-2082.pdf',
+        externalSourceUrl:
+          'https://giwmscdnone.gov.np/media/pdf_upload/Nepal%20Parichaya%2013th%20edition_2082_Finall_g0xrjjr.pdf',
+        description:
+          'Latest baseline compendium covering geography, history, Census 2078 demographics, 753 local government units, and updated macroeconomic indicators.',
+      },
+      {
+        id: 'nepal-parichaya-12th-edition-2081',
+        title: 'नेपाल परिचय (१२ औं संस्करण), २०८१',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '12th Edition · 2081 BS (2024 AD)',
+        pages: 412,
+        path: '/materials/nepal-parichaya-12th-edition-2081.pdf',
+        externalSourceUrl:
+          'https://giwmscdnone.gov.np/media/pdf_upload/Nepal_Parichaya_12th_edition_2081_website_Final.pdf',
+        description:
+          'Comprehensive update of provincial GDP contributions, ecological conservation zones, flora/fauna reserves, and civil service administration.',
+      },
+      {
+        id: 'nepal-parichaya-11th-edition-2080',
+        title: 'नेपाल परिचय (११ औं संस्करण), २०८०',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '11th Edition · 2080 BS (2023 AD)',
+        pages: 396,
+        path: '/materials/nepal-parichaya-11th-edition-2080.pdf',
+        externalSourceUrl:
+          'https://giwmscdnone.gov.np/media/app/public/23/posts/1697528158_10.pdf',
+        description:
+          'First edition integrating official National Census 2078 results (142 castes/ethnicities, 124 mother tongues, and revised literacy matrices).',
+      },
+      {
+        id: 'nepal-parichaya-10th-edition-2079',
+        title: 'नेपाल परिचय (१० औं संस्करण), २०७९',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '10th Edition · 2079 BS (2022 AD)',
+        pages: 384,
+        path: '/materials/nepal-parichaya-10th-edition-2079.pdf',
+        externalSourceUrl:
+          'https://giwmscdnone.gov.np/media/app/public/23/posts/1663745737_77.pdf',
+        description:
+          'Tenth jubilee edition highlighting public administrative reform, national heritage monuments, and periodic planning targets.',
+      },
+      {
+        id: 'nepal-parichaya-9th-edition-2078',
+        title: 'नेपाल परिचय (९ औं संस्करण), २०७८',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '9th Edition · 2078 BS (2021 AD)',
+        pages: 376,
+        path: '/materials/nepal-parichaya-9th-edition-2078.pdf',
+        externalSourceUrl: 'https://doib.gov.np/category/1316#edition-9',
+        description:
+          'Focuses on Sustainable Development Goals (SDGs), pandemic recovery governance, and modern diplomatic relations.',
+      },
+      {
+        id: 'nepal-parichaya-8th-edition-2077',
+        title: 'नेपाल परिचय (८ औं संस्करण), २०७७',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '8th Edition · 2077 BS (2020 AD)',
+        pages: 368,
+        path: '/materials/nepal-parichaya-8th-edition-2077.pdf',
+        externalSourceUrl: 'https://doib.gov.np/category/1316#edition-8',
+        description:
+          'Features the historic updated political map of Nepal (चुच्चे नक्सा) incorporating Limpiyadhura, Lipulekh, and Kalapani.',
+      },
+      {
+        id: 'nepal-parichaya-7th-edition-2076',
+        title: 'नेपाल परिचय (७ औं संस्करण), २०७६',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '7th Edition · 2076 BS (2019 AD)',
+        pages: 360,
+        path: '/materials/nepal-parichaya-7th-edition-2076.pdf',
+        externalSourceUrl: 'https://doib.gov.np/category/1316#edition-7',
+        description:
+          'Cooperative federalism frameworks, intergovernmental fiscal transfers, and provincial administrative centers.',
+      },
+      {
+        id: 'nepal-parichaya-6th-edition-2075',
+        title: 'नेपाल परिचय (६ औं संस्करण), २०७५',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '6th Edition · 2075 BS (2018 AD)',
+        pages: 352,
+        path: '/materials/nepal-parichaya-6th-edition-2075.pdf',
+        externalSourceUrl: 'https://doib.gov.np/category/1316#edition-6',
+        description:
+          'Post-2017 general election three-tier government structure and Local Government Operation Act (LGOA 2074) mandates.',
+      },
+      {
+        id: 'nepal-parichaya-5th-edition-2074',
+        title: 'नेपाल परिचय (५ औं संस्करण), २०७४',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '5th Edition · 2074 BS (2017 AD)',
+        pages: 344,
+        path: '/materials/nepal-parichaya-5th-edition-2074.pdf',
+        externalSourceUrl: 'https://doib.gov.np/category/1316#edition-5',
+        description:
+          'Rollout of the 7-province system and restructuring of Nepal into 753 local government units.',
+      },
+      {
+        id: 'nepal-parichaya-4th-edition-2073',
+        title: 'नेपाल परिचय (४ औं संस्करण), २०७३',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '4th Edition · 2073 BS (2016 AD)',
+        pages: 336,
+        path: '/materials/nepal-parichaya-4th-edition-2073.pdf',
+        externalSourceUrl: 'https://doib.gov.np/category/1316#edition-4',
+        description:
+          'First edition published after the promulgation of the Constitution of Nepal (२०७२), featuring fundamental rights and state directives.',
+      },
+      {
+        id: 'nepal-parichaya-3rd-edition-2072',
+        title: 'नेपाल परिचय (३ औं संस्करण), २०७२',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '3rd Edition · 2072 BS (2015 AD)',
+        pages: 320,
+        path: '/materials/nepal-parichaya-3rd-edition-2072.pdf',
+        externalSourceUrl: 'https://doib.gov.np/category/1316#edition-3',
+        description:
+          'Comprehensive pre-constitution reference on Nepal physical geography, river basins, cultural heritage, and administrative divisions.',
+      },
+      {
+        id: 'nepal-parichaya-2nd-edition-2070',
+        title: 'नेपाल परिचय (२ औं संस्करण), २०७०',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '2nd Edition · 2070 BS (2013 AD)',
+        pages: 312,
+        path: '/materials/nepal-parichaya-2nd-edition-2070.pdf',
+        externalSourceUrl: 'https://doib.gov.np/category/1316#edition-2',
+        description:
+          'Second revised edition updating economic indicators, energy developments, and census trends.',
+      },
+      {
+        id: 'nepal-parichaya-1st-edition-2069',
+        title: 'नेपाल परिचय (१ औं संस्करण - पूर्ण परिमार्जित), २०६९',
+        authority: 'Department of Information and Broadcasting (DoIB)',
+        codeOrEdition: '1st Revised Edition · 2069 BS (2012 AD)',
+        pages: 304,
+        path: '/materials/nepal-parichaya-1st-edition-2069.pdf',
+        externalSourceUrl: 'https://doib.gov.np/category/1316#edition-1',
+        description:
+          'The foundational master revised compendium commissioned by the Government of Nepal for public knowledge and civil service preparation.',
+      },
       {
         id: 'np-geography',
         title: 'Nepal Parichaya: Physical Geography & Ecological Belts',

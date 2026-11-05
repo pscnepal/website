@@ -23,6 +23,7 @@ import {
 } from '../../data/readingMaterials';
 import { WRITTEN_QUESTIONS } from '../../data/writtenQuestionsData';
 import { createBookIdFromUrl, resolveSampleUrl } from '../../utils/urlHelpers';
+import { BookCoverVector } from '../vectors/BookCoverVector';
 
 export function BrowseMaterials() {
   const { categoryId } = useParams<{ categoryId?: string }>();
@@ -433,6 +434,44 @@ export function BrowseMaterials() {
                 </div>
               </div>
 
+              {/* Visual Showcase Banner for Nepal Parichaya / Official Compendiums */}
+              {selectedCategory.id === 'nepal-parichaya' && (
+                <div className="relative rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm flex flex-col sm:flex-row items-stretch">
+                  <div className="sm:w-2/5 relative h-48 sm:h-auto min-h-[160px] overflow-hidden">
+                    <img
+                      src="/src/assets/images/study_parichaya_desk_1793889771100.jpg"
+                      alt="Official Nepal Parichaya Compendiums on Study Desk"
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-black/60 via-transparent to-transparent sm:from-transparent" />
+                  </div>
+                  <div className="sm:w-3/5 p-5 sm:p-6 flex flex-col justify-between space-y-3">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700/60">
+                          Complete 13-Edition Compendium
+                        </span>
+                        <span className="text-xs text-zinc-500 font-mono">२०६९ — २०८२</span>
+                      </div>
+                      <h3 className="font-serif text-base sm:text-lg font-bold text-zinc-950 dark:text-zinc-50">
+                        नेपाल परिचय (Nepal Parichaya) Official Library
+                      </h3>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                        Published by the Department of Information and Broadcasting (सूचना तथा प्रसारण विभाग), Government of Nepal. Every edition from the 1st revised (२०६९) to the latest 13th edition (२०८२) indexed for comprehensive civil service revision.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-500 dark:text-zinc-400 font-mono tabular-nums pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                      <span>13 Official Editions</span>
+                      <span aria-hidden="true">·</span>
+                      <span>4 Curated Study Digests</span>
+                      <span aria-hidden="true">·</span>
+                      <span className="text-blue-700 dark:text-blue-400 font-medium">3D Flipbook &amp; PDF</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Document URL Cards List */}
               {filteredItems.length === 0 ? (
                 <div className="py-12 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
@@ -482,53 +521,70 @@ export function BrowseMaterials() {
                         onKeyDown={(e) =>
                           handleCardKeyDown(e, () => handleOpenMaterial(item))
                         }
-                        className="group flex flex-col justify-between rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 hover:border-blue-700/45 dark:hover:border-blue-400/45 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                        className="group flex flex-col justify-between rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 hover:border-blue-700/45 dark:hover:border-blue-400/45 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 shadow-xs hover:shadow-md"
                       >
-                        <div>
-                          {/* Unboxed metadata row */}
-                          <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
-                            <span>{item.authority}</span>
-                            <span aria-hidden="true">·</span>
-                            <span>{item.codeOrEdition}</span>
-                            <span aria-hidden="true">·</span>
-                            <span className="font-mono tabular-nums">
-                              {item.pages} pages
-                            </span>
-                            {linkedQuestions > 0 && (
-                              <>
-                                <span aria-hidden="true">·</span>
-                                <span className="font-mono tabular-nums">
-                                  {linkedQuestions} quiz Qs
-                                </span>
-                              </>
-                            )}
-                            {linkedWritten > 0 && (
-                              <>
-                                <span aria-hidden="true">·</span>
-                                <span className="font-mono tabular-nums">
-                                  {linkedWritten} written Qs
-                                </span>
-                              </>
-                            )}
-                            {savedProgress ? (
-                              <>
-                                <span aria-hidden="true">·</span>
-                                <span className="font-mono tabular-nums text-blue-700 dark:text-blue-400">
-                                  Page {savedProgress.lastPage}/{savedProgress.totalPages} ({completionPct}%)
-                                </span>
-                              </>
-                            ) : null}
+                        <div className="flex items-start gap-4">
+                          <BookCoverVector
+                            title={item.title}
+                            codeOrEdition={item.codeOrEdition}
+                            themeColor={
+                              item.id.includes('13th') || item.id.includes('constitution')
+                                ? 'crimson'
+                                : item.id.includes('12th') || item.id.includes('geography')
+                                  ? 'navy'
+                                  : item.id.includes('11th') || item.id.includes('local-government')
+                                    ? 'emerald'
+                                    : 'amber'
+                            }
+                            aspectRatio="compact"
+                            className="hidden xs:flex sm:flex"
+                          />
+                          <div className="min-w-0 flex-1">
+                            {/* Unboxed metadata row */}
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                              <span>{item.authority}</span>
+                              <span aria-hidden="true">·</span>
+                              <span>{item.codeOrEdition}</span>
+                              <span aria-hidden="true">·</span>
+                              <span className="font-mono tabular-nums">
+                                {item.pages} pages
+                              </span>
+                              {linkedQuestions > 0 && (
+                                <>
+                                  <span aria-hidden="true">·</span>
+                                  <span className="font-mono tabular-nums">
+                                    {linkedQuestions} quiz Qs
+                                  </span>
+                                </>
+                              )}
+                              {linkedWritten > 0 && (
+                                <>
+                                  <span aria-hidden="true">·</span>
+                                  <span className="font-mono tabular-nums">
+                                    {linkedWritten} written Qs
+                                  </span>
+                                </>
+                              )}
+                              {savedProgress ? (
+                                <>
+                                  <span aria-hidden="true">·</span>
+                                  <span className="font-mono tabular-nums text-blue-700 dark:text-blue-400">
+                                    Page {savedProgress.lastPage}/{savedProgress.totalPages} ({completionPct}%)
+                                  </span>
+                                </>
+                              ) : null}
+                            </div>
+
+                            {/* Display Name */}
+                            <h2 className="mt-2.5 font-serif text-fluid-h3 font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
+                              {item.title}
+                            </h2>
+
+                            {/* Document Details */}
+                            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                              {item.description}
+                            </p>
                           </div>
-
-                          {/* Display Name */}
-                          <h2 className="mt-2.5 font-serif text-fluid-h3 font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">
-                            {item.title}
-                          </h2>
-
-                          {/* Document Details */}
-                          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                            {item.description}
-                          </p>
                         </div>
 
                         <div className="mt-5 space-y-3.5">
@@ -559,7 +615,15 @@ export function BrowseMaterials() {
                                     onKeyDown={(e) => e.stopPropagation()}
                                     className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-blue-700 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded px-1"
                                   >
-                                    <span>psc.gov.np</span>
+                                    <span>
+                                      {item.externalSourceUrl.includes('doib.gov.np')
+                                        ? 'doib.gov.np'
+                                        : item.externalSourceUrl.includes('giwmscdnone.gov.np')
+                                          ? 'giwms.gov.np'
+                                          : item.externalSourceUrl.includes('psc.gov.np')
+                                            ? 'psc.gov.np'
+                                            : 'Official Source'}
+                                    </span>
                                     <ExternalLink className="w-3 h-3" />
                                   </a>
                                 )}

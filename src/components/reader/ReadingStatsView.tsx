@@ -177,7 +177,52 @@ export function ReadingStatsView({
                   <h3 className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-3">
                     All Documents in Library
                   </h3>
-                  <div className="overflow-x-auto">
+                  {/* Mobile Responsive View (< 640px): Document + Progress top justify-between, time + pace bottom */}
+                  <div className="sm:hidden divide-y divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800">
+                    {recentBooks.map((item) => {
+                      const stats = readingStatsMap[item.id];
+                      const secs = stats?.totalReadingSeconds ?? 0;
+                      const ppm = stats?.pagesPerMinute ?? 0;
+                      const pct =
+                        item.totalPages > 0
+                          ? Math.min(
+                              100,
+                              Math.round((item.lastPage / item.totalPages) * 100)
+                            )
+                          : 0;
+                      const isCurrent = item.id === bookId;
+
+                      return (
+                        <div
+                          key={`mob-${item.id}`}
+                          className={`py-3 px-2 space-y-1.5 transition-colors ${
+                            isCurrent
+                              ? 'bg-zinc-100/80 dark:bg-zinc-800/50 font-medium'
+                              : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/30'
+                          }`}
+                        >
+                          {/* Top: Document Title + Progress in justify-between */}
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate pr-2">
+                              {item.title}
+                            </span>
+                            <span className="font-mono tabular-nums text-xs text-zinc-700 dark:text-zinc-300 shrink-0 font-medium">
+                              {item.lastPage}/{item.totalPages} ({pct}%)
+                            </span>
+                          </div>
+
+                          {/* Bottom: Time Spent and Reading Pace */}
+                          <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 font-mono tabular-nums pt-1 border-t border-zinc-100 dark:border-zinc-800/60">
+                            <span>Time: {formatCompactDuration(secs)}</span>
+                            <span>Speed: {ppm.toFixed(1)} p/min</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Desktop / Tablet View (>= 640px): Full Table */}
+                  <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-zinc-200 dark:border-zinc-800 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
