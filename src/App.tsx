@@ -18,6 +18,7 @@ import { ScrollToTopButton } from './components/layout/ScrollToTopButton';
 import { SeoManager } from './components/seo/SeoManager';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
+import { DashboardPage } from './pages/DashboardPage';
 import { FeaturesPage } from './pages/FeaturesPage';
 import { HomePage } from './pages/HomePage';
 import { LibraryPage } from './pages/LibraryPage';
@@ -108,6 +109,8 @@ export default function App() {
       <LayoutGroup>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
           <Route path="/syllabus" element={<SyllabusPage />} />
           <Route path="/syllabus/:cadreId" element={<SyllabusPage />} />
           <Route path="/simulate" element={<SimulationPage />} />

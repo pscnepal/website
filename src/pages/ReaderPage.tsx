@@ -488,6 +488,7 @@ export function ReaderPage() {
     >
       <ReaderToolbar
         bookTitle={displayTitle}
+        materialId={resolvedSource.book?.id}
         backTo={backTo}
         backLabel={backLabel}
         currentPage={currentPage}

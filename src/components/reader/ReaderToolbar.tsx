@@ -29,12 +29,14 @@ import { formatCompactDuration } from '../../utils/pdfHelpers';
 import { Button } from '../ui/Button';
 import { Dropdown } from '../ui/Dropdown';
 import { Tooltip } from '../ui/Tooltip';
+import { ReactionButtons } from '../common/ReactionButtons';
 import { FullscreenButton } from './FullscreenButton';
 import { PageNavigation } from './PageNavigation';
 import { ZoomControls } from './ZoomControls';
 
 interface ReaderToolbarProps {
   bookTitle: string;
+  materialId?: string;
   backTo?: string;
   backLabel?: string;
   currentPage: number;
@@ -71,6 +73,7 @@ interface ReaderToolbarProps {
 
 export function ReaderToolbar({
   bookTitle,
+  materialId,
   backTo = '/',
   backLabel = 'Return to Home',
   currentPage,
@@ -235,6 +238,16 @@ export function ReaderToolbar({
           />
           <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-800 mx-1.5" />
         </div>
+
+        {materialId && (
+          <div className="hidden sm:flex items-center mr-1">
+            <ReactionButtons
+              itemId={materialId}
+              itemType="material"
+              size="sm"
+            />
+          </div>
+        )}
 
         <Tooltip content="Reading Stats" shortcut="I">
           <button
@@ -517,6 +530,13 @@ export function ReaderToolbar({
                     {formatCompactDuration(totalReadingSeconds)}
                   </span>
                 </button>
+
+                {materialId && (
+                  <div className="sm:hidden px-2.5 py-2 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800">
+                    <span className="text-zinc-500 dark:text-zinc-400">Rate this book</span>
+                    <ReactionButtons itemId={materialId} itemType="material" size="sm" />
+                  </div>
+                )}
 
                 <button
                   type="button"

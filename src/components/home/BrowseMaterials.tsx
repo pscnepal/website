@@ -23,6 +23,7 @@ import {
 } from '../../data/readingMaterials';
 import { WRITTEN_QUESTIONS } from '../../data/writtenQuestionsData';
 import { createBookIdFromUrl, resolveSampleUrl } from '../../utils/urlHelpers';
+import { ReactionButtons } from '../common/ReactionButtons';
 import { BookCoverVector } from '../vectors/BookCoverVector';
 
 export function BrowseMaterials() {
@@ -674,6 +675,12 @@ export function BrowseMaterials() {
                           {/* Read + Practice Quiz & Written Q&A Actions Footer */}
                           <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-2.5">
                             <div className="flex flex-wrap items-center gap-2">
+                              <ReactionButtons
+                                itemId={item.id}
+                                itemType="material"
+                                size="sm"
+                              />
+
                               {linkedQuestions > 0 && (
                                 <button
                                   type="button"

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 
 const DESKTOP_NAV_ITEMS = [
+  { to: '/dashboard', label: 'Dashboard', end: false },
   { to: '/syllabus', label: 'Syllabus', end: false },
   { to: '/materials', label: 'Materials', end: false },
   { to: '/quiz', label: 'Quiz', end: false },
@@ -12,6 +13,7 @@ const DESKTOP_NAV_ITEMS = [
 ];
 
 const MOBILE_NAV_ITEMS = [
+  { to: '/dashboard', label: 'Dashboard & Banks', end: false },
   { to: '/syllabus', label: 'PSC Syllabus', end: false },
   { to: '/materials', label: 'Study Materials', end: false },
   { to: '/quiz', label: 'Objective Quiz', end: false },

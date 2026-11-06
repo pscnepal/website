@@ -19,6 +19,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { formatReverseClock } from '../quiz/QuizSessionDialog';
+import { ReactionButtons } from '../common/ReactionButtons';
 import {
   isQuestionCorrect,
   QUIZ_OPTION_KEYS,
@@ -1169,32 +1170,39 @@ function OmrHallDialogInner({
 
                       return (
                         <article key={q.id} className="py-5 space-y-2">
-                          <div className="flex flex-wrap items-center gap-2 text-xs font-mono tabular-nums">
-                            <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                              Q.{String(idx + 1).padStart(2, '0')}
-                            </span>
-                            <span aria-hidden="true">·</span>
-                            {isBlank ? (
-                              <span className="text-zinc-500">
-                                Blank (0.00M)
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2 text-xs font-mono tabular-nums">
+                              <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+                                Q.{String(idx + 1).padStart(2, '0')}
                               </span>
-                            ) : isRight ? (
-                              <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
-                                Correct (+{preset.marksPerQuestion.toFixed(2)}M)
+                              <span aria-hidden="true">·</span>
+                              {isBlank ? (
+                                <span className="text-zinc-500">
+                                  Blank (0.00M)
+                                </span>
+                              ) : isRight ? (
+                                <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
+                                  Correct (+{preset.marksPerQuestion.toFixed(2)}M)
+                                </span>
+                              ) : (
+                                <span className="text-red-600 dark:text-red-400 font-semibold">
+                                  Wrong (-
+                                  {(
+                                    preset.marksPerQuestion * preset.negativeRate
+                                  ).toFixed(2)}
+                                  M)
+                                </span>
+                              )}
+                              <span aria-hidden="true">·</span>
+                              <span className="font-sans text-zinc-500 dark:text-zinc-400">
+                                {q.subject} / {q.topic}
                               </span>
-                            ) : (
-                              <span className="text-red-600 dark:text-red-400 font-semibold">
-                                Wrong (-
-                                {(
-                                  preset.marksPerQuestion * preset.negativeRate
-                                ).toFixed(2)}
-                                M)
-                              </span>
-                            )}
-                            <span aria-hidden="true">·</span>
-                            <span className="font-sans text-zinc-500 dark:text-zinc-400">
-                              {q.subject} / {q.topic}
-                            </span>
+                            </div>
+                            <ReactionButtons
+                              itemId={q.id}
+                              itemType="question"
+                              size="xs"
+                            />
                           </div>
 
                           <p className="font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50">
@@ -1345,23 +1353,31 @@ function OmrHallDialogInner({
                             </span>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={() => handleToggleFlag(activeQuestion.id)}
-                            aria-pressed={Boolean(flagged[activeQuestion.id])}
-                            className={`min-h-8 inline-flex items-center gap-1.5 px-2.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
-                              flagged[activeQuestion.id]
-                                ? 'text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40'
-                                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                            }`}
-                          >
-                            <Flag className="w-3.5 h-3.5" />
-                            <span>
-                              {flagged[activeQuestion.id]
-                                ? 'Flagged'
-                                : 'Flag review'}
-                            </span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <ReactionButtons
+                              itemId={activeQuestion.id}
+                              itemType="question"
+                              size="xs"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => handleToggleFlag(activeQuestion.id)}
+                              aria-pressed={Boolean(flagged[activeQuestion.id])}
+                              className={`min-h-8 inline-flex items-center gap-1.5 px-2.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+                                flagged[activeQuestion.id]
+                                  ? 'text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40'
+                                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                              }`}
+                            >
+                              <Flag className="w-3.5 h-3.5" />
+                              <span>
+                                {flagged[activeQuestion.id]
+                                  ? 'Flagged'
+                                  : 'Flag review'}
+                              </span>
+                            </button>
+                          </div>
                         </div>
 
                         <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -2149,12 +2165,19 @@ function WrittenHallDialogInner({
 
               {/* Official Prompt */}
               <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-                  <span>{activeQuestion.id}</span>
-                  <span aria-hidden="true">·</span>
-                  <span className="font-sans">{activeQuestion.paper}</span>
-                  <span aria-hidden="true">·</span>
-                  <span>Marks: {activeQuestion.en.marksAllocation}</span>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span>{activeQuestion.id}</span>
+                    <span aria-hidden="true">·</span>
+                    <span className="font-sans">{activeQuestion.paper}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>Marks: {activeQuestion.en.marksAllocation}</span>
+                  </div>
+                  <ReactionButtons
+                    itemId={activeQuestion.id}
+                    itemType="question"
+                    size="xs"
+                  />
                 </div>
 
                 {lang === 'bilingual' ? (
@@ -2247,14 +2270,21 @@ function WrittenHallDialogInner({
                     key={q.id}
                     className={`${idx === 0 ? 'pb-8' : 'py-8'} space-y-6`}
                   >
-                    <div>
-                      <p className="text-xs font-mono tabular-nums text-zinc-500 dark:text-zinc-400">
-                        Question {idx + 1} · {q.marks} Marks ·{' '}
-                        {q.en.marksAllocation}
-                      </p>
-                      <h4 className="mt-1 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50">
-                        {q.en.title} / <span lang="ne">{q.ne.title}</span>
-                      </h4>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-mono tabular-nums text-zinc-500 dark:text-zinc-400">
+                          Question {idx + 1} · {q.marks} Marks ·{' '}
+                          {q.en.marksAllocation}
+                        </p>
+                        <h4 className="mt-1 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50">
+                          {q.en.title} / <span lang="ne">{q.ne.title}</span>
+                        </h4>
+                      </div>
+                      <ReactionButtons
+                        itemId={q.id}
+                        itemType="question"
+                        size="sm"
+                      />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

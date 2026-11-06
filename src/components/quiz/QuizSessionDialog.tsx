@@ -42,6 +42,7 @@ import {
   type QuizPlayMode,
 } from '../../features/quiz/quizSlice';
 import { resolveSampleUrl } from '../../utils/urlHelpers';
+import { ReactionButtons } from '../common/ReactionButtons';
 
 type ReviewFilter = 'all' | 'incorrect' | 'unanswered' | 'correct' | 'flagged';
 
@@ -1332,16 +1333,23 @@ function QuizDialogInner({
                               )}
                             </div>
 
-                            {isCorrect ? (
-                              <span className="inline-flex items-center gap-1.5 font-mono tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Correct (+{q.marks.toFixed(2)})</span>
-                              </span>
-                            ) : isUnanswered ? (
-                              <span className="inline-flex items-center gap-1.5 font-mono tabular-nums font-medium text-zinc-500 dark:text-zinc-400">
-                                <Clock className="w-3.5 h-3.5" />
-                                <span>Skipped (0.00)</span>
-                              </span>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <ReactionButtons
+                                itemId={q.id}
+                                itemType="question"
+                                size="xs"
+                              />
+
+                              {isCorrect ? (
+                                <span className="inline-flex items-center gap-1.5 font-mono tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Correct (+{q.marks.toFixed(2)})</span>
+                                </span>
+                              ) : isUnanswered ? (
+                                <span className="inline-flex items-center gap-1.5 font-mono tabular-nums font-medium text-zinc-500 dark:text-zinc-400">
+                                  <Clock className="w-3.5 h-3.5" />
+                                  <span>Skipped (0.00)</span>
+                                </span>
                             ) : (
                               <span className="inline-flex items-center gap-1.5 font-mono tabular-nums font-medium text-red-600 dark:text-red-400">
                                 <XCircle className="w-3.5 h-3.5" />
@@ -1349,6 +1357,7 @@ function QuizDialogInner({
                               </span>
                             )}
                           </div>
+                        </div>
 
                           <h5 className="font-serif text-fluid-h3 font-semibold text-zinc-900 dark:text-zinc-100">
                             {q.question}
@@ -1502,21 +1511,29 @@ function QuizDialogInner({
                             </span>
                           </div>
 
-                          <button
-                            type="button"
-                            onClick={toggleFlagCurrent}
-                            aria-pressed={isCurrentFlagged}
-                            className={`inline-flex items-center gap-1.5 py-1 px-2 -mr-2 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                              isCurrentFlagged
-                                ? 'text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/40'
-                                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/70'
-                            }`}
-                          >
-                            <Flag className="w-3.5 h-3.5" />
-                            <span>
-                              {isCurrentFlagged ? 'Flagged' : 'Flag for review'}
-                            </span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <ReactionButtons
+                              itemId={currentQuestion.id}
+                              itemType="question"
+                              size="xs"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={toggleFlagCurrent}
+                              aria-pressed={isCurrentFlagged}
+                              className={`inline-flex items-center gap-1.5 py-1 px-2 -mr-2 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                                isCurrentFlagged
+                                  ? 'text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/40'
+                                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/70'
+                              }`}
+                            >
+                              <Flag className="w-3.5 h-3.5" />
+                              <span>
+                                {isCurrentFlagged ? 'Flagged' : 'Flag for review'}
+                              </span>
+                            </button>
+                          </div>
                         </div>
 
                         {/* Subject / Topic / Subtopic Taxonomy Breadcrumb */}

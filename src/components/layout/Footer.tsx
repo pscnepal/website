@@ -59,6 +59,12 @@ export function Footer() {
               className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs"
             >
               <Link
+                to="/dashboard"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
+              >
+                Dashboard &amp; Banks
+              </Link>
+              <Link
                 to="/syllabus"
                 className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
               >
@@ -142,12 +148,6 @@ export function Footer() {
               >
                 Terms of Service
               </Link>
-              <a
-                href="mailto:info.pscnepal@gmail.com"
-                className="text-zinc-500 dark:text-zinc-400 hover:text-blue-700 dark:hover:text-blue-400 transition-colors whitespace-nowrap text-[11px] font-mono pt-1"
-              >
-                info.pscnepal@gmail.com
-              </a>
             </nav>
           </div>
         </div>

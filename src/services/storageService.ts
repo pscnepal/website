@@ -17,6 +17,7 @@ const KEYS = {
   WRITTEN_STATE: 'psc_nepal_written_state_v1',
   PSC_PREP_STATE: 'psc_nepal_prep_v1',
   CONTACT_INQUIRIES: 'psc_nepal_contact_inquiries_v1',
+  REACTIONS: 'psc_nepal_reactions_v1',
 } as const;
 
 const LEGACY_KEY_FALLBACKS: Record<string, string> = {
@@ -28,6 +29,7 @@ const LEGACY_KEY_FALLBACKS: Record<string, string> = {
   [KEYS.WRITTEN_STATE]: 'page' + 'flow_written_state_v1',
   [KEYS.PSC_PREP_STATE]: 'page' + 'flow_psc_prep_v1',
   [KEYS.CONTACT_INQUIRIES]: 'page' + 'flow_contact_inquiries_v1',
+  [KEYS.REACTIONS]: 'psc_nepal_reactions_v1',
 };
 
 export type InquiryCategory =
@@ -256,5 +258,22 @@ export const storageService = {
     } catch {
       // Ignore private-mode storage errors
     }
+  },
+
+  loadReactions(): { userReactions: Record<string, 'like' | 'dislike'> } {
+    const saved = safeReadJson<{ userReactions?: Record<string, 'like' | 'dislike'> }>(
+      KEYS.REACTIONS,
+      { userReactions: {} }
+    );
+    return {
+      userReactions:
+        saved && typeof saved.userReactions === 'object' && saved.userReactions !== null
+          ? saved.userReactions
+          : {},
+    };
+  },
+
+  saveReactions(reactions: { userReactions: Record<string, 'like' | 'dislike'> }): void {
+    safeWriteJson(KEYS.REACTIONS, reactions);
   },
 };

@@ -5,6 +5,7 @@ import {
   BookOpen,
   Clock,
   FileText,
+  LayoutDashboard,
   Moon,
   PenLine,
   Play,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { ActionButton } from '../components/common/ActionButton';
 import { PdfUpload } from '../components/home/PdfUpload';
 import { PdfUrlInput } from '../components/home/PdfUrlInput';
 import { Footer } from '../components/layout/Footer';
@@ -285,6 +287,14 @@ export function HomePage() {
                 >
                   <span>Explore {activeCadre.shortTitle} Syllabus</span>
                   <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  to="/dashboard"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span>Dashboard &amp; Banks</span>
                 </Link>
               </div>
             </div>
@@ -732,13 +742,17 @@ export function HomePage() {
                           </span>
                         </div>
                         <div>
-                          <Link
+                          <ActionButton
                             to={actionHref}
-                            className="inline-flex items-center justify-center gap-1.5 w-full h-9 px-3.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-xs font-semibold text-blue-700 dark:text-blue-300 transition-colors shadow-2xs"
-                          >
-                            <span>{actionLabel}</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </Link>
+                            title={`${actionLabel} for ${paper.title}`}
+                            label={actionLabel}
+                            color="blue"
+                            variant="subtle"
+                            size="md"
+                            icon={ArrowRight}
+                            iconPosition="right"
+                            className="w-full justify-between"
+                          />
                         </div>
                       </div>
                     </div>
@@ -813,13 +827,16 @@ export function HomePage() {
                             {paper.durationLabel}
                           </td>
                           <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                            <Link
+                            <ActionButton
                               to={actionHref}
-                              className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline"
-                            >
-                              <span>{actionLabel}</span>
-                              <ArrowRight className="w-3 h-3" />
-                            </Link>
+                              title={`${actionLabel} for ${paper.title}`}
+                              label={actionLabel}
+                              color="blue"
+                              variant="outline"
+                              size="xs"
+                              icon={ArrowRight}
+                              iconPosition="right"
+                            />
                           </td>
                         </tr>
                       );

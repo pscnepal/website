@@ -33,6 +33,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
 import { AssessmentFormatNav } from '../components/quiz/AssessmentFormatNav';
 import { formatReverseClock } from '../components/quiz/QuizSessionDialog';
+import { ReactionButtons } from '../components/common/ReactionButtons';
 import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
 import {
   getWrittenQuestionById,
@@ -585,20 +586,29 @@ export function WrittenQuestionsPage() {
                   <span>{activeQuestion.recommendedMinutes}m exam target</span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleOpenSourcePdf(
-                      activeQuestion,
-                      `/written/${activeQuestion.id}`
-                    )
-                  }
-                  className="inline-flex items-center gap-1.5 font-sans font-medium text-blue-700 dark:text-blue-400 hover:underline underline-offset-4 cursor-pointer whitespace-nowrap shrink-0"
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  <span>Read Source PDF: {activeQuestion.sourceTitle}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <ReactionButtons
+                    itemId={activeQuestion.id}
+                    itemType="question"
+                    size="sm"
+                    showLabels
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleOpenSourcePdf(
+                        activeQuestion,
+                        `/written/${activeQuestion.id}`
+                      )
+                    }
+                    className="inline-flex items-center gap-1.5 font-sans font-medium text-blue-700 dark:text-blue-400 hover:underline underline-offset-4 cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Read Source PDF: {activeQuestion.sourceTitle}</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
 
               <h1 className="font-serif text-fluid-h1 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
@@ -1436,7 +1446,13 @@ export function WrittenQuestionsPage() {
                         </button>
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs">
+                      <div className="flex flex-wrap items-center gap-3 text-xs">
+                        <ReactionButtons
+                          itemId={q.id}
+                          itemType="question"
+                          size="sm"
+                        />
+
                         <button
                           type="button"
                           onClick={() => handleOpenSourcePdf(q, '/written')}

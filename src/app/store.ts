@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import libraryReducer from '../features/library/librarySlice';
 import pscReducer from '../features/psc/pscSlice';
 import quizReducer from '../features/quiz/quizSlice';
+import reactionsReducer from '../features/reactions/reactionsSlice';
 import readerReducer from '../features/reader/readerSlice';
 import settingsReducer from '../features/settings/settingsSlice';
 import writtenReducer from '../features/written/writtenSlice';
@@ -15,6 +16,7 @@ export const store = configureStore({
     quiz: quizReducer,
     written: writtenReducer,
     psc: pscReducer,
+    reactions: reactionsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
@@ -29,6 +31,7 @@ let prevStats = store.getState().library.readingStats;
 let prevQuiz = store.getState().quiz;
 let prevWritten = store.getState().written;
 let prevPsc = store.getState().psc;
+let prevReactions = store.getState().reactions;
 
 store.subscribe(() => {
   const state = store.getState();
@@ -66,6 +69,11 @@ store.subscribe(() => {
   if (state.psc !== prevPsc) {
     prevPsc = state.psc;
     storageService.savePscPrepState(state.psc);
+  }
+
+  if (state.reactions !== prevReactions) {
+    prevReactions = state.reactions;
+    storageService.saveReactions(state.reactions);
   }
 });
 
