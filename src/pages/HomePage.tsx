@@ -5,6 +5,7 @@ import {
   BookOpen,
   Clock,
   FileText,
+  Flame,
   LayoutDashboard,
   Moon,
   PenLine,
@@ -290,6 +291,14 @@ export function HomePage() {
                 </Link>
 
                 <Link
+                  to="/current-affairs"
+                  className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-amber-300 dark:border-amber-800/80 bg-amber-50/70 dark:bg-amber-950/40 text-sm font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-900/50 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  <Flame className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span>समसामयिक (Affairs)</span>
+                </Link>
+
+                <Link
                   to="/dashboard"
                   className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                 >
@@ -504,7 +513,7 @@ export function HomePage() {
         <section className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800/80 space-y-6">
           <div className="max-w-2xl">
             <h2 className="font-serif text-fluid-h2 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-              Six Integrated Preparation Pillars
+              Seven Integrated Preparation Pillars
             </h2>
             <p className="mt-1 text-fluid-body text-zinc-600 dark:text-zinc-400">
               Every syllabus unit links directly to its reference statute PDF,
@@ -653,6 +662,40 @@ export function HomePage() {
                   Audit syllabus unit completion, weak MCQ recovery sets,
                   written rubric progress, and cumulative study hours.
                 </p>
+              </div>
+            </Link>
+
+            <Link
+              to="/current-affairs"
+              className="group rounded-xl border border-amber-300 dark:border-amber-900/60 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-amber-500 dark:hover:border-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 sm:col-span-2 lg:col-span-3"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
+                    <span className="font-semibold text-amber-600 dark:text-amber-400">
+                      07
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span className="text-amber-700 dark:text-amber-300 font-medium">
+                      समसामयिक (Current Affairs)
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span>16th Plan, Budget 2081/82, Fast Track, COP29</span>
+                  </div>
+                  <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center gap-2">
+                    <span>समसामयिक विषयवस्तु तथा घटनाक्रम (2081/82 Feed)</span>
+                    <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
+                  </h3>
+                  <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400 max-w-3xl">
+                    High-yield national and international affairs, periodic plan targets, budget outlays, and demographic indicators curated for Paper I GK and Papers II–IV written analytical bullets. Includes monthly printable digests.
+                  </p>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <span>Explore Feed</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </span>
+                </div>
               </div>
             </Link>
           </div>

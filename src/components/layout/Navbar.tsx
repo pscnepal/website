@@ -6,18 +6,22 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 const DESKTOP_NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', end: false },
   { to: '/syllabus', label: 'Syllabus', end: false },
+  { to: '/calendar', label: 'Calendar', end: false },
+  { to: '/current-affairs', label: 'Affairs', end: false },
   { to: '/materials', label: 'Materials', end: false },
   { to: '/quiz', label: 'Quiz', end: false },
   { to: '/written', label: 'Written', end: false },
-  { to: '/progress', label: 'Progress', end: false },
 ];
 
 const MOBILE_NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard & Banks', end: false },
+  { to: '/calendar', label: 'PSC Calendar & Notices (कार्यतालिका)', end: false },
+  { to: '/current-affairs', label: 'Current Affairs (समसामयिक)', end: false },
   { to: '/syllabus', label: 'PSC Syllabus', end: false },
   { to: '/materials', label: 'Study Materials', end: false },
   { to: '/quiz', label: 'Objective Quiz', end: false },
   { to: '/written', label: 'Written Q&A (EN/ने)', end: false },
+  { to: '/pyq', label: 'Past Questions & PYQ (विगतका प्रश्न)', end: false },
   { to: '/progress', label: 'Study Progress', end: false },
   { to: '/library', label: 'Personal Library', end: false },
   { to: '/read', label: 'PDF Flipbook Reader', end: false },

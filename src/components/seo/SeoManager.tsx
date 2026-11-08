@@ -7,6 +7,7 @@ import {
 } from '../../data/pscSyllabusData';
 import { ALL_QUIZ_QUESTIONS, QUIZ_DECKS } from '../../data/quizData';
 import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
+import { CURRENT_AFFAIRS_ITEMS } from '../../data/currentAffairsData';
 import {
   getWrittenQuestionById,
   WRITTEN_QUESTIONS,
@@ -165,7 +166,114 @@ function resolveRouteSeo(
     };
   }
 
-  // 2. Syllabus Hub (/syllabus & /syllabus/:cadreId)
+  // 2. Command Dashboard (/dashboard & /dashboard?tab=...)
+  if (normalizedPath === '/dashboard') {
+    const rawTab = searchParams.get('tab');
+    const validTabs = [
+      'overview',
+      'quiz-bank',
+      'written-bank',
+      'users',
+      'materials',
+      'data',
+    ];
+    const activeTab =
+      rawTab && validTabs.includes(rawTab) ? rawTab : 'overview';
+
+    let title: string;
+    let description: string;
+    let breadcrumbName: string;
+
+    switch (activeTab) {
+      case 'quiz-bank':
+        title = `Lok Sewa MCQ Question Bank | ${BRAND_NAME}`;
+        description = clampText(
+          `Browse, filter, and search ${ALL_QUIZ_QUESTIONS.length}+ verified Nepal Lok Sewa Paper I MCQs across General Knowledge, IQ, and Public Administration with answers.`,
+          158
+        );
+        breadcrumbName = 'MCQ Question Bank';
+        break;
+      case 'written-bank':
+        title = `Lok Sewa Written Question Bank | ${BRAND_NAME}`;
+        description = clampText(
+          `Explore ${WRITTEN_QUESTIONS.length}+ subjective written exam questions for Nepal Lok Sewa Papers II–IV with bilingual model answers, rubrics, and marking schemes.`,
+          158
+        );
+        breadcrumbName = 'Written Question Bank';
+        break;
+      case 'users':
+        title = `Aspirants Community & Study Cohort | ${BRAND_NAME}`;
+        description = clampText(
+          'Connect with fellow Nepal Lok Sewa aspirants across all 7 provinces preparing for Section Officer, Nayab Subba, and Kharidar public examinations.',
+          158
+        );
+        breadcrumbName = 'Aspirants Cohort';
+        break;
+      case 'materials':
+        title = `Lok Sewa Materials & Syllabus Inventory | ${BRAND_NAME}`;
+        description = clampText(
+          'Audit and manage Lok Sewa curriculum units, official PSC gazette PDFs, Nepal Parichaya documents, and bilingual preparation flipbooks.',
+          158
+        );
+        breadcrumbName = 'Materials Inventory';
+        break;
+      case 'data':
+        title = `Study Data Backup & Sync Hub | ${BRAND_NAME}`;
+        description = clampText(
+          'Export, import, and backup your Lok Sewa mock exam scores, written answer submissions, and syllabus checklist progress safely in JSON format.',
+          158
+        );
+        breadcrumbName = 'Data Backup & Sync';
+        break;
+      case 'overview':
+      default:
+        title = 'PSC Nepal Command Dashboard | Lok Sewa Prep Central';
+        description = clampText(
+          'Access your comprehensive PSC Nepal command dashboard: track syllabus coverage, question banks, aspirant cohort activity, and study backups.',
+          158
+        );
+        breadcrumbName = 'Command Dashboard';
+        break;
+    }
+
+    const canonicalPath =
+      activeTab === 'overview' ? '/dashboard' : `/dashboard?tab=${activeTab}`;
+    const crumbs = [
+      { name: 'Home', path: '/' },
+      { name: 'Dashboard', path: '/dashboard' },
+    ];
+    if (activeTab !== 'overview') {
+      crumbs.push({ name: breadcrumbName, path: canonicalPath });
+    }
+
+    return {
+      title,
+      description,
+      canonicalPath,
+      robots: 'index, follow, max-image-preview:large',
+      ogType: 'website',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          buildBreadcrumbList(origin, crumbs),
+          {
+            '@type': activeTab === 'overview' ? 'WebPage' : 'CollectionPage',
+            name: title,
+            description,
+            url: `${origin}${canonicalPath}`,
+            inLanguage: ['en', 'ne'],
+            isPartOf: {
+              '@type': 'WebSite',
+              name: BRAND_NAME,
+              url: origin,
+            },
+          },
+        ],
+      },
+    };
+  }
+
+  // 3. Syllabus Hub (/syllabus & /syllabus/:cadreId)
   if (
     normalizedPath === '/syllabus' ||
     normalizedPath.startsWith('/syllabus/')
@@ -544,7 +652,160 @@ function resolveRouteSeo(
     };
   }
 
-  // 7. Study & Exam Readiness Tracker (/progress)
+  // 7. Current Affairs & Samasamayik (/current-affairs & /samasamayik)
+  if (
+    normalizedPath === '/current-affairs' ||
+    normalizedPath === '/samasamayik' ||
+    normalizedPath === '/affairs'
+  ) {
+    const title = `Lok Sewa Current Affairs (समसामयिक) 2081/82 | ${BRAND_NAME}`;
+    const description = clampText(
+      `Study ${CURRENT_AFFAIRS_ITEMS.length}+ curated Nepal Lok Sewa current affairs, 16th Plan targets, federal budget 2081/82 highlights, and monthly samasamayik compendiums.`,
+      158
+    );
+    const canonicalPath = '/current-affairs';
+
+    return {
+      title,
+      description,
+      canonicalPath,
+      robots: 'index, follow, max-image-preview:large',
+      ogType: 'website',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          buildBreadcrumbList(origin, [
+            { name: 'Home', path: '/' },
+            { name: 'Current Affairs (समसामयिक)', path: '/current-affairs' },
+          ]),
+          {
+            '@type': 'CollectionPage',
+            name: title,
+            description,
+            url: `${origin}/current-affairs`,
+            inLanguage: ['en', 'ne'],
+            hasPart: CURRENT_AFFAIRS_ITEMS.map((item) => ({
+              '@type': 'NewsArticle',
+              headline: item.titleNe,
+              alternativeHeadline: item.titleEn,
+              description: item.summaryNe,
+              url: `${origin}/current-affairs#${item.id}`,
+            })),
+          },
+        ],
+      },
+    };
+  }
+
+  // 8. Annual Vacancy Calendar & Notices (/calendar & /notices)
+  if (
+    normalizedPath === '/calendar' ||
+    normalizedPath === '/notices' ||
+    normalizedPath === '/psc-calendar' ||
+    normalizedPath === '/routine'
+  ) {
+    const rawTab = searchParams.get('tab');
+    const isNotices = normalizedPath === '/notices' || rawTab === 'notices';
+    const isGuidelines = rawTab === 'guidelines';
+
+    let title: string;
+    let description: string;
+
+    if (isNotices) {
+      title = `PSC Official Notices & Results (सूचना पाटी) | ${BRAND_NAME}`;
+      description = clampText(
+        'Read official Nepal Lok Sewa Aayog exam center allocations, vacancy advertisements, written examination results, and OMR guidelines.',
+        158
+      );
+    } else if (isGuidelines) {
+      title = `PSC OMR Exam Hall Rules & Guidelines | ${BRAND_NAME}`;
+      description = clampText(
+        'Review official Lok Sewa examination hall rules: -20% negative marking math, mandatory black ballpoint pen, admit card, and candidate checklist.',
+        158
+      );
+    } else {
+      title = `PSC Annual Vacancy Calendar (वार्षिक कार्यतालिका) | ${BRAND_NAME}`;
+      description = clampText(
+        'Inspect official Nepal Lok Sewa Aayog 2081/82 recruitment calendar: advertisement dates, application deadlines, and exam routines for all cadres.',
+        158
+      );
+    }
+
+    const canonicalPath = isNotices
+      ? '/notices'
+      : isGuidelines
+        ? '/calendar?tab=guidelines'
+        : '/calendar';
+
+    return {
+      title,
+      description,
+      canonicalPath,
+      robots: 'index, follow, max-image-preview:large',
+      ogType: 'website',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          buildBreadcrumbList(origin, [
+            { name: 'Home', path: '/' },
+            { name: 'PSC Calendar & Notices', path: '/calendar' },
+          ]),
+          {
+            '@type': 'WebPage',
+            name: title,
+            description,
+            url: `${origin}${canonicalPath}`,
+            inLanguage: ['en', 'ne'],
+          },
+        ],
+      },
+    };
+  }
+
+  // 9. Past Years Questions & Frequency Analysis (/pyq & /past-questions)
+  if (
+    normalizedPath === '/pyq' ||
+    normalizedPath === '/past-questions' ||
+    normalizedPath === '/previous-questions'
+  ) {
+    const rawTab = searchParams.get('tab');
+    const isHeatmap = rawTab === 'heatmap';
+
+    const title = isHeatmap
+      ? `Lok Sewa High-Yield Frequency Heatmap | ${BRAND_NAME}`
+      : `Lok Sewa Past Questions Archive (२०७५–२०८०) | ${BRAND_NAME}`;
+    const description = clampText(
+      'Practice authentic Nepal Lok Sewa past exam papers for Section Officer, Na.Su., and Kharidar with recurrence frequency analysis and model answer outlines.',
+      158
+    );
+    const canonicalPath = isHeatmap ? '/pyq?tab=heatmap' : '/pyq';
+
+    return {
+      title,
+      description,
+      canonicalPath,
+      robots: 'index, follow, max-image-preview:large',
+      ogType: 'website',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          buildBreadcrumbList(origin, [
+            { name: 'Home', path: '/' },
+            { name: 'Past Questions & PYQ', path: '/pyq' },
+          ]),
+          {
+            '@type': 'CollectionPage',
+            name: title,
+            description,
+            url: `${origin}${canonicalPath}`,
+            inLanguage: ['en', 'ne'],
+          },
+        ],
+      },
+    };
+  }
+
+  // 10. Study & Exam Readiness Tracker (/progress)
   if (normalizedPath === '/progress') {
     const title = `PSC Study & Exam Readiness Tracker | ${BRAND_NAME}`;
     const description =
@@ -818,9 +1079,13 @@ export function SeoManager() {
   const { pathname, search } = useLocation();
 
   useEffect(() => {
-    const seo = resolveRouteSeo(pathname, search, BASE_SITE_URL);
-    const canonicalUrl = `${BASE_SITE_URL}${seo.canonicalPath}`;
-    const ogImageUrl = `${BASE_SITE_URL}${OG_IMAGE_PATH}`;
+    const origin =
+      typeof window !== 'undefined' && window.location.origin
+        ? window.location.origin
+        : BASE_SITE_URL;
+    const seo = resolveRouteSeo(pathname, search, origin);
+    const canonicalUrl = `${origin}${seo.canonicalPath}`;
+    const ogImageUrl = `${origin}${OG_IMAGE_PATH}`;
 
     document.title = seo.title;
 

@@ -18,14 +18,17 @@ import { ScrollToTopButton } from './components/layout/ScrollToTopButton';
 import { SeoManager } from './components/seo/SeoManager';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
+import { CurrentAffairsPage } from './pages/CurrentAffairsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FeaturesPage } from './pages/FeaturesPage';
 import { HomePage } from './pages/HomePage';
 import { LibraryPage } from './pages/LibraryPage';
 import { MaterialsPage } from './pages/MaterialsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { NoticeCalendarPage } from './pages/NoticeCalendarPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { ProgressPage } from './pages/ProgressPage';
+import { PyqArchivePage } from './pages/PyqArchivePage';
 import { QuizPage } from './pages/QuizPage';
 import { ReaderPage } from './pages/ReaderPage';
 import { SimulationPage } from './pages/SimulationPage';
@@ -129,6 +132,31 @@ export default function App() {
           <Route
             path="/long-questions"
             element={<Navigate to="/written" replace />}
+          />
+          <Route path="/current-affairs" element={<CurrentAffairsPage />} />
+          <Route
+            path="/samasamayik"
+            element={<Navigate to="/current-affairs" replace />}
+          />
+          <Route
+            path="/affairs"
+            element={<Navigate to="/current-affairs" replace />}
+          />
+          <Route path="/calendar" element={<NoticeCalendarPage />} />
+          <Route path="/notices" element={<NoticeCalendarPage />} />
+          <Route path="/routine" element={<Navigate to="/calendar" replace />} />
+          <Route
+            path="/psc-calendar"
+            element={<Navigate to="/calendar" replace />}
+          />
+          <Route path="/pyq" element={<PyqArchivePage />} />
+          <Route
+            path="/past-questions"
+            element={<Navigate to="/pyq" replace />}
+          />
+          <Route
+            path="/previous-questions"
+            element={<Navigate to="/pyq" replace />}
           />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/library" element={<LibraryPage />} />

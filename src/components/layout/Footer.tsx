@@ -95,6 +95,24 @@ export function Footer() {
                 Written Q&amp;A (EN/ने)
               </Link>
               <Link
+                to="/current-affairs"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
+              >
+                समसामयिक (Affairs)
+              </Link>
+              <Link
+                to="/calendar"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
+              >
+                कार्यतालिका (Calendar)
+              </Link>
+              <Link
+                to="/pyq"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
+              >
+                विगतका प्रश्न (PYQ)
+              </Link>
+              <Link
                 to="/progress"
                 className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
               >
