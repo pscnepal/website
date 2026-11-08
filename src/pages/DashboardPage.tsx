@@ -120,95 +120,71 @@ export function DashboardPage() {
               aria-label="Dashboard views"
               className="flex items-center gap-1.5 p-1 rounded-xl bg-zinc-200/60 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 overflow-x-auto scrollbar-none"
             >
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'overview'}
+              <ActionButton
+                label="Executive Overview"
+                title="Switch to executive dashboard overview"
+                icon={LayoutDashboard}
+                color="zinc"
+                variant={activeTab === 'overview' ? 'solid' : 'ghost'}
+                size="md"
                 onClick={() => handleTabChange('overview')}
-                className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  activeTab === 'overview'
-                    ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-xs font-semibold'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span>Executive Overview</span>
-              </button>
+                className="whitespace-nowrap shrink-0"
+              />
 
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'quiz-bank'}
+              <ActionButton
+                label={`Quiz Question Bank (${ALL_QUIZ_QUESTIONS.length})`}
+                title="Browse and test 50+ objective questions"
+                icon={HelpCircle}
+                color={activeTab === 'quiz-bank' ? 'blue' : 'zinc'}
+                variant={activeTab === 'quiz-bank' ? 'solid' : 'ghost'}
+                size="md"
                 onClick={() => handleTabChange('quiz-bank')}
-                className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  activeTab === 'quiz-bank'
-                    ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-xs font-semibold'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                <span>Quiz Question Bank ({ALL_QUIZ_QUESTIONS.length})</span>
-              </button>
+                className="whitespace-nowrap shrink-0"
+              />
 
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'written-bank'}
+              <ActionButton
+                label={`Written Question Bank (${WRITTEN_QUESTIONS.length})`}
+                title="Inspect subjective questions and model solutions"
+                icon={PenLine}
+                color={activeTab === 'written-bank' ? 'crimson' : 'zinc'}
+                variant={activeTab === 'written-bank' ? 'solid' : 'ghost'}
+                size="md"
                 onClick={() => handleTabChange('written-bank')}
-                className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  activeTab === 'written-bank'
-                    ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-xs font-semibold'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                <PenLine className="w-4 h-4 text-crimson-600 dark:text-crimson-400" />
-                <span>Written Question Bank ({WRITTEN_QUESTIONS.length})</span>
-              </button>
+                className="whitespace-nowrap shrink-0"
+              />
 
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'users'}
+              <ActionButton
+                label={`Aspirants / Users (${INITIAL_CANDIDATE_USERS.length})`}
+                title="View candidate directory and peer cohort"
+                icon={Users}
+                color={activeTab === 'users' ? 'amber' : 'zinc'}
+                variant={activeTab === 'users' ? 'solid' : 'ghost'}
+                size="md"
                 onClick={() => handleTabChange('users')}
-                className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  activeTab === 'users'
-                    ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-xs font-semibold'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                <Users className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                <span>Aspirants / Users ({INITIAL_CANDIDATE_USERS.length})</span>
-              </button>
+                className="whitespace-nowrap shrink-0"
+              />
 
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'materials'}
+              <ActionButton
+                label="Materials Inventory"
+                title="Browse 13 official Nepal Parichaya editions and statutory documents"
+                icon={BookOpen}
+                color={activeTab === 'materials' ? 'emerald' : 'zinc'}
+                variant={activeTab === 'materials' ? 'solid' : 'ghost'}
+                size="md"
                 onClick={() => handleTabChange('materials')}
-                className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  activeTab === 'materials'
-                    ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-xs font-semibold'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Materials Inventory</span>
-              </button>
+                className="whitespace-nowrap shrink-0"
+              />
 
-              <button
-                type="button"
-                role="tab"
-                aria-selected={activeTab === 'data'}
+              <ActionButton
+                label="Data & Backup"
+                title="Export or reset local browser study progress"
+                icon={Database}
+                color={activeTab === 'data' ? 'purple' : 'zinc'}
+                variant={activeTab === 'data' ? 'solid' : 'ghost'}
+                size="md"
                 onClick={() => handleTabChange('data')}
-                className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  activeTab === 'data'
-                    ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-zinc-50 shadow-xs font-semibold'
-                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                <Database className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                <span>Data &amp; Backup</span>
-              </button>
+                className="whitespace-nowrap shrink-0"
+              />
             </div>
 
             {/* Active Tab Panel */}

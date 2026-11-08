@@ -8,6 +8,8 @@ import {
   Search,
   X,
 } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { recordView } from '../../features/reactions/reactionsSlice';
 import {
   READING_MATERIAL_CATEGORIES,
   type ReadingMaterialItem,
@@ -23,8 +25,11 @@ type MaterialTableRow = ReadingMaterialItem & {
 };
 
 export function MaterialsInventoryTab() {
+  const dispatch = useAppDispatch();
+  const userReactions = useAppSelector((state) => state.reactions.userReactions);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCat, setSelectedCat] = useState('all');
+  const [reactionFilter, setReactionFilter] = useState<'all' | 'liked' | 'disliked' | 'unrated'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const allItems = useMemo(() => {
@@ -42,6 +47,15 @@ export function MaterialsInventoryTab() {
       if (selectedCat !== 'all' && item.categoryId !== selectedCat) {
         return false;
       }
+      if (reactionFilter === 'liked' && userReactions[item.id] !== 'like') {
+        return false;
+      }
+      if (reactionFilter === 'disliked' && userReactions[item.id] !== 'dislike') {
+        return false;
+      }
+      if (reactionFilter === 'unrated' && userReactions[item.id]) {
+        return false;
+      }
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const matchesTitle = item.title.toLowerCase().includes(query);
@@ -52,7 +66,7 @@ export function MaterialsInventoryTab() {
       }
       return true;
     });
-  }, [allItems, selectedCat, searchQuery]);
+  }, [allItems, selectedCat, reactionFilter, userReactions, searchQuery]);
 
   const handleCopy = (fullUrl: string, id: string) => {
     navigator.clipboard.writeText(fullUrl).then(() => {
@@ -67,6 +81,8 @@ export function MaterialsInventoryTab() {
         id: 'codeOrEdition',
         header: 'Edition / Code',
         width: 'w-28',
+        sortable: true,
+        sortKey: (item) => item.codeOrEdition,
         className: 'font-mono font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap',
         render: (item) => item.codeOrEdition,
       },
@@ -74,6 +90,8 @@ export function MaterialsInventoryTab() {
         id: 'titleAndAuthority',
         header: 'Document Title & Authority',
         className: 'min-w-[260px]',
+        sortable: true,
+        sortKey: (item) => item.title,
         render: (item) => (
           <div>
             <p className="font-serif text-[13px] font-semibold text-zinc-950 dark:text-zinc-100">
@@ -90,6 +108,8 @@ export function MaterialsInventoryTab() {
         header: 'Category',
         width: 'w-40',
         hideOnMobile: true,
+        sortable: true,
+        sortKey: (item) => item.categoryName,
         render: (item) => (
           <span className="font-medium text-zinc-800 dark:text-zinc-200 block text-xs">
             {item.categoryName}
@@ -101,6 +121,8 @@ export function MaterialsInventoryTab() {
         header: 'Pages',
         width: 'w-20',
         align: 'center',
+        sortable: true,
+        sortKey: (item) => item.pages,
         render: (item) => (
           <span className="font-mono tabular-nums font-bold text-zinc-900 dark:text-zinc-100">
             {item.pages}
@@ -109,8 +131,8 @@ export function MaterialsInventoryTab() {
       },
       {
         id: 'ratings',
-        header: 'Ratings',
-        width: 'w-32',
+        header: 'Views & Ratings',
+        width: 'w-44',
         render: (item) => (
           <ReactionButtons
             itemId={item.id}
@@ -131,6 +153,7 @@ export function MaterialsInventoryTab() {
             <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
               <ActionButton
                 to={`/read?url=${encodeURIComponent(fullUrl)}`}
+                onClick={() => dispatch(recordView({ itemId: item.id }))}
                 title="Open 3D Flipbook or PDF Reader"
                 label="Read"
                 color="blue"
@@ -183,7 +206,7 @@ export function MaterialsInventoryTab() {
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
           {/* Search Box */}
-          <div className="sm:col-span-8 relative">
+          <div className="sm:col-span-6 relative">
             <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -193,19 +216,21 @@ export function MaterialsInventoryTab() {
               className="w-full h-9 pl-8 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
             {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear search"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                <ActionButton
+                  title="Clear search"
+                  icon={X}
+                  color="zinc"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSearchQuery('')}
+                />
+              </span>
             )}
           </div>
 
           {/* Category Filter */}
-          <div className="sm:col-span-4">
+          <div className="sm:col-span-3">
             <select
               value={selectedCat}
               onChange={(e) => setSelectedCat(e.target.value)}
@@ -220,6 +245,21 @@ export function MaterialsInventoryTab() {
               ))}
             </select>
           </div>
+
+          {/* Reaction / Bookmark Filter */}
+          <div className="sm:col-span-3">
+            <select
+              value={reactionFilter}
+              onChange={(e) => setReactionFilter(e.target.value as any)}
+              aria-label="Filter by material rating"
+              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer font-medium"
+            >
+              <option value="all">All Document Ratings</option>
+              <option value="liked">Liked (★ Saved)</option>
+              <option value="disliked">Disliked</option>
+              <option value="unrated">Unrated Only</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -228,6 +268,9 @@ export function MaterialsInventoryTab() {
         data={filteredItems}
         columns={columns}
         keyExtractor={(item) => item.id}
+        pagination={true}
+        defaultPageSize={15}
+        pageSizeOptions={[10, 15, 25]}
         emptyMessage="No documents match your query"
         emptyDescription="Try clearing your search query or switching to All Categories."
         emptyAction={
@@ -241,6 +284,7 @@ export function MaterialsInventoryTab() {
             onClick={() => {
               setSearchQuery('');
               setSelectedCat('all');
+              setReactionFilter('all');
             }}
           />
         }

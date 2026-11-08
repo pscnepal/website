@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  Flame,
   LayoutGrid,
   List,
   Plus,
@@ -88,7 +87,6 @@ export function UsersDirectoryTab() {
           : formCadre === 'nayab-subba'
             ? 'Nayab Subba (नायब सुब्बा)'
             : 'Kharidar (खरिदार)',
-      preparationStreakDays: 1,
       mockAverageScore: 70.0,
       mockPercentile: 90.0,
       questionsAttempted: 0,
@@ -121,6 +119,8 @@ export function UsersDirectoryTab() {
         id: 'candidate',
         header: 'Candidate & Roll Code',
         className: 'min-w-[220px]',
+        sortable: true,
+        sortKey: (cand) => cand.nameEn,
         render: (cand) => (
           <div className="flex items-center gap-2.5">
             <div
@@ -143,6 +143,8 @@ export function UsersDirectoryTab() {
         id: 'cadre',
         header: 'Target Cadre',
         width: 'w-48',
+        sortable: true,
+        sortKey: (cand) => cand.targetCadre,
         render: (cand) => (
           <span className="font-medium text-zinc-800 dark:text-zinc-200 block text-xs">
             {cand.targetCadreLabel}
@@ -154,6 +156,8 @@ export function UsersDirectoryTab() {
         header: 'District',
         width: 'w-36',
         hideOnMobile: true,
+        sortable: true,
+        sortKey: (cand) => cand.district,
         render: (cand) => (
           <span className="text-zinc-600 dark:text-zinc-400 text-xs">
             {cand.district}, {cand.province}
@@ -165,6 +169,8 @@ export function UsersDirectoryTab() {
         header: 'Mock Avg',
         width: 'w-24',
         align: 'center',
+        sortable: true,
+        sortKey: (cand) => cand.mockAverageScore,
         render: (cand) => (
           <span className="font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400">
             {cand.mockAverageScore}%
@@ -172,14 +178,15 @@ export function UsersDirectoryTab() {
         ),
       },
       {
-        id: 'streak',
-        header: 'Streak',
+        id: 'percentile',
+        header: 'Percentile',
         width: 'w-24',
         align: 'center',
+        sortable: true,
+        sortKey: (cand) => cand.mockPercentile,
         render: (cand) => (
-          <span className="font-mono tabular-nums font-bold text-amber-600 dark:text-amber-400 inline-flex items-center gap-1">
-            <Flame className="w-3 h-3 shrink-0" />
-            <span>{cand.preparationStreakDays}d</span>
+          <span className="font-mono tabular-nums font-semibold text-blue-700 dark:text-blue-400">
+            {cand.mockPercentile}th %ile
           </span>
         ),
       },
@@ -188,6 +195,8 @@ export function UsersDirectoryTab() {
         header: 'Standing',
         width: 'w-28',
         align: 'center',
+        sortable: true,
+        sortKey: (cand) => cand.status,
         render: (cand) => (
           <span
             className={`font-mono text-[10.5px] font-semibold px-2 py-0.5 rounded border inline-block ${
@@ -295,14 +304,16 @@ export function UsersDirectoryTab() {
               className="w-full h-9 pl-8 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
             {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear search"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                <ActionButton
+                  title="Clear search"
+                  icon={X}
+                  color="zinc"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSearchQuery('')}
+                />
+              </span>
             )}
           </div>
 
@@ -345,6 +356,9 @@ export function UsersDirectoryTab() {
           data={filteredCandidates}
           columns={columns}
           keyExtractor={(cand) => cand.id}
+          pagination={true}
+          defaultPageSize={10}
+          pageSizeOptions={[10, 20, 50]}
           emptyMessage="No candidates matched your search criteria"
           emptyDescription="Try clearing your search query or switching cadre filters."
           emptyAction={
@@ -457,10 +471,9 @@ export function UsersDirectoryTab() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-zinc-400 block">Streak</span>
-                    <span className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                      <Flame className="w-3 h-3 shrink-0" />
-                      <span>{cand.preparationStreakDays}d</span>
+                    <span className="text-[10px] text-zinc-400 block">Percentile</span>
+                    <span className="font-bold text-blue-700 dark:text-blue-400">
+                      {cand.mockPercentile}th %ile
                     </span>
                   </div>
                 </div>
@@ -506,14 +519,14 @@ export function UsersDirectoryTab() {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
+              <ActionButton
+                title="Close dossier"
+                icon={X}
+                color="zinc"
+                variant="ghost"
+                size="xs"
                 onClick={() => setSelectedCandidate(null)}
-                aria-label="Close dossier"
-                className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              />
             </div>
 
             <div className="space-y-4 text-xs">
@@ -554,12 +567,12 @@ export function UsersDirectoryTab() {
 
                 <div className="p-3 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                   <span className="text-[10px] text-zinc-400 block font-sans">
-                    Streak
+                    Written
                   </span>
                   <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
-                    {selectedCandidate.preparationStreakDays}d
+                    {selectedCandidate.writtenMastered}
                   </span>
-                  <span className="text-[10px] text-zinc-500 block">Active days</span>
+                  <span className="text-[10px] text-zinc-500 block">Mastered sets</span>
                 </div>
               </div>
 
@@ -609,14 +622,14 @@ export function UsersDirectoryTab() {
               <h4 id="add-candidate-title" className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50">
                 Register Candidate / Study Buddy
               </h4>
-              <button
-                type="button"
+              <ActionButton
+                title="Close form"
+                icon={X}
+                color="zinc"
+                variant="ghost"
+                size="xs"
                 onClick={() => setIsAddModalOpen(false)}
-                aria-label="Close form"
-                className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              />
             </div>
 
             <form onSubmit={handleAddCandidate} className="space-y-3.5 text-xs">

@@ -9,15 +9,20 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { recordView } from '../../features/reactions/reactionsSlice';
 import { ALL_QUIZ_QUESTIONS, type QuizOptionKey, type QuizQuestion } from '../../data/quizData';
 import { ActionButton } from '../common/ActionButton';
 import { ReactionButtons } from '../common/ReactionButtons';
 import { SharedTable, type ColumnDef } from '../common/SharedTable';
 
 export function QuizQuestionBankTab() {
+  const dispatch = useAppDispatch();
+  const userReactions = useAppSelector((state) => state.reactions.userReactions);
   const [searchQuery, setSearchQuery] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [reactionFilter, setReactionFilter] = useState<'all' | 'liked' | 'disliked' | 'unrated'>('all');
   const [selectedQuestion, setSelectedQuestion] = useState<QuizQuestion | null>(null);
   const [testSelectedOption, setTestSelectedOption] = useState<QuizOptionKey | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -40,6 +45,15 @@ export function QuizQuestionBankTab() {
       if (difficultyFilter !== 'all' && q.difficulty !== difficultyFilter) {
         return false;
       }
+      if (reactionFilter === 'liked' && userReactions[q.id] !== 'like') {
+        return false;
+      }
+      if (reactionFilter === 'disliked' && userReactions[q.id] !== 'dislike') {
+        return false;
+      }
+      if (reactionFilter === 'unrated' && userReactions[q.id]) {
+        return false;
+      }
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const matchesPrompt = q.question.toLowerCase().includes(query);
@@ -50,7 +64,7 @@ export function QuizQuestionBankTab() {
       }
       return true;
     });
-  }, [searchQuery, subjectFilter, difficultyFilter]);
+  }, [searchQuery, subjectFilter, difficultyFilter, reactionFilter, userReactions]);
 
   const handleCopyQuestion = (q: QuizQuestion) => {
     const text = `Q (${q.id}): ${q.question}\n${q.options.map((o) => `${o.key}. ${o.text}`).join('\n')}\nAnswer: ${q.correct_options.join(', ')}\nExplanation: ${q.explanation}`;
@@ -60,13 +74,15 @@ export function QuizQuestionBankTab() {
     });
   };
 
-  // Shared table columns definition
+  // Shared table columns definition with sorting
   const columns = useMemo<ColumnDef<QuizQuestion>[]>(() => {
     return [
       {
         id: 'code',
         header: 'Code',
         width: 'w-28',
+        sortable: true,
+        sortKey: (q) => q.id,
         render: (q) => (
           <span className="font-mono font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
             {q.id}
@@ -76,6 +92,8 @@ export function QuizQuestionBankTab() {
       {
         id: 'prompt',
         header: 'Question Prompt',
+        sortable: true,
+        sortKey: (q) => q.question,
         render: (q) => (
           <div className="min-w-[260px]">
             <p className="font-serif text-[13px] font-semibold text-zinc-950 dark:text-zinc-100 line-clamp-2">
@@ -93,6 +111,8 @@ export function QuizQuestionBankTab() {
         header: 'Topic',
         width: 'w-36',
         hideOnMobile: true,
+        sortable: true,
+        sortKey: (q) => q.topic,
         render: (q) => (
           <div className="text-zinc-600 dark:text-zinc-400">
             <span className="font-medium text-zinc-800 dark:text-zinc-200 block">
@@ -109,6 +129,9 @@ export function QuizQuestionBankTab() {
         header: 'Difficulty',
         width: 'w-24',
         hideOnTablet: true,
+        sortable: true,
+        sortKey: (q) =>
+          q.difficulty === 'Easy' ? 1 : q.difficulty === 'Medium' ? 2 : 3,
         render: (q) => (
           <span
             className={`font-mono text-[11px] font-semibold ${
@@ -136,8 +159,8 @@ export function QuizQuestionBankTab() {
       },
       {
         id: 'ratings',
-        header: 'Ratings',
-        width: 'w-32',
+        header: 'Views & Ratings',
+        width: 'w-44',
         render: (q) => (
           <ReactionButtons itemId={q.id} itemType="question" size="xs" />
         ),
@@ -159,6 +182,7 @@ export function QuizQuestionBankTab() {
                 variant="outline"
                 size="xs"
                 onClick={() => {
+                  dispatch(recordView({ itemId: q.id }));
                   setSelectedQuestion(q);
                   setTestSelectedOption(null);
                 }}
@@ -199,7 +223,7 @@ export function QuizQuestionBankTab() {
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
           {/* Search Box */}
-          <div className="sm:col-span-6 relative">
+          <div className="sm:col-span-5 relative">
             <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -209,14 +233,16 @@ export function QuizQuestionBankTab() {
               className="w-full h-9 pl-8 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
             {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear search"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                <ActionButton
+                  title="Clear search"
+                  icon={X}
+                  color="zinc"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSearchQuery('')}
+                />
+              </span>
             )}
           </div>
 
@@ -238,7 +264,7 @@ export function QuizQuestionBankTab() {
           </div>
 
           {/* Difficulty Filter */}
-          <div className="sm:col-span-3">
+          <div className="sm:col-span-2">
             <select
               value={difficultyFilter}
               onChange={(e) => setDifficultyFilter(e.target.value)}
@@ -247,8 +273,23 @@ export function QuizQuestionBankTab() {
             >
               <option value="all">All Difficulties</option>
               <option value="Easy">Easy (Foundation)</option>
-              <option value="Medium">Medium (Cadre Standard)</option>
+              <option value="Medium">Medium (Standard)</option>
               <option value="Hard">Hard (High Discriminator)</option>
+            </select>
+          </div>
+
+          {/* Reaction / Bookmark Filter */}
+          <div className="sm:col-span-2">
+            <select
+              value={reactionFilter}
+              onChange={(e) => setReactionFilter(e.target.value as any)}
+              aria-label="Filter by candidate rating"
+              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer font-medium"
+            >
+              <option value="all">All Ratings</option>
+              <option value="liked">Liked (★ Saved)</option>
+              <option value="disliked">Disliked</option>
+              <option value="unrated">Unrated Only</option>
             </select>
           </div>
         </div>
@@ -259,6 +300,9 @@ export function QuizQuestionBankTab() {
         data={filteredQuestions}
         columns={columns}
         keyExtractor={(q) => q.id}
+        pagination={true}
+        defaultPageSize={15}
+        pageSizeOptions={[10, 15, 25, 50]}
         emptyMessage="No objective questions match your search filters"
         emptyDescription="Try clearing your search query or selecting All Subjects."
         emptyAction={
@@ -273,6 +317,7 @@ export function QuizQuestionBankTab() {
               setSearchQuery('');
               setSubjectFilter('all');
               setDifficultyFilter('all');
+              setReactionFilter('all');
             }}
           />
         }
@@ -297,14 +342,14 @@ export function QuizQuestionBankTab() {
                 <span aria-hidden="true">·</span>
                 <span>{selectedQuestion.difficulty}</span>
               </div>
-              <button
-                type="button"
+              <ActionButton
+                title="Close modal"
+                icon={X}
+                color="zinc"
+                variant="ghost"
+                size="xs"
                 onClick={() => setSelectedQuestion(null)}
-                aria-label="Close modal"
-                className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              />
             </div>
 
             <div className="space-y-2">

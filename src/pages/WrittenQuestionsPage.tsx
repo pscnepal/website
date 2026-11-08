@@ -34,6 +34,7 @@ import { PageTransition } from '../components/layout/PageTransition';
 import { AssessmentFormatNav } from '../components/quiz/AssessmentFormatNav';
 import { formatReverseClock } from '../components/quiz/QuizSessionDialog';
 import { ReactionButtons } from '../components/common/ReactionButtons';
+import { recordView } from '../features/reactions/reactionsSlice';
 import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
 import {
   getWrittenQuestionById,
@@ -282,11 +283,12 @@ export function WrittenQuestionsPage() {
       setTimerRunning(false);
       return;
     }
+    dispatch(recordView({ itemId: activeQuestion.id }));
     setTimerRunning(false);
     setRemainingSeconds(activeQuestion.recommendedMinutes * 60);
     setShowModelAnswerInStudio(true);
     unsavedElapsedRef.current = 0;
-  }, [activeQuestion]);
+  }, [activeQuestion, dispatch]);
 
   // Countdown tick & practice time persistence for active studio
   useEffect(() => {

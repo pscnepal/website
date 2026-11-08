@@ -43,6 +43,7 @@ import {
 } from '../../features/quiz/quizSlice';
 import { resolveSampleUrl } from '../../utils/urlHelpers';
 import { ReactionButtons } from '../common/ReactionButtons';
+import { recordView } from '../../features/reactions/reactionsSlice';
 
 type ReviewFilter = 'all' | 'incorrect' | 'unanswered' | 'correct' | 'flagged';
 
@@ -312,6 +313,13 @@ function QuizDialogInner({
   }, [selectedAnswers]);
 
   const currentQuestion = deck.questions[currentIndex];
+
+  useEffect(() => {
+    if (currentQuestion?.id) {
+      dispatch(recordView({ itemId: currentQuestion.id }));
+    }
+  }, [currentQuestion?.id, dispatch]);
+
   const answeredCount = useMemo(
     () =>
       Object.values(selectedAnswers).filter((keys) => keys && keys.length > 0)

@@ -12,7 +12,6 @@ export interface CandidateUser {
   province: string;
   targetCadre: 'section-officer' | 'nayab-subba' | 'kharidar';
   targetCadreLabel: string;
-  preparationStreakDays: number;
   mockAverageScore: number;
   mockPercentile: number;
   questionsAttempted: number;
@@ -35,7 +34,6 @@ export const INITIAL_CANDIDATE_USERS: CandidateUser[] = [
     province: 'Bagmati',
     targetCadre: 'section-officer',
     targetCadreLabel: 'Section Officer (शाखा अधिकृत)',
-    preparationStreakDays: 48,
     mockAverageScore: 78.4,
     mockPercentile: 98.6,
     questionsAttempted: 420,
@@ -56,7 +54,6 @@ export const INITIAL_CANDIDATE_USERS: CandidateUser[] = [
     province: 'Gandaki',
     targetCadre: 'section-officer',
     targetCadreLabel: 'Section Officer (शाखा अधिकृत)',
-    preparationStreakDays: 35,
     mockAverageScore: 74.8,
     mockPercentile: 96.2,
     questionsAttempted: 380,
@@ -77,7 +74,6 @@ export const INITIAL_CANDIDATE_USERS: CandidateUser[] = [
     province: 'Bagmati',
     targetCadre: 'nayab-subba',
     targetCadreLabel: 'Nayab Subba (नायब सुब्बा)',
-    preparationStreakDays: 29,
     mockAverageScore: 71.5,
     mockPercentile: 92.4,
     questionsAttempted: 310,
@@ -98,7 +94,6 @@ export const INITIAL_CANDIDATE_USERS: CandidateUser[] = [
     province: 'Koshi',
     targetCadre: 'section-officer',
     targetCadreLabel: 'Section Officer (शाखा अधिकृत)',
-    preparationStreakDays: 42,
     mockAverageScore: 76.2,
     mockPercentile: 97.4,
     questionsAttempted: 460,
@@ -119,7 +114,6 @@ export const INITIAL_CANDIDATE_USERS: CandidateUser[] = [
     province: 'Bagmati',
     targetCadre: 'kharidar',
     targetCadreLabel: 'Kharidar (खरिदार)',
-    preparationStreakDays: 21,
     mockAverageScore: 68.0,
     mockPercentile: 88.5,
     questionsAttempted: 240,
@@ -140,7 +134,6 @@ export const INITIAL_CANDIDATE_USERS: CandidateUser[] = [
     province: 'Gandaki',
     targetCadre: 'section-officer',
     targetCadreLabel: 'Section Officer (शाखा अधिकृत)',
-    preparationStreakDays: 56,
     mockAverageScore: 81.0,
     mockPercentile: 99.1,
     questionsAttempted: 520,
@@ -161,7 +154,6 @@ export const INITIAL_CANDIDATE_USERS: CandidateUser[] = [
     province: 'Lumbini',
     targetCadre: 'nayab-subba',
     targetCadreLabel: 'Nayab Subba (नायब सुब्बा)',
-    preparationStreakDays: 19,
     mockAverageScore: 66.4,
     mockPercentile: 85.0,
     questionsAttempted: 195,
@@ -182,7 +174,6 @@ export const INITIAL_CANDIDATE_USERS: CandidateUser[] = [
     province: 'Sudurpashchim',
     targetCadre: 'section-officer',
     targetCadreLabel: 'Section Officer (शाखा अधिकृत)',
-    preparationStreakDays: 31,
     mockAverageScore: 73.0,
     mockPercentile: 94.1,
     questionsAttempted: 350,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Eye, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
@@ -7,12 +7,14 @@ import {
   toggleDislike,
   toggleLike,
 } from '../../features/reactions/reactionsSlice';
+import { formatCompactCount } from '../../features/reactions/reactionUtils';
 
 export interface ReactionButtonsProps {
   itemId: string;
   itemType?: 'question' | 'material';
   size?: 'xs' | 'sm' | 'md';
   showLabels?: boolean;
+  showViews?: boolean;
   className?: string;
 }
 
@@ -21,12 +23,13 @@ export function ReactionButtons({
   itemType = 'question',
   size = 'sm',
   showLabels = false,
+  showViews = true,
   className = '',
 }: ReactionButtonsProps) {
   const dispatch = useAppDispatch();
   const shouldReduceMotion = useReducedMotion();
 
-  const { likes, dislikes, userReaction } = useAppSelector((state) =>
+  const { likes, dislikes, views, userReaction } = useAppSelector((state) =>
     selectItemReactionData(state, itemId, itemType)
   );
 
@@ -63,10 +66,29 @@ export function ReactionButtons({
   return (
     <div
       role="group"
-      aria-label={`${itemType === 'material' ? 'Study material' : 'Question'} community ratings and feedback`}
+      aria-label={`${itemType === 'material' ? 'Study material' : 'Question'} community views and ratings`}
       className={`inline-flex items-center gap-1 shrink-0 ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
+      {/* Views Counter Badge */}
+      {showViews && (
+        <span
+          aria-label={`${views.toLocaleString()} total views`}
+          title={`${views.toLocaleString()} total views`}
+          className={`inline-flex items-center gap-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 select-none font-medium ${paddingClass} ${textSizeClass}`}
+        >
+          <Eye className={`${iconSizeClass} text-zinc-400 dark:text-zinc-500`} />
+          <span className="font-mono tabular-nums leading-none">
+            {formatCompactCount(views)}
+          </span>
+          {showLabels && (
+            <span className="hidden sm:inline font-sans font-normal text-zinc-400">
+              Views
+            </span>
+          )}
+        </span>
+      )}
+
       {/* Like Button */}
       <motion.button
         type="button"

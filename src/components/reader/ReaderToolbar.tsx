@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   ArrowLeft,
   BarChart3,
@@ -19,6 +20,8 @@ import {
   VolumeX,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAppDispatch } from '../../app/hooks';
+import { recordView } from '../../features/reactions/reactionsSlice';
 import type {
   FitMode,
   ReadingMode,
@@ -107,6 +110,14 @@ export function ReaderToolbar({
   onToggleStats,
   onDownload,
 }: ReaderToolbarProps) {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (materialId) {
+      dispatch(recordView({ itemId: materialId }));
+    }
+  }, [materialId, dispatch]);
+
   return (
     <header className="h-14 w-full shrink-0 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-sm px-2 sm:px-4 flex items-center justify-between gap-1.5 sm:gap-2 z-30">
       {/* Left: Return link, sidebar toggle, document title */}

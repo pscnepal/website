@@ -15,6 +15,7 @@ export function DataBackupTab() {
   const writtenRecords = useAppSelector((state) => state.written.records);
   const simulationRuns = useAppSelector((state) => state.psc.simulationHistory);
   const userReactions = useAppSelector((state) => state.reactions.userReactions);
+  const itemViews = useAppSelector((state) => state.reactions.itemViews);
   const recentBooks = useAppSelector((state) => state.library.recentBooks);
 
   const [confirmReset, setConfirmReset] = useState(false);
@@ -29,6 +30,7 @@ export function DataBackupTab() {
       writtenRecords,
       simulationRuns,
       userReactions,
+      itemViews,
       recentBooks,
     };
 
@@ -90,10 +92,15 @@ export function DataBackupTab() {
           </div>
 
           <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800">
-            <span className="text-zinc-500 font-sans block">Liked / Disliked Items</span>
-            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-400">
-              {Object.keys(userReactions).length}
-            </span>
+            <span className="text-zinc-500 font-sans block">Views &amp; Reactions</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-bold text-emerald-700 dark:text-emerald-400">
+                {Object.keys(userReactions).length}
+              </span>
+              <span className="text-[11px] text-zinc-400 font-mono">
+                rated · {Object.keys(itemViews).length} viewed
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -260,20 +260,30 @@ export const storageService = {
     }
   },
 
-  loadReactions(): { userReactions: Record<string, 'like' | 'dislike'> } {
-    const saved = safeReadJson<{ userReactions?: Record<string, 'like' | 'dislike'> }>(
-      KEYS.REACTIONS,
-      { userReactions: {} }
-    );
+  loadReactions(): {
+    userReactions: Record<string, 'like' | 'dislike'>;
+    itemViews: Record<string, number>;
+  } {
+    const saved = safeReadJson<{
+      userReactions?: Record<string, 'like' | 'dislike'>;
+      itemViews?: Record<string, number>;
+    }>(KEYS.REACTIONS, { userReactions: {}, itemViews: {} });
     return {
       userReactions:
         saved && typeof saved.userReactions === 'object' && saved.userReactions !== null
           ? saved.userReactions
           : {},
+      itemViews:
+        saved && typeof saved.itemViews === 'object' && saved.itemViews !== null
+          ? saved.itemViews
+          : {},
     };
   },
 
-  saveReactions(reactions: { userReactions: Record<string, 'like' | 'dislike'> }): void {
+  saveReactions(reactions: {
+    userReactions: Record<string, 'like' | 'dislike'>;
+    itemViews?: Record<string, number>;
+  }): void {
     safeWriteJson(KEYS.REACTIONS, reactions);
   },
 };

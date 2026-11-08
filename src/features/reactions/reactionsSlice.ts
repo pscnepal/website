@@ -8,18 +8,28 @@ export type ReactionType = 'like' | 'dislike';
 export interface ReactionsState {
   /** Map of item ID (question ID or material ID) to current user's reaction */
   userReactions: Record<string, ReactionType>;
+  /** Map of item ID to recorded user views */
+  itemViews: Record<string, number>;
 }
 
 const initialReactions = storageService.loadReactions();
 
 const initialState: ReactionsState = {
   userReactions: initialReactions.userReactions ?? {},
+  itemViews: initialReactions.itemViews ?? {},
 };
 
 export const reactionsSlice = createSlice({
   name: 'reactions',
   initialState,
   reducers: {
+    recordView: (
+      state,
+      action: PayloadAction<{ itemId: string }>
+    ) => {
+      const { itemId } = action.payload;
+      state.itemViews[itemId] = (state.itemViews[itemId] || 0) + 1;
+    },
     toggleLike: (
       state,
       action: PayloadAction<{ itemId: string }>
@@ -60,11 +70,12 @@ export const reactionsSlice = createSlice({
     },
     clearAllReactions: (state) => {
       state.userReactions = {};
+      state.itemViews = {};
     },
   },
 });
 
-export const { toggleLike, toggleDislike, setReaction, clearAllReactions } =
+export const { recordView, toggleLike, toggleDislike, setReaction, clearAllReactions } =
   reactionsSlice.actions;
 
 export const selectUserReaction = (
@@ -79,17 +90,21 @@ export const selectItemReactionData = (
 ): {
   likes: number;
   dislikes: number;
+  views: number;
   userReaction: ReactionType | null;
 } => {
   const base = getBaseReactionCounts(itemId, itemType);
   const userReaction = state.reactions.userReactions[itemId] ?? null;
+  const userAddedViews = state.reactions.itemViews?.[itemId] ?? 0;
 
   const likes = base.likes + (userReaction === 'like' ? 1 : 0);
   const dislikes = base.dislikes + (userReaction === 'dislike' ? 1 : 0);
+  const views = base.views + userAddedViews;
 
   return {
     likes,
     dislikes,
+    views,
     userReaction,
   };
 };

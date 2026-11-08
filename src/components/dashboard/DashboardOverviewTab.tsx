@@ -25,6 +25,11 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
   const writtenRecords = useAppSelector((state) => state.written.records);
   const simulationRuns = useAppSelector((state) => state.psc.simulationHistory);
   const targetCadreId = useAppSelector((state) => state.psc.targetCadreId);
+  const userReactions = useAppSelector((state) => state.reactions.userReactions);
+
+  const totalLiked = useMemo(() => {
+    return Object.values(userReactions).filter((r) => r === 'like').length;
+  }, [userReactions]);
 
   // Compute aggregate statistics
   const totalMaterialsCount = useMemo(() => {
@@ -158,7 +163,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
             />
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono tabular-nums">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 text-xs font-mono tabular-nums">
             <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800">
               <span className="text-zinc-500 dark:text-zinc-400 block font-sans">
                 MCQs Answered
@@ -179,7 +184,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
 
             <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800">
               <span className="text-zinc-500 dark:text-zinc-400 block font-sans">
-                Exam Hall Sittings
+                Exam Sittings
               </span>
               <span className="text-lg font-bold text-blue-700 dark:text-blue-400">
                 {simulationRuns.length}
@@ -194,6 +199,15 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
                 {totalWrittenPracticeSeconds > 0
                   ? formatCompactDuration(totalWrittenPracticeSeconds)
                   : '0m'}
+              </span>
+            </div>
+
+            <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 col-span-2 sm:col-span-1">
+              <span className="text-zinc-500 dark:text-zinc-400 block font-sans">
+                Saved for Revision
+              </span>
+              <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                {totalLiked}
               </span>
             </div>
           </div>
@@ -223,7 +237,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
             <ActionButton
               onClick={() => onSwitchTab('users')}
               label="Aspirants Roster"
-              title="View peer cohort candidates, ranks, and streaks"
+              title="View peer cohort candidates, ranks, and performance dossiers"
               color="zinc"
               variant="outline"
               size="md"
@@ -254,13 +268,14 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
                 Peer study group &amp; benchmark leaders
               </p>
             </div>
-            <button
-              type="button"
+            <ActionButton
+              label={`View all ${INITIAL_CANDIDATE_USERS.length} →`}
+              title="View full aspirants directory"
+              color="blue"
+              variant="ghost"
+              size="xs"
               onClick={() => onSwitchTab('users')}
-              className="text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline underline-offset-4 cursor-pointer"
-            >
-              View all {INITIAL_CANDIDATE_USERS.length} &rarr;
-            </button>
+            />
           </div>
 
           <div className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
@@ -293,7 +308,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
                     {user.mockAverageScore}%
                   </span>
                   <span className="block text-[10px] text-zinc-400">
-                    {user.preparationStreakDays}d streak
+                    {user.mockPercentile}th %ile
                   </span>
                 </div>
               </div>
@@ -302,7 +317,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
         </section>
       </div>
 
-      {/* Cadre Syllabi & Architecture Pipeline Highlights */}
+      {/* Official Cadre Syllabus Frameworks */}
       <section className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
           <div>

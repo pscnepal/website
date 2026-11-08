@@ -13,14 +13,19 @@ import {
   WRITTEN_QUESTIONS,
   type WrittenQuestion,
 } from '../../data/writtenQuestionsData';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { recordView } from '../../features/reactions/reactionsSlice';
 import { ActionButton } from '../common/ActionButton';
 import { ReactionButtons } from '../common/ReactionButtons';
 import { SharedTable, type ColumnDef } from '../common/SharedTable';
 
 export function WrittenQuestionBankTab() {
+  const dispatch = useAppDispatch();
+  const userReactions = useAppSelector((state) => state.reactions.userReactions);
   const [searchQuery, setSearchQuery] = useState('');
   const [paperFilter, setPaperFilter] = useState('all');
   const [marksFilter, setMarksFilter] = useState<'all' | '5' | '10'>('all');
+  const [reactionFilter, setReactionFilter] = useState<'all' | 'liked' | 'disliked' | 'unrated'>('all');
   const [selectedQuestion, setSelectedQuestion] = useState<WrittenQuestion | null>(null);
   const [modalLang, setModalLang] = useState<'bilingual' | 'en' | 'ne'>('bilingual');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -34,6 +39,15 @@ export function WrittenQuestionBankTab() {
       if (marksFilter !== 'all' && q.marks !== Number(marksFilter)) {
         return false;
       }
+      if (reactionFilter === 'liked' && userReactions[q.id] !== 'like') {
+        return false;
+      }
+      if (reactionFilter === 'disliked' && userReactions[q.id] !== 'dislike') {
+        return false;
+      }
+      if (reactionFilter === 'unrated' && userReactions[q.id]) {
+        return false;
+      }
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const matchesEn = (q.en.title + ' ' + q.en.question).toLowerCase().includes(query);
@@ -44,7 +58,7 @@ export function WrittenQuestionBankTab() {
       }
       return true;
     });
-  }, [searchQuery, paperFilter, marksFilter]);
+  }, [searchQuery, paperFilter, marksFilter, reactionFilter, userReactions]);
 
   const handleCopy = (q: WrittenQuestion) => {
     const text = `PSC Written (${q.id}) - ${q.paper} [${q.marks} Marks]:\n\nEnglish:\n${q.en.title}\n${q.en.question}\n\nNepali:\n${q.ne.title}\n${q.ne.question}\n\nModel Answer (Intro):\n${q.en.introduction}\n\nExaminer Criteria:\n${q.rubric.map((r, i) => `${i + 1}. ${r.en}`).join('\n')}`;
@@ -54,13 +68,15 @@ export function WrittenQuestionBankTab() {
     });
   };
 
-  // Shared table columns definition
+  // Shared table columns definition with sorting
   const columns = useMemo<ColumnDef<WrittenQuestion>[]>(() => {
     return [
       {
         id: 'code',
         header: 'Code',
         width: 'w-28',
+        sortable: true,
+        sortKey: (q) => q.id,
         render: (q) => (
           <span className="font-mono font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
             {q.id}
@@ -70,6 +86,8 @@ export function WrittenQuestionBankTab() {
       {
         id: 'title',
         header: 'Written Title & Question (Bilingual)',
+        sortable: true,
+        sortKey: (q) => q.en.title,
         render: (q) => (
           <div className="min-w-[280px]">
             <p className="font-serif text-[13px] font-semibold text-zinc-950 dark:text-zinc-100">
@@ -89,6 +107,8 @@ export function WrittenQuestionBankTab() {
         header: 'Paper',
         width: 'w-36',
         hideOnMobile: true,
+        sortable: true,
+        sortKey: (q) => q.paper,
         render: (q) => (
           <div className="text-zinc-600 dark:text-zinc-400">
             <span className="font-medium text-zinc-800 dark:text-zinc-200 block">
@@ -105,6 +125,8 @@ export function WrittenQuestionBankTab() {
         header: 'Marks / Limit',
         align: 'center',
         width: 'w-28',
+        sortable: true,
+        sortKey: (q) => q.marks,
         render: (q) => (
           <div className="font-mono tabular-nums whitespace-nowrap">
             <span className="font-bold text-zinc-900 dark:text-zinc-100 block">
@@ -130,8 +152,8 @@ export function WrittenQuestionBankTab() {
       },
       {
         id: 'ratings',
-        header: 'Ratings',
-        width: 'w-32',
+        header: 'Views & Ratings',
+        width: 'w-44',
         render: (q) => (
           <ReactionButtons itemId={q.id} itemType="question" size="xs" />
         ),
@@ -152,7 +174,10 @@ export function WrittenQuestionBankTab() {
                 color="zinc"
                 variant="outline"
                 size="xs"
-                onClick={() => setSelectedQuestion(q)}
+                onClick={() => {
+                  dispatch(recordView({ itemId: q.id }));
+                  setSelectedQuestion(q);
+                }}
               />
 
               <ActionButton
@@ -200,7 +225,7 @@ export function WrittenQuestionBankTab() {
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
           {/* Search Box */}
-          <div className="sm:col-span-6 relative">
+          <div className="sm:col-span-5 relative">
             <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -210,19 +235,21 @@ export function WrittenQuestionBankTab() {
               className="w-full h-9 pl-8 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
             {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                aria-label="Clear search"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
+                <ActionButton
+                  title="Clear search"
+                  icon={X}
+                  color="zinc"
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSearchQuery('')}
+                />
+              </span>
             )}
           </div>
 
           {/* Paper Select */}
-          <div className="sm:col-span-4">
+          <div className="sm:col-span-3">
             <select
               value={paperFilter}
               onChange={(e) => setPaperFilter(e.target.value)}
@@ -251,6 +278,21 @@ export function WrittenQuestionBankTab() {
               <option value="5">5 Marks (9m)</option>
             </select>
           </div>
+
+          {/* Reaction / Bookmark Filter */}
+          <div className="sm:col-span-2">
+            <select
+              value={reactionFilter}
+              onChange={(e) => setReactionFilter(e.target.value as any)}
+              aria-label="Filter by candidate rating"
+              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer font-medium"
+            >
+              <option value="all">All Ratings</option>
+              <option value="liked">Liked (★ Saved)</option>
+              <option value="disliked">Disliked</option>
+              <option value="unrated">Unrated Only</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -259,6 +301,9 @@ export function WrittenQuestionBankTab() {
         data={filteredQuestions}
         columns={columns}
         keyExtractor={(q) => q.id}
+        pagination={true}
+        defaultPageSize={15}
+        pageSizeOptions={[10, 15, 25]}
         emptyMessage="No written questions match your search filters"
         emptyDescription="Try clearing your search query or selecting All Papers."
         emptyAction={
@@ -273,6 +318,7 @@ export function WrittenQuestionBankTab() {
               setSearchQuery('');
               setPaperFilter('all');
               setMarksFilter('all');
+              setReactionFilter('all');
             }}
           />
         }
@@ -297,14 +343,14 @@ export function WrittenQuestionBankTab() {
                 <span aria-hidden="true">·</span>
                 <span>{selectedQuestion.marks} Marks ({selectedQuestion.recommendedMinutes}m)</span>
               </div>
-              <button
-                type="button"
+              <ActionButton
+                title="Close modal"
+                icon={X}
+                color="zinc"
+                variant="ghost"
+                size="xs"
                 onClick={() => setSelectedQuestion(null)}
-                aria-label="Close modal"
-                className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              />
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -321,7 +367,7 @@ export function WrittenQuestionBankTab() {
               <div
                 role="group"
                 aria-label="Modal answer language"
-                className="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs self-start sm:self-auto"
+                className="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs self-start sm:self-auto gap-1"
               >
                 {(
                   [
@@ -330,18 +376,15 @@ export function WrittenQuestionBankTab() {
                     { id: 'ne', label: 'नेपाली' },
                   ] as const
                 ).map((opt) => (
-                  <button
+                  <ActionButton
                     key={opt.id}
-                    type="button"
+                    label={opt.label}
+                    title={`Switch model answer language to ${opt.label}`}
+                    color="zinc"
+                    variant={modalLang === opt.id ? 'solid' : 'ghost'}
+                    size="xs"
                     onClick={() => setModalLang(opt.id)}
-                    className={`h-7 px-2.5 rounded-md font-medium transition-colors cursor-pointer ${
-                      modalLang === opt.id
-                        ? 'bg-white dark:bg-zinc-700 text-zinc-950 dark:text-zinc-50 shadow-2xs'
-                        : 'text-zinc-600 dark:text-zinc-400'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
+                  />
                 ))}
               </div>
             </div>
