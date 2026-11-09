@@ -17,6 +17,7 @@ import {
   Play,
   RotateCcw,
   Search,
+  Scale,
   Trash2,
   X,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { ActionButton } from '../components/common/ActionButton';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
@@ -809,6 +811,16 @@ export function WrittenQuestionsPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <ActionButton
+                    label="रुब्रिक स्व-मूल्याङ्कन (Self-Grade)"
+                    icon={Scale}
+                    title="Practice this question under 1.8 min/mark timer and grade with official 4-part rubric"
+                    color="blue"
+                    variant="solid"
+                    size="sm"
+                    to={`/evaluator?q=${activeQuestion.id}`}
+                  />
+
                   <button
                     type="button"
                     onClick={() => handleCopyAnswer(activeQuestion)}
@@ -1487,6 +1499,16 @@ export function WrittenQuestionsPage() {
                             </p>
 
                             <div className="flex flex-wrap items-center gap-2">
+                              <ActionButton
+                                label="स्व-मूल्याङ्कन (Grade)"
+                                icon={Scale}
+                                title="Practice with 1.8 min/mark timer and score on official rubric"
+                                color="blue"
+                                variant="outline"
+                                size="xs"
+                                to={`/evaluator?q=${q.id}`}
+                              />
+
                               <button
                                 type="button"
                                 onClick={() => handleCopyAnswer(q)}

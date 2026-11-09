@@ -8,7 +8,7 @@ export const SAMPLE_EDITIONS: SampleEdition[] = [
     author: 'Dept. of Information Compendium',
     category: 'Nepal Parichaya',
     pages: 5,
-    path: '/materials/nepal-parichaya-geography.pdf',
+    path: 'https://doib.gov.np/media/app/public/nepal-parichaya-physical-geography.pdf',
     description:
       'Coordinates, Himal/Pahad/Terai physiography, Koshi-Gandaki-Karnali basins, climate zones, and national parks.',
   },
@@ -18,7 +18,7 @@ export const SAMPLE_EDITIONS: SampleEdition[] = [
     author: 'Nepal Law Commission Digest',
     category: 'Laws & Legislation',
     pages: 5,
-    path: '/materials/constitution-of-nepal-2072.pdf',
+    path: 'https://lawcommission.gov.np/np/wp-content/uploads/2021/01/Nepal-ko-Sambhidhan-2072.pdf',
     description:
       'Constitutional supremacy, Fundamental Rights & Duties, Federal structure, and Constitutional Commissions.',
   },
@@ -28,7 +28,7 @@ export const SAMPLE_EDITIONS: SampleEdition[] = [
     author: 'Public Service Commission, Nepal',
     category: 'Official PSC Syllabi',
     pages: 24,
-    path: '/materials/official-psc/psc-official-section-officer-phase1.pdf',
+    path: 'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
     description:
       'Verbatim Lok Sewa Aayog joint examination scheme and Paper I Administrative Aptitude Test (AAT) syllabus.',
   },
@@ -116,19 +116,43 @@ export function createBookIdFromLocalFile(fileName: string, fileSize: number): s
  * Extracts a clean, human-readable book title from a URL or filename.
  */
 export function deriveTitleFromSource(urlOrFileName: string): string {
+  if (!urlOrFileName) return 'Untitled Document';
   try {
-    let rawSegment = urlOrFileName;
-    if (urlOrFileName.includes('://') || urlOrFileName.startsWith('/')) {
+    const trimmed = urlOrFileName.trim();
+
+    // Direct match against reading material catalog items (by path, externalSourceUrl, or id)
+    for (const category of READING_MATERIAL_CATEGORIES) {
+      const directMatch = category.items.find(
+        (item) =>
+          item.path === trimmed ||
+          item.externalSourceUrl === trimmed ||
+          item.id === trimmed
+      );
+      if (directMatch) {
+        return directMatch.title;
+      }
+    }
+
+    let rawSegment = trimmed;
+    if (trimmed.includes('://') || trimmed.startsWith('/')) {
       const parsed = new URL(
-        urlOrFileName,
+        trimmed,
         typeof window !== 'undefined' ? window.location.origin : 'https://localhost'
       );
+
       for (const category of READING_MATERIAL_CATEGORIES) {
-        const matched = category.items.find((item) => item.path === parsed.pathname);
+        const matched = category.items.find(
+          (item) =>
+            item.path === parsed.href ||
+            item.path === parsed.pathname ||
+            item.externalSourceUrl === parsed.href ||
+            item.path.endsWith(parsed.pathname)
+        );
         if (matched) {
           return matched.title;
         }
       }
+
       const segments = parsed.pathname.split('/').filter(Boolean);
       rawSegment = segments[segments.length - 1] || parsed.hostname;
     }
@@ -147,7 +171,39 @@ export function deriveTitleFromSource(urlOrFileName: string): string {
   }
 }
 
+/**
+ * Resolves a reading material path or URL to an absolute URL.
+ * Handles absolute http(s) URLs directly, maps legacy relative /materials/... paths
+ * to catalog URLs, and prefixes same-origin paths with window.location.origin.
+ */
 export function resolveSampleUrl(path: string): string {
-  if (typeof window === 'undefined') return path;
-  return `${window.location.origin}${path}`;
+  if (!path) return '';
+  const trimmed = path.trim();
+
+  // If already an absolute web URL or blob/data URI, return directly
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('data:')
+  ) {
+    return trimmed;
+  }
+
+  // Look up legacy relative path or material ID in catalog to get updated official web URL
+  const legacyFilename = trimmed.split('/').pop() || trimmed;
+  for (const category of READING_MATERIAL_CATEGORIES) {
+    const matched = category.items.find((item) => {
+      if (item.path === trimmed || item.id === trimmed) return true;
+      const itemFilename = item.path.split('/').pop();
+      return itemFilename && itemFilename === legacyFilename;
+    });
+
+    if (matched && (matched.path.startsWith('http://') || matched.path.startsWith('https://'))) {
+      return matched.path;
+    }
+  }
+
+  if (typeof window === 'undefined') return trimmed;
+  return `${window.location.origin}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
 }

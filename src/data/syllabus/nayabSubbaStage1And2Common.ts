@@ -8,7 +8,7 @@ export const NAYAB_SUBBA_PHASE_1: PscExamPhase = {
   summary:
     '45-minute OMR screening examination with 50 MCQs at 2 marks each = 100 Marks (Part 1: 30 GK [18 Level I + 12 Level II] = 60M · Part 2: 20 GMAT = 40M). Minimum 45 marks (45%) required after 20% negative deduction (-0.40 mark per wrong answer) to qualify for Stage II; Stage I marks are not added to final merit.',
   officialPdfPath:
-    '/materials/official-psc/psc-official-nayab-subba-phase1.pdf',
+    'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
   officialPscUrl:
     'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
   papers: [
@@ -910,7 +910,7 @@ export const NAYAB_SUBBA_PHASE_3: PscExamPhase = {
   summary:
     '15-minute practical computer skill test (10 Marks) and oral board interview (30 Marks) open exclusively to candidates passing Stage II written papers. Combined with Stage II (200M) for the 240-mark Final Merit Ranking.',
   officialPdfPath:
-    '/materials/official-psc/psc-official-nayab-subba-phase1.pdf',
+    'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
   officialPscUrl:
     'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
   papers: [

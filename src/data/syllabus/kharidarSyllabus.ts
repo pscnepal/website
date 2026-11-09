@@ -22,7 +22,7 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
     'Stage II Written Papers (Paper II & Paper III) are common across all non-technical services; separate answer booklets are used per section.',
     'Any Act, Rule, or Policy amended up to 3 months prior to the examination date is included in the syllabus.',
   ],
-  syllabusPdfPath: '/materials/official-psc/psc-official-kharidar-phase1.pdf',
+  syllabusPdfPath: 'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
   officialPscPdfs: [
     {
       id: 'kh-official-pdf-1',
@@ -33,7 +33,7 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
         'राजपत्र अनंकित द्वितीय श्रेणी (खरिदार) प्रथम चरण — लोक सेवा आयोगको मूल PDF',
       pages: 9,
       approvedDateBs: '2081/03/20 (Effective FY 2081/82)',
-      localPdfPath: '/materials/official-psc/psc-official-kharidar-phase1.pdf',
+      localPdfPath: 'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
       officialPscUrl:
         'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
     },
@@ -46,7 +46,7 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
         'राजपत्र अनंकित द्वितीय श्रेणी (खरिदार) द्वितीय चरण — लोक सेवा आयोगको मूल PDF',
       pages: 4,
       approvedDateBs: '2081/03/20 (Effective FY 2081/82)',
-      localPdfPath: '/materials/official-psc/psc-official-kharidar-phase2.pdf',
+      localPdfPath: 'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca1.pdf',
       officialPscUrl:
         'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca1.pdf',
     },
@@ -61,7 +61,7 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
       summary:
         '45-minute OMR screening exam (50 MCQs × 2 Marks = 100 Marks) comprising Section A General Knowledge (30 Qs = 60M) and Section B Basic Office Skills Test (20 Qs = 40M). Minimum 45 marks required after 20% negative deduction (-0.40M per wrong answer) to qualify for Stage II.',
       officialPdfPath:
-        '/materials/official-psc/psc-official-kharidar-phase1.pdf',
+        'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
       officialPscUrl:
         'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
       papers: [
@@ -411,7 +411,7 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
       summary:
         'Two common 100-mark subjective written papers (2 Hours 30 Minutes each, Pass Marks: 40) across Justice, Administration, Audit, and Legislature-Parliament services. Separate answer booklets are used for each section.',
       officialPdfPath:
-        '/materials/official-psc/psc-official-kharidar-phase2.pdf',
+        'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca1.pdf',
       officialPscUrl:
         'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca1.pdf',
       papers: [
@@ -950,7 +950,7 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
       summary:
         '15-minute practical computer test (10 Marks) and 30-mark oral interview conducted for candidates passing Stage II written papers. Combined with Stage II (200M) for the 240-Mark Final Merit List.',
       officialPdfPath:
-        '/materials/official-psc/psc-official-kharidar-phase1.pdf',
+        'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
       officialPscUrl:
         'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
       papers: [

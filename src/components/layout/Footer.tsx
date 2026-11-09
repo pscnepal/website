@@ -113,6 +113,18 @@ export function Footer() {
                 विगतका प्रश्न (PYQ)
               </Link>
               <Link
+                to="/flashcards"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
+              >
+                स्मरण कार्ड (Flashcards)
+              </Link>
+              <Link
+                to="/evaluator"
+                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
+              >
+                उत्तर मूल्याङ्कन (Evaluator)
+              </Link>
+              <Link
                 to="/progress"
                 className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
               >

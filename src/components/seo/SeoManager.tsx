@@ -805,7 +805,83 @@ function resolveRouteSeo(
     };
   }
 
-  // 10. Study & Exam Readiness Tracker (/progress)
+  // 10. Spaced Repetition Flashcards (/flashcards & /cards)
+  if (
+    normalizedPath === '/flashcards' ||
+    normalizedPath === '/cards' ||
+    normalizedPath === '/memorize'
+  ) {
+    const title = `Lok Sewa Flashcards & Spaced Repetition | ${BRAND_NAME}`;
+    const description = clampText(
+      'Rapidly memorize Constitution articles 1–308, geography statistics, historic treaty dates, and 16th Plan indicators with the Leitner Flashcard Studio.',
+      158
+    );
+    const canonicalPath = '/flashcards';
+
+    return {
+      title,
+      description,
+      canonicalPath,
+      robots: 'index, follow, max-image-preview:large',
+      ogType: 'website',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          buildBreadcrumbList(origin, [
+            { name: 'Home', path: '/' },
+            { name: 'Flashcard Studio (स्मरण कार्ड)', path: '/flashcards' },
+          ]),
+          {
+            '@type': 'LearningResource',
+            name: title,
+            description,
+            learningResourceType: 'Flashcards',
+            url: `${origin}/flashcards`,
+            inLanguage: ['en', 'ne'],
+          },
+        ],
+      },
+    };
+  }
+
+  // 11. Written Answer Evaluator & Rubric Scoring (/evaluator, /written-evaluator, /rubric)
+  if (
+    normalizedPath === '/evaluator' ||
+    normalizedPath === '/written-evaluator' ||
+    normalizedPath === '/rubric'
+  ) {
+    const title = `Lok Sewa Written Answer Evaluator & Rubric | ${BRAND_NAME}`;
+    const description =
+      'Self-grade your Lok Sewa subjective answers with our 1.8 min/mark timer, official 4-part scoring rubric, and side-by-side model answer comparison.';
+    return {
+      title,
+      description,
+      canonicalPath: '/evaluator',
+      robots: 'index, follow, max-image-preview:large',
+      ogType: 'website',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          buildBreadcrumbList(origin, [
+            { name: 'Home', path: '/' },
+            { name: 'Written Q&A', path: '/written' },
+            { name: 'Answer Evaluator (उत्तर मूल्याङ्कन)', path: '/evaluator' },
+          ]),
+          {
+            '@type': 'LearningResource',
+            name: title,
+            description,
+            learningResourceType: 'Assessment Tool',
+            educationalLevel: 'Public Service Commission (Lok Sewa Aayog)',
+            url: `${origin}/evaluator`,
+            inLanguage: ['en', 'ne'],
+          },
+        ],
+      },
+    };
+  }
+
+  // 12. Study & Exam Readiness Tracker (/progress)
   if (normalizedPath === '/progress') {
     const title = `PSC Study & Exam Readiness Tracker | ${BRAND_NAME}`;
     const description =

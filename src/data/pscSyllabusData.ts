@@ -42,7 +42,7 @@ export const SECTION_OFFICER_SYLLABUS: PscCadreSyllabus = {
     'Any Constitution, Act, Rule, or Policy enacted or amended up to 3 months before the exam date is included in the syllabus.',
   ],
   syllabusPdfPath:
-    '/materials/official-psc/psc-official-section-officer-phase1.pdf',
+    'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
   officialPscPdfs: [
     {
       id: 'so-official-pdf-1',
@@ -53,7 +53,7 @@ export const SECTION_OFFICER_SYLLABUS: PscCadreSyllabus = {
       pages: 24,
       approvedDateBs: '2081/03/20 (Amended 2082/08/22)',
       localPdfPath:
-        '/materials/official-psc/psc-official-section-officer-phase1.pdf',
+        'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
       officialPscUrl:
         'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
     },
@@ -67,7 +67,7 @@ export const SECTION_OFFICER_SYLLABUS: PscCadreSyllabus = {
       pages: 31,
       approvedDateBs: '2081/03/20 (Effective 2081/82)',
       localPdfPath:
-        '/materials/official-psc/psc-official-section-officer-phase2.pdf',
+        'https://psc.gov.np/site_uploads/course/202512091043336937fd55e8f3c1.pdf',
       officialPscUrl:
         'https://psc.gov.np/site_uploads/course/202512091043336937fd55e8f3c1.pdf',
     },
@@ -103,7 +103,7 @@ export const NAYAB_SUBBA_SYLLABUS: PscCadreSyllabus = {
     'Any Act, Rule, or Policy amended up to 3 months before the exam date forms part of the syllabus.',
   ],
   syllabusPdfPath:
-    '/materials/official-psc/psc-official-nayab-subba-phase1.pdf',
+    'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
   officialPscPdfs: [
     {
       id: 'ns-official-pdf-1',
@@ -115,7 +115,7 @@ export const NAYAB_SUBBA_SYLLABUS: PscCadreSyllabus = {
       pages: 11,
       approvedDateBs: '2081/03/20 (Effective FY 2081/82)',
       localPdfPath:
-        '/materials/official-psc/psc-official-nayab-subba-phase1.pdf',
+        'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
       officialPscUrl:
         'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
     },
@@ -129,7 +129,7 @@ export const NAYAB_SUBBA_SYLLABUS: PscCadreSyllabus = {
       pages: 12,
       approvedDateBs: '2081/03/20 (Effective FY 2081/82)',
       localPdfPath:
-        '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
+        'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f61.pdf',
       officialPscUrl:
         'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f61.pdf',
     },

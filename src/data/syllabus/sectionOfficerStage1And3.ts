@@ -8,7 +8,7 @@ export const SECTION_OFFICER_PHASE_1: PscExamPhase = {
   summary:
     'Objective multiple-choice OMR screening test (100 Qs × 1 Mark = 100 Marks · 1 Hour 30 Minutes). Candidates must score at least 45 marks (45%) after 20% negative deduction (-0.20 mark per wrong answer) to qualify for Stage II. Stage I marks are not added to Main Examination merit.',
   officialPdfPath:
-    '/materials/official-psc/psc-official-section-officer-phase1.pdf',
+    'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
   officialPscUrl:
     'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
   papers: [
@@ -794,7 +794,7 @@ export const SECTION_OFFICER_PHASE_3: PscExamPhase = {
   summary:
     'Open exclusively to candidates selected from Stage II Main Written Examination. Evaluates practical office computing (10 Marks · 20 Min), leaderless group discussion & individual presentation (10 Marks · 30 Min), and oral interview board (40 Marks; 50 Marks for Foreign Service).',
   officialPdfPath:
-    '/materials/official-psc/psc-official-section-officer-phase2.pdf',
+    'https://psc.gov.np/site_uploads/course/202512091043336937fd55e8f3c1.pdf',
   officialPscUrl:
     'https://psc.gov.np/site_uploads/course/202512091043336937fd55e8f3c1.pdf',
   papers: [

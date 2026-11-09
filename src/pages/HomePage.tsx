@@ -22,6 +22,7 @@ import { PdfUrlInput } from '../components/home/PdfUrlInput';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
+import singhaDurbarImg from '../assets/images/nepal_singha_durbar_1793889770945.jpg';
 import {
   ALL_SYLLABUS_UNITS,
   getCadreSyllabusById,
@@ -404,7 +405,10 @@ export function HomePage() {
           <div className="relative rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-950 text-white shadow-sm">
             <div className="relative h-48 sm:h-64 lg:h-72 w-full overflow-hidden">
               <img
-                src="/src/assets/images/nepal_singha_durbar_1793889770945.jpg"
+                src={singhaDurbarImg || '/images/nepal_singha_durbar_1793889770945.jpg'}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/images/nepal_singha_durbar_1793889770945.jpg';
+                }}
                 alt="Singha Durbar and snow-capped Himalayan mountain peaks, Kathmandu, Nepal"
                 className="w-full h-full object-cover object-center filter brightness-[0.88] hover:scale-105 transition-transform duration-700 ease-out"
                 loading="lazy"

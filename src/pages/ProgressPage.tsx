@@ -7,7 +7,9 @@ import {
   Clock,
   PenLine,
   RotateCcw,
+  Scale,
   Trash2,
+  Trophy,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
@@ -100,6 +102,36 @@ export function ProgressPage() {
     }
     return map;
   }, []);
+
+  const writtenEvaluations = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('psc_written_evaluations_v2');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const evalSummary = useMemo(() => {
+    if (writtenEvaluations.length === 0) return null;
+    const totalMarksPossible = writtenEvaluations.reduce(
+      (sum: number, r: { marks: number }) => sum + r.marks,
+      0
+    );
+    const totalMarksScored = writtenEvaluations.reduce(
+      (sum: number, r: { totalScore: number }) => sum + r.totalScore,
+      0
+    );
+    const avgPercentage = Math.round(
+      (totalMarksScored / (totalMarksPossible || 1)) * 100
+    );
+    return {
+      count: writtenEvaluations.length,
+      avgPercentage,
+      totalMarksScored: Number(totalMarksScored.toFixed(1)),
+      totalMarksPossible,
+    };
+  }, [writtenEvaluations]);
 
   const catalogMaterials = useMemo<EnrichedCatalogMaterial[]>(() => {
     const list: EnrichedCatalogMaterial[] = [];
@@ -1071,6 +1103,96 @@ export function ProgressPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Written Answer Self-Evaluation & Rubric Log */}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+              <div>
+                <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50 flex items-center gap-2">
+                  <Scale className="w-5 h-5 text-blue-600" />
+                  <span>लिखित उत्तर रुब्रिक स्व-मूल्याङ्कन (Written Answer Rubric Track)</span>
+                </h2>
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                  Performance audit across 1.8 min/mark timed drafting and official 4-part scoring rubrics.
+                </p>
+              </div>
+
+              <Link
+                to="/evaluator"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-400 hover:underline underline-offset-4 whitespace-nowrap shrink-0"
+              >
+                <Scale className="w-3.5 h-3.5" />
+                <span>Open Evaluator Studio</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {evalSummary ? (
+              <div className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <span className="text-zinc-400 font-medium">Answers Graded</span>
+                    <div className="text-xl font-bold font-mono text-zinc-900 dark:text-zinc-100 mt-1">
+                      {evalSummary.count} <span className="text-xs font-normal text-zinc-500">attempts</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <span className="text-zinc-400 font-medium">Average Rubric Score</span>
+                    <div className="text-xl font-bold font-mono text-blue-600 dark:text-blue-400 mt-1">
+                      {evalSummary.avgPercentage}%
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800">
+                    <span className="text-zinc-400 font-medium">Total Marks Earned</span>
+                    <div className="text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
+                      {evalSummary.totalMarksScored} <span className="text-xs font-normal text-zinc-500">/ {evalSummary.totalMarksPossible}</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-zinc-400 font-medium">Competitiveness</span>
+                      <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-1">
+                        {evalSummary.avgPercentage >= 70 ? 'Topper Tier' : evalSummary.avgPercentage >= 55 ? 'Competitive Pass' : 'Needs Practice'}
+                      </div>
+                    </div>
+                    <Trophy className="w-6 h-6 text-amber-500 shrink-0" />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800 text-xs">
+                  <span className="text-zinc-500">
+                    Want to improve score? Re-attempt questions under the 1.8 min/mark countdown clock.
+                  </span>
+                  <Link
+                    to="/evaluator"
+                    className="font-medium text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                  >
+                    <span>Practice New Question</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 text-center space-y-2">
+                <Scale className="w-8 h-8 text-zinc-400 mx-auto" />
+                <h4 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                  No Written Answer Evaluations Yet
+                </h4>
+                <p className="text-xs text-zinc-500 max-w-md mx-auto">
+                  Practice writing 5-mark and 10-mark answers under authentic countdown conditions and self-grade on the official 4-dimension Lok Sewa rubric.
+                </p>
+                <div className="pt-2">
+                  <Link
+                    to="/evaluator"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
+                  >
+                    <PenLine className="w-3.5 h-3.5" />
+                    <span>Start First Self-Evaluation</span>
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Curated Exam Deck Benchmarks */}

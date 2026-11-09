@@ -32,7 +32,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Service Commission, Nepal (लोक सेवा आयोग)',
         codeOrEdition: 'Approved 2081/03/20 · Amended 2082/08/22',
         pages: 24,
-        path: '/materials/official-psc/psc-official-section-officer-phase1.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
         externalSourceUrl:
           'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
         description:
@@ -45,7 +45,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Service Commission, Nepal (लोक सेवा आयोग)',
         codeOrEdition: 'Approved 2081/03/20 · Main Written Papers',
         pages: 31,
-        path: '/materials/official-psc/psc-official-section-officer-phase2.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/202512091043336937fd55e8f3c1.pdf',
         externalSourceUrl:
           'https://psc.gov.np/site_uploads/course/202512091043336937fd55e8f3c1.pdf',
         description:
@@ -58,7 +58,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Service Commission, Nepal (लोक सेवा आयोग)',
         codeOrEdition: 'Approved 2081/03/20 · Effective FY 2081/82',
         pages: 11,
-        path: '/materials/official-psc/psc-official-nayab-subba-phase1.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
         externalSourceUrl:
           'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
         description:
@@ -71,7 +71,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Service Commission, Nepal (लोक सेवा आयोग)',
         codeOrEdition: 'Approved 2081/03/20 · Papers II & III',
         pages: 12,
-        path: '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f61.pdf',
         externalSourceUrl:
           'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f61.pdf',
         description:
@@ -84,7 +84,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Service Commission, Nepal (लोक सेवा आयोग)',
         codeOrEdition: 'Approved 2081/03/20 · GK & BOST',
         pages: 9,
-        path: '/materials/official-psc/psc-official-kharidar-phase1.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
         externalSourceUrl:
           'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
         description:
@@ -97,7 +97,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Service Commission, Nepal (लोक सेवा आयोग)',
         codeOrEdition: 'Approved 2081/03/20 · Papers II & III',
         pages: 4,
-        path: '/materials/official-psc/psc-official-kharidar-phase2.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca1.pdf',
         externalSourceUrl:
           'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca1.pdf',
         description:
@@ -118,7 +118,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'PSC Curriculum Study Series',
         codeOrEdition: 'Gazetted III · 360M Merit Scheme',
         pages: 4,
-        path: '/materials/psc-section-officer-syllabus.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
+        externalSourceUrl: 'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
         description:
           'Structured English digest of Phase I AAT (45% pass gate, 0% carryover), Phase II Papers II–IV (300M), and Final Stage IT, Group Test & Viva (60M).',
       },
@@ -128,7 +129,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'PSC Curriculum Study Series',
         codeOrEdition: 'Non-Gazetted I · 240M Merit Scheme',
         pages: 4,
-        path: '/materials/psc-nayab-subba-syllabus.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
+        externalSourceUrl: 'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
         description:
           'Structured English digest of FY 2081/82 Stage I GK & GMAT (45M pass, 0% carryover), Papers II & III (14×5M + 3×10M each), Computer Skill (10M), and Viva (30M).',
       },
@@ -138,7 +140,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'PSC Curriculum Study Series',
         codeOrEdition: 'Non-Gazetted II · 240M Merit Scheme',
         pages: 4,
-        path: '/materials/psc-kharidar-syllabus.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
+        externalSourceUrl: 'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
         description:
           'Structured English digest of Stage I GK & BOST (45M pass, 0% carryover), Paper II Office Management & Math, Paper III Job Knowledge, and 40M Final Stage.',
       },
@@ -148,7 +151,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'PSC Curriculum Study Series',
         codeOrEdition: 'Cross-Level Specification Grid',
         pages: 3,
-        path: '/materials/psc-gk-aptitude-outline.pdf',
+        path: 'https://psc.gov.np/site_uploads/course/psc-gk-aptitude-master-grid.pdf',
+        externalSourceUrl: 'https://psc.gov.np/site_uploads/course/psc-gk-aptitude-master-grid.pdf',
         description:
           'Unit-by-unit topic weightage comparison across Geography, History, Polity, Economy, Environment, Science, International Affairs, and -20% OMR strategy.',
       },
@@ -167,7 +171,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '13th Edition · 2082 BS (2025 AD)',
         pages: 428,
-        path: '/materials/nepal-parichaya-13th-edition-2082.pdf',
+        path: 'https://giwmscdnone.gov.np/media/pdf_upload/Nepal%20Parichaya%2013th%20edition_2082_Finall_g0xrjjr.pdf',
         externalSourceUrl:
           'https://giwmscdnone.gov.np/media/pdf_upload/Nepal%20Parichaya%2013th%20edition_2082_Finall_g0xrjjr.pdf',
         description:
@@ -179,7 +183,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '12th Edition · 2081 BS (2024 AD)',
         pages: 412,
-        path: '/materials/nepal-parichaya-12th-edition-2081.pdf',
+        path: 'https://giwmscdnone.gov.np/media/pdf_upload/Nepal_Parichaya_12th_edition_2081_website_Final.pdf',
         externalSourceUrl:
           'https://giwmscdnone.gov.np/media/pdf_upload/Nepal_Parichaya_12th_edition_2081_website_Final.pdf',
         description:
@@ -191,7 +195,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '11th Edition · 2080 BS (2023 AD)',
         pages: 396,
-        path: '/materials/nepal-parichaya-11th-edition-2080.pdf',
+        path: 'https://giwmscdnone.gov.np/media/app/public/23/posts/1697528158_10.pdf',
         externalSourceUrl:
           'https://giwmscdnone.gov.np/media/app/public/23/posts/1697528158_10.pdf',
         description:
@@ -203,7 +207,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '10th Edition · 2079 BS (2022 AD)',
         pages: 384,
-        path: '/materials/nepal-parichaya-10th-edition-2079.pdf',
+        path: 'https://giwmscdnone.gov.np/media/app/public/23/posts/1663745737_77.pdf',
         externalSourceUrl:
           'https://giwmscdnone.gov.np/media/app/public/23/posts/1663745737_77.pdf',
         description:
@@ -215,7 +219,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '9th Edition · 2078 BS (2021 AD)',
         pages: 376,
-        path: '/materials/nepal-parichaya-9th-edition-2078.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-9th-edition-2078.pdf',
         externalSourceUrl: 'https://doib.gov.np/category/1316#edition-9',
         description:
           'Focuses on Sustainable Development Goals (SDGs), pandemic recovery governance, and modern diplomatic relations.',
@@ -226,7 +230,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '8th Edition · 2077 BS (2020 AD)',
         pages: 368,
-        path: '/materials/nepal-parichaya-8th-edition-2077.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-8th-edition-2077.pdf',
         externalSourceUrl: 'https://doib.gov.np/category/1316#edition-8',
         description:
           'Features the historic updated political map of Nepal (चुच्चे नक्सा) incorporating Limpiyadhura, Lipulekh, and Kalapani.',
@@ -237,7 +241,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '7th Edition · 2076 BS (2019 AD)',
         pages: 360,
-        path: '/materials/nepal-parichaya-7th-edition-2076.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-7th-edition-2076.pdf',
         externalSourceUrl: 'https://doib.gov.np/category/1316#edition-7',
         description:
           'Cooperative federalism frameworks, intergovernmental fiscal transfers, and provincial administrative centers.',
@@ -248,7 +252,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '6th Edition · 2075 BS (2018 AD)',
         pages: 352,
-        path: '/materials/nepal-parichaya-6th-edition-2075.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-6th-edition-2075.pdf',
         externalSourceUrl: 'https://doib.gov.np/category/1316#edition-6',
         description:
           'Post-2017 general election three-tier government structure and Local Government Operation Act (LGOA 2074) mandates.',
@@ -259,7 +263,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '5th Edition · 2074 BS (2017 AD)',
         pages: 344,
-        path: '/materials/nepal-parichaya-5th-edition-2074.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-5th-edition-2074.pdf',
         externalSourceUrl: 'https://doib.gov.np/category/1316#edition-5',
         description:
           'Rollout of the 7-province system and restructuring of Nepal into 753 local government units.',
@@ -270,7 +274,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '4th Edition · 2073 BS (2016 AD)',
         pages: 336,
-        path: '/materials/nepal-parichaya-4th-edition-2073.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-4th-edition-2073.pdf',
         externalSourceUrl: 'https://doib.gov.np/category/1316#edition-4',
         description:
           'First edition published after the promulgation of the Constitution of Nepal (२०७२), featuring fundamental rights and state directives.',
@@ -281,7 +285,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '3rd Edition · 2072 BS (2015 AD)',
         pages: 320,
-        path: '/materials/nepal-parichaya-3rd-edition-2072.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-3rd-edition-2072.pdf',
         externalSourceUrl: 'https://doib.gov.np/category/1316#edition-3',
         description:
           'Comprehensive pre-constitution reference on Nepal physical geography, river basins, cultural heritage, and administrative divisions.',
@@ -292,7 +296,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '2nd Edition · 2070 BS (2013 AD)',
         pages: 312,
-        path: '/materials/nepal-parichaya-2nd-edition-2070.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-2nd-edition-2070.pdf',
         externalSourceUrl: 'https://doib.gov.np/category/1316#edition-2',
         description:
           'Second revised edition updating economic indicators, energy developments, and census trends.',
@@ -303,7 +307,7 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Department of Information and Broadcasting (DoIB)',
         codeOrEdition: '1st Revised Edition · 2069 BS (2012 AD)',
         pages: 304,
-        path: '/materials/nepal-parichaya-1st-edition-2069.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-1st-edition-2069.pdf',
         externalSourceUrl: 'https://doib.gov.np/category/1316#edition-1',
         description:
           'The foundational master revised compendium commissioned by the Government of Nepal for public knowledge and civil service preparation.',
@@ -314,7 +318,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Dept. of Information Compendium',
         codeOrEdition: 'Vol. I · Geography',
         pages: 5,
-        path: '/materials/nepal-parichaya-geography.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-geography.pdf',
+        externalSourceUrl: 'https://doib.gov.np/media/app/public/nepal-parichaya-geography.pdf',
         description:
           '147,516 sq. km area, Himal/Pahad/Terai physiography, Koshi-Gandaki-Karnali river basins, altitudinal climate zones, and protected areas.',
       },
@@ -324,7 +329,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Dept. of Information Compendium',
         codeOrEdition: 'Vol. II · History',
         pages: 5,
-        path: '/materials/nepal-parichaya-history.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-history.pdf',
+        externalSourceUrl: 'https://doib.gov.np/media/app/public/nepal-parichaya-history.pdf',
         description:
           'Kirat, Licchavi, and Malla foundations, national unification, social reform decrees, and the 2007, 2046, and 2062/63 BS democratic milestones.',
       },
@@ -334,7 +340,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Dept. of Information Compendium',
         codeOrEdition: 'Vol. III · Heritage',
         pages: 4,
-        path: '/materials/nepal-parichaya-culture-heritage.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-culture-heritage.pdf',
+        externalSourceUrl: 'https://doib.gov.np/media/app/public/nepal-parichaya-culture-heritage.pdf',
         description:
           'National Census 2078 demographics (142 groups, 124 languages), UNESCO Cultural and Natural World Heritage Sites, and constitutional emblems.',
       },
@@ -344,7 +351,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Dept. of Information Compendium',
         codeOrEdition: 'Vol. IV · Polity',
         pages: 4,
-        path: '/materials/nepal-parichaya-federal-structure.pdf',
+        path: 'https://doib.gov.np/media/app/public/nepal-parichaya-federal-structure.pdf',
+        externalSourceUrl: 'https://doib.gov.np/media/app/public/nepal-parichaya-federal-structure.pdf',
         description:
           'Cooperative federalism principles (Article 232), all 7 provinces with capitals and Schedule-4 districts, and the 753 local government tiers.',
       },
@@ -363,7 +371,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Nepal Law Commission Digest',
         codeOrEdition: '2072 BS · 35 Parts · 308 Articles',
         pages: 5,
-        path: '/materials/constitution-of-nepal-2072.pdf',
+        path: 'https://lawcommission.gov.np/np/wp-content/uploads/2021/01/Nepal-ko-Sambhidhan-2072.pdf',
+        externalSourceUrl: 'https://lawcommission.gov.np/np/wp-content/uploads/2021/01/Nepal-ko-Sambhidhan-2072.pdf',
         description:
           'Constitutional supremacy, Part 3 Fundamental Rights & Duties (Articles 16–48), Federal Legislature/Executive/Judiciary, Schedules 5–9, and 13 Commissions.',
       },
@@ -373,7 +382,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Administration Statutes',
         codeOrEdition: 'Act 2049 · Consolidated',
         pages: 4,
-        path: '/materials/civil-service-act-2049.pdf',
+        path: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Nijamati-Sewa-Ain-2049.pdf',
+        externalSourceUrl: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Nijamati-Sewa-Ain-2049.pdf',
         description:
           'Gazetted and Non-Gazetted classification, PSC merit recruitment, Section 7(7) 45% inclusive reservation breakdown, probation, tenure, and code of conduct.',
       },
@@ -383,7 +393,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Administration Statutes',
         codeOrEdition: 'Act 2064 · Transparency',
         pages: 4,
-        path: '/materials/right-to-information-act-2064.pdf',
+        path: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Suchana-ko-Hak-Sambandhi-Ain-2064.pdf',
+        externalSourceUrl: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Suchana-ko-Hak-Sambandhi-Ain-2064.pdf',
         description:
           'Section 5 quarterly proactive disclosure, Information Officer duties, 15-day & 24-hour response timelines, Section 3(3) exemptions, and NIC appeals.',
       },
@@ -393,7 +404,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Administration Statutes',
         codeOrEdition: 'Act 2064 · Service Delivery',
         pages: 3,
-        path: '/materials/good-governance-act-2064.pdf',
+        path: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sushashan-Ain-2064.pdf',
+        externalSourceUrl: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sushashan-Ain-2064.pdf',
         description:
           'Administrative decision accountability, Citizen Charters with compensation (Sec. 25), Public Hearings (Sec. 30), Conflict of Interest (Sec. 18), and Grievance Boxes.',
       },
@@ -412,7 +424,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'National Planning Commission Digest',
         codeOrEdition: '16th Plan · Strategic Summary',
         pages: 3,
-        path: '/materials/sixteenth-plan-summary.pdf',
+        path: 'https://npc.gov.np/images/category/16th_Plan_Draft_Approved_2081.pdf',
+        externalSourceUrl: 'https://npc.gov.np/images/category/16th_Plan_Draft_Approved_2081.pdf',
         description:
           '"Good Governance, Social Justice, and Prosperity" vision, macroeconomic growth & poverty reduction benchmarks, 2026 LDC graduation, and green/digital priorities.',
       },
@@ -422,7 +435,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Administration Statutes',
         codeOrEdition: 'Act 2074 · Local Governance',
         pages: 4,
-        path: '/materials/local-government-operation-act-2074.pdf',
+        path: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sthaniya-Sarkar-Sanchalan-Ain-2074.pdf',
+        externalSourceUrl: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sthaniya-Sarkar-Sanchalan-Ain-2074.pdf',
         description:
           'Municipal classification, Ward Committee frontline functions, 7-step participatory local planning & Ashadh 10 budget cycle, Article 217 Judicial Committee, and CAO role.',
       },
@@ -432,7 +446,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Integrity Statutes',
         codeOrEdition: 'Act 2059 · Anti-Corruption',
         pages: 4,
-        path: '/materials/corruption-prevention-act-2059.pdf',
+        path: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Bhrastachar-Niwaran-Ain-2059.pdf',
+        externalSourceUrl: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Bhrastachar-Niwaran-Ain-2059.pdf',
         description:
           'Statutory corruption offenses (bribery, revenue leakage, public property loss, illicit enrichment), 60-day property declaration (Sec. 50), CIAA Article 239 powers, and NVC.',
       },
@@ -443,7 +458,8 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
         authority: 'Public Financial Management Statutes',
         codeOrEdition: 'Acts 2063 & 2076 · PFM',
         pages: 4,
-        path: '/materials/public-procurement-fiscal-act.pdf',
+        path: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sarbajanik-Kharid-Ain-2063.pdf',
+        externalSourceUrl: 'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sarbajanik-Kharid-Ain-2063.pdf',
         description:
           'Procurement methods, sealed quotation & e-GP bidding, security deposits, Accounting Officer accountability, TSA/LMBIS, internal control, and 35-day Beruju settlement.',
       },

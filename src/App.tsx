@@ -21,6 +21,7 @@ import { ContactPage } from './pages/ContactPage';
 import { CurrentAffairsPage } from './pages/CurrentAffairsPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { FeaturesPage } from './pages/FeaturesPage';
+import { FlashcardsPage } from './pages/FlashcardsPage';
 import { HomePage } from './pages/HomePage';
 import { LibraryPage } from './pages/LibraryPage';
 import { MaterialsPage } from './pages/MaterialsPage';
@@ -34,6 +35,7 @@ import { ReaderPage } from './pages/ReaderPage';
 import { SimulationPage } from './pages/SimulationPage';
 import { SyllabusPage } from './pages/SyllabusPage';
 import { TermsPage } from './pages/TermsPage';
+import { WrittenEvaluatorPage } from './pages/WrittenEvaluatorPage';
 import { WrittenQuestionsPage } from './pages/WrittenQuestionsPage';
 import { revokeAllLocalPdfFiles } from './services/pdfService';
 
@@ -133,6 +135,15 @@ export default function App() {
             path="/long-questions"
             element={<Navigate to="/written" replace />}
           />
+          <Route path="/evaluator" element={<WrittenEvaluatorPage />} />
+          <Route
+            path="/written-evaluator"
+            element={<Navigate to="/evaluator" replace />}
+          />
+          <Route
+            path="/rubric"
+            element={<Navigate to="/evaluator" replace />}
+          />
           <Route path="/current-affairs" element={<CurrentAffairsPage />} />
           <Route
             path="/samasamayik"
@@ -158,6 +169,9 @@ export default function App() {
             path="/previous-questions"
             element={<Navigate to="/pyq" replace />}
           />
+          <Route path="/flashcards" element={<FlashcardsPage />} />
+          <Route path="/cards" element={<Navigate to="/flashcards" replace />} />
+          <Route path="/memorize" element={<Navigate to="/flashcards" replace />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/library" element={<LibraryPage />} />
           <Route path="/features" element={<FeaturesPage />} />

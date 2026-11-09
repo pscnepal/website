@@ -3,6 +3,7 @@ import {
   BookOpen,
   HelpCircle,
   PenLine,
+  Scale,
   Trophy,
   Users,
 } from 'lucide-react';
@@ -232,6 +233,16 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
               variant="solid"
               size="md"
               icon={PenLine}
+            />
+
+            <ActionButton
+              to="/evaluator"
+              label="Rubric Evaluator"
+              title="Practice written answers with 1.8 min/mark timer and official rubric"
+              color="blue"
+              variant="solid"
+              size="md"
+              icon={Scale}
             />
 
             <ActionButton

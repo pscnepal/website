@@ -25,6 +25,7 @@ import { WRITTEN_QUESTIONS } from '../../data/writtenQuestionsData';
 import { createBookIdFromUrl, resolveSampleUrl } from '../../utils/urlHelpers';
 import { ReactionButtons } from '../common/ReactionButtons';
 import { BookCoverVector } from '../vectors/BookCoverVector';
+import studyParichayaDeskImg from '../../assets/images/study_parichaya_desk_1793889771100.jpg';
 
 export function BrowseMaterials() {
   const { categoryId } = useParams<{ categoryId?: string }>();
@@ -440,7 +441,10 @@ export function BrowseMaterials() {
                 <div className="relative rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm flex flex-col sm:flex-row items-stretch">
                   <div className="sm:w-2/5 relative h-48 sm:h-auto min-h-[160px] overflow-hidden">
                     <img
-                      src="/src/assets/images/study_parichaya_desk_1793889771100.jpg"
+                      src={studyParichayaDeskImg || '/images/study_parichaya_desk_1793889771100.jpg'}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/images/study_parichaya_desk_1793889771100.jpg';
+                      }}
                       alt="Official Nepal Parichaya Compendiums on Study Desk"
                       className="w-full h-full object-cover"
                       loading="lazy"
