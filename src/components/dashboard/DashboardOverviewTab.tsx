@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
+  Database,
   HelpCircle,
   PenLine,
-  Scale,
-  Trophy,
   Users,
 } from 'lucide-react';
 import { useAppSelector } from '../../app/hooks';
@@ -15,13 +15,24 @@ import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
 import { WRITTEN_QUESTIONS } from '../../data/writtenQuestionsData';
 import { formatCompactDuration } from '../../utils/pdfHelpers';
 
-interface DashboardOverviewTabProps {
-  onSwitchTab: (
+export interface DashboardOverviewTabProps {
+  onSwitchTab?: (
     tab: 'overview' | 'quiz-bank' | 'written-bank' | 'users' | 'materials' | 'data'
   ) => void;
 }
 
 export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps) {
+  const navigate = useNavigate();
+  const handleSwitchTab = (
+    tab: 'overview' | 'quiz-bank' | 'written-bank' | 'users' | 'materials' | 'data'
+  ) => {
+    if (onSwitchTab) {
+      onSwitchTab(tab);
+    } else {
+      navigate(tab === 'overview' ? '/dashboard' : `/dashboard/${tab}`);
+    }
+  };
+
   const quizAttempts = useAppSelector((state) => state.quiz.attempts);
   const writtenRecords = useAppSelector((state) => state.written.records);
   const simulationRuns = useAppSelector((state) => state.psc.simulationHistory);
@@ -216,7 +227,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
           {/* Quick Actions Bar */}
           <div className="pt-2 flex flex-wrap items-center gap-2.5">
             <ActionButton
-              onClick={() => onSwitchTab('quiz-bank')}
+              onClick={() => handleSwitchTab('quiz-bank')}
               label="Browse MCQ Bank"
               title="Filter and browse 50+ objective questions"
               color="blue"
@@ -226,7 +237,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
             />
 
             <ActionButton
-              onClick={() => onSwitchTab('written-bank')}
+              onClick={() => handleSwitchTab('written-bank')}
               label="Written Question Bank"
               title="Practice and drill subjective 5M, 10M, and 20M case analytical questions"
               color="crimson"
@@ -236,17 +247,17 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
             />
 
             <ActionButton
-              to="/evaluator"
-              label="Rubric Evaluator"
-              title="Practice written answers with 1.8 min/mark timer and official rubric"
-              color="blue"
+              onClick={() => handleSwitchTab('materials')}
+              label="Materials Inventory"
+              title="Inspect 13 Nepal Parichaya editions and statutory documents"
+              color="emerald"
               variant="solid"
               size="md"
-              icon={Scale}
+              icon={BookOpen}
             />
 
             <ActionButton
-              onClick={() => onSwitchTab('users')}
+              onClick={() => handleSwitchTab('users')}
               label="Aspirants Roster"
               title="View peer cohort candidates, ranks, and performance dossiers"
               color="zinc"
@@ -256,13 +267,13 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
             />
 
             <ActionButton
-              to="/simulate"
-              label="Launch Mock Hall"
-              title="Launch timed PSC exam simulation hall"
-              color="amber"
+              onClick={() => handleSwitchTab('data')}
+              label="Backup & Storage"
+              title="Export, backup, or reset local study telemetry"
+              color="purple"
               variant="outline"
               size="md"
-              icon={Trophy}
+              icon={Database}
               className="ml-auto"
             />
           </div>
@@ -285,7 +296,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
               color="blue"
               variant="ghost"
               size="xs"
-              onClick={() => onSwitchTab('users')}
+              onClick={() => handleSwitchTab('users')}
             />
           </div>
 

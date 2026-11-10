@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import {
+  Award,
+  BookOpen,
+  Copy,
   LayoutGrid,
   List,
   Plus,
-  RotateCcw,
-  Search,
   UserCheck,
   X,
 } from 'lucide-react';
@@ -13,7 +14,15 @@ import {
   type CandidateUser,
 } from '../../data/candidateUsersData';
 import { ActionButton } from '../common/ActionButton';
-import { SharedTable, type ColumnDef } from '../common/SharedTable';
+import {
+  SharedActionMenu,
+  type ActionMenuItem,
+} from '../common/SharedActionMenu';
+import {
+  SharedDataTable,
+  type ColumnDef,
+  type TableFilterDef,
+} from '../common/SharedDataTable';
 
 const LOCAL_USERS_KEY = 'psc_nepal_custom_candidates_v1';
 
@@ -222,41 +231,140 @@ export function UsersDirectoryTab() {
       {
         id: 'actions',
         header: 'Actions',
-        width: 'w-28',
+        width: 'w-32',
         align: 'right',
-        render: (cand) => (
-          <div className="flex items-center justify-end">
-            <ActionButton
-              label="Dossier"
-              title={`View detailed dossier for ${cand.nameEn}`}
-              color="blue"
-              variant="outline"
-              size="xs"
-              icon={UserCheck}
-              onClick={() => setSelectedCandidate(cand)}
-            />
-          </div>
-        ),
+        render: (cand) => {
+          const actionMenuItems: ActionMenuItem[] = [
+            {
+              id: 'dossier',
+              label: 'View Detailed Dossier',
+              description: `${cand.province} · ${cand.district}`,
+              icon: UserCheck,
+              color: 'blue',
+              onClick: () => setSelectedCandidate(cand),
+            },
+            {
+              id: 'scores',
+              label: 'Mock Test Metrics',
+              description: `${cand.mockAverageScore}% Average · ${cand.mockPercentile}th %ile`,
+              icon: Award,
+              color: 'emerald',
+              onClick: () => setSelectedCandidate(cand),
+            },
+            {
+              id: 'focus',
+              label: 'Target Cadre & Syllabus',
+              description: cand.targetCadreLabel,
+              icon: BookOpen,
+              color: 'purple',
+              onClick: () => setSelectedCandidate(cand),
+            },
+            {
+              id: 'copy-roll',
+              label: `Copy Roll (${cand.rollCode})`,
+              icon: Copy,
+              color: 'zinc',
+              divider: true,
+              onClick: () => {
+                navigator.clipboard.writeText(cand.rollCode);
+              },
+            },
+          ];
+
+          return (
+            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
+              <ActionButton
+                label="Dossier"
+                title={`View detailed dossier for ${cand.nameEn}`}
+                color="blue"
+                variant="outline"
+                size="xs"
+                icon={UserCheck}
+                onClick={() => setSelectedCandidate(cand)}
+              />
+              <SharedActionMenu
+                items={actionMenuItems}
+                title={`Actions for ${cand.nameEn}`}
+                color="zinc"
+                variant="outline"
+                size="xs"
+                width="w-60"
+                header={cand.rollCode}
+              />
+            </div>
+          );
+        },
       },
     ],
     []
   );
 
+  const tableFilters: TableFilterDef[] = useMemo(
+    () => [
+      {
+        id: 'cadre',
+        label: 'Cadre',
+        value: cadreFilter,
+        onChange: setCadreFilter,
+        options: [
+          { label: 'All Cadres', value: 'all' },
+          { label: 'Section Officer (शाखा अधिकृत)', value: 'section-officer' },
+          { label: 'Nayab Subba (नायब सुब्बा)', value: 'nayab-subba' },
+          { label: 'Kharidar (खरिदार)', value: 'kharidar' },
+        ],
+      },
+      {
+        id: 'status',
+        label: 'Standing',
+        value: statusFilter,
+        onChange: setStatusFilter,
+        options: [
+          { label: 'All Standings', value: 'all' },
+          { label: 'Top Rankers (>95th %ile)', value: 'ranker' },
+          { label: 'Merit Standings', value: 'merit' },
+          { label: 'Active Daily Aspirants', value: 'active' },
+          { label: 'Review Editors', value: 'editor' },
+        ],
+      },
+    ],
+    [cadreFilter, statusFilter]
+  );
+
+  const isFiltered =
+    cadreFilter !== 'all' ||
+    statusFilter !== 'all' ||
+    Boolean(searchQuery.trim());
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setCadreFilter('all');
+    setStatusFilter('all');
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header & Controls */}
-      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-          <div>
-            <h3 className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50">
-              Aspirants Directory &amp; Peer Cohort
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Active Lok Sewa candidates across Nepal preparing for Section Officer, Nayab Subba, and Kharidar
-            </p>
-          </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            {/* View Mode Toggle */}
+      {/* Integrated Shared Data Table with Table/Card Modes, CSV Export, Filters, & Pagination */}
+      <SharedDataTable<CandidateUser>
+        title="Aspirants Directory & Peer Cohort"
+        subtitle="Active Lok Sewa candidates across Nepal preparing for Section Officer, Nayab Subba, and Kharidar"
+        totalCount={allCandidates.length}
+        data={filteredCandidates}
+        columns={columns}
+        keyExtractor={(cand) => cand.id}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search candidate name, roll code, district (Kathmandu, Pokhara)..."
+        filters={tableFilters}
+        isFiltered={isFiltered}
+        onResetFilters={handleResetFilters}
+        enableCsvExport={true}
+        csvFilename="psc-aspirants-directory.csv"
+        pagination={true}
+        defaultPageSize={12}
+        pageSizeOptions={[12, 24, 48]}
+        viewMode={viewMode}
+        actions={
+          <div className="flex items-center gap-2">
             <div className="inline-flex items-center rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-0.5">
               <ActionButton
                 title="Table view"
@@ -285,214 +393,145 @@ export function UsersDirectoryTab() {
               icon={Plus}
               onClick={() => setIsAddModalOpen(true)}
             />
-
-            <span className="font-mono tabular-nums text-xs font-semibold px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
-              {filteredCandidates.length} Active Candidates
-            </span>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
-          {/* Search Box */}
-          <div className="sm:col-span-6 relative">
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search candidate name, roll code, district (Kathmandu, Pokhara)..."
-              className="w-full h-9 pl-8 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-            {searchQuery && (
-              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
-                <ActionButton
-                  title="Clear search"
-                  icon={X}
-                  color="zinc"
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => setSearchQuery('')}
-                />
-              </span>
-            )}
-          </div>
-
-          {/* Cadre Filter */}
-          <div className="sm:col-span-3">
-            <select
-              value={cadreFilter}
-              onChange={(e) => setCadreFilter(e.target.value)}
-              aria-label="Filter by target cadre"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-            >
-              <option value="all">All Cadres</option>
-              <option value="section-officer">Section Officer (शाखा अधिकृत)</option>
-              <option value="nayab-subba">Nayab Subba (नायब सुब्बा)</option>
-              <option value="kharidar">Kharidar (खरिदार)</option>
-            </select>
-          </div>
-
-          {/* Status Filter */}
-          <div className="sm:col-span-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              aria-label="Filter by standing"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-            >
-              <option value="all">All Standings</option>
-              <option value="ranker">Top Rankers (&gt;95th %ile)</option>
-              <option value="merit">Merit Standings</option>
-              <option value="active">Active Daily Aspirants</option>
-              <option value="editor">Review Editors</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Candidate Display: Table or Cards */}
-      {viewMode === 'table' ? (
-        <SharedTable<CandidateUser>
-          data={filteredCandidates}
-          columns={columns}
-          keyExtractor={(cand) => cand.id}
-          pagination={true}
-          defaultPageSize={10}
-          pageSizeOptions={[10, 20, 50]}
-          emptyMessage="No candidates matched your search criteria"
-          emptyDescription="Try clearing your search query or switching cadre filters."
-          emptyAction={
-            <ActionButton
-              label="Reset Filters"
-              title="Clear search query and cadre filters"
-              color="blue"
-              variant="solid"
-              size="sm"
-              icon={RotateCcw}
-              onClick={() => {
-                setSearchQuery('');
-                setCadreFilter('all');
-                setStatusFilter('all');
-              }}
-            />
-          }
-        />
-      ) : filteredCandidates.length === 0 ? (
-        <div className="py-12 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl space-y-2 bg-white dark:bg-zinc-900">
-          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-            No candidates matched your search criteria
-          </p>
-          <p className="text-xs text-zinc-500">
-            Try resetting your search query or cadre filters.
-          </p>
-          <div className="pt-2">
-            <ActionButton
-              label="Reset Filters"
-              title="Clear search query and cadre filters"
-              color="blue"
-              variant="solid"
-              size="sm"
-              icon={RotateCcw}
-              onClick={() => {
-                setSearchQuery('');
-                setCadreFilter('all');
-                setStatusFilter('all');
-              }}
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-          {filteredCandidates.map((cand) => (
-            <article
-              key={cand.id}
-              className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 space-y-4 hover:border-blue-600/50 dark:hover:border-blue-400/50 transition-colors shadow-2xs flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div
-                    className={`w-11 h-11 rounded-full bg-gradient-to-tr ${cand.avatarColor} text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs`}
-                  >
-                    {cand.nameEn[0]}
-                  </div>
-                  <span
-                    className={`font-mono text-[10.5px] font-semibold px-2 py-0.5 rounded border ${
-                      cand.status === 'ranker'
-                        ? 'bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
-                        : cand.status === 'merit'
-                          ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
-                          : cand.status === 'editor'
-                            ? 'bg-purple-50 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-700'
-                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
-                    }`}
-                  >
-                    {cand.status === 'ranker'
-                      ? 'Ranker'
+        }
+        renderCard={(cand) => (
+          <article
+            key={cand.id}
+            className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 space-y-4 hover:border-blue-600/50 dark:hover:border-blue-400/50 transition-colors shadow-2xs flex flex-col justify-between"
+          >
+            <div className="space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div
+                  className={`w-11 h-11 rounded-full bg-gradient-to-tr ${cand.avatarColor} text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs`}
+                >
+                  {cand.nameEn[0]}
+                </div>
+                <span
+                  className={`font-mono text-[10.5px] font-semibold px-2 py-0.5 rounded border ${
+                    cand.status === 'ranker'
+                      ? 'bg-amber-50 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700'
                       : cand.status === 'merit'
-                        ? 'Merit'
+                        ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
                         : cand.status === 'editor'
-                          ? 'Editor'
-                          : 'Active'}
-                  </span>
-                </div>
+                          ? 'bg-purple-50 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-700'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
+                  }`}
+                >
+                  {cand.status === 'ranker'
+                    ? 'Ranker'
+                    : cand.status === 'merit'
+                      ? 'Merit'
+                      : cand.status === 'editor'
+                        ? 'Editor'
+                        : 'Active'}
+                </span>
+              </div>
 
-                <div>
-                  <h4 className="font-serif font-bold text-zinc-950 dark:text-zinc-50 text-base leading-snug">
-                    {cand.nameEn}
-                  </h4>
-                  <p lang="ne" className="text-xs text-zinc-500 font-medium">
-                    {cand.nameNe}
-                  </p>
-                  <p className="mt-1 text-[11px] text-zinc-500 font-mono">
-                    {cand.rollCode} · {cand.district}
-                  </p>
-                </div>
-
-                <div className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 space-y-1 text-xs">
-                  <span className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block">
-                    Target Cadre
-                  </span>
-                  <span className="font-medium text-zinc-800 dark:text-zinc-200 block truncate">
-                    {cand.targetCadreLabel}
-                  </span>
-                </div>
-
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
-                  {cand.bio}
+              <div>
+                <h4 className="font-serif font-bold text-zinc-950 dark:text-zinc-50 text-base leading-snug">
+                  {cand.nameEn}
+                </h4>
+                <p lang="ne" className="text-xs text-zinc-500 font-medium">
+                  {cand.nameNe}
+                </p>
+                <p className="mt-1 text-[11px] text-zinc-500 font-mono">
+                  {cand.rollCode} · {cand.district}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
-                <div className="grid grid-cols-2 gap-2 text-xs font-mono tabular-nums">
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block">Mock Avg</span>
-                    <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                      {cand.mockAverageScore}%
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block">Percentile</span>
-                    <span className="font-bold text-blue-700 dark:text-blue-400">
-                      {cand.mockPercentile}th %ile
-                    </span>
-                  </div>
-                </div>
+              <div className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-800 space-y-1 text-xs">
+                <span className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block">
+                  Target Cadre
+                </span>
+                <span className="font-medium text-zinc-800 dark:text-zinc-200 block truncate">
+                  {cand.targetCadreLabel}
+                </span>
+              </div>
 
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                {cand.bio}
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-xs font-mono tabular-nums">
+                <div>
+                  <span className="text-[10px] text-zinc-400 block">Mock Avg</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                    {cand.mockAverageScore}%
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-zinc-400 block">Percentile</span>
+                  <span className="font-bold text-blue-700 dark:text-blue-400">
+                    {cand.mockPercentile}th %ile
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5">
                 <ActionButton
                   label="View Dossier"
                   title={`View detailed dossier for ${cand.nameEn}`}
-                  color="zinc"
+                  color="blue"
                   variant="outline"
                   size="sm"
                   icon={UserCheck}
-                  className="w-full"
+                  className="flex-1"
                   onClick={() => setSelectedCandidate(cand)}
                 />
+                <SharedActionMenu
+                  items={[
+                    {
+                      id: 'dossier',
+                      label: 'Candidate Dossier',
+                      description: `${cand.district}, ${cand.province}`,
+                      icon: UserCheck,
+                      color: 'blue',
+                      onClick: () => setSelectedCandidate(cand),
+                    },
+                    {
+                      id: 'scores',
+                      label: 'Mock Exam Scorecard',
+                      description: `${cand.mockAverageScore}% · ${cand.mockPercentile}th Percentile`,
+                      icon: Award,
+                      color: 'emerald',
+                      onClick: () => setSelectedCandidate(cand),
+                    },
+                    {
+                      id: 'syllabus',
+                      label: 'Target Syllabus Area',
+                      description: cand.focusArea,
+                      icon: BookOpen,
+                      color: 'purple',
+                      onClick: () => setSelectedCandidate(cand),
+                    },
+                    {
+                      id: 'copy-roll',
+                      label: `Copy Roll (${cand.rollCode})`,
+                      icon: Copy,
+                      color: 'zinc',
+                      divider: true,
+                      onClick: () => {
+                        navigator.clipboard.writeText(cand.rollCode);
+                      },
+                    },
+                  ]}
+                  title={`Actions for ${cand.nameEn}`}
+                  color="zinc"
+                  variant="outline"
+                  size="sm"
+                  width="w-60"
+                  header={cand.rollCode}
+                />
               </div>
-            </article>
-          ))}
-        </div>
-      )}
+            </div>
+          </article>
+        )}
+        emptyMessage="No candidates matched your search criteria"
+        emptyDescription="Try clearing your search query or switching cadre filters."
+      />
 
       {/* Candidate Detail Dossier Modal */}
       {selectedCandidate && (

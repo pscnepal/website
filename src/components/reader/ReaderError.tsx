@@ -7,12 +7,14 @@ import { Button } from '../ui/Button';
 
 interface ReaderErrorProps {
   error: PdfErrorInfo;
+  documentUrl?: string | null;
   onRetry: () => void;
   onSubmitPassword?: (password: string) => void;
 }
 
 export function ReaderError({
   error,
+  documentUrl,
   onRetry,
   onSubmitPassword,
 }: ReaderErrorProps) {
@@ -25,6 +27,10 @@ export function ReaderError({
     if (!passwordInput.trim() || !onSubmitPassword) return;
     onSubmitPassword(passwordInput);
   };
+
+  const isExternalUrl =
+    documentUrl &&
+    (documentUrl.startsWith('http://') || documentUrl.startsWith('https://'));
 
   return (
     <div className="flex-1 flex items-center justify-center p-6">
@@ -52,6 +58,35 @@ export function ReaderError({
             )}
           </div>
         </div>
+
+        {/* If the document has a direct external web URL, provide direct open & download actions */}
+        {isExternalUrl && (
+          <div className="mt-5 p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 space-y-3">
+            <p className="text-xs font-medium text-blue-900 dark:text-blue-200">
+              This document is hosted on an official external government server.
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href={documentUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-2xs transition-colors"
+              >
+                <span>Open Official URL in New Tab</span>
+              </a>
+              <a
+                href={documentUrl}
+                download
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-750 transition-colors"
+              >
+                <span>Download PDF</span>
+              </a>
+            </div>
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
+              Tip: You can download the file and drag it into the box below to view it inside the 3D flipbook reader.
+            </p>
+          </div>
+        )}
 
         {isPasswordPrompt && onSubmitPassword ? (
           <form onSubmit={handlePasswordForm} className="mt-6 flex gap-2.5">

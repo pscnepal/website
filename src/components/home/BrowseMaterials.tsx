@@ -42,6 +42,10 @@ export function BrowseMaterials() {
     for (const q of ALL_QUIZ_QUESTIONS) {
       if (q.sourcePath) {
         map[q.sourcePath] = (map[q.sourcePath] ?? 0) + 1;
+        const resolved = resolveSampleUrl(q.sourcePath);
+        if (resolved && resolved !== q.sourcePath) {
+          map[resolved] = (map[resolved] ?? 0) + 1;
+        }
       }
     }
     return map;
@@ -52,6 +56,10 @@ export function BrowseMaterials() {
     for (const q of WRITTEN_QUESTIONS) {
       if (q.sourcePath) {
         map[q.sourcePath] = (map[q.sourcePath] ?? 0) + 1;
+        const resolved = resolveSampleUrl(q.sourcePath);
+        if (resolved && resolved !== q.sourcePath) {
+          map[resolved] = (map[resolved] ?? 0) + 1;
+        }
       }
     }
     return map;
@@ -500,9 +508,18 @@ export function BrowseMaterials() {
                     const fullUrl = resolveSampleUrl(item.path);
                     const bookId = createBookIdFromUrl(fullUrl);
                     const savedProgress = readingProgress[bookId];
-                    const linkedQuestions = quizCountBySourcePath[item.path] ?? 0;
+                    const linkedQuestions =
+                      (quizCountBySourcePath[item.path] ?? 0) ||
+                      (quizCountBySourcePath[fullUrl] ?? 0) ||
+                      (item.externalSourceUrl
+                        ? quizCountBySourcePath[item.externalSourceUrl] ?? 0
+                        : 0);
                     const linkedWritten =
-                      writtenCountBySourcePath[item.path] ?? 0;
+                      (writtenCountBySourcePath[item.path] ?? 0) ||
+                      (writtenCountBySourcePath[fullUrl] ?? 0) ||
+                      (item.externalSourceUrl
+                        ? writtenCountBySourcePath[item.externalSourceUrl] ?? 0
+                        : 0);
                     const completionPct =
                       savedProgress && savedProgress.totalPages > 0
                         ? Math.min(

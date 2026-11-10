@@ -538,6 +538,7 @@ export function ReaderPage() {
         {activeError ? (
           <ReaderError
             error={activeError}
+            documentUrl={resolvedSource.url}
             onRetry={() => setRetryKey((k) => k + 1)}
             onSubmitPassword={(pw) => {
               setPdfPassword(pw);

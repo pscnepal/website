@@ -5,9 +5,7 @@ import {
   Copy,
   Download,
   ExternalLink,
-  RotateCcw,
-  Search,
-  X,
+  FileText,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
@@ -17,8 +15,16 @@ import {
 } from '../../data/readingMaterials';
 import { resolveSampleUrl } from '../../utils/urlHelpers';
 import { ActionButton } from '../common/ActionButton';
+import {
+  SharedActionMenu,
+  type ActionMenuItem,
+} from '../common/SharedActionMenu';
 import { ReactionButtons } from '../common/ReactionButtons';
-import { SharedTable, type ColumnDef } from '../common/SharedTable';
+import {
+  SharedDataTable,
+  type ColumnDef,
+  type TableFilterDef,
+} from '../common/SharedDataTable';
 
 type MaterialTableRow = ReadingMaterialItem & {
   categoryName: string;
@@ -145,11 +151,62 @@ export function MaterialsInventoryTab() {
       {
         id: 'actions',
         header: 'Actions',
-        width: 'w-36',
+        width: 'w-32',
         align: 'right',
         render: (item) => {
           const fullUrl = resolveSampleUrl(item.path);
           const isCopied = copiedId === item.id;
+
+          const actionMenuItems: ActionMenuItem[] = [
+            {
+              id: 'flipbook-read',
+              label: '3D Flipbook Reader',
+              description: 'Interactive page-turning view',
+              icon: BookOpen,
+              color: 'blue',
+              to: `/read?url=${encodeURIComponent(fullUrl)}`,
+              onClick: () => dispatch(recordView({ itemId: item.id })),
+            },
+            {
+              id: 'pdf-download',
+              label: 'Download Official PDF',
+              description: `${item.pages} pages archived document`,
+              icon: Download,
+              color: 'emerald',
+              href: fullUrl,
+              download: true,
+            },
+            ...(item.externalSourceUrl
+              ? [
+                  {
+                    id: 'gov-source',
+                    label: 'Official Gov Portal',
+                    description: item.authority,
+                    icon: ExternalLink,
+                    color: 'purple' as const,
+                    href: item.externalSourceUrl,
+                    target: '_blank',
+                  },
+                ]
+              : []),
+            {
+              id: 'copy-url',
+              label: isCopied ? 'URL Copied!' : 'Copy Direct URL',
+              description: 'Shareable PDF link',
+              icon: isCopied ? Check : Copy,
+              color: isCopied ? 'emerald' : 'zinc',
+              onClick: () => handleCopy(fullUrl, item.id),
+              divider: true,
+            },
+            {
+              id: 'doc-meta',
+              label: `${item.codeOrEdition} Archive`,
+              description: `${item.pages} pages · ${item.authority}`,
+              icon: FileText,
+              color: 'zinc',
+            },
+          ];
+
           return (
             <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
               <ActionButton
@@ -162,134 +219,90 @@ export function MaterialsInventoryTab() {
                 size="xs"
                 icon={BookOpen}
               />
-              <ActionButton
-                href={fullUrl}
-                download
-                title="Download PDF"
+              <SharedActionMenu
+                items={actionMenuItems}
+                title={`Document actions for ${item.title}`}
                 color="zinc"
                 variant="outline"
                 size="xs"
-                icon={Download}
-              />
-              <ActionButton
-                onClick={() => handleCopy(fullUrl, item.id)}
-                title={isCopied ? 'Direct URL copied!' : 'Copy direct document URL'}
-                color={isCopied ? 'emerald' : 'zinc'}
-                variant="outline"
-                size="xs"
-                icon={isCopied ? Check : Copy}
+                width="w-64"
+                header={item.codeOrEdition}
               />
             </div>
           );
         },
       },
     ],
-    [copiedId]
+    [copiedId, dispatch]
   );
+
+  const tableFilters: TableFilterDef[] = useMemo(
+    () => [
+      {
+        id: 'category',
+        label: 'Category',
+        value: selectedCat,
+        onChange: setSelectedCat,
+        options: [
+          { label: `All Collections (${allItems.length})`, value: 'all' },
+          ...READING_MATERIAL_CATEGORIES.map((cat) => ({
+            label: `${cat.name} (${cat.items.length})`,
+            value: cat.id,
+          })),
+        ],
+      },
+      {
+        id: 'rating',
+        label: 'Rating',
+        value: reactionFilter,
+        onChange: (val) => setReactionFilter(val as any),
+        options: [
+          { label: 'All Document Ratings', value: 'all' },
+          { label: 'Liked (★ Saved)', value: 'liked' },
+          { label: 'Disliked', value: 'disliked' },
+          { label: 'Unrated Only', value: 'unrated' },
+        ],
+      },
+    ],
+    [selectedCat, reactionFilter, allItems.length]
+  );
+
+  const isFiltered =
+    selectedCat !== 'all' ||
+    reactionFilter !== 'all' ||
+    Boolean(searchQuery.trim());
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedCat('all');
+    setReactionFilter('all');
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header & Controls */}
-      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-          <div>
-            <h3 className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50">
-              Official Study Materials &amp; Parichaya Archives
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Complete inventory of 13 official editions of Nepal Parichaya (२०६९—२०८२), Constitution, and Statutory Acts
-            </p>
-          </div>
-          <span className="font-mono tabular-nums text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 self-start sm:self-auto">
-            {filteredItems.length} Documents Indexed
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
-          {/* Search Box */}
-          <div className="sm:col-span-6 relative">
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search document title, edition (13th, 12th, २०८२), publisher, or keyword..."
-              className="w-full h-9 pl-8 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-            {searchQuery && (
-              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
-                <ActionButton
-                  title="Clear search"
-                  icon={X}
-                  color="zinc"
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => setSearchQuery('')}
-                />
-              </span>
-            )}
-          </div>
-
-          {/* Category Filter */}
-          <div className="sm:col-span-3">
-            <select
-              value={selectedCat}
-              onChange={(e) => setSelectedCat(e.target.value)}
-              aria-label="Filter by material category"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-            >
-              <option value="all">All Categories</option>
-              {READING_MATERIAL_CATEGORIES.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name} ({cat.items.length})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Reaction / Bookmark Filter */}
-          <div className="sm:col-span-3">
-            <select
-              value={reactionFilter}
-              onChange={(e) => setReactionFilter(e.target.value as any)}
-              aria-label="Filter by material rating"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer font-medium"
-            >
-              <option value="all">All Document Ratings</option>
-              <option value="liked">Liked (★ Saved)</option>
-              <option value="disliked">Disliked</option>
-              <option value="unrated">Unrated Only</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Shared Materials Inventory Table */}
-      <SharedTable<MaterialTableRow>
+      {/* Integrated Shared Data Table with Search, Filters, CSV Export, and Pagination */}
+      <SharedDataTable<MaterialTableRow>
+        title="Official Study Materials & Parichaya Archives"
+        subtitle="Complete inventory of 13 official editions of Nepal Parichaya (२०६९—२०८२), Constitution, and Statutory Acts"
+        totalCount={allItems.length}
         data={filteredItems}
         columns={columns}
         keyExtractor={(item) => item.id}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search document title, edition (13th, 12th, २०८२), publisher, or keyword..."
+        filters={tableFilters}
+        isFiltered={isFiltered}
+        onResetFilters={handleResetFilters}
+        enableCsvExport={true}
+        csvFilename="psc-materials-inventory.csv"
         pagination={true}
         defaultPageSize={15}
-        pageSizeOptions={[10, 15, 25]}
+        pageSizeOptions={[10, 15, 25, 50]}
         emptyMessage="No documents match your query"
-        emptyDescription="Try clearing your search query or switching to All Categories."
-        emptyAction={
-          <ActionButton
-            label="Reset Filters"
-            title="Reset filters and search query"
-            color="blue"
-            variant="solid"
-            size="sm"
-            icon={RotateCcw}
-            onClick={() => {
-              setSearchQuery('');
-              setSelectedCat('all');
-              setReactionFilter('all');
-            }}
-          />
-        }
+        emptyDescription="Try clearing your search query or switching to All Collections."
       />
     </div>
   );
 }
+

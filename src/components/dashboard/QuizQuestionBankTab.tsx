@@ -4,8 +4,8 @@ import {
   CheckCircle2,
   Copy,
   Eye,
-  RotateCcw,
-  Search,
+  FileText,
+  Play,
   X,
   XCircle,
 } from 'lucide-react';
@@ -13,8 +13,16 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
 import { ALL_QUIZ_QUESTIONS, type QuizOptionKey, type QuizQuestion } from '../../data/quizData';
 import { ActionButton } from '../common/ActionButton';
+import {
+  SharedActionMenu,
+  type ActionMenuItem,
+} from '../common/SharedActionMenu';
 import { ReactionButtons } from '../common/ReactionButtons';
-import { SharedTable, type ColumnDef } from '../common/SharedTable';
+import {
+  SharedDataTable,
+  type ColumnDef,
+  type TableFilterDef,
+} from '../common/SharedDataTable';
 
 export function QuizQuestionBankTab() {
   const dispatch = useAppDispatch();
@@ -169,9 +177,53 @@ export function QuizQuestionBankTab() {
         id: 'actions',
         header: 'Actions',
         align: 'right',
-        width: 'w-28',
+        width: 'w-32',
         render: (q) => {
           const isCopied = copiedId === q.id;
+
+          const actionMenuItems: ActionMenuItem[] = [
+            {
+              id: 'inspect',
+              label: 'View & Test Question',
+              description: `${q.options.length} verified options with rationale`,
+              icon: Eye,
+              color: 'blue',
+              onClick: () => {
+                dispatch(recordView({ itemId: q.id }));
+                setSelectedQuestion(q);
+                setTestSelectedOption(null);
+              },
+            },
+            {
+              id: 'practice',
+              label: 'Launch MCQ Sandbox',
+              description: 'Practice simulated timed exam',
+              icon: Play,
+              color: 'emerald',
+              to: '/quiz',
+            },
+            {
+              id: 'copy-text',
+              label: isCopied ? 'Question Copied!' : 'Copy Question Text',
+              description: 'Formatted with options & explanation',
+              icon: isCopied ? Check : Copy,
+              color: isCopied ? 'emerald' : 'zinc',
+              onClick: () => handleCopyQuestion(q),
+              divider: true,
+            },
+            {
+              id: 'copy-id',
+              label: `Copy Code (${q.id})`,
+              icon: FileText,
+              color: 'purple',
+              onClick: () => {
+                navigator.clipboard.writeText(q.id);
+                setCopiedId(q.id);
+                setTimeout(() => setCopiedId(null), 2000);
+              },
+            },
+          ];
+
           return (
             <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
               <ActionButton
@@ -188,139 +240,98 @@ export function QuizQuestionBankTab() {
                 }}
               />
 
-              <ActionButton
-                title={isCopied ? 'Copied to clipboard' : 'Copy question text'}
-                icon={isCopied ? Check : Copy}
-                color={isCopied ? 'emerald' : 'zinc'}
+              <SharedActionMenu
+                items={actionMenuItems}
+                title={`More actions for question ${q.id}`}
+                color="zinc"
                 variant="outline"
                 size="xs"
-                onClick={() => handleCopyQuestion(q)}
+                width="w-60"
+                header={`MCQ ${q.id}`}
               />
             </div>
           );
         },
       },
     ];
-  }, [copiedId]);
+  }, [copiedId, dispatch]);
+
+  const tableFilters: TableFilterDef[] = useMemo(
+    () => [
+      {
+        id: 'subject',
+        label: 'Subject',
+        value: subjectFilter,
+        onChange: setSubjectFilter,
+        options: [
+          { label: `All Subjects (${ALL_QUIZ_QUESTIONS.length})`, value: 'all' },
+          ...availableSubjects.map((sub) => ({ label: sub, value: sub })),
+        ],
+      },
+      {
+        id: 'difficulty',
+        label: 'Difficulty',
+        value: difficultyFilter,
+        onChange: setDifficultyFilter,
+        options: [
+          { label: 'All Difficulties', value: 'all' },
+          { label: 'Easy (Foundation)', value: 'Easy' },
+          { label: 'Medium (Standard)', value: 'Medium' },
+          { label: 'Hard (Discriminator)', value: 'Hard' },
+        ],
+      },
+      {
+        id: 'rating',
+        label: 'Rating',
+        value: reactionFilter,
+        onChange: (val) => setReactionFilter(val as any),
+        options: [
+          { label: 'All Ratings', value: 'all' },
+          { label: 'Liked (★ Saved)', value: 'liked' },
+          { label: 'Disliked', value: 'disliked' },
+          { label: 'Unrated Only', value: 'unrated' },
+        ],
+      },
+    ],
+    [subjectFilter, difficultyFilter, reactionFilter, availableSubjects]
+  );
+
+  const isFiltered =
+    subjectFilter !== 'all' ||
+    difficultyFilter !== 'all' ||
+    reactionFilter !== 'all' ||
+    Boolean(searchQuery.trim());
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSubjectFilter('all');
+    setDifficultyFilter('all');
+    setReactionFilter('all');
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header & Filter Controls */}
-      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-          <div>
-            <h3 className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50">
-              Objective MCQ Question Bank
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Complete index of authentic Lok Sewa multiple-choice questions with verified keys and rationale
-            </p>
-          </div>
-          <span className="font-mono tabular-nums text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 self-start sm:self-auto">
-            {filteredQuestions.length} of {ALL_QUIZ_QUESTIONS.length} Questions
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
-          {/* Search Box */}
-          <div className="sm:col-span-5 relative">
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by keyword, topic, question ID, or option..."
-              className="w-full h-9 pl-8 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-            {searchQuery && (
-              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
-                <ActionButton
-                  title="Clear search"
-                  icon={X}
-                  color="zinc"
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => setSearchQuery('')}
-                />
-              </span>
-            )}
-          </div>
-
-          {/* Subject Filter */}
-          <div className="sm:col-span-3">
-            <select
-              value={subjectFilter}
-              onChange={(e) => setSubjectFilter(e.target.value)}
-              aria-label="Filter by subject"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-            >
-              <option value="all">All Subjects ({ALL_QUIZ_QUESTIONS.length})</option>
-              {availableSubjects.map((sub) => (
-                <option key={sub} value={sub}>
-                  {sub}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Difficulty Filter */}
-          <div className="sm:col-span-2">
-            <select
-              value={difficultyFilter}
-              onChange={(e) => setDifficultyFilter(e.target.value)}
-              aria-label="Filter by difficulty"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-            >
-              <option value="all">All Difficulties</option>
-              <option value="Easy">Easy (Foundation)</option>
-              <option value="Medium">Medium (Standard)</option>
-              <option value="Hard">Hard (High Discriminator)</option>
-            </select>
-          </div>
-
-          {/* Reaction / Bookmark Filter */}
-          <div className="sm:col-span-2">
-            <select
-              value={reactionFilter}
-              onChange={(e) => setReactionFilter(e.target.value as any)}
-              aria-label="Filter by candidate rating"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer font-medium"
-            >
-              <option value="all">All Ratings</option>
-              <option value="liked">Liked (★ Saved)</option>
-              <option value="disliked">Disliked</option>
-              <option value="unrated">Unrated Only</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Shared Question Table */}
-      <SharedTable<QuizQuestion>
+      {/* Integrated Shared Data Table with Search, Filters, CSV Export, and Pagination */}
+      <SharedDataTable<QuizQuestion>
+        title="Objective MCQ Question Bank"
+        subtitle="Complete repository of authentic Lok Sewa multiple-choice questions with verified keys and official rationale"
+        totalCount={ALL_QUIZ_QUESTIONS.length}
         data={filteredQuestions}
         columns={columns}
         keyExtractor={(q) => q.id}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search by keyword, topic, question ID, or option text..."
+        filters={tableFilters}
+        isFiltered={isFiltered}
+        onResetFilters={handleResetFilters}
+        enableCsvExport={true}
+        csvFilename="psc-objective-mcq-question-bank.csv"
         pagination={true}
         defaultPageSize={15}
         pageSizeOptions={[10, 15, 25, 50]}
         emptyMessage="No objective questions match your search filters"
-        emptyDescription="Try clearing your search query or selecting All Subjects."
-        emptyAction={
-          <ActionButton
-            label="Reset Filters"
-            title="Reset question bank filters"
-            icon={RotateCcw}
-            color="blue"
-            variant="solid"
-            size="sm"
-            onClick={() => {
-              setSearchQuery('');
-              setSubjectFilter('all');
-              setDifficultyFilter('all');
-              setReactionFilter('all');
-            }}
-          />
-        }
+        emptyDescription="Try clearing your search query or choosing All Subjects."
       />
 
       {/* Inspect & Test Modal */}

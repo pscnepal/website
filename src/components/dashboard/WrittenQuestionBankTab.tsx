@@ -1,11 +1,10 @@
 import { useMemo, useState } from 'react';
 import {
+  BookOpen,
   Check,
   Copy,
   Eye,
   PenLine,
-  RotateCcw,
-  Search,
   X,
 } from 'lucide-react';
 import {
@@ -16,8 +15,16 @@ import {
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
 import { ActionButton } from '../common/ActionButton';
+import {
+  SharedActionMenu,
+  type ActionMenuItem,
+} from '../common/SharedActionMenu';
 import { ReactionButtons } from '../common/ReactionButtons';
-import { SharedTable, type ColumnDef } from '../common/SharedTable';
+import {
+  SharedDataTable,
+  type ColumnDef,
+  type TableFilterDef,
+} from '../common/SharedDataTable';
 
 export function WrittenQuestionBankTab() {
   const dispatch = useAppDispatch();
@@ -165,21 +172,51 @@ export function WrittenQuestionBankTab() {
         width: 'w-36',
         render: (q) => {
           const isCopied = copiedId === q.id;
+
+          const actionMenuItems: ActionMenuItem[] = [
+            {
+              id: 'inspect-answer',
+              label: 'Inspect Model Answer',
+              description: `Bilingual breakdown & ${q.rubric.length}-point rubric`,
+              icon: Eye,
+              color: 'blue',
+              onClick: () => {
+                dispatch(recordView({ itemId: q.id }));
+                setSelectedQuestion(q);
+              },
+            },
+            {
+              id: 'timed-practice',
+              label: 'Launch Timed Writing Studio',
+              description: `${q.recommendedMinutes} minutes official exam timer`,
+              icon: PenLine,
+              color: 'crimson',
+              to: `/written/${q.id}`,
+            },
+            {
+              id: 'copy-text',
+              label: isCopied ? 'Rubric Copied!' : 'Copy Prompt & Rubric',
+              description: 'Formatted English & Nepali prompts',
+              icon: isCopied ? Check : Copy,
+              color: isCopied ? 'emerald' : 'zinc',
+              onClick: () => handleCopy(q),
+              divider: true,
+            },
+            {
+              id: 'paper-info',
+              label: `${q.paper} Syllabus Info`,
+              description: q.subject,
+              icon: BookOpen,
+              color: 'purple',
+              onClick: () => {
+                dispatch(recordView({ itemId: q.id }));
+                setSelectedQuestion(q);
+              },
+            },
+          ];
+
           return (
             <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-              <ActionButton
-                label="Answer"
-                title={`Inspect model answer for ${q.id}`}
-                icon={Eye}
-                color="zinc"
-                variant="outline"
-                size="xs"
-                onClick={() => {
-                  dispatch(recordView({ itemId: q.id }));
-                  setSelectedQuestion(q);
-                }}
-              />
-
               <ActionButton
                 label="Practice"
                 title={`Launch Timed Writing Sandbox for ${q.id}`}
@@ -190,138 +227,97 @@ export function WrittenQuestionBankTab() {
                 to={`/written/${q.id}`}
               />
 
-              <ActionButton
-                title={isCopied ? 'Copied' : 'Copy question & rubric'}
-                icon={isCopied ? Check : Copy}
-                color={isCopied ? 'emerald' : 'zinc'}
+              <SharedActionMenu
+                items={actionMenuItems}
+                title={`Actions for written prompt ${q.id}`}
+                color="zinc"
                 variant="outline"
                 size="xs"
-                onClick={() => handleCopy(q)}
+                width="w-64"
+                header={`${q.id} · ${q.marks} Marks`}
               />
             </div>
           );
         },
       },
     ];
-  }, [copiedId]);
+  }, [copiedId, dispatch]);
+
+  const tableFilters: TableFilterDef[] = useMemo(
+    () => [
+      {
+        id: 'paper',
+        label: 'Paper',
+        value: paperFilter,
+        onChange: setPaperFilter,
+        options: [
+          { label: `All Papers (${WRITTEN_QUESTIONS.length})`, value: 'all' },
+          ...WRITTEN_PAPERS.map((paper) => ({ label: paper, value: paper })),
+        ],
+      },
+      {
+        id: 'marks',
+        label: 'Marks',
+        value: marksFilter,
+        onChange: (val) => setMarksFilter(val as any),
+        options: [
+          { label: 'All Marks', value: 'all' },
+          { label: '10 Marks (18m)', value: '10' },
+          { label: '5 Marks (9m)', value: '5' },
+        ],
+      },
+      {
+        id: 'rating',
+        label: 'Rating',
+        value: reactionFilter,
+        onChange: (val) => setReactionFilter(val as any),
+        options: [
+          { label: 'All Ratings', value: 'all' },
+          { label: 'Liked (★ Saved)', value: 'liked' },
+          { label: 'Disliked', value: 'disliked' },
+          { label: 'Unrated Only', value: 'unrated' },
+        ],
+      },
+    ],
+    [paperFilter, marksFilter, reactionFilter]
+  );
+
+  const isFiltered =
+    paperFilter !== 'all' ||
+    marksFilter !== 'all' ||
+    reactionFilter !== 'all' ||
+    Boolean(searchQuery.trim());
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setPaperFilter('all');
+    setMarksFilter('all');
+    setReactionFilter('all');
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header & Controls */}
-      <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-          <div>
-            <h3 className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50">
-              PSC Written Exam Long Questions Bank
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Curated Lok Sewa subjective questions for Section Officer Papers II, III, and IV with bilingual model solutions
-            </p>
-          </div>
-          <span className="font-mono tabular-nums text-xs font-semibold px-2.5 py-1 rounded-md bg-crimson-50 dark:bg-crimson-950/80 text-crimson-800 dark:text-crimson-300 border border-crimson-200 dark:border-crimson-800 self-start sm:self-auto">
-            {filteredQuestions.length} of {WRITTEN_QUESTIONS.length} Questions
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
-          {/* Search Box */}
-          <div className="sm:col-span-5 relative">
-            <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search in English or नेपाली (Federalism, 16th Plan, RTI, सुशासन)..."
-              className="w-full h-9 pl-8 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-            {searchQuery && (
-              <span className="absolute right-1.5 top-1/2 -translate-y-1/2">
-                <ActionButton
-                  title="Clear search"
-                  icon={X}
-                  color="zinc"
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => setSearchQuery('')}
-                />
-              </span>
-            )}
-          </div>
-
-          {/* Paper Select */}
-          <div className="sm:col-span-3">
-            <select
-              value={paperFilter}
-              onChange={(e) => setPaperFilter(e.target.value)}
-              aria-label="Filter by PSC written paper"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-            >
-              <option value="all">All Papers (Papers II, III &amp; IV)</option>
-              {WRITTEN_PAPERS.map((paper) => (
-                <option key={paper} value={paper}>
-                  {paper}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Marks Filter */}
-          <div className="sm:col-span-2">
-            <select
-              value={marksFilter}
-              onChange={(e) => setMarksFilter(e.target.value as any)}
-              aria-label="Filter by marks weightage"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer font-mono"
-            >
-              <option value="all">All Marks</option>
-              <option value="10">10 Marks (18m)</option>
-              <option value="5">5 Marks (9m)</option>
-            </select>
-          </div>
-
-          {/* Reaction / Bookmark Filter */}
-          <div className="sm:col-span-2">
-            <select
-              value={reactionFilter}
-              onChange={(e) => setReactionFilter(e.target.value as any)}
-              aria-label="Filter by candidate rating"
-              className="w-full h-9 px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer font-medium"
-            >
-              <option value="all">All Ratings</option>
-              <option value="liked">Liked (★ Saved)</option>
-              <option value="disliked">Disliked</option>
-              <option value="unrated">Unrated Only</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Shared Written Question Table */}
-      <SharedTable<WrittenQuestion>
+      {/* Integrated Shared Data Table with Search, Filters, CSV Export, and Pagination */}
+      <SharedDataTable<WrittenQuestion>
+        title="PSC Written Exam Long Questions Bank"
+        subtitle="Curated Lok Sewa subjective questions for Section Officer Papers II, III, and IV with bilingual model solutions"
+        totalCount={WRITTEN_QUESTIONS.length}
         data={filteredQuestions}
         columns={columns}
         keyExtractor={(q) => q.id}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search in English or नेपाली (Federalism, 16th Plan, RTI, सुशासन)..."
+        filters={tableFilters}
+        isFiltered={isFiltered}
+        onResetFilters={handleResetFilters}
+        enableCsvExport={true}
+        csvFilename="psc-written-question-bank.csv"
         pagination={true}
         defaultPageSize={15}
-        pageSizeOptions={[10, 15, 25]}
+        pageSizeOptions={[10, 15, 25, 50]}
         emptyMessage="No written questions match your search filters"
         emptyDescription="Try clearing your search query or selecting All Papers."
-        emptyAction={
-          <ActionButton
-            label="Reset Filters"
-            title="Reset written bank filters"
-            icon={RotateCcw}
-            color="crimson"
-            variant="solid"
-            size="sm"
-            onClick={() => {
-              setSearchQuery('');
-              setPaperFilter('all');
-              setMarksFilter('all');
-              setReactionFilter('all');
-            }}
-          />
-        }
       />
 
       {/* Model Answer Preview Modal */}

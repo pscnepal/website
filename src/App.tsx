@@ -19,7 +19,13 @@ import { SeoManager } from './components/seo/SeoManager';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { CurrentAffairsPage } from './pages/CurrentAffairsPage';
-import { DashboardPage } from './pages/DashboardPage';
+import { DashboardLayout } from './components/dashboard/DashboardLayout';
+import { DashboardOverviewPage } from './pages/dashboard/DashboardOverviewPage';
+import { DashboardQuizBankPage } from './pages/dashboard/DashboardQuizBankPage';
+import { DashboardWrittenBankPage } from './pages/dashboard/DashboardWrittenBankPage';
+import { DashboardMaterialsPage } from './pages/dashboard/DashboardMaterialsPage';
+import { DashboardUsersPage } from './pages/dashboard/DashboardUsersPage';
+import { DashboardDataPage } from './pages/dashboard/DashboardDataPage';
 import { FeaturesPage } from './pages/FeaturesPage';
 import { FlashcardsPage } from './pages/FlashcardsPage';
 import { HomePage } from './pages/HomePage';
@@ -114,7 +120,18 @@ export default function App() {
       <LayoutGroup>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          {/* Dedicated Dashboard Section as Separate Pages */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<DashboardOverviewPage />} />
+            <Route path="overview" element={<DashboardOverviewPage />} />
+            <Route path="quiz-bank" element={<DashboardQuizBankPage />} />
+            <Route path="written-bank" element={<DashboardWrittenBankPage />} />
+            <Route path="materials" element={<DashboardMaterialsPage />} />
+            <Route path="users" element={<DashboardUsersPage />} />
+            <Route path="aspirants" element={<Navigate to="/dashboard/users" replace />} />
+            <Route path="data" element={<DashboardDataPage />} />
+            <Route path="backup" element={<Navigate to="/dashboard/data" replace />} />
+          </Route>
           <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
           <Route path="/syllabus" element={<SyllabusPage />} />
           <Route path="/syllabus/:cadreId" element={<SyllabusPage />} />

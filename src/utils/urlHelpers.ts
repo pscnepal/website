@@ -34,6 +34,53 @@ export const SAMPLE_EDITIONS: SampleEdition[] = [
   },
 ];
 
+export const LEGACY_MATERIAL_PATH_MAP: Record<string, string> = {
+  '/materials/psc-section-officer-syllabus.pdf':
+    'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
+  '/materials/psc-nayab-subba-syllabus.pdf':
+    'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
+  '/materials/psc-kharidar-syllabus.pdf':
+    'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
+  '/materials/psc-gk-aptitude-outline.pdf':
+    'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
+  '/materials/official-psc/psc-official-section-officer-phase1.pdf':
+    'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
+  '/materials/official-psc/psc-official-section-officer-phase2.pdf':
+    'https://psc.gov.np/site_uploads/course/202512091043336937fd55e8f3c1.pdf',
+  '/materials/official-psc/psc-official-nayab-subba-phase1.pdf':
+    'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
+  '/materials/official-psc/psc-official-nayab-subba-phase2.pdf':
+    'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f61.pdf',
+  '/materials/official-psc/psc-official-kharidar-phase1.pdf':
+    'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
+  '/materials/official-psc/psc-official-kharidar-phase2.pdf':
+    'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca1.pdf',
+  '/materials/nepal-parichaya-geography.pdf':
+    'https://doib.gov.np/media/app/public/nepal-parichaya-physical-geography.pdf',
+  '/materials/nepal-parichaya-history.pdf':
+    'https://doib.gov.np/media/app/public/nepal-parichaya-history-unification.pdf',
+  '/materials/nepal-parichaya-culture-heritage.pdf':
+    'https://doib.gov.np/media/app/public/nepal-parichaya-culture-heritage.pdf',
+  '/materials/nepal-parichaya-federal-structure.pdf':
+    'https://doib.gov.np/media/app/public/nepal-parichaya-federal-structure.pdf',
+  '/materials/constitution-of-nepal-2072.pdf':
+    'https://lawcommission.gov.np/np/wp-content/uploads/2021/01/Nepal-ko-Sambhidhan-2072.pdf',
+  '/materials/civil-service-act-2049.pdf':
+    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Nijamati-Sewa-Ain-2049.pdf',
+  '/materials/right-to-information-act-2064.pdf':
+    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Suchana-ko-Hak-Sambandhi-Ain-2064.pdf',
+  '/materials/good-governance-act-2064.pdf':
+    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sushashan-Ain-2064.pdf',
+  '/materials/sixteenth-plan-summary.pdf':
+    'https://npc.gov.np/images/category/16th_Plan_Draft_Approved_2081.pdf',
+  '/materials/local-government-operation-act-2074.pdf':
+    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sthaniya-Sarkar-Sanchalan-Ain-2074.pdf',
+  '/materials/corruption-prevention-act-2059.pdf':
+    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Bhrastachar-Niwaran-Ain-2059.pdf',
+  '/materials/public-procurement-fiscal-act.pdf':
+    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sarbajanik-Kharid-Ain-2063.pdf',
+};
+
 export interface UrlValidationResult {
   valid: boolean;
   normalizedUrl: string;
@@ -51,6 +98,14 @@ export function validatePdfUrl(rawInput: string): UrlValidationResult {
       valid: false,
       normalizedUrl: '',
       errorMessage: 'Please enter a PDF URL to open.',
+    };
+  }
+
+  // Check legacy relative path map first
+  if (LEGACY_MATERIAL_PATH_MAP[trimmed]) {
+    return {
+      valid: true,
+      normalizedUrl: LEGACY_MATERIAL_PATH_MAP[trimmed],
     };
   }
 
@@ -188,6 +243,11 @@ export function resolveSampleUrl(path: string): string {
     trimmed.startsWith('data:')
   ) {
     return trimmed;
+  }
+
+  // Check legacy map first
+  if (LEGACY_MATERIAL_PATH_MAP[trimmed]) {
+    return LEGACY_MATERIAL_PATH_MAP[trimmed];
   }
 
   // Look up legacy relative path or material ID in catalog to get updated official web URL
