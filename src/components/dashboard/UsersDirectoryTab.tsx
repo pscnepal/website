@@ -23,6 +23,7 @@ import {
   type ColumnDef,
   type TableFilterDef,
 } from '../common/SharedDataTable';
+import { SharedSearchSelect } from '../common/SharedSearchSelect';
 
 const LOCAL_USERS_KEY = 'psc_nepal_custom_candidates_v1';
 
@@ -706,15 +707,19 @@ export function UsersDirectoryTab() {
                   <label className="font-medium text-zinc-700 dark:text-zinc-300">
                     Target Cadre
                   </label>
-                  <select
+                  <SharedSearchSelect
                     value={formCadre}
-                    onChange={(e) => setFormCadre(e.target.value as any)}
-                    className="w-full h-8 px-2 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  >
-                    <option value="section-officer">Section Officer (शाखा अधिकृत)</option>
-                    <option value="nayab-subba">Nayab Subba (नायब सुब्बा)</option>
-                    <option value="kharidar">Kharidar (खरिदार)</option>
-                  </select>
+                    onChange={(val) => setFormCadre(val as any)}
+                    options={[
+                      { label: 'Section Officer (शाखा अधिकृत)', value: 'section-officer' },
+                      { label: 'Nayab Subba (नायब सुब्बा)', value: 'nayab-subba' },
+                      { label: 'Kharidar (खरिदार)', value: 'kharidar' },
+                    ]}
+                    size="sm"
+                    className="w-full"
+                    popoverWidth="w-full"
+                    enableSearch={false}
+                  />
                 </div>
 
                 <div className="space-y-1">

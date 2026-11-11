@@ -18,6 +18,7 @@ const KEYS = {
   PSC_PREP_STATE: 'psc_nepal_prep_v1',
   CONTACT_INQUIRIES: 'psc_nepal_contact_inquiries_v1',
   REACTIONS: 'psc_nepal_reactions_v1',
+  FLAGGED_QUESTIONS: 'psc_nepal_flagged_questions_v1',
 } as const;
 
 const LEGACY_KEY_FALLBACKS: Record<string, string> = {
@@ -47,6 +48,15 @@ export interface ContactInquiryRecord {
   reference: string;
   message: string;
   createdAt: string;
+}
+
+export interface FlaggedQuestionRecord {
+  questionId: string;
+  flaggedAt: string;
+  source?: 'quiz' | 'simulation';
+  deckTitle?: string;
+  cadreId?: string;
+  note?: string;
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
@@ -285,5 +295,66 @@ export const storageService = {
     itemViews?: Record<string, number>;
   }): void {
     safeWriteJson(KEYS.REACTIONS, reactions);
+  },
+
+  loadFlaggedQuestions(): Record<string, FlaggedQuestionRecord> {
+    const map = safeReadJson<Record<string, FlaggedQuestionRecord>>(
+      KEYS.FLAGGED_QUESTIONS,
+      {}
+    );
+    return map && typeof map === 'object' && !Array.isArray(map) ? map : {};
+  },
+
+  saveFlaggedQuestions(map: Record<string, FlaggedQuestionRecord>): void {
+    safeWriteJson(KEYS.FLAGGED_QUESTIONS, map);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('psc_flagged_questions_changed', { detail: map })
+      );
+    }
+  },
+
+  toggleFlaggedQuestion(
+    questionId: string,
+    meta?: Partial<FlaggedQuestionRecord>
+  ): boolean {
+    const current = this.loadFlaggedQuestions();
+    const isAlreadyFlagged = Boolean(current[questionId]);
+    if (isAlreadyFlagged) {
+      delete current[questionId];
+      this.saveFlaggedQuestions(current);
+      return false;
+    } else {
+      current[questionId] = {
+        questionId,
+        flaggedAt: new Date().toISOString(),
+        source: meta?.source || 'quiz',
+        deckTitle: meta?.deckTitle,
+        cadreId: meta?.cadreId,
+        note: meta?.note || '',
+      };
+      this.saveFlaggedQuestions(current);
+      return true;
+    }
+  },
+
+  removeFlaggedQuestion(questionId: string): void {
+    const current = this.loadFlaggedQuestions();
+    if (current[questionId]) {
+      delete current[questionId];
+      this.saveFlaggedQuestions(current);
+    }
+  },
+
+  updateFlaggedQuestionNote(questionId: string, note: string): void {
+    const current = this.loadFlaggedQuestions();
+    if (current[questionId]) {
+      current[questionId].note = note;
+      this.saveFlaggedQuestions(current);
+    }
+  },
+
+  clearAllFlaggedQuestions(): void {
+    this.saveFlaggedQuestions({});
   },
 };

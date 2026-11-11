@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  Bookmark,
   Check,
   CheckCircle2,
   Copy,
@@ -12,6 +13,7 @@ import {
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
 import { ALL_QUIZ_QUESTIONS, type QuizOptionKey, type QuizQuestion } from '../../data/quizData';
+import { storageService } from '../../services/storageService';
 import { ActionButton } from '../common/ActionButton';
 import {
   SharedActionMenu,
@@ -30,10 +32,26 @@ export function QuizQuestionBankTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [flaggedFilter, setFlaggedFilter] = useState<'all' | 'flagged' | 'unflagged'>('all');
   const [reactionFilter, setReactionFilter] = useState<'all' | 'liked' | 'disliked' | 'unrated'>('all');
   const [selectedQuestion, setSelectedQuestion] = useState<QuizQuestion | null>(null);
   const [testSelectedOption, setTestSelectedOption] = useState<QuizOptionKey | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [flaggedMap, setFlaggedMap] = useState<Record<string, unknown>>(() =>
+    storageService.loadFlaggedQuestions()
+  );
+
+  useEffect(() => {
+    const handleSync = () => {
+      setFlaggedMap(storageService.loadFlaggedQuestions());
+    };
+    window.addEventListener('psc_flagged_questions_changed', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('psc_flagged_questions_changed', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, []);
 
   // Extract unique subjects
   const availableSubjects = useMemo(() => {
@@ -51,6 +69,13 @@ export function QuizQuestionBankTab() {
         return false;
       }
       if (difficultyFilter !== 'all' && q.difficulty !== difficultyFilter) {
+        return false;
+      }
+      const isFlagged = Boolean(flaggedMap[q.id]);
+      if (flaggedFilter === 'flagged' && !isFlagged) {
+        return false;
+      }
+      if (flaggedFilter === 'unflagged' && isFlagged) {
         return false;
       }
       if (reactionFilter === 'liked' && userReactions[q.id] !== 'like') {
@@ -72,7 +97,15 @@ export function QuizQuestionBankTab() {
       }
       return true;
     });
-  }, [searchQuery, subjectFilter, difficultyFilter, reactionFilter, userReactions]);
+  }, [
+    searchQuery,
+    subjectFilter,
+    difficultyFilter,
+    flaggedFilter,
+    flaggedMap,
+    reactionFilter,
+    userReactions,
+  ]);
 
   const handleCopyQuestion = (q: QuizQuestion) => {
     const text = `Q (${q.id}): ${q.question}\n${q.options.map((o) => `${o.key}. ${o.text}`).join('\n')}\nAnswer: ${q.correct_options.join(', ')}\nExplanation: ${q.explanation}`;
@@ -91,11 +124,19 @@ export function QuizQuestionBankTab() {
         width: 'w-28',
         sortable: true,
         sortKey: (q) => q.id,
-        render: (q) => (
-          <span className="font-mono font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
-            {q.id}
-          </span>
-        ),
+        render: (q) => {
+          const isFlagged = Boolean(flaggedMap[q.id]);
+          return (
+            <div className="flex items-center gap-1.5">
+              {isFlagged && (
+                <Bookmark className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+              )}
+              <span className="font-mono font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
+                {q.id}
+              </span>
+            </div>
+          );
+        },
       },
       {
         id: 'prompt',
@@ -203,6 +244,22 @@ export function QuizQuestionBankTab() {
               to: '/quiz',
             },
             {
+              id: 'toggle-flag',
+              label: Boolean(flaggedMap[q.id])
+                ? 'Remove from Flagged'
+                : 'Flag for Review',
+              description: 'Bookmark tricky MCQ for dedicated dashboard review',
+              icon: Bookmark,
+              color: 'amber',
+              onClick: () => {
+                storageService.toggleFlaggedQuestion(q.id, {
+                  source: 'quiz',
+                  deckTitle: q.subject,
+                });
+                setFlaggedMap(storageService.loadFlaggedQuestions());
+              },
+            },
+            {
               id: 'copy-text',
               label: isCopied ? 'Question Copied!' : 'Copy Question Text',
               description: 'Formatted with options & explanation',
@@ -254,7 +311,7 @@ export function QuizQuestionBankTab() {
         },
       },
     ];
-  }, [copiedId, dispatch]);
+  }, [copiedId, dispatch, flaggedMap]);
 
   const tableFilters: TableFilterDef[] = useMemo(
     () => [
@@ -278,6 +335,17 @@ export function QuizQuestionBankTab() {
           { label: 'Easy (Foundation)', value: 'Easy' },
           { label: 'Medium (Standard)', value: 'Medium' },
           { label: 'Hard (Discriminator)', value: 'Hard' },
+        ],
+      },
+      {
+        id: 'flagged',
+        label: 'Flagged for Review',
+        value: flaggedFilter,
+        onChange: (val) => setFlaggedFilter(val as typeof flaggedFilter),
+        options: [
+          { label: 'All Questions', value: 'all' },
+          { label: 'Flagged Only', value: 'flagged' },
+          { label: 'Unflagged Only', value: 'unflagged' },
         ],
       },
       {
@@ -377,18 +445,21 @@ export function QuizQuestionBankTab() {
               <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
                 Select an option to test your recall:
               </p>
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {selectedQuestion.options.map((opt) => {
                   const isPicked = testSelectedOption === opt.key;
                   const isCorrect = selectedQuestion.correct_options.includes(opt.key);
                   const showFeedback = testSelectedOption !== null;
+                  const isParagraph = opt.text.length > 55 || opt.text.includes('\n');
 
                   return (
                     <button
                       key={opt.key}
                       type="button"
                       onClick={() => setTestSelectedOption(opt.key)}
-                      className={`w-full text-left p-3 rounded-lg border text-xs transition-colors flex items-start gap-2.5 cursor-pointer ${
+                      className={`w-full text-left p-2.5 rounded-lg border text-xs transition-colors flex items-start gap-2.5 cursor-pointer ${
+                        isParagraph ? 'sm:col-span-2' : 'sm:col-span-1'
+                      } ${
                         showFeedback && isCorrect
                           ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 font-medium'
                           : showFeedback && isPicked && !isCorrect
@@ -401,7 +472,7 @@ export function QuizQuestionBankTab() {
                       <span className="font-mono font-bold shrink-0 w-5">
                         {opt.key}.
                       </span>
-                      <span className="flex-1">{opt.text}</span>
+                      <span className="flex-1 min-w-0 break-words leading-snug">{opt.text}</span>
                       {showFeedback && isCorrect && (
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 ml-auto" />
                       )}

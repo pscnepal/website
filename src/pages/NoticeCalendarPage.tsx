@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ActionButton } from '../components/common/ActionButton';
+import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
@@ -302,16 +303,20 @@ export function NoticeCalendarPage() {
 
                 <div className="flex items-center gap-2 text-xs shrink-0">
                   <span className="font-semibold text-zinc-500">Status:</span>
-                  <select
+                  <SharedSearchSelect
                     value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="px-2.5 py-1 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  >
-                    <option value="all">All Statuses</option>
-                    <option value="exam-scheduled">Exam Scheduled</option>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="completed">Completed</option>
-                  </select>
+                    onChange={setSelectedStatus}
+                    options={[
+                      { label: 'All Statuses', value: 'all' },
+                      { label: 'Exam Scheduled', value: 'exam-scheduled' },
+                      { label: 'Upcoming', value: 'upcoming' },
+                      { label: 'Completed', value: 'completed' },
+                    ]}
+                    enableSearch={false}
+                    size="xs"
+                    popoverWidth="w-44"
+                    ariaLabel="Filter by notice or exam status"
+                  />
                 </div>
               </div>
 

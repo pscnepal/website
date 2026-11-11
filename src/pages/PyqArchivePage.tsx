@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ActionButton } from '../components/common/ActionButton';
+import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
@@ -317,34 +318,42 @@ export function PyqArchivePage() {
                   </div>
 
                   {/* Year & Paper Dropdown */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-zinc-500">Year:</span>
-                      <select
+                      <span className="font-semibold text-zinc-500 text-xs">Year:</span>
+                      <SharedSearchSelect
                         value={selectedYear}
-                        onChange={(e) => setSelectedYear(e.target.value)}
-                        className="px-2.5 py-1 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                      >
-                        <option value="all">All Years (सबै वर्ष)</option>
-                        <option value="२०८०">२०८० BS</option>
-                        <option value="२०७९">२०७९ BS</option>
-                        <option value="२०७८">२०७८ BS</option>
-                        <option value="२०७७">२०७७ BS</option>
-                      </select>
+                        onChange={setSelectedYear}
+                        options={[
+                          { label: 'All Years (सबै वर्ष)', value: 'all' },
+                          { label: '२०८० BS', value: '२०८०' },
+                          { label: '२०७९ BS', value: '२०७९' },
+                          { label: '२०७८ BS', value: '२०७८' },
+                          { label: '२०७७ BS', value: '२०७७' },
+                        ]}
+                        enableSearch={false}
+                        size="xs"
+                        popoverWidth="w-44"
+                        ariaLabel="Filter by examination year"
+                      />
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-zinc-500">Paper:</span>
-                      <select
+                      <span className="font-semibold text-zinc-500 text-xs">Paper:</span>
+                      <SharedSearchSelect
                         value={selectedPaper}
-                        onChange={(e) => setSelectedPaper(e.target.value)}
-                        className="px-2.5 py-1 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                      >
-                        <option value="all">All Papers (सबै पत्र)</option>
-                        <option value="Paper II">Paper II (Governance)</option>
-                        <option value="Paper III">Paper III (Contemporary)</option>
-                        <option value="Paper IV">Paper IV (Service Rules)</option>
-                      </select>
+                        onChange={setSelectedPaper}
+                        options={[
+                          { label: 'All Papers (सबै पत्र)', value: 'all' },
+                          { label: 'Paper II (Governance)', value: 'Paper II' },
+                          { label: 'Paper III (Contemporary)', value: 'Paper III' },
+                          { label: 'Paper IV (Service Rules)', value: 'Paper IV' },
+                        ]}
+                        enableSearch={false}
+                        size="xs"
+                        popoverWidth="w-52"
+                        ariaLabel="Filter by paper"
+                      />
                     </div>
                   </div>
                 </div>

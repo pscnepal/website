@@ -16,6 +16,7 @@ import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
+import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { formatReverseClock } from '../components/quiz/QuizSessionDialog';
 import { ALL_SYLLABUS_UNITS, PSC_CADRE_SYLLABI } from '../data/pscSyllabusData';
 import { ALL_QUIZ_QUESTIONS, QUIZ_DECKS } from '../data/quizData';
@@ -1256,19 +1257,21 @@ export function ProgressPage() {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <select
-                  aria-label="Filter curriculum by collection"
+                <SharedSearchSelect
+                  ariaLabel="Filter curriculum by collection"
                   value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="h-9 sm:h-8 max-w-full min-w-0 truncate px-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-                >
-                  <option value="all">All Collections (16)</option>
-                  {READING_MATERIAL_CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name} ({cat.items.length})
-                    </option>
-                  ))}
-                </select>
+                  onChange={setCategoryFilter}
+                  options={[
+                    { label: 'All Collections (16)', value: 'all' },
+                    ...READING_MATERIAL_CATEGORIES.map((cat) => ({
+                      label: `${cat.name} (${cat.items.length})`,
+                      value: cat.id,
+                    })),
+                  ]}
+                  size="sm"
+                  popoverWidth="w-64"
+                  className="min-w-[160px]"
+                />
 
                 <div
                   role="group"

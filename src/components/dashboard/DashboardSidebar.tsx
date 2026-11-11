@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   BookOpen,
+  Bookmark,
   Database,
   HelpCircle,
   LayoutDashboard,
@@ -18,6 +19,7 @@ import { ALL_QUIZ_QUESTIONS } from '../../data/quizData';
 import { WRITTEN_QUESTIONS } from '../../data/writtenQuestionsData';
 import { INITIAL_CANDIDATE_USERS } from '../../data/candidateUsersData';
 import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
+import { storageService } from '../../services/storageService';
 
 interface DashboardSidebarProps {
   activeTab?: DashboardTab;
@@ -37,6 +39,22 @@ export function DashboardSidebar({
   onCloseMobile,
 }: DashboardSidebarProps) {
   const location = useLocation();
+  const [flaggedCount, setFlaggedCount] = useState<number>(() => {
+    return Object.keys(storageService.loadFlaggedQuestions()).length;
+  });
+
+  useEffect(() => {
+    const handleSync = () => {
+      setFlaggedCount(Object.keys(storageService.loadFlaggedQuestions()).length);
+    };
+    window.addEventListener('psc_flagged_questions_changed', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('psc_flagged_questions_changed', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, []);
+
   const totalMaterialsCount = READING_MATERIAL_CATEGORIES.reduce(
     (acc, cat) => acc + cat.items.length,
     0
@@ -64,6 +82,14 @@ export function DashboardSidebar({
       icon: HelpCircle,
       count: ALL_QUIZ_QUESTIONS.length,
       description: 'Stage I Objective questions database',
+    },
+    {
+      id: 'flagged',
+      path: '/dashboard/flagged',
+      label: 'Flagged for Review',
+      icon: Bookmark,
+      count: flaggedCount,
+      description: 'Questions flagged during quiz & simulation runs',
     },
     {
       id: 'written-bank',

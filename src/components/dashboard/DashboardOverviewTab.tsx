@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
+  Bookmark,
   Database,
   HelpCircle,
   PenLine,
@@ -13,18 +14,33 @@ import { INITIAL_CANDIDATE_USERS } from '../../data/candidateUsersData';
 import { ALL_QUIZ_QUESTIONS } from '../../data/quizData';
 import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
 import { WRITTEN_QUESTIONS } from '../../data/writtenQuestionsData';
+import { storageService } from '../../services/storageService';
 import { formatCompactDuration } from '../../utils/pdfHelpers';
 
 export interface DashboardOverviewTabProps {
   onSwitchTab?: (
-    tab: 'overview' | 'quiz-bank' | 'written-bank' | 'users' | 'materials' | 'data'
+    tab:
+      | 'overview'
+      | 'quiz-bank'
+      | 'flagged'
+      | 'written-bank'
+      | 'users'
+      | 'materials'
+      | 'data'
   ) => void;
 }
 
 export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps) {
   const navigate = useNavigate();
   const handleSwitchTab = (
-    tab: 'overview' | 'quiz-bank' | 'written-bank' | 'users' | 'materials' | 'data'
+    tab:
+      | 'overview'
+      | 'quiz-bank'
+      | 'flagged'
+      | 'written-bank'
+      | 'users'
+      | 'materials'
+      | 'data'
   ) => {
     if (onSwitchTab) {
       onSwitchTab(tab);
@@ -32,6 +48,22 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
       navigate(tab === 'overview' ? '/dashboard' : `/dashboard/${tab}`);
     }
   };
+
+  const [flaggedCount, setFlaggedCount] = useState<number>(() => {
+    return Object.keys(storageService.loadFlaggedQuestions()).length;
+  });
+
+  useEffect(() => {
+    const handleSync = () => {
+      setFlaggedCount(Object.keys(storageService.loadFlaggedQuestions()).length);
+    };
+    window.addEventListener('psc_flagged_questions_changed', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('psc_flagged_questions_changed', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, []);
 
   const quizAttempts = useAppSelector((state) => state.quiz.attempts);
   const writtenRecords = useAppSelector((state) => state.written.records);
@@ -86,56 +118,75 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
           Platform and Preparation KPIs
         </h2>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
             <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
-              <span className="text-xs font-medium">Objective Question Bank</span>
+              <span className="text-xs font-medium">Objective MCQs</span>
               <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
             <p className="font-mono tabular-nums text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-zinc-50">
               {ALL_QUIZ_QUESTIONS.length}
             </p>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              GK, Constitution, IQ &amp; Governance MCQs
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+              GK, Constitution &amp; IQ
             </p>
           </div>
 
-          <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+          <button
+            type="button"
+            onClick={() => handleSwitchTab('flagged')}
+            className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-amber-400 dark:hover:border-amber-600 space-y-1 text-left transition-colors cursor-pointer group"
+          >
             <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
-              <span className="text-xs font-medium">Written Long Questions</span>
+              <span className="text-xs font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
+                Flagged for Review
+              </span>
+              <Bookmark className="w-4 h-4 text-amber-500 fill-amber-500" />
+            </div>
+            <p className="font-mono tabular-nums text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">
+              {flaggedCount}
+            </p>
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+              Review saved questions &rarr;
+            </p>
+          </button>
+
+          <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+            <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
+              <span className="text-xs font-medium">Written Bank</span>
               <PenLine className="w-4 h-4 text-crimson-600 dark:text-crimson-400" />
             </div>
             <p className="font-mono tabular-nums text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-zinc-50">
               {WRITTEN_QUESTIONS.length}
             </p>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              Papers II, III &amp; IV Bilingual Solutions
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+              Papers II, III &amp; IV Cases
             </p>
           </div>
 
-          <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+          <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
             <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
-              <span className="text-xs font-medium">Official Materials</span>
+              <span className="text-xs font-medium">Materials</span>
               <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <p className="font-mono tabular-nums text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-zinc-50">
               {totalMaterialsCount}
             </p>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              13 Nepal Parichaya editions + Laws ({totalPagesCount} pages)
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+              13 Editions ({totalPagesCount} pgs)
             </p>
           </div>
 
-          <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
+          <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
             <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
-              <span className="text-xs font-medium">Active Aspirants Roster</span>
-              <Users className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <span className="text-xs font-medium">Aspirants Roster</span>
+              <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             </div>
             <p className="font-mono tabular-nums text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-zinc-50">
               {INITIAL_CANDIDATE_USERS.length}
             </p>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-              Cadre rankers &amp; study cohort peers
+            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+              Cadre cohort peers
             </p>
           </div>
         </div>

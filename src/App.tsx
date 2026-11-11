@@ -22,6 +22,7 @@ import { CurrentAffairsPage } from './pages/CurrentAffairsPage';
 import { DashboardLayout } from './components/dashboard/DashboardLayout';
 import { DashboardOverviewPage } from './pages/dashboard/DashboardOverviewPage';
 import { DashboardQuizBankPage } from './pages/dashboard/DashboardQuizBankPage';
+import { DashboardFlaggedPage } from './pages/dashboard/DashboardFlaggedPage';
 import { DashboardWrittenBankPage } from './pages/dashboard/DashboardWrittenBankPage';
 import { DashboardMaterialsPage } from './pages/dashboard/DashboardMaterialsPage';
 import { DashboardUsersPage } from './pages/dashboard/DashboardUsersPage';
@@ -125,6 +126,7 @@ export default function App() {
             <Route index element={<DashboardOverviewPage />} />
             <Route path="overview" element={<DashboardOverviewPage />} />
             <Route path="quiz-bank" element={<DashboardQuizBankPage />} />
+            <Route path="flagged" element={<DashboardFlaggedPage />} />
             <Route path="written-bank" element={<DashboardWrittenBankPage />} />
             <Route path="materials" element={<DashboardMaterialsPage />} />
             <Route path="users" element={<DashboardUsersPage />} />

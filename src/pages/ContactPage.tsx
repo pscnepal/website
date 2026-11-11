@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
+import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import {
   storageService,
   type ContactInquiryRecord,
@@ -393,26 +394,16 @@ export function ContactPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label
-                      htmlFor="contact-category"
-                      className="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
-                    >
-                      Topic
-                    </label>
-                    <select
+                    <SharedSearchSelect
                       id="contact-category"
+                      label="Topic"
                       value={category}
-                      onChange={(e) =>
-                        setCategory(e.target.value as InquiryCategory)
-                      }
-                      className="w-full h-10 sm:h-9 min-w-0 truncate px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-[13.5px] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-                    >
-                      {CATEGORY_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setCategory(val as InquiryCategory)}
+                      options={CATEGORY_OPTIONS}
+                      size="sm"
+                      className="w-full"
+                      popoverWidth="w-full"
+                    />
                   </div>
 
                   <div className="space-y-1.5">

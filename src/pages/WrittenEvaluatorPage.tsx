@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ActionButton } from '../components/common/ActionButton';
+import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
@@ -442,17 +443,20 @@ export function WrittenEvaluatorPage() {
                 </div>
               </div>
 
-              <select
+              <SharedSearchSelect
                 value={selectedQuestionId}
-                onChange={(e) => setSelectedQuestionId(e.target.value)}
-                className="px-3 py-1.5 text-xs rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-600 max-w-sm"
-              >
-                {WRITTEN_QUESTIONS.map((q) => (
-                  <option key={q.id} value={q.id}>
-                    [{q.id}] {q.marks}M: {q.ne.title.slice(0, 45)}…
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedQuestionId}
+                options={WRITTEN_QUESTIONS.map((q) => ({
+                  value: q.id,
+                  label: `[${q.id}] ${q.marks}M: ${q.ne.title}`,
+                  description: `${q.paper} · ${q.en.title}`,
+                }))}
+                size="sm"
+                className="w-full sm:w-80"
+                popoverWidth="w-80 sm:w-96"
+                ariaLabel="Select Question to Practice & Evaluate"
+                searchPlaceholder="Search written questions..."
+              />
             </div>
 
             {/* Question Details Banner */}

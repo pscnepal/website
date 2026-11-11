@@ -1,6 +1,7 @@
 import { useRef, type RefObject } from 'react';
 import {
   BookOpen,
+  Bookmark,
   CheckCircle2,
   Database,
   Globe,
@@ -47,6 +48,11 @@ const TAB_TITLES: Record<
     subtitle: 'Official PSC preliminary MCQs, explanations & references',
     category: 'Question Banks',
   },
+  flagged: {
+    title: 'Flagged for Review',
+    subtitle: 'High-priority questions bookmarked during quiz & exam sittings',
+    category: 'Question Banks',
+  },
   'written-bank': {
     title: 'Subjective Written Bank',
     subtitle: 'Phase II analytical questions, rubrics & model answers',
@@ -80,6 +86,7 @@ export function DashboardHeader({
   const location = useLocation();
   const getSectionFromPath = (path: string): DashboardTab => {
     if (path.includes('/quiz-bank')) return 'quiz-bank';
+    if (path.includes('/flagged')) return 'flagged';
     if (path.includes('/written-bank')) return 'written-bank';
     if (path.includes('/materials')) return 'materials';
     if (path.includes('/users') || path.includes('/aspirants')) return 'users';
@@ -189,6 +196,14 @@ export function DashboardHeader({
               icon: CheckCircle2,
               color: 'emerald',
               to: '/quiz',
+            },
+            {
+              id: 'flagged',
+              label: 'Flagged for Review',
+              description: 'Saved tricky questions & revision notes',
+              icon: Bookmark,
+              color: 'amber',
+              to: '/dashboard/flagged',
             },
             {
               id: 'written',

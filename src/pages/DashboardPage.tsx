@@ -5,6 +5,7 @@ import { DashboardOverviewPage } from './dashboard/DashboardOverviewPage';
 export type DashboardTab =
   | 'overview'
   | 'quiz-bank'
+  | 'flagged'
   | 'written-bank'
   | 'users'
   | 'materials'
@@ -18,7 +19,7 @@ export function DashboardPage() {
   useEffect(() => {
     if (
       tabParam &&
-      ['quiz-bank', 'written-bank', 'users', 'materials', 'data'].includes(tabParam)
+      ['quiz-bank', 'flagged', 'written-bank', 'users', 'materials', 'data'].includes(tabParam)
     ) {
       navigate(`/dashboard/${tabParam}`, { replace: true });
     }

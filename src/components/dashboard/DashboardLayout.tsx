@@ -111,7 +111,7 @@ export function DashboardLayout({
           tabIndex={-1}
           className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 focus:outline-none"
         >
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="space-y-6">
             {children ?? <Outlet />}
           </div>
         </main>

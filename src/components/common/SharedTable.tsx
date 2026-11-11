@@ -7,6 +7,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { ActionButton } from './ActionButton';
+import { SharedSearchSelect } from './SharedSearchSelect';
 
 export interface ColumnDef<T> {
   /** Unique key for the column */
@@ -379,21 +380,22 @@ export function SharedTable<T>({
             {pageSizeOptions.length > 1 && (
               <div className="flex items-center gap-1.5 font-sans">
                 <span className="text-[11px] text-zinc-400">Rows:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
+                <SharedSearchSelect
+                  value={String(pageSize)}
+                  onChange={(val) => {
+                    setPageSize(Number(val));
                     setCurrentPage(0);
                   }}
-                  className="h-6 px-1.5 rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-800 dark:text-zinc-200 cursor-pointer focus:outline-none"
-                  aria-label="Select number of rows per page"
-                >
-                  {pageSizeOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                  options={pageSizeOptions.map((opt) => ({
+                    label: `${opt} / page`,
+                    value: String(opt),
+                  }))}
+                  enableSearch={false}
+                  size="xs"
+                  popoverWidth="w-28"
+                  align="right"
+                  ariaLabel="Select number of rows per page"
+                />
               </div>
             )}
           </div>

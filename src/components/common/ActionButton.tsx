@@ -177,6 +177,7 @@ export const ActionButton = forwardRef<
       ariaLabel,
       className = '',
       type = 'button',
+      active,
       ...rest
     },
     ref
@@ -191,8 +192,11 @@ export const ActionButton = forwardRef<
     const dimensionClasses = isIconOnly
       ? ICON_ONLY_SIZE_MAP[size]
       : sizeConfig.btn;
+    const activeClasses = active
+      ? 'ring-2 ring-blue-500/40 dark:ring-blue-400/40'
+      : '';
 
-    const fullClassName = `${baseClasses} ${colorClasses} ${dimensionClasses} ${className}`;
+    const fullClassName = `${baseClasses} ${colorClasses} ${dimensionClasses} ${activeClasses} ${className}`.trim();
 
     const content = (
       <>
@@ -209,6 +213,7 @@ export const ActionButton = forwardRef<
     const commonProps = {
       title,
       'aria-label': ariaLabel || title,
+      'aria-pressed': typeof active === 'boolean' ? active : undefined,
       className: fullClassName,
       ...rest,
     };

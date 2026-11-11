@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
+  Bookmark,
   CheckCircle2,
   Clock,
   RotateCcw,
@@ -23,6 +24,7 @@ import {
   formatReverseClock,
   QuizSessionDialog,
 } from '../components/quiz/QuizSessionDialog';
+import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import {
   ALL_QUIZ_QUESTIONS,
   getDeckTotalMarks,
@@ -41,6 +43,7 @@ import {
   formatCompactDuration,
   formatRelativeDate,
 } from '../utils/pdfHelpers';
+import { storageService } from '../services/storageService';
 
 type DifficultyFilter = 'All' | QuizDifficulty;
 
@@ -65,6 +68,22 @@ export function QuizPage() {
     () => Array.from(new Set(ALL_QUIZ_QUESTIONS.map((q) => q.subject))),
     []
   );
+
+  const [flaggedCount, setFlaggedCount] = useState<number>(() => {
+    return Object.keys(storageService.loadFlaggedQuestions()).length;
+  });
+
+  useEffect(() => {
+    const handleSync = () => {
+      setFlaggedCount(Object.keys(storageService.loadFlaggedQuestions()).length);
+    };
+    window.addEventListener('psc_flagged_questions_changed', handleSync);
+    window.addEventListener('storage', handleSync);
+    return () => {
+      window.removeEventListener('psc_flagged_questions_changed', handleSync);
+      window.removeEventListener('storage', handleSync);
+    };
+  }, []);
 
   const availableTopics = useMemo(() => {
     const pool =
@@ -196,6 +215,24 @@ export function QuizPage() {
           subtitle: `${questions.length} Questions · ${questions.length}-Minute Reverse Countdown`,
           description:
             'Focused practice session on questions answered incorrectly in your most recent attempts.',
+          questions,
+        };
+      }
+
+      if (qFilter === 'flagged') {
+        const savedFlags = storageService.loadFlaggedQuestions();
+        const flaggedIds = new Set(Object.keys(savedFlags));
+        const questions = ALL_QUIZ_QUESTIONS.filter((q) =>
+          flaggedIds.has(q.id)
+        );
+        if (questions.length === 0) return null;
+
+        return {
+          id: 'custom-flagged-review',
+          title: 'Flagged for Review Practice Set',
+          subtitle: `${questions.length} Questions · ${questions.length}-Minute Reverse Countdown`,
+          description:
+            'Targeted revision quiz containing high-priority questions flagged during your study sessions.',
           questions,
         };
       }
@@ -449,6 +486,41 @@ export function QuizPage() {
             </div>
           )}
 
+          {/* Flagged Questions Quick Review Banner */}
+          {flaggedCount > 0 && (
+            <div className="rounded-xl border border-amber-200/90 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/30 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <Bookmark className="w-5 h-5 fill-amber-500" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-sm text-zinc-950 dark:text-zinc-50">
+                    Flagged for Review ({flaggedCount} Questions)
+                  </h3>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    Targeted practice set compiled from your flagged tricky questions.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5 shrink-0">
+                <Link
+                  to="/dashboard/flagged"
+                  className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  Manage in Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => handleOpenQuizDialog('custom?filter=flagged')}
+                  className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <span>Practice Set</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Structured Taxonomy Filter & Custom Practice Builder */}
           <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 sm:p-6 space-y-5">
             <div className="flex flex-wrap items-baseline justify-between gap-3">
@@ -480,77 +552,56 @@ export function QuizPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               {/* Subject Select */}
               <div className="space-y-1.5">
-                <label
-                  htmlFor="psc-subject-filter"
-                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  Subject
-                </label>
-                <select
+                <SharedSearchSelect
                   id="psc-subject-filter"
+                  label="Subject"
                   value={subjectFilter}
-                  onChange={(e) => handleSubjectChange(e.target.value)}
-                  className="w-full h-10 sm:h-9 min-w-0 truncate px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-[13.5px] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-                >
-                  <option value="All">
-                    All Subjects ({availableSubjects.length})
-                  </option>
-                  {availableSubjects.map((subj) => (
-                    <option key={subj} value={subj}>
-                      {subj}
-                    </option>
-                  ))}
-                </select>
+                  onChange={handleSubjectChange}
+                  options={[
+                    { label: `All Subjects (${availableSubjects.length})`, value: 'All' },
+                    ...availableSubjects.map((subj) => ({ label: subj, value: subj })),
+                  ]}
+                  size="sm"
+                  className="w-full"
+                  popoverWidth="w-full"
+                  searchPlaceholder="Filter subjects..."
+                />
               </div>
 
               {/* Topic Select */}
               <div className="space-y-1.5">
-                <label
-                  htmlFor="psc-topic-filter"
-                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  Topic
-                </label>
-                <select
+                <SharedSearchSelect
                   id="psc-topic-filter"
+                  label="Topic"
                   value={topicFilter}
-                  onChange={(e) => handleTopicChange(e.target.value)}
-                  className="w-full h-10 sm:h-9 min-w-0 truncate px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-[13.5px] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-                >
-                  <option value="All">
-                    All Topics ({availableTopics.length})
-                  </option>
-                  {availableTopics.map((top) => (
-                    <option key={top} value={top}>
-                      {top}
-                    </option>
-                  ))}
-                </select>
+                  onChange={handleTopicChange}
+                  options={[
+                    { label: `All Topics (${availableTopics.length})`, value: 'All' },
+                    ...availableTopics.map((top) => ({ label: top, value: top })),
+                  ]}
+                  size="sm"
+                  className="w-full"
+                  popoverWidth="w-full"
+                  searchPlaceholder="Filter topics..."
+                />
               </div>
 
               {/* Subtopic Select */}
               <div className="space-y-1.5">
-                <label
-                  htmlFor="psc-subtopic-filter"
-                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  Subtopic
-                </label>
-                <select
+                <SharedSearchSelect
                   id="psc-subtopic-filter"
+                  label="Subtopic"
                   value={subtopicFilter}
-                  onChange={(e) => setSubtopicFilter(e.target.value)}
-                  className="w-full h-10 sm:h-9 min-w-0 truncate px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-[13.5px] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-                >
-                  <option value="All">
-                    All Subtopics ({availableSubtopics.length})
-                  </option>
-                  {availableSubtopics.map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSubtopicFilter}
+                  options={[
+                    { label: `All Subtopics (${availableSubtopics.length})`, value: 'All' },
+                    ...availableSubtopics.map((sub) => ({ label: sub, value: sub })),
+                  ]}
+                  size="sm"
+                  className="w-full"
+                  popoverWidth="w-full"
+                  searchPlaceholder="Filter subtopics..."
+                />
               </div>
 
               {/* Difficulty Segmented Control */}

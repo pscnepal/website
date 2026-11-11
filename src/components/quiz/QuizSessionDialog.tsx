@@ -42,6 +42,7 @@ import {
   type QuizPlayMode,
 } from '../../features/quiz/quizSlice';
 import { resolveSampleUrl } from '../../utils/urlHelpers';
+import { storageService } from '../../services/storageService';
 import { ReactionButtons } from '../common/ReactionButtons';
 import { recordView } from '../../features/reactions/reactionsSlice';
 
@@ -291,7 +292,14 @@ function QuizDialogInner({
   const [revealedStudyIds, setRevealedStudyIds] = useState<
     Record<string, boolean>
   >({});
-  const [flaggedIds, setFlaggedIds] = useState<Record<string, boolean>>({});
+  const [flaggedIds, setFlaggedIds] = useState<Record<string, boolean>>(() => {
+    const saved = storageService.loadFlaggedQuestions();
+    const map: Record<string, boolean> = {};
+    for (const qId of Object.keys(saved)) {
+      map[qId] = true;
+    }
+    return map;
+  });
   const [reviewFilter, setReviewFilter] = useState<ReviewFilter>('all');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
@@ -348,11 +356,15 @@ function QuizDialogInner({
 
   const toggleFlagCurrent = useCallback(() => {
     if (isSubmitted || !currentQuestion) return;
+    const isNowFlagged = storageService.toggleFlaggedQuestion(currentQuestion.id, {
+      source: 'quiz',
+      deckTitle: deck.title,
+    });
     setFlaggedIds((prev) => ({
       ...prev,
-      [currentQuestion.id]: !prev[currentQuestion.id],
+      [currentQuestion.id]: isNowFlagged,
     }));
-  }, [isSubmitted, currentQuestion]);
+  }, [isSubmitted, currentQuestion, deck.title]);
 
   const handleClearCurrentSelection = useCallback(() => {
     if (isSubmitted || !currentQuestion) return;
@@ -532,7 +544,12 @@ function QuizDialogInner({
     setCurrentIndex(0);
     setSelectedAnswers({});
     setRevealedStudyIds({});
-    setFlaggedIds({});
+    const savedFlags = storageService.loadFlaggedQuestions();
+    const reloadedFlags: Record<string, boolean> = {};
+    for (const qId of Object.keys(savedFlags)) {
+      reloadedFlags[qId] = true;
+    }
+    setFlaggedIds(reloadedFlags);
     setReviewFilter('all');
     setTimedOut(false);
     setConfirmingExit(false);
@@ -1571,7 +1588,7 @@ function QuizDialogInner({
 
                       {/* Tactile Answer Options (Single-Select Radio or Multi-Select Checkbox) */}
                       <div
-                        className="mt-4 sm:mt-6 space-y-2 sm:space-y-2.5"
+                        className="mt-4 sm:mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5"
                         role={
                           currentQuestion.is_multi_select
                             ? 'group'
@@ -1585,6 +1602,9 @@ function QuizDialogInner({
                             currentQuestion.correct_options.includes(
                               option.key
                             );
+                          const isParagraph =
+                            option.text.length > 55 ||
+                            option.text.includes('\n');
 
                           let rowClasses =
                             'border-zinc-200/90 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/40 dark:bg-zinc-950/35 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 text-zinc-900 dark:text-zinc-100';
@@ -1599,7 +1619,7 @@ function QuizDialogInner({
                               keycapClasses =
                                 'bg-emerald-600 border-emerald-600 text-white dark:bg-emerald-500 dark:border-emerald-500 dark:text-zinc-950';
                               statusLabel = (
-                                <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap shrink-0">
+                                <span className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 whitespace-nowrap shrink-0">
                                   <CheckCircle2 className="w-4 h-4" />
                                   <span className="sr-only sm:not-sr-only">
                                     {isPicked ? 'Correct' : 'Correct option'}
@@ -1612,7 +1632,7 @@ function QuizDialogInner({
                               keycapClasses =
                                 'bg-red-600 border-red-600 text-white dark:bg-red-500 dark:border-red-500';
                               statusLabel = (
-                                <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400 whitespace-nowrap shrink-0">
+                                <span className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-red-600 dark:text-red-400 whitespace-nowrap shrink-0">
                                   <XCircle className="w-4 h-4" />
                                   <span className="sr-only sm:not-sr-only">
                                     Incorrect
@@ -1642,7 +1662,7 @@ function QuizDialogInner({
                                   duration: 0.14,
                                   ease: [0.16, 1, 0.3, 1],
                                 }}
-                                className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 dark:text-blue-400 whitespace-nowrap shrink-0"
+                                className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 dark:text-blue-400 whitespace-nowrap shrink-0"
                               >
                                 {currentQuestion.is_multi_select ? (
                                   <CheckSquare className="w-3.5 h-3.5" />
@@ -1656,7 +1676,7 @@ function QuizDialogInner({
                             );
                           } else if (currentQuestion.is_multi_select) {
                             statusLabel = (
-                              <span className="mt-1 inline-flex items-center text-zinc-400 dark:text-zinc-500 shrink-0">
+                              <span className="mt-0.5 inline-flex items-center text-zinc-400 dark:text-zinc-500 shrink-0">
                                 <Square className="w-3.5 h-3.5" />
                               </span>
                             );
@@ -1688,19 +1708,21 @@ function QuizDialogInner({
                                 duration: 0.12,
                                 ease: [0.16, 1, 0.3, 1],
                               }}
-                              className={`group w-full min-h-11 text-left px-3 py-2.5 sm:px-4 sm:py-3.5 rounded-xl border transition-colors flex items-start justify-between gap-2.5 sm:gap-3.5 ${
+                              className={`group w-full min-h-10 sm:min-h-11 text-left px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl border transition-colors flex items-start justify-between gap-2.5 sm:gap-3 ${
+                                isParagraph ? 'sm:col-span-2' : 'sm:col-span-1'
+                              } ${
                                 isRevealedInStudy
                                   ? 'cursor-default'
                                   : 'cursor-pointer'
                               } ${rowClasses} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600`}
                             >
-                              <div className="flex items-start gap-2.5 sm:gap-3.5 min-w-0">
+                              <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
                                 <span
-                                  className={`mt-0.5 w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg border font-mono tabular-nums text-[11px] sm:text-xs font-semibold inline-flex items-center justify-center transition-colors shrink-0 ${keycapClasses}`}
+                                  className={`mt-0.5 w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-md sm:rounded-lg border font-mono tabular-nums text-[11px] sm:text-xs font-semibold inline-flex items-center justify-center transition-colors shrink-0 ${keycapClasses}`}
                                 >
                                   {option.key}
                                 </span>
-                                <span className="text-fluid-option pt-0.5 min-w-0 break-words">
+                                <span className="text-fluid-option pt-0.5 min-w-0 break-words leading-snug">
                                   {option.text}
                                 </span>
                               </div>

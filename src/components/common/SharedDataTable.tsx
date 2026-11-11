@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { ActionButton } from './ActionButton';
+import { SharedSearchSelect } from './SharedSearchSelect';
 
 export interface ColumnDef<T> {
   id: string;
@@ -365,23 +366,18 @@ export function SharedDataTable<T>({
                   {filter.label}:
                 </span>
               )}
-              <select
+              <SharedSearchSelect
                 value={filter.value}
-                onChange={(e) => {
-                  filter.onChange(e.target.value);
+                onChange={(newVal) => {
+                  filter.onChange(newVal);
                   setCurrentPage(0);
                 }}
-                aria-label={filter.ariaLabel || filter.label || filter.id}
-                className={`h-9 px-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-800 dark:text-zinc-200 cursor-pointer focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 ${
-                  filter.width || 'max-w-[180px]'
-                }`}
-              >
-                {filter.options.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                options={filter.options}
+                ariaLabel={filter.ariaLabel || filter.label || filter.id}
+                size="sm"
+                popoverWidth="w-56"
+                className={filter.width || 'min-w-[140px] sm:min-w-[160px]'}
+              />
             </div>
           ))}
 
@@ -627,21 +623,22 @@ export function SharedDataTable<T>({
             {pageSizeOptions.length > 1 && (
               <div className="flex items-center gap-1.5 font-sans">
                 <span className="text-[11px] text-zinc-400">Rows:</span>
-                <select
-                  value={pageSize}
-                  onChange={(e) => {
-                    setPageSize(Number(e.target.value));
+                <SharedSearchSelect
+                  value={String(pageSize)}
+                  onChange={(val) => {
+                    setPageSize(Number(val));
                     setCurrentPage(0);
                   }}
-                  className="h-6 px-1.5 rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs text-zinc-800 dark:text-zinc-200 cursor-pointer focus:outline-none"
-                  aria-label="Select number of rows per page"
-                >
-                  {pageSizeOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                  options={pageSizeOptions.map((opt) => ({
+                    label: `${opt} / page`,
+                    value: String(opt),
+                  }))}
+                  enableSearch={false}
+                  size="xs"
+                  popoverWidth="w-28"
+                  align="right"
+                  ariaLabel="Select number of rows per page"
+                />
               </div>
             )}
           </div>

@@ -390,15 +390,13 @@ export function PscChatbot() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
+          title="Open PSC Nepal Study Assistant"
           aria-label="Open PSC Nepal Study Assistant"
           className={`fixed right-4 sm:right-6 ${
             isReaderRoute ? 'bottom-20 sm:bottom-6' : 'bottom-4 sm:bottom-6'
-          } z-40 inline-flex items-center justify-center gap-2.5 w-12 h-12 sm:w-auto sm:min-h-12 sm:px-4 rounded-full sm:rounded-xl bg-crimson-700 hover:bg-crimson-800 dark:bg-crimson-600 dark:hover:bg-crimson-500 text-white shadow-lg shadow-zinc-950/20 dark:shadow-black/50 border border-crimson-800/40 dark:border-crimson-400/30 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-950`}
+          } z-40 inline-flex items-center justify-center w-12 h-12 rounded-full bg-crimson-700 hover:bg-crimson-800 dark:bg-crimson-600 dark:hover:bg-crimson-500 text-white shadow-lg shadow-zinc-950/20 dark:shadow-black/50 border border-crimson-800/40 dark:border-crimson-400/30 transition-all hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-950`}
         >
-          <MessageSquareText className="w-5 h-5 sm:w-4 sm:h-4 shrink-0" />
-          <span className="hidden sm:inline text-xs sm:text-sm font-semibold tracking-tight whitespace-nowrap">
-            Ask PSC Nepal
-          </span>
+          <MessageSquareText className="w-5 h-5 shrink-0" />
         </button>
       )}
 

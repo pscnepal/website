@@ -30,6 +30,7 @@ import {
 } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { ActionButton } from '../components/common/ActionButton';
+import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
@@ -1217,27 +1218,19 @@ export function WrittenQuestionsPage() {
 
               {/* Paper Filter */}
               <div className="lg:col-span-4 space-y-1.5">
-                <label
-                  htmlFor="written-paper-select"
-                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  PSC Written Paper
-                </label>
-                <select
+                <SharedSearchSelect
                   id="written-paper-select"
+                  label="PSC Written Paper"
                   value={paperFilter}
-                  onChange={(e) => setPaperFilter(e.target.value)}
-                  className="w-full h-10 sm:h-9 min-w-0 truncate px-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-[13.5px] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-                >
-                  <option value="all">
-                    All Papers (Papers II, III &amp; IV)
-                  </option>
-                  {WRITTEN_PAPERS.map((paper) => (
-                    <option key={paper} value={paper}>
-                      {paper}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setPaperFilter}
+                  options={[
+                    { label: 'All Papers (Papers II, III & IV)', value: 'all' },
+                    ...WRITTEN_PAPERS.map((paper) => ({ label: paper, value: paper })),
+                  ]}
+                  size="sm"
+                  className="w-full"
+                  popoverWidth="w-full"
+                />
               </div>
 
               {/* Marks Weightage */}
@@ -1278,25 +1271,22 @@ export function WrittenQuestionsPage() {
 
               {/* Status Filter */}
               <div className="lg:col-span-2 space-y-1.5">
-                <label
-                  htmlFor="written-status-select"
-                  className="block text-xs font-medium text-zinc-600 dark:text-zinc-400"
-                >
-                  Status
-                </label>
-                <select
+                <SharedSearchSelect
                   id="written-status-select"
+                  label="Status"
                   value={statusFilter}
-                  onChange={(e) =>
-                    setStatusFilter(e.target.value as StatusFilter)
-                  }
-                  className="w-full h-10 sm:h-9 min-w-0 truncate px-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs sm:text-[13.5px] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="mastered">Mastered</option>
-                  <option value="practicing">Practicing</option>
-                  <option value="unseen">Unseen</option>
-                </select>
+                  onChange={(val) => setStatusFilter(val as StatusFilter)}
+                  options={[
+                    { label: 'All Statuses', value: 'all' },
+                    { label: 'Mastered', value: 'mastered' },
+                    { label: 'Practicing', value: 'practicing' },
+                    { label: 'Unseen', value: 'unseen' },
+                  ]}
+                  enableSearch={false}
+                  size="sm"
+                  className="w-full"
+                  popoverWidth="w-full"
+                />
               </div>
             </div>
 
