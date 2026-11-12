@@ -245,24 +245,9 @@ export function UsersDirectoryTab() {
               onClick: () => setSelectedCandidate(cand),
             },
             {
-              id: 'scores',
-              label: 'Mock Test Metrics',
-              description: `${cand.mockAverageScore}% Average · ${cand.mockPercentile}th %ile`,
-              icon: Award,
-              color: 'emerald',
-              onClick: () => setSelectedCandidate(cand),
-            },
-            {
-              id: 'focus',
-              label: 'Target Cadre & Syllabus',
-              description: cand.targetCadreLabel,
-              icon: BookOpen,
-              color: 'purple',
-              onClick: () => setSelectedCandidate(cand),
-            },
-            {
               id: 'copy-roll',
               label: `Copy Roll (${cand.rollCode})`,
+              description: 'Copy roll code to clipboard',
               icon: Copy,
               color: 'zinc',
               divider: true,
@@ -273,18 +258,10 @@ export function UsersDirectoryTab() {
           ];
 
           return (
-            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-              <ActionButton
-                label="Dossier"
-                title={`View detailed dossier for ${cand.nameEn}`}
-                color="blue"
-                variant="outline"
-                size="xs"
-                icon={UserCheck}
-                onClick={() => setSelectedCandidate(cand)}
-              />
+            <div className="flex items-center justify-end whitespace-nowrap">
               <SharedActionMenu
                 items={actionMenuItems}
+                label="Actions"
                 title={`Actions for ${cand.nameEn}`}
                 color="zinc"
                 variant="outline"
@@ -471,17 +448,7 @@ export function UsersDirectoryTab() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
-                <ActionButton
-                  label="View Dossier"
-                  title={`View detailed dossier for ${cand.nameEn}`}
-                  color="blue"
-                  variant="outline"
-                  size="sm"
-                  icon={UserCheck}
-                  className="flex-1"
-                  onClick={() => setSelectedCandidate(cand)}
-                />
+              <div className="pt-1">
                 <SharedActionMenu
                   items={[
                     {
@@ -511,6 +478,7 @@ export function UsersDirectoryTab() {
                     {
                       id: 'copy-roll',
                       label: `Copy Roll (${cand.rollCode})`,
+                      description: 'Copy roll code to clipboard',
                       icon: Copy,
                       color: 'zinc',
                       divider: true,
@@ -519,12 +487,15 @@ export function UsersDirectoryTab() {
                       },
                     },
                   ]}
+                  label="Candidate Actions"
                   title={`Actions for ${cand.nameEn}`}
                   color="zinc"
                   variant="outline"
                   size="sm"
                   width="w-60"
                   header={cand.rollCode}
+                  className="w-full"
+                  triggerClassName="w-full justify-between"
                 />
               </div>
             </div>

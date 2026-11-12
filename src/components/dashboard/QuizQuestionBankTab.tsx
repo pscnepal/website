@@ -4,16 +4,24 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  Download,
+  Edit3,
   Eye,
   FileText,
-  Play,
+  Plus,
+  RotateCcw,
+  Trash2,
   X,
   XCircle,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
-import { ALL_QUIZ_QUESTIONS, type QuizOptionKey, type QuizQuestion } from '../../data/quizData';
+import type { QuizOptionKey, QuizQuestion } from '../../data/quizData';
 import { storageService } from '../../services/storageService';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../../services/questionStorageService';
 import { ActionButton } from '../common/ActionButton';
 import {
   SharedActionMenu,
@@ -25,10 +33,15 @@ import {
   type ColumnDef,
   type TableFilterDef,
 } from '../common/SharedDataTable';
+import { QuizQuestionFormModal } from './QuizQuestionFormModal';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 
 export function QuizQuestionBankTab() {
   const dispatch = useAppDispatch();
   const userReactions = useAppSelector((state) => state.reactions.userReactions);
+  const [questions, setQuestions] = useState<QuizQuestion[]>(() =>
+    questionStorageService.loadQuizQuestions()
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
@@ -41,30 +54,45 @@ export function QuizQuestionBankTab() {
     storageService.loadFlaggedQuestions()
   );
 
+  // CRUD State
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [questionToEdit, setQuestionToEdit] = useState<QuizQuestion | null>(null);
+  const [questionToDelete, setQuestionToDelete] = useState<QuizQuestion | null>(null);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
   useEffect(() => {
     const handleSync = () => {
       setFlaggedMap(storageService.loadFlaggedQuestions());
     };
+    const handleSyncQuestions = () => {
+      setQuestions(questionStorageService.loadQuizQuestions());
+    };
+
     window.addEventListener('psc_flagged_questions_changed', handleSync);
+    window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuestions);
     window.addEventListener('storage', handleSync);
+    window.addEventListener('storage', handleSyncQuestions);
+
     return () => {
       window.removeEventListener('psc_flagged_questions_changed', handleSync);
+      window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuestions);
       window.removeEventListener('storage', handleSync);
+      window.removeEventListener('storage', handleSyncQuestions);
     };
   }, []);
 
   // Extract unique subjects
   const availableSubjects = useMemo(() => {
     const set = new Set<string>();
-    ALL_QUIZ_QUESTIONS.forEach((q) => {
+    questions.forEach((q) => {
       if (q.subject) set.add(q.subject);
     });
     return Array.from(set).sort();
-  }, []);
+  }, [questions]);
 
   // Filter questions
   const filteredQuestions = useMemo(() => {
-    return ALL_QUIZ_QUESTIONS.filter((q) => {
+    return questions.filter((q) => {
       if (subjectFilter !== 'all' && q.subject !== subjectFilter) {
         return false;
       }
@@ -98,6 +126,7 @@ export function QuizQuestionBankTab() {
       return true;
     });
   }, [
+    questions,
     searchQuery,
     subjectFilter,
     difficultyFilter,
@@ -106,6 +135,43 @@ export function QuizQuestionBankTab() {
     reactionFilter,
     userReactions,
   ]);
+
+  const handleSaveQuestion = (saved: QuizQuestion) => {
+    if (questionToEdit) {
+      questionStorageService.updateQuizQuestion(saved);
+    } else {
+      questionStorageService.createQuizQuestion(saved);
+    }
+    setQuestions(questionStorageService.loadQuizQuestions());
+  };
+
+  const handleDeleteQuestion = () => {
+    if (!questionToDelete) return;
+    questionStorageService.deleteQuizQuestion(questionToDelete.id);
+    setQuestions(questionStorageService.loadQuizQuestions());
+    if (selectedQuestion?.id === questionToDelete.id) {
+      setSelectedQuestion(null);
+    }
+    setQuestionToDelete(null);
+  };
+
+  const handleResetToDefault = () => {
+    questionStorageService.resetQuizQuestionsToDefault();
+    setQuestions(questionStorageService.loadQuizQuestions());
+    setIsResetConfirmOpen(false);
+  };
+
+  const handleExportJson = () => {
+    const dataStr =
+      'data:text/json;charset=utf-8,' +
+      encodeURIComponent(JSON.stringify(questions, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', 'psc-nepal-mcq-question-bank.json');
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
 
   const handleCopyQuestion = (q: QuizQuestion) => {
     const text = `Q (${q.id}): ${q.question}\n${q.options.map((o) => `${o.key}. ${o.text}`).join('\n')}\nAnswer: ${q.correct_options.join(', ')}\nExplanation: ${q.explanation}`;
@@ -236,12 +302,26 @@ export function QuizQuestionBankTab() {
               },
             },
             {
-              id: 'practice',
-              label: 'Launch MCQ Sandbox',
-              description: 'Practice simulated timed exam',
-              icon: Play,
-              color: 'emerald',
-              to: '/quiz',
+              id: 'edit',
+              label: 'Edit Question',
+              description: 'Modify stem, options, key, or rationale',
+              icon: Edit3,
+              color: 'amber',
+              onClick: () => {
+                setQuestionToEdit(q);
+                setIsFormModalOpen(true);
+              },
+            },
+            {
+              id: 'delete',
+              label: 'Delete Question',
+              description: 'Permanently remove from question bank',
+              icon: Trash2,
+              color: 'crimson',
+              danger: true,
+              onClick: () => {
+                setQuestionToDelete(q);
+              },
             },
             {
               id: 'toggle-flag',
@@ -258,6 +338,7 @@ export function QuizQuestionBankTab() {
                 });
                 setFlaggedMap(storageService.loadFlaggedQuestions());
               },
+              divider: true,
             },
             {
               id: 'copy-text',
@@ -266,7 +347,6 @@ export function QuizQuestionBankTab() {
               icon: isCopied ? Check : Copy,
               color: isCopied ? 'emerald' : 'zinc',
               onClick: () => handleCopyQuestion(q),
-              divider: true,
             },
             {
               id: 'copy-id',
@@ -282,24 +362,11 @@ export function QuizQuestionBankTab() {
           ];
 
           return (
-            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-              <ActionButton
-                label="View"
-                title={`Inspect ${q.id} and test options`}
-                icon={Eye}
-                color="blue"
-                variant="outline"
-                size="xs"
-                onClick={() => {
-                  dispatch(recordView({ itemId: q.id }));
-                  setSelectedQuestion(q);
-                  setTestSelectedOption(null);
-                }}
-              />
-
+            <div className="flex items-center justify-end whitespace-nowrap">
               <SharedActionMenu
                 items={actionMenuItems}
-                title={`More actions for question ${q.id}`}
+                label="Actions"
+                title={`Actions for question ${q.id}`}
                 color="zinc"
                 variant="outline"
                 size="xs"
@@ -321,7 +388,7 @@ export function QuizQuestionBankTab() {
         value: subjectFilter,
         onChange: setSubjectFilter,
         options: [
-          { label: `All Subjects (${ALL_QUIZ_QUESTIONS.length})`, value: 'all' },
+          { label: `All Subjects (${questions.length})`, value: 'all' },
           ...availableSubjects.map((sub) => ({ label: sub, value: sub })),
         ],
       },
@@ -361,7 +428,7 @@ export function QuizQuestionBankTab() {
         ],
       },
     ],
-    [subjectFilter, difficultyFilter, reactionFilter, availableSubjects]
+    [subjectFilter, difficultyFilter, reactionFilter, availableSubjects, questions.length]
   );
 
   const isFiltered =
@@ -383,7 +450,7 @@ export function QuizQuestionBankTab() {
       <SharedDataTable<QuizQuestion>
         title="Objective MCQ Question Bank"
         subtitle="Complete repository of authentic Lok Sewa multiple-choice questions with verified keys and official rationale"
-        totalCount={ALL_QUIZ_QUESTIONS.length}
+        totalCount={questions.length}
         data={filteredQuestions}
         columns={columns}
         keyExtractor={(q) => q.id}
@@ -393,6 +460,48 @@ export function QuizQuestionBankTab() {
         filters={tableFilters}
         isFiltered={isFiltered}
         onResetFilters={handleResetFilters}
+        actions={
+          <div className="flex items-center gap-2">
+            <ActionButton
+              label="Add MCQ"
+              title="Create a new objective MCQ question"
+              icon={Plus}
+              color="blue"
+              variant="solid"
+              size="sm"
+              onClick={() => {
+                setQuestionToEdit(null);
+                setIsFormModalOpen(true);
+              }}
+            />
+            <SharedActionMenu
+              items={[
+                {
+                  id: 'export-json',
+                  label: 'Export Question Bank (JSON)',
+                  description: 'Download JSON backup of all questions',
+                  icon: Download,
+                  color: 'emerald',
+                  onClick: handleExportJson,
+                },
+                {
+                  id: 'reset-default',
+                  label: 'Restore Official Questions',
+                  description: 'Reset all modifications to default Lok Sewa seed data',
+                  icon: RotateCcw,
+                  color: 'crimson',
+                  danger: true,
+                  onClick: () => setIsResetConfirmOpen(true),
+                },
+              ]}
+              label="Bank Tools"
+              title="MCQ Question Bank Administration"
+              color="zinc"
+              variant="outline"
+              size="sm"
+            />
+          </div>
+        }
         enableCsvExport={true}
         csvFilename="psc-objective-mcq-question-bank.csv"
         pagination={true}
@@ -507,18 +616,79 @@ export function QuizQuestionBankTab() {
                 size="sm"
                 showLabels
               />
-              <ActionButton
-                label="Done"
-                title="Close question inspector"
-                color="zinc"
-                variant="solid"
-                size="sm"
-                onClick={() => setSelectedQuestion(null)}
-              />
+              <div className="flex items-center gap-2">
+                <ActionButton
+                  label="Edit Question"
+                  title="Modify question stem, options, or explanation"
+                  icon={Edit3}
+                  color="blue"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const toEdit = selectedQuestion;
+                    setSelectedQuestion(null);
+                    setQuestionToEdit(toEdit);
+                    setIsFormModalOpen(true);
+                  }}
+                />
+                <ActionButton
+                  label="Done"
+                  title="Close question inspector"
+                  color="zinc"
+                  variant="solid"
+                  size="sm"
+                  onClick={() => setSelectedQuestion(null)}
+                />
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Create / Edit Form Modal */}
+      <QuizQuestionFormModal
+        isOpen={isFormModalOpen}
+        questionToEdit={questionToEdit}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setQuestionToEdit(null);
+        }}
+        onSave={handleSaveQuestion}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(questionToDelete)}
+        title={`Delete Question ${questionToDelete?.id}?`}
+        description={
+          <div>
+            <p>
+              Are you sure you want to permanently delete this question from the
+              bank?
+            </p>
+            {questionToDelete && (
+              <p className="mt-2 p-2 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[11px] line-clamp-2">
+                "{questionToDelete.question}"
+              </p>
+            )}
+          </div>
+        }
+        confirmLabel="Delete Question"
+        confirmColor="crimson"
+        onConfirm={handleDeleteQuestion}
+        onClose={() => setQuestionToDelete(null)}
+      />
+
+      {/* Reset Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isResetConfirmOpen}
+        title="Restore Official Question Bank?"
+        description="This will restore the original 120+ authentic Lok Sewa questions. Any custom questions you added will be removed."
+        confirmLabel="Restore Defaults"
+        confirmColor="crimson"
+        onConfirm={handleResetToDefault}
+        onClose={() => setIsResetConfirmOpen(false)}
+      />
     </div>
   );
 }

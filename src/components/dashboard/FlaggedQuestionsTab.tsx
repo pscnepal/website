@@ -8,13 +8,12 @@ import {
   Edit3,
   Eye,
   FileDown,
-  Play,
+  HelpCircle,
   Sparkles,
   Trash2,
   X,
   XCircle,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
 import {
@@ -44,7 +43,6 @@ export interface EnrichedFlaggedQuestion {
 }
 
 export function FlaggedQuestionsTab() {
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   // State
@@ -388,8 +386,8 @@ export function FlaggedQuestionsTab() {
           const menuItems: ActionMenuItem[] = [
             {
               id: 'inspect',
-              label: 'Practice / Inspect',
-              description: 'Interactive recall tester & explanation',
+              label: 'Inspect & Rationale',
+              description: 'Review options & official explanation',
               icon: Eye,
               color: 'blue',
               onClick: () => handleOpenInspect(question),
@@ -425,22 +423,14 @@ export function FlaggedQuestionsTab() {
           ];
 
           return (
-            <div className="flex items-center gap-1.5 justify-end">
-              <ActionButton
-                label="Practice"
-                title={`Practice & test recall for ${question.id}`}
-                icon={Eye}
-                size="xs"
-                variant="outline"
-                color="blue"
-                onClick={() => handleOpenInspect(question)}
-              />
+            <div className="flex items-center justify-end whitespace-nowrap">
               <SharedActionMenu
                 items={menuItems}
-                variant="ghost"
-                size="xs"
+                label="Actions"
+                title={`Actions for question ${question.id}`}
                 color="zinc"
-                align="right"
+                variant="outline"
+                size="xs"
                 width="w-56"
                 header={`Question ${question.id}`}
               />
@@ -504,15 +494,6 @@ export function FlaggedQuestionsTab() {
   // Header quick action items
   const headerActionItems = useMemo<ActionMenuItem[]>(() => {
     return [
-      {
-        id: 'practice',
-        label: 'Practice Flagged Deck',
-        description: 'Launch timed quiz with only flagged questions',
-        icon: Play,
-        color: 'emerald',
-        disabled: enrichedQuestions.length === 0,
-        to: '/quiz/custom?filter=flagged',
-      },
       {
         id: 'export',
         label: 'Export Flagged JSON',
@@ -600,22 +581,14 @@ export function FlaggedQuestionsTab() {
 
         <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
           <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
-            <span className="text-xs font-medium">Quick Revision Set</span>
-            <Play className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-xs font-medium">Verified Rationale</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="pt-0.5">
-            <button
-              type="button"
-              disabled={enrichedQuestions.length === 0}
-              onClick={() => navigate('/quiz/custom?filter=flagged')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-white" />
-              <span>Practice Now</span>
-            </button>
-          </div>
+          <p className="font-mono tabular-nums text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+            {enrichedQuestions.filter((q) => q.question.explanation).length}
+          </p>
           <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-            Interactive timed quiz session
+            Detailed citations attached
           </p>
         </div>
       </div>
@@ -633,28 +606,15 @@ export function FlaggedQuestionsTab() {
         pageSizeOptions={[5, 10, 20, 50]}
         title="Flagged Questions Registry"
         actions={
-          <div className="flex items-center gap-2">
-            {enrichedQuestions.length > 0 && (
-              <ActionButton
-                label="Practice Flagged"
-                title="Launch timed quiz on flagged questions"
-                icon={Play}
-                color="emerald"
-                variant="solid"
-                size="sm"
-                to="/quiz/custom?filter=flagged"
-              />
-            )}
-            <SharedActionMenu
-              label="Actions"
-              icon={Sparkles}
-              items={headerActionItems}
-              color="zinc"
-              variant="outline"
-              size="sm"
-              header="Flagged Review Tools"
-            />
-          </div>
+          <SharedActionMenu
+            label="Actions"
+            icon={Sparkles}
+            items={headerActionItems}
+            color="zinc"
+            variant="outline"
+            size="sm"
+            header="Flagged Review Tools"
+          />
         }
         emptyMessage="No Flagged Questions in Registry"
         emptyDescription="During any Objective Quiz or OMR Exam Simulation, press F or tap the Flag for Review button to bookmark tricky questions. They will automatically appear here."
@@ -670,13 +630,13 @@ export function FlaggedQuestionsTab() {
               onClick={handlePreloadSamples}
             />
             <ActionButton
-              label="Start Practice Quiz"
-              title="Open full question bank practice quiz"
-              icon={Play}
-              color="emerald"
+              label="Browse Question Bank"
+              title="Open full question bank directory"
+              icon={HelpCircle}
+              color="blue"
               variant="solid"
               size="sm"
-              to="/quiz"
+              to="/dashboard/quiz-bank"
             />
           </div>
         }

@@ -187,15 +187,15 @@ export function DashboardHeader({
           variant="subtle"
           size="sm"
           width="w-64"
-          header="Console Quick Launch"
+          header="Console Quick Navigation"
           items={[
             {
               id: 'quiz',
-              label: 'Objective MCQ Sandbox',
-              description: 'Timed multi-topic preliminary exam',
+              label: 'MCQ Question Bank',
+              description: 'Inspect verified preliminary items',
               icon: CheckCircle2,
               color: 'emerald',
-              to: '/quiz',
+              to: '/dashboard/quiz-bank',
             },
             {
               id: 'flagged',
@@ -207,19 +207,19 @@ export function DashboardHeader({
             },
             {
               id: 'written',
-              label: 'Timed Written Studio',
-              description: 'Subjective paper answer simulator',
+              label: 'Written Question Bank',
+              description: 'Subjective papers & model rubrics',
               icon: PenLine,
               color: 'crimson',
-              to: '/written',
+              to: '/dashboard/written-bank',
             },
             {
               id: 'reader',
-              label: '3D Parichaya Flipbook',
-              description: '13 official editions reader',
+              label: 'Materials Inventory',
+              description: 'Official reference documents & PDFs',
               icon: BookOpen,
               color: 'blue',
-              to: '/read',
+              to: '/dashboard/materials',
             },
             {
               id: 'directory',

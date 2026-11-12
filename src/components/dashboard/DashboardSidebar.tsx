@@ -15,11 +15,13 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import type { DashboardTab } from '../../pages/DashboardPage';
-import { ALL_QUIZ_QUESTIONS } from '../../data/quizData';
-import { WRITTEN_QUESTIONS } from '../../data/writtenQuestionsData';
 import { INITIAL_CANDIDATE_USERS } from '../../data/candidateUsersData';
 import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
 import { storageService } from '../../services/storageService';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../../services/questionStorageService';
 
 interface DashboardSidebarProps {
   activeTab?: DashboardTab;
@@ -42,16 +44,38 @@ export function DashboardSidebar({
   const [flaggedCount, setFlaggedCount] = useState<number>(() => {
     return Object.keys(storageService.loadFlaggedQuestions()).length;
   });
+  const [quizCount, setQuizCount] = useState<number>(() => {
+    return questionStorageService.loadQuizQuestions().length;
+  });
+  const [writtenCount, setWrittenCount] = useState<number>(() => {
+    return questionStorageService.loadWrittenQuestions().length;
+  });
 
   useEffect(() => {
     const handleSync = () => {
       setFlaggedCount(Object.keys(storageService.loadFlaggedQuestions()).length);
     };
+    const handleSyncQuiz = () => {
+      setQuizCount(questionStorageService.loadQuizQuestions().length);
+    };
+    const handleSyncWritten = () => {
+      setWrittenCount(questionStorageService.loadWrittenQuestions().length);
+    };
+
     window.addEventListener('psc_flagged_questions_changed', handleSync);
+    window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuiz);
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncWritten);
     window.addEventListener('storage', handleSync);
+    window.addEventListener('storage', handleSyncQuiz);
+    window.addEventListener('storage', handleSyncWritten);
+
     return () => {
       window.removeEventListener('psc_flagged_questions_changed', handleSync);
+      window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuiz);
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncWritten);
       window.removeEventListener('storage', handleSync);
+      window.removeEventListener('storage', handleSyncQuiz);
+      window.removeEventListener('storage', handleSyncWritten);
     };
   }, []);
 
@@ -80,7 +104,7 @@ export function DashboardSidebar({
       path: '/dashboard/quiz-bank',
       label: 'MCQ Question Bank',
       icon: HelpCircle,
-      count: ALL_QUIZ_QUESTIONS.length,
+      count: quizCount,
       description: 'Stage I Objective questions database',
     },
     {
@@ -96,7 +120,7 @@ export function DashboardSidebar({
       path: '/dashboard/written-bank',
       label: 'Written Question Bank',
       icon: PenLine,
-      count: WRITTEN_QUESTIONS.length,
+      count: writtenCount,
       description: 'Stage II Subjective cases & model solutions',
     },
     {

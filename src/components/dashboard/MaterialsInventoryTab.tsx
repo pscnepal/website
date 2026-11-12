@@ -14,7 +14,6 @@ import {
   type ReadingMaterialItem,
 } from '../../data/readingMaterials';
 import { resolveSampleUrl } from '../../utils/urlHelpers';
-import { ActionButton } from '../common/ActionButton';
 import {
   SharedActionMenu,
   type ActionMenuItem,
@@ -160,8 +159,8 @@ export function MaterialsInventoryTab() {
           const actionMenuItems: ActionMenuItem[] = [
             {
               id: 'flipbook-read',
-              label: '3D Flipbook Reader',
-              description: 'Interactive page-turning view',
+              label: 'Read Document',
+              description: '3D Flipbook or PDF Reader',
               icon: BookOpen,
               color: 'blue',
               to: `/read?url=${encodeURIComponent(fullUrl)}`,
@@ -208,19 +207,10 @@ export function MaterialsInventoryTab() {
           ];
 
           return (
-            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-              <ActionButton
-                to={`/read?url=${encodeURIComponent(fullUrl)}`}
-                onClick={() => dispatch(recordView({ itemId: item.id }))}
-                title="Open 3D Flipbook or PDF Reader"
-                label="Read"
-                color="blue"
-                variant="solid"
-                size="xs"
-                icon={BookOpen}
-              />
+            <div className="flex items-center justify-end whitespace-nowrap">
               <SharedActionMenu
                 items={actionMenuItems}
+                label="Actions"
                 title={`Document actions for ${item.title}`}
                 color="zinc"
                 variant="outline"

@@ -1,19 +1,26 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BookOpen,
   Check,
   Copy,
+  Download,
+  Edit3,
   Eye,
-  PenLine,
+  Plus,
+  RotateCcw,
+  Trash2,
   X,
 } from 'lucide-react';
 import {
   WRITTEN_PAPERS,
-  WRITTEN_QUESTIONS,
   type WrittenQuestion,
 } from '../../data/writtenQuestionsData';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../../services/questionStorageService';
 import { ActionButton } from '../common/ActionButton';
 import {
   SharedActionMenu,
@@ -25,10 +32,15 @@ import {
   type ColumnDef,
   type TableFilterDef,
 } from '../common/SharedDataTable';
+import { WrittenQuestionFormModal } from './WrittenQuestionFormModal';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 
 export function WrittenQuestionBankTab() {
   const dispatch = useAppDispatch();
   const userReactions = useAppSelector((state) => state.reactions.userReactions);
+  const [questions, setQuestions] = useState<WrittenQuestion[]>(() =>
+    questionStorageService.loadWrittenQuestions()
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [paperFilter, setPaperFilter] = useState('all');
   const [marksFilter, setMarksFilter] = useState<'all' | '5' | '10'>('all');
@@ -37,9 +49,27 @@ export function WrittenQuestionBankTab() {
   const [modalLang, setModalLang] = useState<'bilingual' | 'en' | 'ne'>('bilingual');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  // CRUD State
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [questionToEdit, setQuestionToEdit] = useState<WrittenQuestion | null>(null);
+  const [questionToDelete, setQuestionToDelete] = useState<WrittenQuestion | null>(null);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    const handleSyncQuestions = () => {
+      setQuestions(questionStorageService.loadWrittenQuestions());
+    };
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncQuestions);
+    window.addEventListener('storage', handleSyncQuestions);
+    return () => {
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncQuestions);
+      window.removeEventListener('storage', handleSyncQuestions);
+    };
+  }, []);
+
   // Filter written questions
   const filteredQuestions = useMemo(() => {
-    return WRITTEN_QUESTIONS.filter((q) => {
+    return questions.filter((q) => {
       if (paperFilter !== 'all' && q.paper !== paperFilter) {
         return false;
       }
@@ -65,7 +95,44 @@ export function WrittenQuestionBankTab() {
       }
       return true;
     });
-  }, [searchQuery, paperFilter, marksFilter, reactionFilter, userReactions]);
+  }, [questions, searchQuery, paperFilter, marksFilter, reactionFilter, userReactions]);
+
+  const handleSaveQuestion = (saved: WrittenQuestion) => {
+    if (questionToEdit) {
+      questionStorageService.updateWrittenQuestion(saved);
+    } else {
+      questionStorageService.createWrittenQuestion(saved);
+    }
+    setQuestions(questionStorageService.loadWrittenQuestions());
+  };
+
+  const handleDeleteQuestion = () => {
+    if (!questionToDelete) return;
+    questionStorageService.deleteWrittenQuestion(questionToDelete.id);
+    setQuestions(questionStorageService.loadWrittenQuestions());
+    if (selectedQuestion?.id === questionToDelete.id) {
+      setSelectedQuestion(null);
+    }
+    setQuestionToDelete(null);
+  };
+
+  const handleResetToDefault = () => {
+    questionStorageService.resetWrittenQuestionsToDefault();
+    setQuestions(questionStorageService.loadWrittenQuestions());
+    setIsResetConfirmOpen(false);
+  };
+
+  const handleExportJson = () => {
+    const dataStr =
+      'data:text/json;charset=utf-8,' +
+      encodeURIComponent(JSON.stringify(questions, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', 'psc-nepal-written-question-bank.json');
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
 
   const handleCopy = (q: WrittenQuestion) => {
     const text = `PSC Written (${q.id}) - ${q.paper} [${q.marks} Marks]:\n\nEnglish:\n${q.en.title}\n${q.en.question}\n\nNepali:\n${q.ne.title}\n${q.ne.question}\n\nModel Answer (Intro):\n${q.en.introduction}\n\nExaminer Criteria:\n${q.rubric.map((r, i) => `${i + 1}. ${r.en}`).join('\n')}`;
@@ -186,12 +253,26 @@ export function WrittenQuestionBankTab() {
               },
             },
             {
-              id: 'timed-practice',
-              label: 'Launch Timed Writing Studio',
-              description: `${q.recommendedMinutes} minutes official exam timer`,
-              icon: PenLine,
+              id: 'edit',
+              label: 'Edit Question & Rubric',
+              description: 'Modify prompts, model answers & scoring criteria',
+              icon: Edit3,
+              color: 'amber',
+              onClick: () => {
+                setQuestionToEdit(q);
+                setIsFormModalOpen(true);
+              },
+            },
+            {
+              id: 'delete',
+              label: 'Delete Question',
+              description: 'Permanently remove from written question bank',
+              icon: Trash2,
               color: 'crimson',
-              to: `/written/${q.id}`,
+              danger: true,
+              onClick: () => {
+                setQuestionToDelete(q);
+              },
             },
             {
               id: 'copy-text',
@@ -216,19 +297,10 @@ export function WrittenQuestionBankTab() {
           ];
 
           return (
-            <div className="flex items-center justify-end gap-1.5 whitespace-nowrap">
-              <ActionButton
-                label="Practice"
-                title={`Launch Timed Writing Sandbox for ${q.id}`}
-                icon={PenLine}
-                color="crimson"
-                variant="solid"
-                size="xs"
-                to={`/written/${q.id}`}
-              />
-
+            <div className="flex items-center justify-end whitespace-nowrap">
               <SharedActionMenu
                 items={actionMenuItems}
+                label="Actions"
                 title={`Actions for written prompt ${q.id}`}
                 color="zinc"
                 variant="outline"
@@ -251,7 +323,7 @@ export function WrittenQuestionBankTab() {
         value: paperFilter,
         onChange: setPaperFilter,
         options: [
-          { label: `All Papers (${WRITTEN_QUESTIONS.length})`, value: 'all' },
+          { label: `All Papers (${questions.length})`, value: 'all' },
           ...WRITTEN_PAPERS.map((paper) => ({ label: paper, value: paper })),
         ],
       },
@@ -301,7 +373,7 @@ export function WrittenQuestionBankTab() {
       <SharedDataTable<WrittenQuestion>
         title="PSC Written Exam Long Questions Bank"
         subtitle="Curated Lok Sewa subjective questions for Section Officer Papers II, III, and IV with bilingual model solutions"
-        totalCount={WRITTEN_QUESTIONS.length}
+        totalCount={questions.length}
         data={filteredQuestions}
         columns={columns}
         keyExtractor={(q) => q.id}
@@ -311,6 +383,48 @@ export function WrittenQuestionBankTab() {
         filters={tableFilters}
         isFiltered={isFiltered}
         onResetFilters={handleResetFilters}
+        actions={
+          <div className="flex items-center gap-2">
+            <ActionButton
+              label="Add Written Prompt"
+              title="Create a new subjective written question with rubric"
+              icon={Plus}
+              color="crimson"
+              variant="solid"
+              size="sm"
+              onClick={() => {
+                setQuestionToEdit(null);
+                setIsFormModalOpen(true);
+              }}
+            />
+            <SharedActionMenu
+              items={[
+                {
+                  id: 'export-json',
+                  label: 'Export Written Bank (JSON)',
+                  description: 'Download JSON backup of all written questions',
+                  icon: Download,
+                  color: 'emerald',
+                  onClick: handleExportJson,
+                },
+                {
+                  id: 'reset-default',
+                  label: 'Restore Official Questions',
+                  description: 'Reset all modifications to default Lok Sewa seed data',
+                  icon: RotateCcw,
+                  color: 'crimson',
+                  danger: true,
+                  onClick: () => setIsResetConfirmOpen(true),
+                },
+              ]}
+              label="Bank Tools"
+              title="Written Question Bank Administration"
+              color="zinc"
+              variant="outline"
+              size="sm"
+            />
+          </div>
+        }
         enableCsvExport={true}
         csvFilename="psc-written-question-bank.csv"
         pagination={true}
@@ -472,19 +586,33 @@ export function WrittenQuestionBankTab() {
 
               <div className="flex items-center gap-2">
                 <ActionButton
-                  label="Launch Timed Sandbox"
-                  title={`Open ${selectedQuestion.id} in timed writing studio`}
-                  icon={PenLine}
-                  color="crimson"
-                  variant="solid"
+                  label="Edit Question"
+                  title="Edit written problem statement, model answers, or rubric"
+                  icon={Edit3}
+                  color="blue"
+                  variant="outline"
                   size="sm"
-                  to={`/written/${selectedQuestion.id}`}
+                  onClick={() => {
+                    const toEdit = selectedQuestion;
+                    setSelectedQuestion(null);
+                    setQuestionToEdit(toEdit);
+                    setIsFormModalOpen(true);
+                  }}
+                />
+                <ActionButton
+                  label={copiedId === selectedQuestion.id ? 'Copied!' : 'Copy Rubric'}
+                  title={`Copy rubric for ${selectedQuestion.id}`}
+                  icon={copiedId === selectedQuestion.id ? Check : Copy}
+                  color={copiedId === selectedQuestion.id ? 'emerald' : 'zinc'}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopy(selectedQuestion)}
                 />
                 <ActionButton
                   label="Close"
                   title="Close answer preview"
                   color="zinc"
-                  variant="outline"
+                  variant="solid"
                   size="sm"
                   onClick={() => setSelectedQuestion(null)}
                 />
@@ -493,6 +621,51 @@ export function WrittenQuestionBankTab() {
           </div>
         </div>
       )}
+
+      {/* Create / Edit Written Question Modal */}
+      <WrittenQuestionFormModal
+        isOpen={isFormModalOpen}
+        questionToEdit={questionToEdit}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setQuestionToEdit(null);
+        }}
+        onSave={handleSaveQuestion}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(questionToDelete)}
+        title={`Delete Written Question ${questionToDelete?.id}?`}
+        description={
+          <div>
+            <p>
+              Are you sure you want to permanently delete this written prompt
+              from the bank?
+            </p>
+            {questionToDelete && (
+              <p className="mt-2 p-2 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[11px] line-clamp-2">
+                "{questionToDelete.en.title}"
+              </p>
+            )}
+          </div>
+        }
+        confirmLabel="Delete Question"
+        confirmColor="crimson"
+        onConfirm={handleDeleteQuestion}
+        onClose={() => setQuestionToDelete(null)}
+      />
+
+      {/* Reset Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isResetConfirmOpen}
+        title="Restore Official Written Questions?"
+        description="This will restore all authentic Lok Sewa Papers II, III, and IV written questions. Any custom questions or edits will be reset."
+        confirmLabel="Restore Defaults"
+        confirmColor="crimson"
+        onConfirm={handleResetToDefault}
+        onClose={() => setIsResetConfirmOpen(false)}
+      />
     </div>
   );
 }

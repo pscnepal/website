@@ -11,10 +11,12 @@ import {
 import { useAppSelector } from '../../app/hooks';
 import { ActionButton } from '../common/ActionButton';
 import { INITIAL_CANDIDATE_USERS } from '../../data/candidateUsersData';
-import { ALL_QUIZ_QUESTIONS } from '../../data/quizData';
 import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
-import { WRITTEN_QUESTIONS } from '../../data/writtenQuestionsData';
 import { storageService } from '../../services/storageService';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../../services/questionStorageService';
 import { formatCompactDuration } from '../../utils/pdfHelpers';
 
 export interface DashboardOverviewTabProps {
@@ -52,16 +54,38 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
   const [flaggedCount, setFlaggedCount] = useState<number>(() => {
     return Object.keys(storageService.loadFlaggedQuestions()).length;
   });
+  const [quizCount, setQuizCount] = useState<number>(() => {
+    return questionStorageService.loadQuizQuestions().length;
+  });
+  const [writtenCount, setWrittenCount] = useState<number>(() => {
+    return questionStorageService.loadWrittenQuestions().length;
+  });
 
   useEffect(() => {
     const handleSync = () => {
       setFlaggedCount(Object.keys(storageService.loadFlaggedQuestions()).length);
     };
+    const handleSyncQuiz = () => {
+      setQuizCount(questionStorageService.loadQuizQuestions().length);
+    };
+    const handleSyncWritten = () => {
+      setWrittenCount(questionStorageService.loadWrittenQuestions().length);
+    };
+
     window.addEventListener('psc_flagged_questions_changed', handleSync);
+    window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuiz);
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncWritten);
     window.addEventListener('storage', handleSync);
+    window.addEventListener('storage', handleSyncQuiz);
+    window.addEventListener('storage', handleSyncWritten);
+
     return () => {
       window.removeEventListener('psc_flagged_questions_changed', handleSync);
+      window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuiz);
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncWritten);
       window.removeEventListener('storage', handleSync);
+      window.removeEventListener('storage', handleSyncQuiz);
+      window.removeEventListener('storage', handleSyncWritten);
     };
   }, []);
 
@@ -125,7 +149,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
               <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
             <p className="font-mono tabular-nums text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-zinc-50">
-              {ALL_QUIZ_QUESTIONS.length}
+              {quizCount}
             </p>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
               GK, Constitution &amp; IQ
@@ -157,7 +181,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
               <PenLine className="w-4 h-4 text-crimson-600 dark:text-crimson-400" />
             </div>
             <p className="font-mono tabular-nums text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-zinc-50">
-              {WRITTEN_QUESTIONS.length}
+              {writtenCount}
             </p>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
               Papers II, III &amp; IV Cases
@@ -241,7 +265,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
                 Written Mastered
               </span>
               <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
-                {masteredWrittenCount}/{WRITTEN_QUESTIONS.length}
+                {masteredWrittenCount}/{writtenCount}
               </span>
             </div>
 
@@ -290,7 +314,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
             <ActionButton
               onClick={() => handleSwitchTab('written-bank')}
               label="Written Question Bank"
-              title="Practice and drill subjective 5M, 10M, and 20M case analytical questions"
+              title="Browse subjective 5M, 10M, and 20M case analytical questions"
               color="crimson"
               variant="solid"
               size="md"
