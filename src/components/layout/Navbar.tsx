@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, Menu, X } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronRight, Loader2, LogOut, Menu, X } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { GoogleLogoIcon } from '../auth/QuizAuthGate';
 
 const DESKTOP_NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', end: false },
@@ -34,15 +36,61 @@ export function Navbar() {
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const {
+    user,
+    isDashboardAdmin,
+    isAuthReady,
+    isSigningIn,
+    authError,
+    clearAuthError,
+    signInWithGoogle,
+    signOutUser,
+  } = useAuth();
 
   const routeKey = `${location.pathname}${location.search}${location.hash}`;
   const [openRouteKey, setOpenRouteKey] = useState<string | null>(null);
+  const [accountMenuRouteKey, setAccountMenuRouteKey] = useState<string | null>(
+    null
+  );
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
+
   const isMobileMenuOpen = openRouteKey === routeKey;
+  const isAccountMenuOpen = Boolean(user) && accountMenuRouteKey === routeKey;
 
   const closeMobileMenu = () => setOpenRouteKey(null);
   const toggleMobileMenu = () => {
     setOpenRouteKey((prev) => (prev === routeKey ? null : routeKey));
   };
+
+  useEffect(() => {
+    setAvatarLoadError(false);
+  }, [user?.photoURL]);
+
+  useEffect(() => {
+    if (!isAccountMenuOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setAccountMenuRouteKey(null);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setAccountMenuRouteKey(null);
+      }
+    };
+
+    window.addEventListener('mousedown', handleOutsideClick);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('mousedown', handleOutsideClick);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isAccountMenuOpen]);
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
@@ -74,6 +122,12 @@ export function Navbar() {
     };
   }, [isMobileMenuOpen]);
 
+  const userFirstName =
+    user?.displayName?.trim().split(/\s+/)[0] ||
+    user?.email?.split('@')[0] ||
+    'Account';
+  const userInitial = userFirstName.slice(0, 1).toUpperCase();
+
   return (
     <>
       <header className="fixed top-0 inset-x-0 z-40 h-16 border-b border-zinc-200/90 dark:border-zinc-800/90 bg-white/92 dark:bg-zinc-950/92 backdrop-blur-md">
@@ -81,7 +135,7 @@ export function Navbar() {
           aria-hidden="true"
           className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-crimson-700 via-crimson-600 to-blue-700"
         />
-        <div className="max-w-6xl mx-auto h-full flex items-center justify-between gap-4 md:gap-6 lg:gap-8 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto h-full flex items-center justify-between gap-3 md:gap-4 lg:gap-6 px-4 sm:px-6">
           {/* Zone 1: Single text element wordmark */}
           <Link
             to="/"
@@ -92,12 +146,14 @@ export function Navbar() {
             PSC Nepal
           </Link>
 
-          {/* Zone 2: 5 concise single-line React Router navigation links (desktop/tablet >= 768px) */}
+          {/* Zone 2: Concise single-line React Router navigation links (desktop/tablet >= 768px) */}
           <nav
             aria-label="Primary navigation"
-            className="hidden md:flex items-center md:gap-5 lg:gap-7 text-sm font-medium text-zinc-600 dark:text-zinc-400"
+            className="hidden md:flex items-center md:gap-3.5 lg:gap-5 text-sm font-medium text-zinc-600 dark:text-zinc-400"
           >
-            {DESKTOP_NAV_ITEMS.map((item) => (
+            {DESKTOP_NAV_ITEMS.filter(
+              (item) => item.to !== '/dashboard' || isDashboardAdmin
+            ).map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -131,11 +187,90 @@ export function Navbar() {
             ))}
           </nav>
 
-          {/* Zone 3: Primary Exam Simulator action on desktop/tablet + touch menu toggle on mobile */}
+          {/* Zone 3: Exam Simulator + Google Account control on desktop + touch menu toggle on mobile */}
           <div className="flex items-center gap-2 shrink-0">
+            {isAuthReady &&
+              (user ? (
+                <div ref={accountMenuRef} className="relative hidden md:block">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAccountMenuRouteKey((prev) =>
+                        prev === routeKey ? null : routeKey
+                      )
+                    }
+                    aria-expanded={isAccountMenuOpen}
+                    aria-haspopup="menu"
+                    className="inline-flex items-center gap-2 h-9 px-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-medium text-zinc-800 dark:text-zinc-200 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                  >
+                    {user.photoURL && !avatarLoadError ? (
+                      <img
+                        src={user.photoURL}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        onError={() => setAvatarLoadError(true)}
+                        className="w-5 h-5 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <span className="w-5 h-5 rounded-full bg-blue-700 text-white text-[11px] font-semibold inline-flex items-center justify-center shrink-0">
+                        {userInitial}
+                      </span>
+                    )}
+                    <span className="hidden lg:inline max-w-[90px] truncate">
+                      {userFirstName}
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  </button>
+
+                  {isAccountMenuOpen && (
+                    <div
+                      role="menu"
+                      className="absolute right-0 mt-2 w-60 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg shadow-zinc-950/10 dark:shadow-black/50 p-1.5 z-50"
+                    >
+                      <div className="px-3 py-2 border-b border-zinc-200/80 dark:border-zinc-800/80">
+                        <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                          {user.displayName || userFirstName}
+                        </p>
+                        {user.email && (
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                            {user.email}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setAccountMenuRouteKey(null);
+                          void signOutUser();
+                        }}
+                        className="mt-1 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5 shrink-0" />
+                        <span>Sign out</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isSigningIn}
+                  onClick={() => void signInWithGoogle()}
+                  className="hidden md:inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-medium text-zinc-800 dark:text-zinc-200 transition-colors disabled:opacity-60 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  {isSigningIn ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                  ) : (
+                    <GoogleLogoIcon className="w-3.5 h-3.5 shrink-0" />
+                  )}
+                  <span>Sign in</span>
+                </button>
+              ))}
+
             <Link
               to="/simulate"
-              className="hidden md:inline-flex items-center justify-center h-9 px-4 text-xs font-medium rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 shadow-2xs transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="hidden md:inline-flex items-center justify-center h-9 px-3.5 text-xs font-medium rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 shadow-2xs transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
             >
               Exam Simulator
             </Link>
@@ -192,7 +327,9 @@ export function Navbar() {
               className="fixed top-16 inset-x-0 z-40 md:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-b border-zinc-200 dark:border-zinc-800 bg-white/98 dark:bg-zinc-950/98 backdrop-blur-md shadow-xl shadow-zinc-950/10 dark:shadow-black/40"
             >
               <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-col gap-1">
-                {MOBILE_NAV_ITEMS.map((item) => (
+                {MOBILE_NAV_ITEMS.filter(
+                  (item) => item.to !== '/dashboard' || isDashboardAdmin
+                ).map((item) => (
                   <NavLink
                     key={item.to}
                     to={item.to}
@@ -221,7 +358,7 @@ export function Navbar() {
                   </NavLink>
                 ))}
 
-                <div className="mt-2 pt-3 border-t border-zinc-200/80 dark:border-zinc-800/80">
+                <div className="mt-2 pt-3 border-t border-zinc-200/80 dark:border-zinc-800/80 space-y-2.5">
                   <Link
                     to="/simulate"
                     onClick={closeMobileMenu}
@@ -229,6 +366,65 @@ export function Navbar() {
                   >
                     Exam Simulator
                   </Link>
+
+                  {isAuthReady &&
+                    (user ? (
+                      <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/70 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {user.photoURL && !avatarLoadError ? (
+                            <img
+                              src={user.photoURL}
+                              alt=""
+                              referrerPolicy="no-referrer"
+                              onError={() => setAvatarLoadError(true)}
+                              className="w-8 h-8 rounded-full object-cover shrink-0"
+                            />
+                          ) : (
+                            <span className="w-8 h-8 rounded-full bg-blue-700 text-white text-xs font-semibold inline-flex items-center justify-center shrink-0">
+                              {userInitial}
+                            </span>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                              {user.displayName || userFirstName}
+                            </p>
+                            {user.email && (
+                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                                {user.email}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            closeMobileMenu();
+                            void signOutUser();
+                          }}
+                          className="inline-flex items-center gap-1.5 min-h-9 px-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:text-crimson-700 dark:hover:text-crimson-400 shrink-0"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Sign out</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={isSigningIn}
+                        onClick={() => {
+                          closeMobileMenu();
+                          void signInWithGoogle();
+                        }}
+                        className="inline-flex items-center justify-center gap-2 w-full min-h-11 px-4 text-sm font-medium rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-60 whitespace-nowrap"
+                      >
+                        {isSigningIn ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <GoogleLogoIcon className="w-4 h-4" />
+                        )}
+                        <span>Continue with Google</span>
+                      </button>
+                    ))}
                 </div>
               </div>
             </motion.nav>
@@ -238,6 +434,30 @@ export function Navbar() {
 
       {/* Spacer matching fixed header height so content flows cleanly beneath it */}
       <div className="h-16 shrink-0" aria-hidden="true" />
+
+      {authError && (
+        <div
+          role="alert"
+          className="bg-crimson-50 dark:bg-crimson-950/60 border-b border-crimson-200 dark:border-crimson-900/70 text-crimson-900 dark:text-crimson-200 text-xs"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle className="w-4 h-4 shrink-0 text-crimson-600 dark:text-crimson-400" />
+              <span className="font-medium truncate sm:whitespace-normal">
+                {authError}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={clearAuthError}
+              aria-label="Dismiss authentication notice"
+              className="p-1 rounded-md hover:bg-crimson-100 dark:hover:bg-crimson-900/50 transition-colors cursor-pointer shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -7,6 +7,12 @@ import type {
   RecentBookEntry,
 } from '../types/pdf';
 import type { SettingsState } from '../types/reader';
+import { auth } from '../lib/firebase';
+import {
+  clearAllFlaggedQuestionsInFirestore,
+  deleteFlaggedQuestionInFirestore,
+  upsertFlaggedQuestionInFirestore,
+} from './cloudSyncService';
 
 const KEYS = {
   SETTINGS: 'psc_nepal_settings_v2',
@@ -53,10 +59,18 @@ export interface ContactInquiryRecord {
 export interface FlaggedQuestionRecord {
   questionId: string;
   flaggedAt: string;
-  source?: 'quiz' | 'simulation';
+  source?: 'quiz' | 'simulation' | 'dashboard';
   deckTitle?: string;
   cadreId?: string;
   note?: string;
+}
+
+function getVerifiedUid(): string | null {
+  const currentUser = auth.currentUser;
+  if (!currentUser || !currentUser.emailVerified) {
+    return null;
+  }
+  return currentUser.uid;
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
@@ -320,12 +334,19 @@ export const storageService = {
   ): boolean {
     const current = this.loadFlaggedQuestions();
     const isAlreadyFlagged = Boolean(current[questionId]);
+    const uid = getVerifiedUid();
+
     if (isAlreadyFlagged) {
       delete current[questionId];
       this.saveFlaggedQuestions(current);
+      if (uid) {
+        void deleteFlaggedQuestionInFirestore(uid, questionId).catch((err) => {
+          console.error('Failed to remove flagged question from Firestore:', err);
+        });
+      }
       return false;
     } else {
-      current[questionId] = {
+      const record: FlaggedQuestionRecord = {
         questionId,
         flaggedAt: new Date().toISOString(),
         source: meta?.source || 'quiz',
@@ -333,7 +354,13 @@ export const storageService = {
         cadreId: meta?.cadreId,
         note: meta?.note || '',
       };
+      current[questionId] = record;
       this.saveFlaggedQuestions(current);
+      if (uid) {
+        void upsertFlaggedQuestionInFirestore(uid, record).catch((err) => {
+          console.error('Failed to sync flagged question to Firestore:', err);
+        });
+      }
       return true;
     }
   },
@@ -343,6 +370,12 @@ export const storageService = {
     if (current[questionId]) {
       delete current[questionId];
       this.saveFlaggedQuestions(current);
+      const uid = getVerifiedUid();
+      if (uid) {
+        void deleteFlaggedQuestionInFirestore(uid, questionId).catch((err) => {
+          console.error('Failed to delete flagged question in Firestore:', err);
+        });
+      }
     }
   },
 
@@ -351,10 +384,83 @@ export const storageService = {
     if (current[questionId]) {
       current[questionId].note = note;
       this.saveFlaggedQuestions(current);
+      const uid = getVerifiedUid();
+      if (uid) {
+        void upsertFlaggedQuestionInFirestore(uid, current[questionId]).catch(
+          (err) => {
+            console.error('Failed to update flagged question note in Firestore:', err);
+          }
+        );
+      }
     }
   },
 
   clearAllFlaggedQuestions(): void {
     this.saveFlaggedQuestions({});
+    const uid = getVerifiedUid();
+    if (uid) {
+      void clearAllFlaggedQuestionsInFirestore(uid).catch((err) => {
+        console.error('Failed to clear flagged questions in Firestore:', err);
+      });
+    }
+  },
+
+  mergeCloudFlaggedQuestions(
+    cloudMap: Record<string, FlaggedQuestionRecord>
+  ): {
+    merged: Record<string, FlaggedQuestionRecord>;
+    toPushToCloud: FlaggedQuestionRecord[];
+  } {
+    const localMap = this.loadFlaggedQuestions();
+    const merged: Record<string, FlaggedQuestionRecord> = {};
+    const toPushToCloud: FlaggedQuestionRecord[] = [];
+
+    const allIds = new Set<string>([
+      ...Object.keys(cloudMap),
+      ...Object.keys(localMap),
+    ]);
+
+    for (const id of allIds) {
+      const localRec = localMap[id];
+      const cloudRec = cloudMap[id];
+
+      if (localRec && !cloudRec) {
+        merged[id] = localRec;
+        toPushToCloud.push(localRec);
+      } else if (cloudRec && !localRec) {
+        merged[id] = cloudRec;
+      } else if (localRec && cloudRec) {
+        const localTime = new Date(localRec.flaggedAt || 0).getTime() || 0;
+        const cloudTime = new Date(cloudRec.flaggedAt || 0).getTime() || 0;
+        const newer = localTime >= cloudTime ? localRec : cloudRec;
+        const older = localTime >= cloudTime ? cloudRec : localRec;
+        const resolvedNote =
+          (newer.note && newer.note.trim() ? newer.note : older.note) ?? '';
+
+        const combined: FlaggedQuestionRecord = {
+          questionId: id,
+          flaggedAt: newer.flaggedAt || older.flaggedAt,
+          source: newer.source || older.source || 'quiz',
+          ...(newer.deckTitle || older.deckTitle
+            ? { deckTitle: newer.deckTitle || older.deckTitle }
+            : {}),
+          ...(newer.cadreId || older.cadreId
+            ? { cadreId: newer.cadreId || older.cadreId }
+            : {}),
+          note: resolvedNote,
+        };
+        merged[id] = combined;
+
+        if (
+          (combined.note ?? '') !== (cloudRec.note ?? '') ||
+          combined.flaggedAt !== cloudRec.flaggedAt
+        ) {
+          toPushToCloud.push(combined);
+        }
+      }
+    }
+
+    this.saveFlaggedQuestions(merged);
+    return { merged, toPushToCloud };
   },
 };

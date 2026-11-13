@@ -1,5 +1,6 @@
 import type { PscCadreId } from './pscSyllabusData.ts';
-import { ALL_QUIZ_QUESTIONS, type QuizQuestion } from './quizData.ts';
+import type { QuizQuestion } from './quizData.ts';
+import { questionStorageService } from '../services/questionStorageService';
 
 export type BookletKey = 'A' | 'B' | 'C' | 'D';
 
@@ -50,9 +51,10 @@ export function deterministicPermute<T>(items: T[], key: BookletKey): T[] {
 }
 
 function pickBalancedQuestions(count: number, offset: number): QuizQuestion[] {
-  if (ALL_QUIZ_QUESTIONS.length <= count) return [...ALL_QUIZ_QUESTIONS];
+  const pool = questionStorageService.loadQuizQuestions();
+  if (pool.length <= count) return [...pool];
   const bySubject = new Map<string, QuizQuestion[]>();
-  for (const q of ALL_QUIZ_QUESTIONS) {
+  for (const q of pool) {
     const arr = bySubject.get(q.subject) ?? [];
     arr.push(q);
     bySubject.set(q.subject, arr);

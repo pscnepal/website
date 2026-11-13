@@ -9,8 +9,8 @@ import {
   Users,
 } from 'lucide-react';
 import { useAppSelector } from '../../app/hooks';
+import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import { ActionButton } from '../common/ActionButton';
-import { INITIAL_CANDIDATE_USERS } from '../../data/candidateUsersData';
 import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
 import { storageService } from '../../services/storageService';
 import {
@@ -34,6 +34,7 @@ export interface DashboardOverviewTabProps {
 
 export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps) {
   const navigate = useNavigate();
+  const { users: dbUsers, isLoading: isUsersLoading } = useDashboardUsers();
   const handleSwitchTab = (
     tab:
       | 'overview'
@@ -203,14 +204,14 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
 
           <div className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1">
             <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
-              <span className="text-xs font-medium">Aspirants Roster</span>
+              <span className="text-xs font-medium">Registered Users</span>
               <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             </div>
             <p className="font-mono tabular-nums text-2xl sm:text-3xl font-bold text-zinc-950 dark:text-zinc-50">
-              {INITIAL_CANDIDATE_USERS.length}
+              {isUsersLoading ? '—' : dbUsers.length}
             </p>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-              Cadre cohort peers
+              Firestore verified accounts
             </p>
           </div>
         </div>
@@ -354,20 +355,20 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
           </div>
         </section>
 
-        {/* Right Column: Top Cadre Aspirants Snapshot */}
+        {/* Right Column: Live Registered Users Snapshot */}
         <section className="lg:col-span-5 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
             <div>
               <h3 className="font-serif text-base font-bold text-zinc-950 dark:text-zinc-50">
-                Top Candidate Aspirants
+                Registered Users (Firestore)
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Peer study group &amp; benchmark leaders
+                Recent Google-authenticated users &amp; quiz activity
               </p>
             </div>
             <ActionButton
-              label={`View all ${INITIAL_CANDIDATE_USERS.length} →`}
-              title="View full aspirants directory"
+              label={isUsersLoading ? 'View directory →' : `View all ${dbUsers.length} →`}
+              title="View full Firestore users directory"
               color="blue"
               variant="ghost"
               size="xs"
@@ -375,42 +376,75 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
             />
           </div>
 
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
-            {INITIAL_CANDIDATE_USERS.slice(0, 4).map((user, idx) => (
-              <div
-                key={user.id}
-                className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="font-mono tabular-nums text-zinc-400 w-4 text-center">
-                    {idx + 1}
-                  </span>
-                  <div
-                    className={`w-7 h-7 rounded-full bg-gradient-to-tr ${user.avatarColor} text-white flex items-center justify-center font-bold text-[10px] shrink-0`}
-                  >
-                    {user.nameEn[0]}
+          {isUsersLoading ? (
+            <div className="py-8 text-center text-xs text-zinc-500 dark:text-zinc-400">
+              Loading registered users from Firestore...
+            </div>
+          ) : dbUsers.length === 0 ? (
+            <div className="py-8 text-center text-xs text-zinc-500 dark:text-zinc-400">
+              No signed-in user records found in Firestore yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
+              {dbUsers.slice(0, 4).map((dbUser, idx) => (
+                <div
+                  key={dbUser.uid}
+                  className="py-2.5 first:pt-0 last:pb-0 flex items-center justify-between gap-3 text-xs"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="font-mono tabular-nums text-zinc-400 w-4 text-center">
+                      {idx + 1}
+                    </span>
+                    {dbUser.photoURL ? (
+                      <img
+                        src={dbUser.photoURL}
+                        alt={dbUser.displayName}
+                        referrerPolicy="no-referrer"
+                        className="w-7 h-7 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-zinc-700"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-[10px] shrink-0">
+                        {dbUser.displayName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
+                          {dbUser.displayName}
+                        </p>
+                        {dbUser.status !== 'active' && (
+                          <span
+                            className={`font-mono text-[9.5px] px-1.5 py-0.2 rounded border shrink-0 uppercase ${
+                              dbUser.status === 'banned'
+                                ? 'bg-red-50 dark:bg-red-950/70 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
+                                : 'bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                            }`}
+                          >
+                            {dbUser.status}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                        {dbUser.email || dbUser.uid}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                      {user.nameEn}
-                    </p>
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                      {user.district} · {user.rollCode}
-                    </p>
-                  </div>
-                </div>
 
-                <div className="text-right shrink-0 font-mono tabular-nums">
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                    {user.mockAverageScore}%
-                  </span>
-                  <span className="block text-[10px] text-zinc-400">
-                    {user.mockPercentile}th %ile
-                  </span>
+                  <div className="text-right shrink-0 font-mono tabular-nums">
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                      {dbUser.averageAccuracy !== null
+                        ? `${dbUser.averageAccuracy}%`
+                        : '—'}
+                    </span>
+                    <span className="block text-[10px] text-zinc-400">
+                      {dbUser.quizAttemptsCount}{' '}
+                      {dbUser.quizAttemptsCount === 1 ? 'attempt' : 'attempts'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
 

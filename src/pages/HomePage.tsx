@@ -22,6 +22,7 @@ import { PdfUrlInput } from '../components/home/PdfUrlInput';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
+import { useAuth } from '../context/AuthContext';
 import singhaDurbarImg from '../assets/images/nepal_singha_durbar_1793889770945.jpg';
 import {
   ALL_SYLLABUS_UNITS,
@@ -114,6 +115,7 @@ export function HomePage() {
   const defaultReadingMode = useAppSelector(
     (state) => state.settings.defaultReadingMode
   );
+  const { isDashboardAdmin } = useAuth();
   const soundEnabled = useAppSelector((state) => state.reader.soundEnabled);
   const recentBooks = useAppSelector((state) => state.library.recentBooks);
   const readingStats = useAppSelector((state) => state.library.readingStats);
@@ -299,13 +301,15 @@ export function HomePage() {
                   <span>समसामयिक (Affairs)</span>
                 </Link>
 
-                <Link
-                  to="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span>Dashboard &amp; Banks</span>
-                </Link>
+                {isDashboardAdmin && (
+                  <Link
+                    to="/dashboard"
+                    className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span>Dashboard &amp; Banks</span>
+                  </Link>
+                )}
               </div>
             </div>
 

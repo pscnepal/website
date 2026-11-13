@@ -1,4 +1,13 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { Check, ChevronDown, Search, X } from 'lucide-react';
 
 export interface SearchSelectOption {
@@ -108,8 +117,15 @@ export function SharedSearchSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+  const [popoverPos, setPopoverPos] = useState<{
+    top: number;
+    left: number;
+    minWidth?: number;
+    ready: boolean;
+  }>({ top: 0, left: 0, ready: false });
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -139,13 +155,62 @@ export function SharedSearchSelect({
     });
   }, [options, searchQuery]);
 
+  const updatePopoverPosition = useCallback(() => {
+    const triggerEl = containerRef.current;
+    const popoverEl = popoverRef.current;
+    if (!triggerEl || !popoverEl) return;
+
+    const triggerRect = triggerEl.getBoundingClientRect();
+    const popRect = popoverEl.getBoundingClientRect();
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+    const margin = 12;
+    const gap = 4;
+
+    const spaceBelow = viewportH - triggerRect.bottom - margin;
+    const spaceAbove = triggerRect.top - margin;
+    const flipTop = spaceBelow < popRect.height + gap && spaceAbove > spaceBelow;
+
+    const top = flipTop
+      ? Math.max(margin, triggerRect.top - gap - popRect.height)
+      : Math.min(
+          Math.max(margin, triggerRect.bottom + gap),
+          Math.max(margin, viewportH - popRect.height - margin)
+        );
+
+    const effectiveWidth = Math.max(popRect.width, !popoverWidth ? triggerRect.width : 0);
+    let left =
+      align === 'right'
+        ? triggerRect.right - effectiveWidth
+        : triggerRect.left;
+
+    left = Math.max(
+      margin,
+      Math.min(left, Math.max(margin, viewportW - effectiveWidth - margin))
+    );
+
+    setPopoverPos({
+      top: Math.round(top),
+      left: Math.round(left),
+      minWidth: !popoverWidth ? Math.round(triggerRect.width) : undefined,
+      ready: true,
+    });
+  }, [align, popoverWidth]);
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      setPopoverPos((prev) => (prev.ready ? { ...prev, ready: false } : prev));
+      return;
+    }
+    updatePopoverPosition();
+  }, [isOpen, filteredOptions.length, updatePopoverPosition]);
+
   // Focus search input when popover opens
   useEffect(() => {
     if (isOpen) {
       setSearchQuery('');
       setHighlightedIndex(-1);
       if (shouldShowSearch) {
-        // Small timeout to allow popover DOM mount
         const timer = setTimeout(() => {
           searchInputRef.current?.focus();
         }, 30);
@@ -154,14 +219,15 @@ export function SharedSearchSelect({
     }
   }, [isOpen, shouldShowSearch]);
 
-  // Close on outside click or Escape
+  // Close on outside click or Escape & reposition on scroll/resize
   useEffect(() => {
     if (!isOpen) return;
 
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
       if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
+        !containerRef.current?.contains(target) &&
+        !popoverRef.current?.contains(target)
       ) {
         setIsOpen(false);
       }
@@ -176,13 +242,17 @@ export function SharedSearchSelect({
     document.addEventListener('mousedown', handlePointerDown);
     document.addEventListener('touchstart', handlePointerDown);
     document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', updatePopoverPosition);
+    window.addEventListener('scroll', updatePopoverPosition, true);
 
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('touchstart', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', updatePopoverPosition);
+      window.removeEventListener('scroll', updatePopoverPosition, true);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePopoverPosition]);
 
   // Keyboard navigation inside dropdown
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -306,18 +376,26 @@ export function SharedSearchSelect({
         </span>
       </button>
 
-      {/* Popover Dropdown */}
-      {isOpen && (
-        <div
-          role="listbox"
-          tabIndex={-1}
-          className={`absolute z-50 mt-1 min-w-[200px] ${
-            popoverWidth || 'w-full'
-          } rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl py-1 focus:outline-none animate-in fade-in-50 zoom-in-95 duration-100 ${
-            align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left'
-          } ${popoverClassName}`}
-          onClick={(e) => e.stopPropagation()}
-        >
+      {/* Portal Popover Dropdown */}
+      {isOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            role="listbox"
+            tabIndex={-1}
+            style={{
+              position: 'fixed',
+              top: popoverPos.top,
+              left: popoverPos.left,
+              minWidth: popoverPos.minWidth,
+              visibility: popoverPos.ready ? 'visible' : 'hidden',
+            }}
+            className={`z-[9999] min-w-[200px] ${
+              popoverWidth || ''
+            } rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl py-1 focus:outline-none ${popoverClassName}`}
+            onClick={(e) => e.stopPropagation()}
+          >
           {/* Search Filter Header */}
           {shouldShowSearch && (
             <div className="p-1.5 border-b border-zinc-100 dark:border-zinc-800">
@@ -419,7 +497,8 @@ export function SharedSearchSelect({
               })
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

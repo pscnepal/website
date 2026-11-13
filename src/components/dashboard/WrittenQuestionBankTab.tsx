@@ -248,7 +248,7 @@ export function WrittenQuestionBankTab() {
               icon: Eye,
               color: 'blue',
               onClick: () => {
-                dispatch(recordView({ itemId: q.id }));
+                dispatch(recordView({ itemId: q.id, itemType: 'question' }));
                 setSelectedQuestion(q);
               },
             },
@@ -290,7 +290,7 @@ export function WrittenQuestionBankTab() {
               icon: BookOpen,
               color: 'purple',
               onClick: () => {
-                dispatch(recordView({ itemId: q.id }));
+                dispatch(recordView({ itemId: q.id, itemType: 'question' }));
                 setSelectedQuestion(q);
               },
             },

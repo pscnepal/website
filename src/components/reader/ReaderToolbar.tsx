@@ -114,7 +114,7 @@ export function ReaderToolbar({
 
   useEffect(() => {
     if (materialId) {
-      dispatch(recordView({ itemId: materialId }));
+      dispatch(recordView({ itemId: materialId, itemType: 'material' }));
     }
   }, [materialId, dispatch]);
 

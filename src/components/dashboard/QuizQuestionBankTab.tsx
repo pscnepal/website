@@ -16,7 +16,11 @@ import {
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
-import type { QuizOptionKey, QuizQuestion } from '../../data/quizData';
+import {
+  isBilingualQuizQuestion,
+  type QuizOptionKey,
+  type QuizQuestion,
+} from '../../data/quizData';
 import { storageService } from '../../services/storageService';
 import {
   QUESTION_EVENTS,
@@ -117,11 +121,27 @@ export function QuizQuestionBankTab() {
       }
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
-        const matchesPrompt = q.question.toLowerCase().includes(query);
+        const showBilingual = isBilingualQuizQuestion(q);
+        const matchesPrompt =
+          q.question.toLowerCase().includes(query) ||
+          (showBilingual && (q.questionNe ?? '').toLowerCase().includes(query));
         const matchesId = q.id.toLowerCase().includes(query);
         const matchesTopic = (q.topic + ' ' + q.subtopic).toLowerCase().includes(query);
-        const matchesOptions = q.options.some((opt) => opt.text.toLowerCase().includes(query));
-        return matchesPrompt || matchesId || matchesTopic || matchesOptions;
+        const matchesOptions = q.options.some(
+          (opt) =>
+            opt.text.toLowerCase().includes(query) ||
+            (showBilingual && (opt.textNe ?? '').toLowerCase().includes(query))
+        );
+        const matchesExplanation =
+          q.explanation.toLowerCase().includes(query) ||
+          (showBilingual && (q.explanationNe ?? '').toLowerCase().includes(query));
+        return (
+          matchesPrompt ||
+          matchesId ||
+          matchesTopic ||
+          matchesOptions ||
+          matchesExplanation
+        );
       }
       return true;
     });
@@ -174,7 +194,24 @@ export function QuizQuestionBankTab() {
   };
 
   const handleCopyQuestion = (q: QuizQuestion) => {
-    const text = `Q (${q.id}): ${q.question}\n${q.options.map((o) => `${o.key}. ${o.text}`).join('\n')}\nAnswer: ${q.correct_options.join(', ')}\nExplanation: ${q.explanation}`;
+    const showBilingual = isBilingualQuizQuestion(q);
+    const questionPart =
+      showBilingual && q.questionNe?.trim()
+        ? `${q.question}\n${q.questionNe}`
+        : q.question;
+    const optionsPart = q.options
+      .map((o) =>
+        showBilingual && o.textNe && o.textNe.trim() !== o.text.trim()
+          ? `${o.key}. ${o.text} (${o.textNe})`
+          : `${o.key}. ${o.text}`
+      )
+      .join('\n');
+    const explanationPart =
+      showBilingual && q.explanationNe?.trim()
+        ? `${q.explanation}\n${q.explanationNe}`
+        : q.explanation;
+
+    const text = `Q (${q.id}): ${questionPart}\n${optionsPart}\nAnswer: ${q.correct_options.join(', ')}\nExplanation: ${explanationPart}`;
     navigator.clipboard.writeText(text).then(() => {
       setCopiedId(q.id);
       setTimeout(() => setCopiedId(null), 2000);
@@ -211,9 +248,20 @@ export function QuizQuestionBankTab() {
         sortKey: (q) => q.question,
         render: (q) => (
           <div className="min-w-[260px]">
-            <p className="font-serif text-[13px] font-semibold text-zinc-950 dark:text-zinc-100 line-clamp-2">
+            <p
+              lang={q.subject.trim().toLowerCase() === 'nepali' ? 'ne' : undefined}
+              className="font-serif text-[13px] font-semibold text-zinc-950 dark:text-zinc-100 line-clamp-2"
+            >
               {q.question}
             </p>
+            {isBilingualQuizQuestion(q) && q.questionNe?.trim() && (
+              <p
+                lang="ne"
+                className="mt-0.5 text-[12px] text-zinc-600 dark:text-zinc-400 line-clamp-1"
+              >
+                {q.questionNe}
+              </p>
+            )}
             <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">
               {q.options.length} options · +{q.marks.toFixed(2)} / -
               {(q.marks * 0.2).toFixed(2)}M
@@ -296,7 +344,7 @@ export function QuizQuestionBankTab() {
               icon: Eye,
               color: 'blue',
               onClick: () => {
-                dispatch(recordView({ itemId: q.id }));
+                dispatch(recordView({ itemId: q.id, itemType: 'question' }));
                 setSelectedQuestion(q);
                 setTestSelectedOption(null);
               },
@@ -428,12 +476,20 @@ export function QuizQuestionBankTab() {
         ],
       },
     ],
-    [subjectFilter, difficultyFilter, reactionFilter, availableSubjects, questions.length]
+    [
+      subjectFilter,
+      difficultyFilter,
+      flaggedFilter,
+      reactionFilter,
+      availableSubjects,
+      questions.length,
+    ]
   );
 
   const isFiltered =
     subjectFilter !== 'all' ||
     difficultyFilter !== 'all' ||
+    flaggedFilter !== 'all' ||
     reactionFilter !== 'all' ||
     Boolean(searchQuery.trim());
 
@@ -441,6 +497,7 @@ export function QuizQuestionBankTab() {
     setSearchQuery('');
     setSubjectFilter('all');
     setDifficultyFilter('all');
+    setFlaggedFilter('all');
     setReactionFilter('all');
   };
 
@@ -541,9 +598,26 @@ export function QuizQuestionBankTab() {
             </div>
 
             <div className="space-y-2">
-              <h4 id="question-modal-title" className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50">
+              <h4
+                id="question-modal-title"
+                lang={
+                  selectedQuestion.subject.trim().toLowerCase() === 'nepali'
+                    ? 'ne'
+                    : undefined
+                }
+                className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50"
+              >
                 {selectedQuestion.question}
               </h4>
+              {isBilingualQuizQuestion(selectedQuestion) &&
+                selectedQuestion.questionNe?.trim() && (
+                  <p
+                    lang="ne"
+                    className="text-sm font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed"
+                  >
+                    {selectedQuestion.questionNe}
+                  </p>
+                )}
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 {selectedQuestion.topic} / {selectedQuestion.subtopic}
               </p>
@@ -559,7 +633,20 @@ export function QuizQuestionBankTab() {
                   const isPicked = testSelectedOption === opt.key;
                   const isCorrect = selectedQuestion.correct_options.includes(opt.key);
                   const showFeedback = testSelectedOption !== null;
-                  const isParagraph = opt.text.length > 55 || opt.text.includes('\n');
+                  const showBilingual = isBilingualQuizQuestion(selectedQuestion);
+                  const optNe =
+                    showBilingual &&
+                    opt.textNe &&
+                    opt.textNe.trim() !== opt.text.trim()
+                      ? opt.textNe.trim()
+                      : undefined;
+                  const isParagraph =
+                    opt.text.length > 50 ||
+                    (optNe
+                      ? optNe.length > 50 || opt.text.length + optNe.length > 65
+                      : false) ||
+                    opt.text.includes('\n') ||
+                    Boolean(optNe?.includes('\n'));
 
                   return (
                     <button
@@ -581,7 +668,24 @@ export function QuizQuestionBankTab() {
                       <span className="font-mono font-bold shrink-0 w-5">
                         {opt.key}.
                       </span>
-                      <span className="flex-1 min-w-0 break-words leading-snug">{opt.text}</span>
+                      <span
+                        lang={
+                          selectedQuestion.subject.trim().toLowerCase() === 'nepali'
+                            ? 'ne'
+                            : undefined
+                        }
+                        className="flex-1 min-w-0 break-words leading-snug"
+                      >
+                        <span className="block">{opt.text}</span>
+                        {optNe && (
+                          <span
+                            lang="ne"
+                            className="block text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 leading-snug"
+                          >
+                            {optNe}
+                          </span>
+                        )}
+                      </span>
                       {showFeedback && isCorrect && (
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 ml-auto" />
                       )}
@@ -599,9 +703,26 @@ export function QuizQuestionBankTab() {
               <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
                 Official Rationale &amp; Explanation:
               </p>
-              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200/80 dark:border-zinc-800">
-                {selectedQuestion.explanation}
-              </p>
+              <div className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200/80 dark:border-zinc-800 space-y-2">
+                <p
+                  lang={
+                    selectedQuestion.subject.trim().toLowerCase() === 'nepali'
+                      ? 'ne'
+                      : undefined
+                  }
+                >
+                  {selectedQuestion.explanation}
+                </p>
+                {isBilingualQuizQuestion(selectedQuestion) &&
+                  selectedQuestion.explanationNe?.trim() && (
+                    <p
+                      lang="ne"
+                      className="pt-2 border-t border-zinc-200/70 dark:border-zinc-800/70 text-zinc-600 dark:text-zinc-400"
+                    >
+                      {selectedQuestion.explanationNe}
+                    </p>
+                  )}
+              </div>
               {selectedQuestion.sourceTitle && (
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">
                   Source Document: {selectedQuestion.sourceTitle}

@@ -255,18 +255,31 @@ You can practice drafting this answer under timed conditions in the [Written Que
 }
 
 function formatQuizQuestionDetail(q: QuizQuestion): string {
+  const isBilingual =
+    q.subject.trim().toLowerCase() !== 'english' &&
+    q.subject.trim().toLowerCase() !== 'nepali';
+
   const optionsList = q.options
     .map((o) => {
       const isCorrect = q.correct_options.includes(o.key);
-      return `- **(${o.key})** ${o.text} ${isCorrect ? '✅ *(Correct Answer)*' : ''}`;
+      const neText =
+        isBilingual && o.textNe && o.textNe.trim() !== o.text.trim()
+          ? ` *(${o.textNe})*`
+          : '';
+      return `- **(${o.key})** ${o.text}${neText} ${isCorrect ? '✅ *(Correct Answer)*' : ''}`;
     })
     .join('\n');
+
+  const questionNeBlock =
+    isBilingual && q.questionNe?.trim() ? `\n> ${q.questionNe.trim()}` : '';
+  const explanationNeBlock =
+    isBilingual && q.explanationNe?.trim() ? `\n\n${q.explanationNe.trim()}` : '';
 
   return `### Question [${q.id}] (${q.subject} > ${q.subtopic})
 **Difficulty**: ${q.difficulty.toUpperCase()} | **Marks**: ${q.marks}M
 
 **Question**:
-> ${q.question}
+> ${q.question}${questionNeBlock}
 
 **Options**:
 ${optionsList}
@@ -274,7 +287,7 @@ ${optionsList}
 **Verified Answer**: Option **${q.correct_options.join(', ')}**
 
 **Statutory & Conceptual Explanation**:
-${q.explanation}
+${q.explanation}${explanationNeBlock}
 
 ${q.sourceTitle ? `*Reference: ${q.sourceTitle}*` : ''}
 
@@ -492,7 +505,7 @@ Read the complete official document in the [3D Constitution Flipbook](/read?samp
   let bestQuiz: QuizQuestion | null = null;
   let bestQuizScore = 0;
   for (const q of ALL_QUIZ_QUESTIONS) {
-    const text = `${q.id} ${q.subject} ${q.topic} ${q.subtopic} ${q.question} ${q.explanation}`.toLowerCase();
+    const text = `${q.id} ${q.subject} ${q.topic} ${q.subtopic} ${q.question} ${q.questionNe ?? ''} ${q.explanation} ${q.explanationNe ?? ''}`.toLowerCase();
     let score = 0;
     for (const kw of keywords) {
       if (text.includes(kw)) score += kw.length >= 5 ? 3 : 1.5;

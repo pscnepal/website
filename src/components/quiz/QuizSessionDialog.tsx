@@ -28,6 +28,7 @@ import { useAppDispatch } from '../../app/hooks';
 import {
   getDeckTotalMarks,
   getQuizDeadlineSeconds,
+  isBilingualQuizQuestion,
   isQuestionCorrect,
   QUIZ_OPTION_KEYS,
   type QuizDeck,
@@ -45,6 +46,11 @@ import { resolveSampleUrl } from '../../utils/urlHelpers';
 import { storageService } from '../../services/storageService';
 import { ReactionButtons } from '../common/ReactionButtons';
 import { recordView } from '../../features/reactions/reactionsSlice';
+import {
+  saveQuizAttemptToFirestore,
+  useAuth,
+} from '../../context/AuthContext';
+import { QuizAuthGate } from '../auth/QuizAuthGate';
 
 type ReviewFilter = 'all' | 'incorrect' | 'unanswered' | 'correct' | 'flagged';
 
@@ -69,10 +75,18 @@ function formatOptionList(
   question: QuizQuestion,
   keys: QuizOptionKey[]
 ): string {
+  const bilingual = isBilingualQuizQuestion(question);
   return keys
     .map((key) => {
       const match = question.options.find((opt) => opt.key === key);
-      return match ? `${match.key}. ${match.text}` : key;
+      if (!match) return key;
+      const textNe =
+        bilingual &&
+        match.textNe &&
+        match.textNe.trim() !== match.text.trim()
+          ? ` (${match.textNe.trim()})`
+          : '';
+      return `${match.key}. ${match.text}${textNe}`;
     })
     .join(' · ');
 }
@@ -273,6 +287,7 @@ function QuizDialogInner({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const shouldReduceMotion = Boolean(useReducedMotion());
 
   const totalQuestions = deck.questions.length;
@@ -324,7 +339,7 @@ function QuizDialogInner({
 
   useEffect(() => {
     if (currentQuestion?.id) {
-      dispatch(recordView({ itemId: currentQuestion.id }));
+      dispatch(recordView({ itemId: currentQuestion.id, itemType: 'question' }));
     }
   }, [currentQuestion?.id, dispatch]);
 
@@ -430,26 +445,31 @@ function QuizDialogInner({
         ? deadlineSeconds
         : Math.max(1, deadlineSeconds - finalRemaining);
 
-      dispatch(
-        recordQuizAttempt({
-          id: `attempt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          deckId: deck.id,
-          deckTitle: deck.title,
-          mode,
-          totalQuestions,
-          totalMarks,
-          correctCount,
-          wrongCount,
-          unansweredCount,
-          accuracyPercent,
-          pscNetScore,
-          durationSeconds: usedSeconds,
-          deadlineSeconds,
-          timedOut: didTimeOut,
-          completedAt: new Date().toISOString(),
-          questionOutcomes,
-        })
-      );
+      const attemptRecord = {
+        id: `attempt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        deckId: deck.id,
+        deckTitle: deck.title,
+        mode,
+        totalQuestions,
+        totalMarks,
+        correctCount,
+        wrongCount,
+        unansweredCount,
+        accuracyPercent,
+        pscNetScore,
+        durationSeconds: usedSeconds,
+        deadlineSeconds,
+        timedOut: didTimeOut,
+        completedAt: new Date().toISOString(),
+        questionOutcomes,
+      };
+
+      dispatch(recordQuizAttempt(attemptRecord));
+      if (user) {
+        void saveQuizAttemptToFirestore(user, attemptRecord).catch((err) => {
+          console.error('Failed to persist quiz attempt to Firestore:', err);
+        });
+      }
 
       setConfirmingExit(false);
       setReviewFilter('all');
@@ -458,7 +478,7 @@ function QuizDialogInner({
       setIsSubmitted(true);
       bodyScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     },
-    [deck, mode, totalQuestions, totalMarks, deadlineSeconds, dispatch]
+    [deck, mode, totalQuestions, totalMarks, deadlineSeconds, dispatch, user]
   );
 
   // Wall-clock reverse countdown timer starting at N:00 (1 minute per question)
@@ -1384,9 +1404,22 @@ function QuizDialogInner({
                           </div>
                         </div>
 
-                          <h5 className="font-serif text-fluid-h3 font-semibold text-zinc-900 dark:text-zinc-100">
-                            {q.question}
-                          </h5>
+                          <div className="space-y-1">
+                            <h5
+                              lang={q.subject.trim().toLowerCase() === 'nepali' ? 'ne' : undefined}
+                              className="font-serif text-fluid-h3 font-semibold text-zinc-900 dark:text-zinc-100"
+                            >
+                              {q.question}
+                            </h5>
+                            {isBilingualQuizQuestion(q) && q.questionNe?.trim() && (
+                              <p
+                                lang="ne"
+                                className="text-sm font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed"
+                              >
+                                {q.questionNe}
+                              </p>
+                            )}
+                          </div>
 
                           <div className="space-y-1 text-fluid-option break-words">
                             {!isUnanswered && !isCorrect && (
@@ -1405,9 +1438,22 @@ function QuizDialogInner({
                             </p>
                           </div>
 
-                          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                            {q.explanation}
-                          </p>
+                          <div className="space-y-1.5">
+                            <p
+                              lang={q.subject.trim().toLowerCase() === 'nepali' ? 'ne' : undefined}
+                              className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed"
+                            >
+                              {q.explanation}
+                            </p>
+                            {isBilingualQuizQuestion(q) && q.explanationNe?.trim() && (
+                              <p
+                                lang="ne"
+                                className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed pt-1.5 border-t border-zinc-200/70 dark:border-zinc-800/70"
+                              >
+                                {q.explanationNe}
+                              </p>
+                            )}
+                          </div>
 
                           {q.sourcePath && q.sourceTitle && (
                             <div className="pt-0.5">
@@ -1582,9 +1628,27 @@ function QuizDialogInner({
                       </div>
 
                       {/* Question Stem */}
-                      <h3 className="mt-3.5 font-serif text-fluid-question font-semibold text-zinc-950 dark:text-zinc-50 text-balance">
-                        {currentQuestion.question}
-                      </h3>
+                      <div className="mt-3.5 space-y-1.5">
+                        <h3
+                          lang={
+                            currentQuestion.subject.trim().toLowerCase() === 'nepali'
+                              ? 'ne'
+                              : undefined
+                          }
+                          className="font-serif text-fluid-question font-semibold text-zinc-950 dark:text-zinc-50 text-balance"
+                        >
+                          {currentQuestion.question}
+                        </h3>
+                        {isBilingualQuizQuestion(currentQuestion) &&
+                          currentQuestion.questionNe?.trim() && (
+                            <p
+                              lang="ne"
+                              className="text-sm sm:text-base font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed"
+                            >
+                              {currentQuestion.questionNe}
+                            </p>
+                          )}
+                      </div>
 
                       {/* Tactile Answer Options (Single-Select Radio or Multi-Select Checkbox) */}
                       <div
@@ -1602,9 +1666,22 @@ function QuizDialogInner({
                             currentQuestion.correct_options.includes(
                               option.key
                             );
+                          const showBilingual =
+                            isBilingualQuizQuestion(currentQuestion);
+                          const optionNe =
+                            showBilingual &&
+                            option.textNe &&
+                            option.textNe.trim() !== option.text.trim()
+                              ? option.textNe.trim()
+                              : undefined;
                           const isParagraph =
-                            option.text.length > 55 ||
-                            option.text.includes('\n');
+                            option.text.length > 50 ||
+                            (optionNe
+                              ? optionNe.length > 50 ||
+                                option.text.length + optionNe.length > 65
+                              : false) ||
+                            option.text.includes('\n') ||
+                            Boolean(optionNe?.includes('\n'));
 
                           let rowClasses =
                             'border-zinc-200/90 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/40 dark:bg-zinc-950/35 hover:bg-zinc-50 dark:hover:bg-zinc-800/40 text-zinc-900 dark:text-zinc-100';
@@ -1722,8 +1799,23 @@ function QuizDialogInner({
                                 >
                                   {option.key}
                                 </span>
-                                <span className="text-fluid-option pt-0.5 min-w-0 break-words leading-snug">
-                                  {option.text}
+                                <span
+                                  lang={
+                                    currentQuestion.subject.trim().toLowerCase() === 'nepali'
+                                      ? 'ne'
+                                      : undefined
+                                  }
+                                  className="text-fluid-option pt-0.5 min-w-0 break-words leading-snug"
+                                >
+                                  <span className="block">{option.text}</span>
+                                  {optionNe && (
+                                    <span
+                                      lang="ne"
+                                      className="block text-[12px] sm:text-[13px] text-zinc-600 dark:text-zinc-400 mt-0.5 leading-snug"
+                                    >
+                                      {optionNe}
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                               {statusLabel}
@@ -1803,9 +1895,27 @@ function QuizDialogInner({
                               </span>
                             </div>
 
-                            <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                              {currentQuestion.explanation}
-                            </p>
+                            <div className="space-y-1.5">
+                              <p
+                                lang={
+                                  currentQuestion.subject.trim().toLowerCase() === 'nepali'
+                                    ? 'ne'
+                                    : undefined
+                                }
+                                className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed"
+                              >
+                                {currentQuestion.explanation}
+                              </p>
+                              {isBilingualQuizQuestion(currentQuestion) &&
+                                currentQuestion.explanationNe?.trim() && (
+                                  <p
+                                    lang="ne"
+                                    className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed pt-1.5 border-t border-zinc-200/70 dark:border-zinc-800/70"
+                                  >
+                                    {currentQuestion.explanationNe}
+                                  </p>
+                                )}
+                            </div>
 
                             {currentQuestion.sourcePath &&
                               currentQuestion.sourceTitle && (
@@ -2188,6 +2298,8 @@ export function QuizSessionDialog({
   initialMode,
   onClose,
 }: QuizSessionDialogProps) {
+  const { user } = useAuth();
+
   useEffect(() => {
     if (!open || !deck) return;
     const prevOverflow = document.body.style.overflow;
@@ -2206,12 +2318,25 @@ export function QuizSessionDialog({
           aria-modal="true"
           aria-labelledby="quiz-dialog-title"
         >
-          <QuizDialogInner
-            key={deck.id}
-            deck={deck}
-            initialMode={initialMode}
-            onClose={onClose}
-          />
+          {user ? (
+            <QuizDialogInner
+              key={deck.id}
+              deck={deck}
+              initialMode={initialMode}
+              onClose={onClose}
+            />
+          ) : (
+            <QuizAuthGate
+              title={deck.title}
+              subtitle={deck.subtitle}
+              metaItems={[
+                `${deck.questions.length} Questions`,
+                `${getDeckTotalMarks(deck.questions)} Marks`,
+                `${deck.questions.length}:00 Countdown`,
+              ]}
+              onClose={onClose}
+            />
+          )}
         </div>
       )}
     </AnimatePresence>

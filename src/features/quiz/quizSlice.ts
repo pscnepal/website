@@ -41,6 +41,23 @@ const quizSlice = createSlice({
     recordQuizAttempt(state, action: PayloadAction<QuizAttemptRecord>) {
       state.attempts = [action.payload, ...state.attempts].slice(0, 30);
     },
+    mergeRemoteQuizAttempts(state, action: PayloadAction<QuizAttemptRecord[]>) {
+      const byId = new Map<string, QuizAttemptRecord>();
+      for (const att of state.attempts) {
+        byId.set(att.id, att);
+      }
+      for (const att of action.payload) {
+        if (!byId.has(att.id)) {
+          byId.set(att.id, att);
+        }
+      }
+      state.attempts = Array.from(byId.values())
+        .sort(
+          (a, b) =>
+            new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+        )
+        .slice(0, 30);
+    },
     clearQuizHistory(state) {
       state.attempts = [];
     },
@@ -50,6 +67,7 @@ const quizSlice = createSlice({
 export const {
   setPreferredQuizMode,
   recordQuizAttempt,
+  mergeRemoteQuizAttempts,
   clearQuizHistory,
 } = quizSlice.actions;
 

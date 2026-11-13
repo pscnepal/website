@@ -1,4 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { createPortal } from 'react-dom';
 import type { LucideIcon } from 'lucide-react';
 import { ChevronDown, MoreHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -135,14 +142,80 @@ export function SharedActionMenu({
   menuClassName = '',
 }: SharedActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{
+    top: number;
+    left: number;
+    placement: 'bottom' | 'top';
+    ready: boolean;
+  }>({
+    top: 0,
+    left: 0,
+    placement: 'bottom',
+    ready: false,
+  });
 
-  // Close menu on click outside
+  const triggerWrapperRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const updatePosition = useCallback(() => {
+    const triggerEl = triggerWrapperRef.current;
+    const dropdownEl = dropdownRef.current;
+    if (!triggerEl || !dropdownEl) return;
+
+    const triggerRect = triggerEl.getBoundingClientRect();
+    const menuRect = dropdownEl.getBoundingClientRect();
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+    const margin = 12;
+    const gap = 6;
+
+    const spaceBelow = viewportH - triggerRect.bottom - margin;
+    const spaceAbove = triggerRect.top - margin;
+    const shouldFlipTop =
+      spaceBelow < menuRect.height + gap && spaceAbove > spaceBelow;
+
+    const top = shouldFlipTop
+      ? Math.max(margin, triggerRect.top - gap - menuRect.height)
+      : Math.min(
+          Math.max(margin, triggerRect.bottom + gap),
+          Math.max(margin, viewportH - menuRect.height - margin)
+        );
+
+    let left =
+      align === 'right'
+        ? triggerRect.right - menuRect.width
+        : triggerRect.left;
+
+    left = Math.max(
+      margin,
+      Math.min(left, Math.max(margin, viewportW - menuRect.width - margin))
+    );
+
+    setMenuPosition({
+      top: Math.round(top),
+      left: Math.round(left),
+      placement: shouldFlipTop ? 'top' : 'bottom',
+      ready: true,
+    });
+  }, [align]);
+
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      setMenuPosition((prev) => (prev.ready ? { ...prev, ready: false } : prev));
+      return;
+    }
+    updatePosition();
+  }, [isOpen, items.length, updatePosition]);
+
+  // Reposition on scroll/resize and close on click outside or Escape
   useEffect(() => {
     if (!isOpen) return;
 
     const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const inTrigger = triggerWrapperRef.current?.contains(target);
+      const inDropdown = dropdownRef.current?.contains(target);
+      if (!inTrigger && !inDropdown) {
         setIsOpen(false);
       }
     };
@@ -153,22 +226,39 @@ export function SharedActionMenu({
       }
     };
 
+    const handleViewportChange = () => {
+      updatePosition();
+    };
+
     document.addEventListener('mousedown', handlePointerDown);
     document.addEventListener('touchstart', handlePointerDown);
     document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', handleViewportChange);
+    window.addEventListener('scroll', handleViewportChange, true);
 
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
       document.removeEventListener('touchstart', handlePointerDown);
       document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', handleViewportChange);
+      window.removeEventListener('scroll', handleViewportChange, true);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePosition]);
 
   // Determine trigger icon
   const TriggerIcon = icon || (label ? ChevronDown : MoreHorizontal);
 
+  const originClass =
+    menuPosition.placement === 'top'
+      ? align === 'right'
+        ? 'origin-bottom-right'
+        : 'origin-bottom-left'
+      : align === 'right'
+        ? 'origin-top-right'
+        : 'origin-top-left';
+
   return (
-    <div ref={menuRef} className={`relative inline-block text-left ${className}`}>
+    <div ref={triggerWrapperRef} className={`relative inline-block text-left ${className}`}>
       {/* Trigger Button */}
       <ActionButton
         label={label}
@@ -189,24 +279,31 @@ export function SharedActionMenu({
         }}
       />
 
-      {/* Flyout Menu Dropdown */}
-      {isOpen && (
-        <div
-          role="menu"
-          aria-orientation="vertical"
-          tabIndex={-1}
-          className={`absolute z-50 mt-1.5 ${width} rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1.5 focus:outline-none animate-in fade-in-50 zoom-in-95 duration-150 ${
-            align === 'right' ? 'right-0 origin-top-right' : 'left-0 origin-top-left'
-          } ${menuClassName}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {header && (
-            <div className="px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
-              {header}
-            </div>
-          )}
+      {/* Portal Flyout Menu Dropdown (escapes parent overflow-hidden / overflow-x-auto containers) */}
+      {isOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            role="menu"
+            aria-orientation="vertical"
+            tabIndex={-1}
+            style={{
+              position: 'fixed',
+              top: menuPosition.top,
+              left: menuPosition.left,
+              visibility: menuPosition.ready ? 'visible' : 'hidden',
+            }}
+            className={`z-[9999] ${width} max-h-[calc(100vh-24px)] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1.5 focus:outline-none ${originClass} ${menuClassName}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {header && (
+              <div className="px-3 py-1.5 text-[11px] font-mono uppercase tracking-wider font-semibold text-zinc-400 dark:text-zinc-500 border-b border-zinc-100 dark:border-zinc-800">
+                {header}
+              </div>
+            )}
 
-          <div className="py-0.5 space-y-0.5">
+            <div className="py-0.5 space-y-0.5">
             {items.map((item) => {
               const itemColor = item.danger ? 'red' : item.color || 'zinc';
               const colorStyle = ITEM_COLOR_MAP[itemColor];
@@ -302,9 +399,10 @@ export function SharedActionMenu({
                 </React.Fragment>
               );
             })}
-          </div>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

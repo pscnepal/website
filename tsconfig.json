@@ -12,6 +12,7 @@
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "moduleDetection": "force",
+    "resolveJsonModule": true,
     "jsx": "react-jsx",
     "allowImportingTsExtensions": true,
     "noUnusedLocals": true,

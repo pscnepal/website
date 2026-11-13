@@ -1,0 +1,398 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated aspirant profile synced from Google Sign-In.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth user UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name from Google profile.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified Google account email address.",
+          "maxLength": 254
+        },
+        "photoURL": {
+          "type": "string",
+          "format": "uri",
+          "description": "Optional Google profile photo URL.",
+          "maxLength": 512
+        },
+        "role": {
+          "type": "string",
+          "enum": ["aspirant", "admin"],
+          "description": "Account access role."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "disabled", "banned"],
+          "description": "Moderation and access status of the account."
+        },
+        "statusReason": {
+          "type": "string",
+          "description": "Optional reason recorded when disabling or banning a user.",
+          "maxLength": 300
+        },
+        "targetCadre": {
+          "type": "string",
+          "enum": ["section-officer", "nayab-subba", "kharidar"],
+          "description": "Target Lok Sewa examination cadre."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Optional contact phone number.",
+          "maxLength": 32
+        },
+        "adminNotes": {
+          "type": "string",
+          "description": "Optional internal administrator notes.",
+          "maxLength": 1000
+        },
+        "statusUpdatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the latest ban, disable, or restore action."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest admin detail update."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when profile was created."
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest login."
+        }
+      },
+      "required": ["uid", "displayName", "createdAt", "lastLoginAt"]
+    },
+    "QuizAttempt": {
+      "title": "QuizAttempt",
+      "description": "Completed timed MCQ quiz or OMR simulation attempt recorded for an authenticated user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique quiz attempt identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "deckId": {
+          "type": "string",
+          "description": "Quiz deck or OMR preset identifier.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "deckTitle": {
+          "type": "string",
+          "description": "Human-readable title of the quiz deck.",
+          "minLength": 1,
+          "maxLength": 220
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["exam", "study"],
+          "description": "Quiz play mode."
+        },
+        "totalQuestions": {
+          "type": "number",
+          "description": "Total number of questions in the quiz."
+        },
+        "totalMarks": {
+          "type": "number",
+          "description": "Total possible marks."
+        },
+        "correctCount": {
+          "type": "number",
+          "description": "Number of correct answers."
+        },
+        "wrongCount": {
+          "type": "number",
+          "description": "Number of wrong answers."
+        },
+        "unansweredCount": {
+          "type": "number",
+          "description": "Number of unanswered questions."
+        },
+        "accuracyPercent": {
+          "type": "number",
+          "description": "Accuracy percentage (0 to 100)."
+        },
+        "pscNetScore": {
+          "type": "number",
+          "description": "PSC net score after -20% negative marking."
+        },
+        "durationSeconds": {
+          "type": "number",
+          "description": "Time spent in seconds."
+        },
+        "deadlineSeconds": {
+          "type": "number",
+          "description": "Allocated countdown seconds."
+        },
+        "timedOut": {
+          "type": "boolean",
+          "description": "Whether the attempt auto-submitted on timeout."
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when attempt finished.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when attempt was recorded."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "deckId",
+        "deckTitle",
+        "mode",
+        "totalQuestions",
+        "totalMarks",
+        "correctCount",
+        "wrongCount",
+        "unansweredCount",
+        "accuracyPercent",
+        "pscNetScore",
+        "durationSeconds",
+        "deadlineSeconds",
+        "timedOut",
+        "completedAt",
+        "createdAt"
+      ]
+    },
+    "FlaggedQuestion": {
+      "title": "FlaggedQuestion",
+      "description": "Question bookmarked for review during quiz or exam simulation runs, with optional study notes.",
+      "type": "object",
+      "properties": {
+        "questionId": {
+          "type": "string",
+          "description": "Flagged MCQ identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "flaggedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when question was flagged.",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "source": {
+          "type": "string",
+          "enum": ["quiz", "simulation", "dashboard"],
+          "description": "Surface from which the question was flagged."
+        },
+        "deckTitle": {
+          "type": "string",
+          "description": "Optional deck or exam preset title.",
+          "maxLength": 220
+        },
+        "cadreId": {
+          "type": "string",
+          "description": "Optional PSC cadre identifier.",
+          "maxLength": 64
+        },
+        "note": {
+          "type": "string",
+          "description": "Personal study mnemonic or revision note.",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when flag was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest note/flag update."
+        }
+      },
+      "required": [
+        "questionId",
+        "userId",
+        "flaggedAt",
+        "source",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserItemReaction": {
+      "title": "UserItemReaction",
+      "description": "Authenticated user's personal like/dislike state and recorded view count for a question or study material.",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "description": "Question or study material identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "itemType": {
+          "type": "string",
+          "enum": ["question", "material"],
+          "description": "Type of study item."
+        },
+        "reaction": {
+          "type": "string",
+          "enum": ["like", "dislike", "none"],
+          "description": "User's active reaction."
+        },
+        "viewCount": {
+          "type": "number",
+          "description": "Number of recorded views by this user."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when reaction record was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when reaction or view count was updated."
+        }
+      },
+      "required": [
+        "itemId",
+        "userId",
+        "itemType",
+        "reaction",
+        "viewCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ItemStats": {
+      "title": "ItemStats",
+      "description": "Publicly readable community counters (views, likes, dislikes) incremented atomically via authenticated reactions.",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "description": "Question or study material identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "itemType": {
+          "type": "string",
+          "enum": ["question", "material"],
+          "description": "Type of study item."
+        },
+        "viewsCount": {
+          "type": "number",
+          "description": "Cloud-persisted cumulative view delta."
+        },
+        "likesCount": {
+          "type": "number",
+          "description": "Cloud-persisted cumulative like delta."
+        },
+        "dislikesCount": {
+          "type": "number",
+          "description": "Cloud-persisted cumulative dislike delta."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when stats doc was initialized."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest metric update."
+        }
+      },
+      "required": [
+        "itemId",
+        "itemType",
+        "viewsCount",
+        "likesCount",
+        "dislikesCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private owner-only authenticated user profile containing Google display name, email, photo URL, and login timestamps."
+    },
+    "/users/{userId}/quizAttempts/{attemptId}": {
+      "schema": {
+        "$ref": "#/entities/QuizAttempt"
+      },
+      "description": "Completed timed MCQ quiz and OMR simulation history scoped per authenticated user."
+    },
+    "/users/{userId}/flaggedQuestions/{questionId}": {
+      "schema": {
+        "$ref": "#/entities/FlaggedQuestion"
+      },
+      "description": "User's cloud-synced flagged questions with optional revision notes."
+    },
+    "/users/{userId}/itemReactions/{itemId}": {
+      "schema": {
+        "$ref": "#/entities/UserItemReaction"
+      },
+      "description": "User's personal view count and like/dislike reaction per question or study material."
+    },
+    "/itemStats/{itemId}": {
+      "schema": {
+        "$ref": "#/entities/ItemStats"
+      },
+      "description": "Community view, like, and dislike counters updated atomically alongside UserItemReaction."
+    }
+  }
+}

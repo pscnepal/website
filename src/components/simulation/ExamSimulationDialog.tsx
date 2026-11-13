@@ -21,6 +21,7 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { formatReverseClock } from '../quiz/QuizSessionDialog';
 import { ReactionButtons } from '../common/ReactionButtons';
 import {
+  isBilingualQuizQuestion,
   isQuestionCorrect,
   QUIZ_OPTION_KEYS,
   type QuizOptionKey,
@@ -50,7 +51,13 @@ import {
   setWrittenQuestionStatus,
   type WrittenLanguageMode,
 } from '../../features/written/writtenSlice';
+import { recordView } from '../../features/reactions/reactionsSlice';
 import { resolveSampleUrl } from '../../utils/urlHelpers';
+import {
+  saveQuizAttemptToFirestore,
+  useAuth,
+} from '../../context/AuthContext';
+import { QuizAuthGate } from '../auth/QuizAuthGate';
 
 export {
   deterministicPermute,
@@ -158,6 +165,7 @@ function OmrHallDialogInner({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const shouldReduceMotion = Boolean(useReducedMotion());
 
   const [questions, setQuestions] = useState<QuizQuestion[]>(() =>
@@ -198,6 +206,12 @@ function OmrHallDialogInner({
   }, [responses]);
 
   const activeQuestion = questions[omrIndex];
+
+  useEffect(() => {
+    if (phase === 'sitting' && activeQuestion?.id) {
+      dispatch(recordView({ itemId: activeQuestion.id, itemType: 'question' }));
+    }
+  }, [phase, activeQuestion?.id, dispatch]);
 
   const liveStats = useMemo(() => {
     let attempted = 0;
@@ -330,29 +344,34 @@ function OmrHallDialogInner({
         })
       );
 
-      dispatch(
-        recordQuizAttempt({
-          id: `att-sim-${Date.now()}`,
-          deckId: preset.id,
-          deckTitle: `${preset.title} (Key ${bookletKey})`,
-          mode: 'exam',
-          totalQuestions: questions.length,
-          totalMarks: fullMarks,
-          correctCount: correctItems,
-          wrongCount: wrongItems,
-          unansweredCount: questions.length - attemptedItems,
-          accuracyPercent:
-            questions.length > 0
-              ? Math.round((correctItems / questions.length) * 100)
-              : 0,
-          pscNetScore: netMarks,
-          durationSeconds: elapsed,
-          deadlineSeconds: preset.allocatedSeconds,
-          timedOut: didTimeOut,
-          completedAt,
-          questionOutcomes: outcomes,
-        })
-      );
+      const attemptRecord = {
+        id: `att-sim-${Date.now()}`,
+        deckId: preset.id,
+        deckTitle: `${preset.title} (Key ${bookletKey})`,
+        mode: 'exam' as const,
+        totalQuestions: questions.length,
+        totalMarks: fullMarks,
+        correctCount: correctItems,
+        wrongCount: wrongItems,
+        unansweredCount: questions.length - attemptedItems,
+        accuracyPercent:
+          questions.length > 0
+            ? Math.round((correctItems / questions.length) * 100)
+            : 0,
+        pscNetScore: netMarks,
+        durationSeconds: elapsed,
+        deadlineSeconds: preset.allocatedSeconds,
+        timedOut: didTimeOut,
+        completedAt,
+        questionOutcomes: outcomes,
+      };
+
+      dispatch(recordQuizAttempt(attemptRecord));
+      if (user) {
+        void saveQuizAttemptToFirestore(user, attemptRecord).catch((err) => {
+          console.error('Failed to persist OMR attempt to Firestore:', err);
+        });
+      }
 
       setSecondsLeft(didTimeOut ? 0 : finalRemaining);
       setTimedOut(didTimeOut);
@@ -362,7 +381,7 @@ function OmrHallDialogInner({
       setPhase('result');
       bodyScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     },
-    [preset, questions, rollNumber, bookletKey, dispatch]
+    [preset, questions, rollNumber, bookletKey, dispatch, user]
   );
 
   // Wall-clock reverse countdown timer
@@ -1223,9 +1242,22 @@ function OmrHallDialogInner({
                             />
                           </div>
 
-                          <p className="font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50">
-                            {q.question}
-                          </p>
+                          <div className="space-y-1">
+                            <p
+                              lang={q.subject.trim().toLowerCase() === 'nepali' ? 'ne' : undefined}
+                              className="font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50"
+                            >
+                              {q.question}
+                            </p>
+                            {isBilingualQuizQuestion(q) && q.questionNe?.trim() && (
+                              <p
+                                lang="ne"
+                                className="text-sm font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed"
+                              >
+                                {q.questionNe}
+                              </p>
+                            )}
+                          </div>
 
                           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-baseline gap-x-4 gap-y-1 text-fluid-option break-words">
                             <span className="text-zinc-600 dark:text-zinc-400">
@@ -1238,6 +1270,13 @@ function OmrHallDialogInner({
                               Official Key:{' '}
                               {q.correct_options.map((k, kIdx) => {
                                 const opt = q.options.find((o) => o.key === k);
+                                const showBilingual = isBilingualQuizQuestion(q);
+                                const optNe =
+                                  showBilingual &&
+                                  opt?.textNe &&
+                                  opt.textNe.trim() !== opt.text.trim()
+                                    ? ` / ${opt.textNe.trim()}`
+                                    : '';
                                 return (
                                   <span key={k}>
                                     {kIdx > 0 ? ', ' : ''}
@@ -1247,7 +1286,8 @@ function OmrHallDialogInner({
                                     {opt ? (
                                       <span className="font-sans font-medium">
                                         {' '}
-                                        ({opt.text})
+                                        ({opt.text}
+                                        {optNe && <span lang="ne">{optNe}</span>})
                                       </span>
                                     ) : null}
                                   </span>
@@ -1256,9 +1296,22 @@ function OmrHallDialogInner({
                             </span>
                           </div>
 
-                          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                            {q.explanation}
-                          </p>
+                          <div className="space-y-1.5">
+                            <p
+                              lang={q.subject.trim().toLowerCase() === 'nepali' ? 'ne' : undefined}
+                              className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed"
+                            >
+                              {q.explanation}
+                            </p>
+                            {isBilingualQuizQuestion(q) && q.explanationNe?.trim() && (
+                              <p
+                                lang="ne"
+                                className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed pt-1.5 border-t border-zinc-200/70 dark:border-zinc-800/70"
+                              >
+                                {q.explanationNe}
+                              </p>
+                            )}
+                          </div>
 
                           {q.sourcePath && q.sourceTitle && (
                             <div className="pt-0.5">
@@ -1406,9 +1459,27 @@ function OmrHallDialogInner({
                         </p>
                       </div>
 
-                      <h3 className="font-serif text-fluid-question font-semibold text-zinc-950 dark:text-zinc-50 [text-wrap:balance]">
-                        {activeQuestion.question}
-                      </h3>
+                      <div className="space-y-1.5">
+                        <h3
+                          lang={
+                            activeQuestion.subject.trim().toLowerCase() === 'nepali'
+                              ? 'ne'
+                              : undefined
+                          }
+                          className="font-serif text-fluid-question font-semibold text-zinc-950 dark:text-zinc-50 [text-wrap:balance]"
+                        >
+                          {activeQuestion.question}
+                        </h3>
+                        {isBilingualQuizQuestion(activeQuestion) &&
+                          activeQuestion.questionNe?.trim() && (
+                            <p
+                              lang="ne"
+                              className="text-sm sm:text-base font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed"
+                            >
+                              {activeQuestion.questionNe}
+                            </p>
+                          )}
+                      </div>
 
                       {/* Tactile OMR Option Cards */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
@@ -1416,9 +1487,22 @@ function OmrHallDialogInner({
                           const picked =
                             responses[activeQuestion.id]?.includes(opt.key) ??
                             false;
+                          const showBilingual =
+                            isBilingualQuizQuestion(activeQuestion);
+                          const optNe =
+                            showBilingual &&
+                            opt.textNe &&
+                            opt.textNe.trim() !== opt.text.trim()
+                              ? opt.textNe.trim()
+                              : undefined;
                           const isParagraph =
-                            opt.text.length > 55 ||
-                            opt.text.includes('\n');
+                            opt.text.length > 50 ||
+                            (optNe
+                              ? optNe.length > 50 ||
+                                opt.text.length + optNe.length > 65
+                              : false) ||
+                            opt.text.includes('\n') ||
+                            Boolean(optNe?.includes('\n'));
 
                           return (
                             <button
@@ -1446,8 +1530,23 @@ function OmrHallDialogInner({
                                 >
                                   {opt.key}
                                 </span>
-                                <span className="text-fluid-option pt-0.5 min-w-0 break-words leading-snug">
-                                  {opt.text}
+                                <span
+                                  lang={
+                                    activeQuestion.subject.trim().toLowerCase() === 'nepali'
+                                      ? 'ne'
+                                      : undefined
+                                  }
+                                  className="text-fluid-option pt-0.5 min-w-0 break-words leading-snug"
+                                >
+                                  <span className="block">{opt.text}</span>
+                                  {optNe && (
+                                    <span
+                                      lang="ne"
+                                      className="block text-[12px] sm:text-[13px] text-zinc-600 dark:text-zinc-400 mt-0.5 leading-snug"
+                                    >
+                                      {optNe}
+                                    </span>
+                                  )}
                                 </span>
                               </div>
 
@@ -1757,6 +1856,12 @@ function WrittenHallDialogInner({
   }, [scripts]);
 
   const activeQuestion = sittingQuestions[qIndex];
+
+  useEffect(() => {
+    if (phase === 'sitting' && activeQuestion?.id) {
+      dispatch(recordView({ itemId: activeQuestion.id, itemType: 'question' }));
+    }
+  }, [phase, activeQuestion?.id, dispatch]);
 
   const finishSitting = useCallback(
     (finalScripts: Record<string, string>, finalRemaining: number) => {
@@ -2541,6 +2646,8 @@ export function ExamSimulationDialog({
   initialWrittenLang,
   onClose,
 }: ExamSimulationDialogProps) {
+  const { user } = useAuth();
+
   useEffect(() => {
     if (!open) return;
     const prevOverflow = document.body.style.overflow;
@@ -2560,14 +2667,27 @@ export function ExamSimulationDialog({
           aria-labelledby="exam-sim-dialog-title"
         >
           {simulationType === 'omr-hall' ? (
-            <OmrHallDialogInner
-              key={`omr-${omrPreset.id}`}
-              preset={omrPreset}
-              rollNumber={rollNumber}
-              bookletKey={bookletKey}
-              onBookletKeyChange={onBookletKeyChange}
-              onClose={onClose}
-            />
+            user ? (
+              <OmrHallDialogInner
+                key={`omr-${omrPreset.id}`}
+                preset={omrPreset}
+                rollNumber={rollNumber}
+                bookletKey={bookletKey}
+                onBookletKeyChange={onBookletKeyChange}
+                onClose={onClose}
+              />
+            ) : (
+              <QuizAuthGate
+                title={omrPreset.title}
+                subtitle={`${omrPreset.cadreLabel} · Booklet Key ${bookletKey}`}
+                metaItems={[
+                  `${omrPreset.marksPerQuestion}M / Q`,
+                  `-${Math.round(omrPreset.negativeRate * 100)}% Neg`,
+                  `${Math.round(omrPreset.allocatedSeconds / 60)} Min Hall Sitting`,
+                ]}
+                onClose={onClose}
+              />
+            )
           ) : (
             <WrittenHallDialogInner
               key={`written-${writtenPreset.id}`}

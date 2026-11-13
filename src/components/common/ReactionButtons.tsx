@@ -39,13 +39,13 @@ export function ReactionButtons({
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    dispatch(toggleLike({ itemId }));
+    dispatch(toggleLike({ itemId, itemType }));
   };
 
   const handleDislike = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    dispatch(toggleDislike({ itemId }));
+    dispatch(toggleDislike({ itemId, itemType }));
   };
 
   const iconSizeClass =

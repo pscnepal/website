@@ -1,0 +1,401 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Security & Validation Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && request.auth.token.email == 'info.pscnepal@gmail.com';
+    }
+
+    function isActiveAccount(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId))
+        && (
+          !('status' in get(/databases/$(database)/documents/users/$(userId)).data)
+          || get(/databases/$(database)/documents/users/$(userId)).data.status == 'active'
+        );
+    }
+
+    function isActiveSignedInUser() {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        || !('status' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data)
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+    }
+
+    // Entity Validation Blueprint: UserProfile
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'displayName', 'createdAt', 'lastLoginAt'])
+        && data.keys().hasOnly([
+          'uid',
+          'displayName',
+          'email',
+          'photoURL',
+          'role',
+          'status',
+          'statusReason',
+          'targetCadre',
+          'phone',
+          'adminNotes',
+          'statusUpdatedAt',
+          'updatedAt',
+          'createdAt',
+          'lastLoginAt'
+        ])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 120
+        && (!('email' in data) || (data.email is string && data.email.size() <= 254))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 512))
+        && (!('role' in data) || data.role in ['aspirant', 'admin'])
+        && (!('status' in data) || data.status in ['active', 'disabled', 'banned'])
+        && (!('statusReason' in data) || (data.statusReason is string && data.statusReason.size() <= 300))
+        && (!('targetCadre' in data) || data.targetCadre in ['section-officer', 'nayab-subba', 'kharidar'])
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 32))
+        && (!('adminNotes' in data) || (data.adminNotes is string && data.adminNotes.size() <= 1000))
+        && (!('statusUpdatedAt' in data) || data.statusUpdatedAt is timestamp)
+        && (!('updatedAt' in data) || data.updatedAt is timestamp)
+        && data.createdAt is timestamp
+        && data.lastLoginAt is timestamp;
+    }
+
+    // Entity Validation Blueprint: QuizAttempt
+    function isValidQuizAttempt(data) {
+      return data.keys().hasAll([
+        'id',
+        'userId',
+        'deckId',
+        'deckTitle',
+        'mode',
+        'totalQuestions',
+        'totalMarks',
+        'correctCount',
+        'wrongCount',
+        'unansweredCount',
+        'accuracyPercent',
+        'pscNetScore',
+        'durationSeconds',
+        'deadlineSeconds',
+        'timedOut',
+        'completedAt',
+        'createdAt'
+      ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'deckId',
+          'deckTitle',
+          'mode',
+          'totalQuestions',
+          'totalMarks',
+          'correctCount',
+          'wrongCount',
+          'unansweredCount',
+          'accuracyPercent',
+          'pscNetScore',
+          'durationSeconds',
+          'deadlineSeconds',
+          'timedOut',
+          'completedAt',
+          'createdAt'
+        ])
+        && isValidId(data.id)
+        && isValidId(data.userId)
+        && data.userId == request.auth.uid
+        && data.deckId is string
+        && data.deckId.size() >= 1
+        && data.deckId.size() <= 160
+        && data.deckTitle is string
+        && data.deckTitle.size() >= 1
+        && data.deckTitle.size() <= 220
+        && data.mode in ['exam', 'study']
+        && data.totalQuestions is number
+        && data.totalQuestions >= 1
+        && data.totalQuestions <= 500
+        && data.totalMarks is number
+        && data.totalMarks >= 0
+        && data.totalMarks <= 1000
+        && data.correctCount is number
+        && data.correctCount >= 0
+        && data.correctCount <= data.totalQuestions
+        && data.wrongCount is number
+        && data.wrongCount >= 0
+        && data.wrongCount <= data.totalQuestions
+        && data.unansweredCount is number
+        && data.unansweredCount >= 0
+        && data.unansweredCount <= data.totalQuestions
+        && data.accuracyPercent is number
+        && data.accuracyPercent >= 0
+        && data.accuracyPercent <= 100
+        && data.pscNetScore is number
+        && data.pscNetScore >= 0
+        && data.pscNetScore <= data.totalMarks
+        && data.durationSeconds is number
+        && data.durationSeconds >= 0
+        && data.durationSeconds <= 36000
+        && data.deadlineSeconds is number
+        && data.deadlineSeconds >= 1
+        && data.deadlineSeconds <= 36000
+        && data.timedOut is bool
+        && data.completedAt is string
+        && data.completedAt.size() >= 1
+        && data.completedAt.size() <= 64
+        && data.createdAt is timestamp;
+    }
+
+    // Entity Validation Blueprint: FlaggedQuestion
+    function isValidFlaggedQuestion(data) {
+      return data.keys().hasAll(['questionId', 'userId', 'flaggedAt', 'source', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['questionId', 'userId', 'flaggedAt', 'source', 'deckTitle', 'cadreId', 'note', 'createdAt', 'updatedAt'])
+        && isValidId(data.questionId)
+        && isValidId(data.userId)
+        && data.userId == request.auth.uid
+        && data.flaggedAt is string
+        && data.flaggedAt.size() >= 1
+        && data.flaggedAt.size() <= 64
+        && data.source in ['quiz', 'simulation', 'dashboard']
+        && (!('deckTitle' in data) || (data.deckTitle is string && data.deckTitle.size() <= 220))
+        && (!('cadreId' in data) || (data.cadreId is string && data.cadreId.size() <= 64))
+        && (!('note' in data) || (data.note is string && data.note.size() <= 1000))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Entity Validation Blueprint: UserItemReaction
+    function isValidUserItemReaction(data) {
+      return data.keys().hasAll(['itemId', 'userId', 'itemType', 'reaction', 'viewCount', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['itemId', 'userId', 'itemType', 'reaction', 'viewCount', 'createdAt', 'updatedAt'])
+        && isValidId(data.itemId)
+        && isValidId(data.userId)
+        && data.userId == request.auth.uid
+        && data.itemType in ['question', 'material']
+        && data.reaction in ['like', 'dislike', 'none']
+        && data.viewCount is number
+        && data.viewCount >= 0
+        && data.viewCount <= 100000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Entity Validation Blueprint: ItemStats
+    function isValidItemStats(data) {
+      return data.keys().hasAll(['itemId', 'itemType', 'viewsCount', 'likesCount', 'dislikesCount', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['itemId', 'itemType', 'viewsCount', 'likesCount', 'dislikesCount', 'createdAt', 'updatedAt'])
+        && isValidId(data.itemId)
+        && data.itemType in ['question', 'material']
+        && data.viewsCount is number
+        && data.viewsCount >= 0
+        && data.viewsCount <= 10000000
+        && data.likesCount is number
+        && data.likesCount >= 0
+        && data.likesCount <= 1000000
+        && data.dislikesCount is number
+        && data.dislikesCount >= 0
+        && data.dislikesCount <= 1000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Public Non-PII Community Item Stats (Views, Likes, Dislikes)
+    match /itemStats/{itemId} {
+      allow get: if isValidId(itemId);
+      allow list: if existing().itemType in ['question', 'material'];
+      allow create: if isVerifiedUser()
+        && isValidId(itemId)
+        && isValidItemStats(incoming())
+        && isActiveSignedInUser()
+        && incoming().itemId == itemId
+        && incoming().likesCount <= 1
+        && incoming().dislikesCount <= 1
+        && incoming().viewsCount <= 100
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && existsAfter(/databases/$(database)/documents/users/$(request.auth.uid)/itemReactions/$(itemId));
+      allow update: if isVerifiedUser()
+        && isValidId(itemId)
+        && isValidItemStats(incoming())
+        && isActiveSignedInUser()
+        && incoming().itemId == existing().itemId
+        && incoming().itemType == existing().itemType
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['viewsCount', 'likesCount', 'dislikesCount', 'updatedAt'])
+        && incoming().likesCount - existing().likesCount >= -1
+        && incoming().likesCount - existing().likesCount <= 1
+        && incoming().dislikesCount - existing().dislikesCount >= -1
+        && incoming().dislikesCount - existing().dislikesCount <= 1
+        && incoming().viewsCount >= existing().viewsCount
+        && incoming().viewsCount - existing().viewsCount <= 100
+        && existsAfter(/databases/$(database)/documents/users/$(request.auth.uid)/itemReactions/$(itemId));
+      allow delete: if false;
+    }
+
+    // Strict Owner-Only + Verified Admin Governance User Profiles (PII Isolated)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == userId
+        && incoming().createdAt == request.time
+        && incoming().lastLoginAt == request.time
+        && (!('role' in incoming()) || incoming().role == 'aspirant')
+        && (!('status' in incoming()) || incoming().status == 'active')
+        && !('statusReason' in incoming())
+        && !('adminNotes' in incoming())
+        && !('statusUpdatedAt' in incoming())
+        && !('updatedAt' in incoming());
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && (
+          (
+            isOwner(userId)
+            && (!('status' in existing()) || existing().status == 'active')
+            && incoming().lastLoginAt == request.time
+            && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'photoURL', 'lastLoginAt'])
+          )
+          ||
+          (
+            isAdmin()
+            && incoming().lastLoginAt == existing().lastLoginAt
+            && incoming().updatedAt == request.time
+            && (
+              userId != request.auth.uid
+              || (!('status' in incoming()) || incoming().status == 'active')
+            )
+            && (
+              !incoming().diff(existing()).affectedKeys().hasAny(['status', 'statusReason', 'statusUpdatedAt'])
+              || incoming().statusUpdatedAt == request.time
+            )
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'displayName',
+              'email',
+              'photoURL',
+              'role',
+              'status',
+              'statusReason',
+              'targetCadre',
+              'phone',
+              'adminNotes',
+              'statusUpdatedAt',
+              'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(userId) && isAdmin() && userId != request.auth.uid;
+
+      // User's Completed Quiz & OMR Simulation Attempts
+      match /quizAttempts/{attemptId} {
+        allow get: if isValidId(userId) && isValidId(attemptId) && (isOwner(userId) || isAdmin());
+        allow list: if (isOwner(userId) && existing().userId == request.auth.uid)
+          || (isAdmin() && existing().userId == userId);
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(attemptId)
+          && isValidQuizAttempt(incoming())
+          && isActiveAccount(userId)
+          && incoming().id == attemptId
+          && incoming().userId == userId
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(attemptId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      // User's Flagged Questions for Review
+      match /flaggedQuestions/{questionId} {
+        allow get: if isValidId(userId) && isValidId(questionId) && (isOwner(userId) || isAdmin());
+        allow list: if (isOwner(userId) && existing().userId == request.auth.uid)
+          || (isAdmin() && existing().userId == userId);
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(questionId)
+          && isValidFlaggedQuestion(incoming())
+          && isActiveAccount(userId)
+          && incoming().questionId == questionId
+          && incoming().userId == userId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(questionId)
+          && isValidFlaggedQuestion(incoming())
+          && isActiveAccount(userId)
+          && incoming().questionId == existing().questionId
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['flaggedAt', 'source', 'deckTitle', 'cadreId', 'note', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(questionId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      // User's Personal Views & Like/Dislike Reactions
+      match /itemReactions/{itemId} {
+        allow get: if isValidId(userId) && isValidId(itemId) && (isOwner(userId) || isAdmin());
+        allow list: if (isOwner(userId) && existing().userId == request.auth.uid)
+          || (isAdmin() && existing().userId == userId);
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(itemId)
+          && isValidUserItemReaction(incoming())
+          && isActiveAccount(userId)
+          && incoming().itemId == itemId
+          && incoming().userId == userId
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(itemId)
+          && isValidUserItemReaction(incoming())
+          && isActiveAccount(userId)
+          && incoming().itemId == existing().itemId
+          && incoming().userId == existing().userId
+          && incoming().itemType == existing().itemType
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['reaction', 'viewCount', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(itemId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+    }
+  }
+}

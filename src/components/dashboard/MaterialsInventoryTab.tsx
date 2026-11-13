@@ -164,7 +164,7 @@ export function MaterialsInventoryTab() {
               icon: BookOpen,
               color: 'blue',
               to: `/read?url=${encodeURIComponent(fullUrl)}`,
-              onClick: () => dispatch(recordView({ itemId: item.id })),
+              onClick: () => dispatch(recordView({ itemId: item.id, itemType: 'material' })),
             },
             {
               id: 'pdf-download',

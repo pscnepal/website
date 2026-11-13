@@ -153,7 +153,7 @@ export function PrivacyPolicyPage() {
 
       <PageTransition>
         <main className="flex-1">
-        <article className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
+        <article className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
           {/* Header */}
           <header className="space-y-3 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-8">
             <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">

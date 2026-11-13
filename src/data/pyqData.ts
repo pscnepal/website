@@ -45,8 +45,6 @@ export interface PyqQuestion {
   outlineHintsNe: string[];
   outlineHintsEn: string[];
   linkedWrittenQuestionId?: string;
-  likes: number;
-  views: number;
 }
 
 export const PYQ_RECURRING_TOPIC_STATS: PyqRecurringTopic[] = [
@@ -167,8 +165,6 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Challenges & Conclusion (4 marks): Proceduralism, weak citizen charter enforcement, lack of performance auditing.',
     ],
     linkedWrittenQuestionId: 'PSC-WR-201',
-    likes: 184,
-    views: 3120,
   },
   {
     id: 'pyq-so-2080-02',
@@ -200,8 +196,6 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Remedial Pathways (3 marks): Active National Coordination Council meetings, objective fiscal equalization grants.',
     ],
     linkedWrittenQuestionId: 'PSC-WR-202',
-    likes: 156,
-    views: 2840,
   },
   {
     id: 'pyq-so-2079-01',
@@ -233,8 +227,6 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Future Strategy (4 marks): Remit-hydro bonds, preferential SME startup loans for returnee migrants, productive asset formation.',
     ],
     linkedWrittenQuestionId: 'PSC-WR-302',
-    likes: 142,
-    views: 2610,
   },
   {
     id: 'pyq-nasu-2080-01',
@@ -264,8 +256,6 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Safeguarding Rights (3 marks): Service certainty, curbing harassment/bribery, grievance redressal, compensatory rights.',
     ],
     linkedWrittenQuestionId: 'PSC-WR-203',
-    likes: 215,
-    views: 3480,
   },
   {
     id: 'pyq-nasu-2079-01',
@@ -297,8 +287,6 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Significance (4 marks): Curbing corruption, promoting open governance, enhancing civic monitoring.',
     ],
     linkedWrittenQuestionId: 'PSC-WR-203',
-    likes: 198,
-    views: 3220,
   },
   {
     id: 'pyq-kharidar-2080-01',
@@ -327,8 +315,6 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Distinction (2 marks): Inward record of incoming correspondence vs outward record of outgoing dispatches.',
       'Importance (3 marks): Prevents loss of papers, establishes legal timeline proof, facilitates future retrieval.',
     ],
-    likes: 240,
-    views: 3890,
   },
   {
     id: 'pyq-kharidar-2079-01',
@@ -359,8 +345,6 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Key Considerations (4 marks): Objectivity, exact legal citation, unbiased language, unambiguous recommendation.',
       'Format (4 marks): Subject line, factual background, statutory clause, recommendation, and signature block.',
     ],
-    likes: 285,
-    views: 4190,
   },
   {
     id: 'pyq-so-2078-01',
@@ -392,8 +376,6 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Strategic Steps (3 marks): Mountain advocacy alliances, proactive COP diplomacy, dedicated domestic direct-access entity.',
     ],
     linkedWrittenQuestionId: 'PSC-WR-301',
-    likes: 177,
-    views: 2950,
   },
   {
     id: 'pyq-so-2077-01',
@@ -423,8 +405,6 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Professionalization Pathways (6 marks): Strict merit-based promotion, depoliticizing staff unions, objective KPI-driven evaluations.',
     ],
     linkedWrittenQuestionId: 'PSC-WR-201',
-    likes: 168,
-    views: 2790,
   },
   {
     id: 'pyq-nasu-2078-01',
@@ -453,7 +433,5 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Exclusive Powers & Act (5 marks): Schedule 8 (22 exclusive powers), local revenue, primary health, and basic education.',
       'Service Delivery Impediments (5 marks): Human capital shortages, weak internal revenue generation, fiscal accountability lapses.',
     ],
-    likes: 192,
-    views: 3100,
   },
 ];

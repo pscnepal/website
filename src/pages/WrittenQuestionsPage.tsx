@@ -286,7 +286,7 @@ export function WrittenQuestionsPage() {
       setTimerRunning(false);
       return;
     }
-    dispatch(recordView({ itemId: activeQuestion.id }));
+    dispatch(recordView({ itemId: activeQuestion.id, itemType: 'question' }));
     setTimerRunning(false);
     setRemainingSeconds(activeQuestion.recommendedMinutes * 60);
     setShowModelAnswerInStudio(true);
@@ -448,10 +448,16 @@ export function WrittenQuestionsPage() {
   };
 
   const toggleExpandCard = (id: string) => {
-    setExpandedIds((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setExpandedIds((prev) => {
+      const nextExpanded = !prev[id];
+      if (nextExpanded) {
+        dispatch(recordView({ itemId: id, itemType: 'question' }));
+      }
+      return {
+        ...prev,
+        [id]: nextExpanded,
+      };
+    });
   };
 
   const renderLanguageSegmentedControl = (layoutGroupId: string) => (

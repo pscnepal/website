@@ -26,12 +26,12 @@ import {
 } from '../components/quiz/QuizSessionDialog';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import {
-  ALL_QUIZ_QUESTIONS,
   getDeckTotalMarks,
   getQuizDeadlineSeconds,
   QUIZ_DECKS,
   type QuizDeck,
   type QuizDifficulty,
+  type QuizQuestion,
 } from '../data/quizData';
 import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
 import {
@@ -40,10 +40,15 @@ import {
   type QuizPlayMode,
 } from '../features/quiz/quizSlice';
 import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../services/questionStorageService';
+import {
   formatCompactDuration,
   formatRelativeDate,
 } from '../utils/pdfHelpers';
 import { storageService } from '../services/storageService';
+import { useAuth } from '../context/AuthContext';
 
 type DifficultyFilter = 'All' | QuizDifficulty;
 
@@ -53,9 +58,14 @@ export function QuizPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const shouldReduceMotion = Boolean(useReducedMotion());
+  const { isDashboardAdmin } = useAuth();
 
   const preferredMode = useAppSelector((state) => state.quiz.preferredMode);
   const attempts = useAppSelector((state) => state.quiz.attempts);
+
+  const [allQuestions, setAllQuestions] = useState<QuizQuestion[]>(() =>
+    questionStorageService.loadQuizQuestions()
+  );
 
   // Taxonomy explorer filter state
   const [subjectFilter, setSubjectFilter] = useState<string>('All');
@@ -65,8 +75,8 @@ export function QuizPage() {
     useState<DifficultyFilter>('All');
 
   const availableSubjects = useMemo(
-    () => Array.from(new Set(ALL_QUIZ_QUESTIONS.map((q) => q.subject))),
-    []
+    () => Array.from(new Set(allQuestions.map((q) => q.subject))),
+    [allQuestions]
   );
 
   const [flaggedCount, setFlaggedCount] = useState<number>(() => {
@@ -77,24 +87,41 @@ export function QuizPage() {
     const handleSync = () => {
       setFlaggedCount(Object.keys(storageService.loadFlaggedQuestions()).length);
     };
+    const handleBankSync = () => {
+      setAllQuestions(questionStorageService.loadQuizQuestions());
+    };
     window.addEventListener('psc_flagged_questions_changed', handleSync);
+    window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleBankSync);
     window.addEventListener('storage', handleSync);
+    window.addEventListener('storage', handleBankSync);
     return () => {
       window.removeEventListener('psc_flagged_questions_changed', handleSync);
+      window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleBankSync);
       window.removeEventListener('storage', handleSync);
+      window.removeEventListener('storage', handleBankSync);
     };
   }, []);
+
+  const hydratedQuizDecks = useMemo<QuizDeck[]>(() => {
+    const byId = new Map(allQuestions.map((q) => [q.id, q]));
+    return QUIZ_DECKS.map((deck) => ({
+      ...deck,
+      questions: deck.questions
+        .map((q) => byId.get(q.id))
+        .filter((q): q is QuizQuestion => Boolean(q)),
+    }));
+  }, [allQuestions]);
 
   const availableTopics = useMemo(() => {
     const pool =
       subjectFilter === 'All'
-        ? ALL_QUIZ_QUESTIONS
-        : ALL_QUIZ_QUESTIONS.filter((q) => q.subject === subjectFilter);
+        ? allQuestions
+        : allQuestions.filter((q) => q.subject === subjectFilter);
     return Array.from(new Set(pool.map((q) => q.topic)));
-  }, [subjectFilter]);
+  }, [allQuestions, subjectFilter]);
 
   const availableSubtopics = useMemo(() => {
-    let pool = ALL_QUIZ_QUESTIONS;
+    let pool = allQuestions;
     if (subjectFilter !== 'All') {
       pool = pool.filter((q) => q.subject === subjectFilter);
     }
@@ -102,10 +129,10 @@ export function QuizPage() {
       pool = pool.filter((q) => q.topic === topicFilter);
     }
     return Array.from(new Set(pool.map((q) => q.subtopic)));
-  }, [subjectFilter, topicFilter]);
+  }, [allQuestions, subjectFilter, topicFilter]);
 
   const filteredCustomQuestions = useMemo(() => {
-    return ALL_QUIZ_QUESTIONS.filter((q) => {
+    return allQuestions.filter((q) => {
       if (subjectFilter !== 'All' && q.subject !== subjectFilter) return false;
       if (topicFilter !== 'All' && q.topic !== topicFilter) return false;
       if (subtopicFilter !== 'All' && q.subtopic !== subtopicFilter)
@@ -114,7 +141,13 @@ export function QuizPage() {
         return false;
       return true;
     });
-  }, [subjectFilter, topicFilter, subtopicFilter, difficultyFilter]);
+  }, [
+    allQuestions,
+    subjectFilter,
+    topicFilter,
+    subtopicFilter,
+    difficultyFilter,
+  ]);
 
   const hasActiveFilter =
     subjectFilter !== 'All' ||
@@ -178,7 +211,7 @@ export function QuizPage() {
       const qFilter = searchParams.get('filter');
 
       if (qSource) {
-        const questions = ALL_QUIZ_QUESTIONS.filter(
+        const questions = allQuestions.filter(
           (q) => q.sourcePath === qSource
         );
         if (questions.length === 0) return null;
@@ -204,7 +237,7 @@ export function QuizPage() {
       }
 
       if (qFilter === 'weak') {
-        const questions = ALL_QUIZ_QUESTIONS.filter((q) =>
+        const questions = allQuestions.filter((q) =>
           weakQuestionIdSet.has(q.id)
         );
         if (questions.length === 0) return null;
@@ -222,7 +255,7 @@ export function QuizPage() {
       if (qFilter === 'flagged') {
         const savedFlags = storageService.loadFlaggedQuestions();
         const flaggedIds = new Set(Object.keys(savedFlags));
-        const questions = ALL_QUIZ_QUESTIONS.filter((q) =>
+        const questions = allQuestions.filter((q) =>
           flaggedIds.has(q.id)
         );
         if (questions.length === 0) return null;
@@ -242,7 +275,7 @@ export function QuizPage() {
       const qSubtopic = searchParams.get('subtopic') ?? 'All';
       const qDifficulty = searchParams.get('difficulty') ?? 'All';
 
-      const questions = ALL_QUIZ_QUESTIONS.filter((q) => {
+      const questions = allQuestions.filter((q) => {
         if (qSubject !== 'All' && q.subject !== qSubject) return false;
         if (qTopic !== 'All' && q.topic !== qTopic) return false;
         if (qSubtopic !== 'All' && q.subtopic !== qSubtopic) return false;
@@ -273,8 +306,8 @@ export function QuizPage() {
       };
     }
 
-    return QUIZ_DECKS.find((deck) => deck.id === deckId) ?? null;
-  }, [deckId, searchParams, weakQuestionIdSet]);
+    return hydratedQuizDecks.find((deck) => deck.id === deckId) ?? null;
+  }, [deckId, searchParams, weakQuestionIdSet, allQuestions, hydratedQuizDecks]);
 
   const handleOpenQuizDialog = (targetDeckId: string) => {
     navigate(`/quiz/${targetDeckId}`);
@@ -503,12 +536,14 @@ export function QuizPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2.5 shrink-0">
-                <Link
-                  to="/dashboard/flagged"
-                  className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  Manage in Dashboard
-                </Link>
+                {isDashboardAdmin && (
+                  <Link
+                    to="/dashboard/flagged"
+                    className="px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    Manage in Dashboard
+                  </Link>
+                )}
                 <button
                   type="button"
                   onClick={() => handleOpenQuizDialog('custom?filter=flagged')}
@@ -528,7 +563,7 @@ export function QuizPage() {
                 <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                   <SlidersHorizontal className="w-3.5 h-3.5" />
                   <span>
-                    Structured PSC Question Bank · {ALL_QUIZ_QUESTIONS.length}{' '}
+                    Structured PSC Question Bank · {allQuestions.length}{' '}
                     unique items
                   </span>
                 </div>
@@ -665,7 +700,7 @@ export function QuizPage() {
                 <span>
                   {hasActiveFilter
                     ? `Start Filtered Quiz (${filteredCustomQuestions.length} Qs)`
-                    : `Start Full Master Bank (${ALL_QUIZ_QUESTIONS.length} Qs)`}
+                    : `Start Full Master Bank (${allQuestions.length} Qs)`}
                 </span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
@@ -679,7 +714,7 @@ export function QuizPage() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {QUIZ_DECKS.map((deck, idx) => {
+              {hydratedQuizDecks.map((deck, idx) => {
                 const bestAccuracy = bestScoreByDeck[deck.id];
                 const deckDeadline = getQuizDeadlineSeconds(
                   deck.questions.length

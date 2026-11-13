@@ -14,8 +14,9 @@ import {
   X,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import type { DashboardTab } from '../../pages/DashboardPage';
-import { INITIAL_CANDIDATE_USERS } from '../../data/candidateUsersData';
 import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
 import { storageService } from '../../services/storageService';
 import {
@@ -41,6 +42,16 @@ export function DashboardSidebar({
   onCloseMobile,
 }: DashboardSidebarProps) {
   const location = useLocation();
+  const { user } = useAuth();
+  const { users: dbUsers, isLoading: isUsersLoading } = useDashboardUsers();
+  const adminName = user?.displayName || 'Portal Admin';
+  const adminEmail = user?.email || '';
+  const adminInitials = adminName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('') || 'AD';
   const [flaggedCount, setFlaggedCount] = useState<number>(() => {
     return Object.keys(storageService.loadFlaggedQuestions()).length;
   });
@@ -136,8 +147,8 @@ export function DashboardSidebar({
       path: '/dashboard/users',
       label: 'Aspirants Cohort',
       icon: Users,
-      count: INITIAL_CANDIDATE_USERS.length,
-      description: 'Candidate directory & peer cohort profiles',
+      count: isUsersLoading ? undefined : dbUsers.length,
+      description: 'Live Firestore user directory & quiz telemetry',
     },
     {
       id: 'data',
@@ -282,35 +293,54 @@ export function DashboardSidebar({
 
       {/* Bottom Profile & Return to Public Portal */}
       <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 space-y-2 bg-zinc-50/50 dark:bg-zinc-900/50">
-        {/* Candidate Aspirant Card */}
+        {/* Authenticated Admin Card */}
         {(!isCollapsed || isMobileOpen) ? (
           <div className="p-2.5 rounded-lg bg-white dark:bg-zinc-800/70 border border-zinc-200/80 dark:border-zinc-700/60 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-blue-500/20">
-              KO
-            </div>
+            {user?.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={adminName}
+                referrerPolicy="no-referrer"
+                className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-blue-500/20"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs shrink-0 ring-1 ring-blue-500/20">
+                {adminInitials}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
-                  Aspirant Officer
+                  {adminName}
                 </span>
                 <span
-                  title="Session Connected"
+                  title="Authenticated Session"
                   className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"
                 />
               </div>
               <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
-                Target: Gazetted Class III (Admin)
+                {adminEmail || 'Verified Admin'}
               </p>
             </div>
           </div>
         ) : (
           <div className="flex justify-center py-1">
-            <div
-              title="Aspirant Officer · Target: Gazetted Class III"
-              className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs ring-1 ring-blue-500/20 cursor-default"
-            >
-              KO
-            </div>
+            {user?.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={adminName}
+                title={`${adminName}${adminEmail ? ` · ${adminEmail}` : ''}`}
+                referrerPolicy="no-referrer"
+                className="w-8 h-8 rounded-full object-cover ring-1 ring-blue-500/20"
+              />
+            ) : (
+              <div
+                title={`${adminName}${adminEmail ? ` · ${adminEmail}` : ''}`}
+                className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center font-bold text-xs ring-1 ring-blue-500/20 cursor-default"
+              >
+                {adminInitials}
+              </div>
+            )}
           </div>
         )}
 

@@ -18,7 +18,9 @@ import {
   X,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useAppDispatch } from '../app/hooks';
 import { ActionButton } from '../components/common/ActionButton';
+import { ReactionButtons } from '../components/common/ReactionButtons';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
@@ -28,12 +30,14 @@ import {
   PYQ_RECURRING_TOPIC_STATS,
   type PyqQuestion,
 } from '../data/pyqData';
+import { recordView } from '../features/reactions/reactionsSlice';
 
 export type PyqPageTab = 'archive' | 'heatmap' | 'challenge';
 
 const STORAGE_KEY_PYQ_BOOKMARKS = 'psc_pyq_bookmarks_v1';
 
 export function PyqArchivePage() {
+  const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchInputId = useId();
 
@@ -423,9 +427,11 @@ export function PyqArchivePage() {
 
                         {/* Bottom Action Footer */}
                         <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-                          <div className="text-zinc-400 text-[11px]">
-                            {q.views.toLocaleString()} aspirants reviewed this question
-                          </div>
+                          <ReactionButtons
+                            itemId={q.linkedWrittenQuestionId || q.id}
+                            itemType="question"
+                            size="xs"
+                          />
 
                           <div className="flex items-center gap-2">
                             {q.linkedWrittenQuestionId ? (
@@ -477,7 +483,17 @@ export function PyqArchivePage() {
                               color="zinc"
                               variant="ghost"
                               size="xs"
-                              onClick={() => setExpandedQuestionId(isExpanded ? null : q.id)}
+                              onClick={() => {
+                                if (!isExpanded) {
+                                  dispatch(
+                                    recordView({
+                                      itemId: q.linkedWrittenQuestionId || q.id,
+                                      itemType: 'question',
+                                    })
+                                  );
+                                }
+                                setExpandedQuestionId(isExpanded ? null : q.id);
+                              }}
                             />
                           </div>
                         </div>

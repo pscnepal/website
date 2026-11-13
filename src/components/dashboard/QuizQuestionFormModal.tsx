@@ -1,7 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Check, CheckCircle2, HelpCircle, X } from 'lucide-react';
-import type { QuizDifficulty, QuizOptionKey, QuizQuestion } from '../../data/quizData';
-import { QUIZ_OPTION_KEYS } from '../../data/quizData';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Check, CheckCircle2, HelpCircle, Languages, X } from 'lucide-react';
+import {
+  isLanguageOnlySubject,
+  QUIZ_OPTION_KEYS,
+  type QuizDifficulty,
+  type QuizOptionKey,
+  type QuizQuestion,
+} from '../../data/quizData';
 import { ActionButton } from '../common/ActionButton';
 import { SharedSearchSelect } from '../common/SharedSearchSelect';
 
@@ -12,13 +17,15 @@ export interface QuizQuestionFormModalProps {
   onSave: (question: QuizQuestion) => void;
 }
 
-const SUBJECT_OPTIONS = [
-  { value: 'General Knowledge', label: 'General Knowledge (GK)' },
-  { value: 'IQ & Analytical', label: 'IQ & Analytical Ability' },
-  { value: 'Public Administration', label: 'Public Administration & Management' },
-  { value: 'Governance & Law', label: 'Governance & Administrative Law' },
-  { value: 'Constitution & Rights', label: 'Constitution & Fundamental Rights' },
-  { value: 'Economic Affairs', label: 'Economic Planning & Fiscal Governance' },
+const BASE_SUBJECT_OPTIONS = [
+  { value: 'Geography of Nepal', label: 'Geography of Nepal (Bilingual EN/NE)' },
+  { value: 'History & Culture of Nepal', label: 'History & Culture of Nepal (Bilingual EN/NE)' },
+  { value: 'Constitution & Governance', label: 'Constitution & Governance (Bilingual EN/NE)' },
+  { value: 'Public Administration & Law', label: 'Public Administration & Law (Bilingual EN/NE)' },
+  { value: 'Development Planning', label: 'Development Planning (Bilingual EN/NE)' },
+  { value: 'General Mental Ability (IQ)', label: 'General Mental Ability / IQ (Bilingual EN/NE)' },
+  { value: 'English', label: 'English (English Only)' },
+  { value: 'Nepali', label: 'Nepali / नेपाली (Nepali Only)' },
 ];
 
 const DIFFICULTY_OPTIONS = [
@@ -35,13 +42,20 @@ export function QuizQuestionFormModal({
 }: QuizQuestionFormModalProps) {
   const isEditing = Boolean(questionToEdit);
 
-  const [subject, setSubject] = useState('General Knowledge');
+  const [subject, setSubject] = useState('Geography of Nepal');
   const [topic, setTopic] = useState('');
   const [subtopic, setSubtopic] = useState('');
   const [difficulty, setDifficulty] = useState<QuizDifficulty>('Medium');
   const [marks, setMarks] = useState<number>(2);
   const [questionText, setQuestionText] = useState('');
+  const [questionNe, setQuestionNe] = useState('');
   const [options, setOptions] = useState<Record<QuizOptionKey, string>>({
+    A: '',
+    B: '',
+    C: '',
+    D: '',
+  });
+  const [optionsNe, setOptionsNe] = useState<Record<QuizOptionKey, string>>({
     A: '',
     B: '',
     C: '',
@@ -50,47 +64,72 @@ export function QuizQuestionFormModal({
   const [correctOptions, setCorrectOptions] = useState<QuizOptionKey[]>(['A']);
   const [isMultiSelect, setIsMultiSelect] = useState(false);
   const [explanation, setExplanation] = useState('');
+  const [explanationNe, setExplanationNe] = useState('');
   const [sourceTitle, setSourceTitle] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const languageOnlyMode = isLanguageOnlySubject(subject); // 'en' | 'ne' | null
+  const isBilingualSubject = languageOnlyMode === null;
+
+  const subjectOptions = useMemo(() => {
+    if (
+      questionToEdit?.subject &&
+      !BASE_SUBJECT_OPTIONS.some((opt) => opt.value === questionToEdit.subject)
+    ) {
+      return [
+        {
+          value: questionToEdit.subject,
+          label: `${questionToEdit.subject} (Bilingual EN/NE)`,
+        },
+        ...BASE_SUBJECT_OPTIONS,
+      ];
+    }
+    return BASE_SUBJECT_OPTIONS;
+  }, [questionToEdit?.subject]);
 
   // Populate on open or question change
   useEffect(() => {
     if (questionToEdit) {
-      setSubject(questionToEdit.subject || 'General Knowledge');
+      setSubject(questionToEdit.subject || 'Geography of Nepal');
       setTopic(questionToEdit.topic || '');
       setSubtopic(questionToEdit.subtopic || '');
       setDifficulty(questionToEdit.difficulty || 'Medium');
       setMarks(questionToEdit.marks || 2);
       setQuestionText(questionToEdit.question || '');
+      setQuestionNe(questionToEdit.questionNe || '');
 
       const optMap: Record<QuizOptionKey, string> = { A: '', B: '', C: '', D: '' };
+      const optNeMap: Record<QuizOptionKey, string> = { A: '', B: '', C: '', D: '' };
       questionToEdit.options.forEach((opt) => {
-        if (opt.key in optMap) optMap[opt.key] = opt.text;
+        if (opt.key in optMap) {
+          optMap[opt.key] = opt.text;
+          optNeMap[opt.key] = opt.textNe || '';
+        }
       });
       setOptions(optMap);
+      setOptionsNe(optNeMap);
       setCorrectOptions(
         questionToEdit.correct_options.length > 0 ? questionToEdit.correct_options : ['A']
       );
       setIsMultiSelect(Boolean(questionToEdit.is_multi_select));
       setExplanation(questionToEdit.explanation || '');
+      setExplanationNe(questionToEdit.explanationNe || '');
       setSourceTitle(questionToEdit.sourceTitle || '');
     } else {
       // Default blank template
-      setSubject('General Knowledge');
+      setSubject('Geography of Nepal');
       setTopic('General Overview');
-      setSubtopic('Constitutional Context');
+      setSubtopic('Core Context');
       setDifficulty('Medium');
-      setMarks(2);
+      setMarks(1);
       setQuestionText('');
-      setOptions({
-        A: '',
-        B: '',
-        C: '',
-        D: '',
-      });
+      setQuestionNe('');
+      setOptions({ A: '', B: '', C: '', D: '' });
+      setOptionsNe({ A: '', B: '', C: '', D: '' });
       setCorrectOptions(['A']);
       setIsMultiSelect(false);
       setExplanation('');
+      setExplanationNe('');
       setSourceTitle('Constitution of Nepal / Official Gazette');
     }
     setErrorMsg(null);
@@ -117,7 +156,18 @@ export function QuizQuestionFormModal({
     setErrorMsg(null);
 
     if (!questionText.trim()) {
-      setErrorMsg('Question prompt cannot be empty.');
+      setErrorMsg(
+        languageOnlyMode === 'ne'
+          ? 'Nepali question prompt cannot be empty.'
+          : 'Question prompt cannot be empty.'
+      );
+      return;
+    }
+
+    if (isBilingualSubject && !questionNe.trim()) {
+      setErrorMsg(
+        'Nepali translation of the question prompt (प्रश्न नेपालीमा) is required for non-language categories.'
+      );
       return;
     }
 
@@ -125,6 +175,17 @@ export function QuizQuestionFormModal({
     if (filledOptions.length < 2) {
       setErrorMsg('Please provide at least 2 options for the question.');
       return;
+    }
+
+    if (isBilingualSubject) {
+      for (const k of filledOptions) {
+        if (!optionsNe[k].trim()) {
+          setErrorMsg(
+            `Please provide the Nepali translation for Option ${k} (विकल्प ${k}).`
+          );
+          return;
+        }
+      }
     }
 
     if (correctOptions.length === 0) {
@@ -144,9 +205,19 @@ export function QuizQuestionFormModal({
       return;
     }
 
+    if (isBilingualSubject && !explanationNe.trim()) {
+      setErrorMsg(
+        'Please provide the Nepali rationale/explanation (व्याख्या नेपालीमा) for this bilingual category.'
+      );
+      return;
+    }
+
     const compiledOptions = QUIZ_OPTION_KEYS.map((k) => ({
       key: k,
-      text: options[k].trim() || `Option ${k}`,
+      text: options[k].trim() || (languageOnlyMode === 'ne' ? `विकल्प ${k}` : `Option ${k}`),
+      ...(isBilingualSubject && optionsNe[k].trim()
+        ? { textNe: optionsNe[k].trim() }
+        : {}),
     }));
 
     const finalQuestion: QuizQuestion = {
@@ -162,13 +233,16 @@ export function QuizQuestionFormModal({
       subtopicId: questionToEdit?.subtopicId || 'custom-subtopic',
       subtopic: subtopic.trim() || 'Core Analysis',
       question: questionText.trim(),
+      ...(isBilingualSubject ? { questionNe: questionNe.trim() } : {}),
       options: compiledOptions,
       correct_options: correctOptions,
       is_multi_select: isMultiSelect,
       explanation: explanation.trim(),
+      ...(isBilingualSubject ? { explanationNe: explanationNe.trim() } : {}),
       difficulty,
-      marks: Number(marks) || 2,
+      marks: Number(marks) || 1,
       sourceTitle: sourceTitle.trim() || undefined,
+      sourcePath: questionToEdit?.sourcePath,
     };
 
     onSave(finalQuestion);
@@ -217,6 +291,26 @@ export function QuizQuestionFormModal({
           />
         </div>
 
+        {/* Language Rule Notice */}
+        <div className="flex items-start gap-2.5 p-3 rounded-lg border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/30 text-xs text-blue-900 dark:text-blue-200">
+          <Languages className="w-4 h-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
+          <div>
+            {languageOnlyMode === 'en' ? (
+              <span>
+                <strong>English Category Mode:</strong> Questions, answer options, and explanations are stored and displayed <strong>exclusively in English</strong>.
+              </span>
+            ) : languageOnlyMode === 'ne' ? (
+              <span lang="ne">
+                <strong>नेपाली विषय मोड:</strong> यस श्रेणीका प्रश्न, विकल्प र व्याख्या <strong>नेपाली भाषामा मात्र</strong> राखिन्छन् र देखाइन्छन्।
+              </span>
+            ) : (
+              <span>
+                <strong>Bilingual Mode (English &amp; नेपाली):</strong> Provide questions, options, and explanations in <strong>both English and Nepali</strong>.
+              </span>
+            )}
+          </div>
+        </div>
+
         {errorMsg && (
           <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs">
             {errorMsg}
@@ -231,7 +325,7 @@ export function QuizQuestionFormModal({
                 Subject
               </label>
               <SharedSearchSelect
-                options={SUBJECT_OPTIONS}
+                options={subjectOptions}
                 value={subject}
                 onChange={setSubject}
                 size="sm"
@@ -294,18 +388,47 @@ export function QuizQuestionFormModal({
           </div>
 
           {/* Question Text */}
-          <div>
-            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-              Question Prompt <span className="text-crimson-600">*</span>
-            </label>
-            <textarea
-              required
-              rows={3}
-              placeholder="Enter official objective question stem..."
-              value={questionText}
-              onChange={(e) => setQuestionText(e.target.value)}
-              className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 leading-relaxed"
-            />
+          <div className={isBilingualSubject ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'space-y-2'}>
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                {languageOnlyMode === 'ne'
+                  ? 'Question Prompt (नेपालीमा मात्र)'
+                  : isBilingualSubject
+                    ? 'Question Prompt (English)'
+                    : 'Question Prompt (English Only)'}{' '}
+                <span className="text-crimson-600">*</span>
+              </label>
+              <textarea
+                required
+                rows={3}
+                lang={languageOnlyMode === 'ne' ? 'ne' : undefined}
+                placeholder={
+                  languageOnlyMode === 'ne'
+                    ? 'नेपाली भाषामा आधिकारिक वस्तुगत प्रश्न लेख्नुहोस्...'
+                    : 'Enter official objective question stem in English...'
+                }
+                value={questionText}
+                onChange={(e) => setQuestionText(e.target.value)}
+                className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 leading-relaxed"
+              />
+            </div>
+
+            {isBilingualSubject && (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Question Prompt (नेपाली) <span className="text-crimson-600">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  lang="ne"
+                  placeholder="नेपालीमा वस्तुगत प्रश्न लेख्नुहोस्..."
+                  value={questionNe}
+                  onChange={(e) => setQuestionNe(e.target.value)}
+                  className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 leading-relaxed"
+                />
+              </div>
+            )}
           </div>
 
           {/* Options & Key Selector */}
@@ -336,7 +459,7 @@ export function QuizQuestionFormModal({
                 return (
                   <div
                     key={k}
-                    className={`flex items-center gap-2 p-1.5 rounded-lg border transition-colors ${
+                    className={`flex items-start gap-2.5 p-2 rounded-lg border transition-colors ${
                       isSelected
                         ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20'
                         : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'
@@ -346,7 +469,7 @@ export function QuizQuestionFormModal({
                       type="button"
                       onClick={() => handleToggleCorrectOption(k)}
                       title={`Mark Option ${k} as ${isSelected ? 'incorrect' : 'correct'}`}
-                      className={`w-7 h-7 rounded-md font-mono text-xs font-bold flex items-center justify-center shrink-0 transition-colors ${
+                      className={`mt-0.5 w-7 h-7 rounded-md font-mono text-xs font-bold flex items-center justify-center shrink-0 transition-colors ${
                         isSelected
                           ? 'bg-emerald-600 text-white shadow-xs'
                           : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -354,17 +477,41 @@ export function QuizQuestionFormModal({
                     >
                       {isSelected ? <Check className="w-3.5 h-3.5" /> : k}
                     </button>
-                    <input
-                      type="text"
-                      placeholder={`Text for Option ${k}...`}
-                      value={options[k]}
-                      onChange={(e) =>
-                        setOptions({ ...options, [k]: e.target.value })
-                      }
-                      className="flex-1 text-xs bg-transparent border-0 px-2 py-1 text-zinc-900 dark:text-zinc-100 focus:outline-none"
-                    />
-                    <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 pr-2">
-                      {isSelected ? 'Correct Key' : 'Distractor'}
+
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <input
+                        type="text"
+                        lang={languageOnlyMode === 'ne' ? 'ne' : undefined}
+                        placeholder={
+                          languageOnlyMode === 'ne'
+                            ? `विकल्प ${k} (नेपालीमा)...`
+                            : isBilingualSubject
+                              ? `Option ${k} (English)...`
+                              : `Text for Option ${k}...`
+                        }
+                        value={options[k]}
+                        onChange={(e) =>
+                          setOptions({ ...options, [k]: e.target.value })
+                        }
+                        className="w-full text-xs bg-white/80 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 rounded px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                      />
+
+                      {isBilingualSubject && (
+                        <input
+                          type="text"
+                          lang="ne"
+                          placeholder={`विकल्प ${k} (नेपालीमा)...`}
+                          value={optionsNe[k]}
+                          onChange={(e) =>
+                            setOptionsNe({ ...optionsNe, [k]: e.target.value })
+                          }
+                          className="w-full text-xs bg-zinc-50/80 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-700/80 rounded px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                        />
+                      )}
+                    </div>
+
+                    <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 pt-1.5 pr-1 shrink-0">
+                      {isSelected ? 'Correct' : 'Distractor'}
                     </span>
                   </div>
                 );
@@ -376,18 +523,47 @@ export function QuizQuestionFormModal({
           </div>
 
           {/* Explanation */}
-          <div>
-            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-              Official Rationale &amp; Explanation <span className="text-crimson-600">*</span>
-            </label>
-            <textarea
-              required
-              rows={2}
-              placeholder="Cite the statutory article, Act section, or factual background that proves the correct answer..."
-              value={explanation}
-              onChange={(e) => setExplanation(e.target.value)}
-              className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
+          <div className={isBilingualSubject ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'space-y-2'}>
+            <div>
+              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                {languageOnlyMode === 'ne'
+                  ? 'आधिकारिक व्याख्या (नेपालीमा मात्र)'
+                  : isBilingualSubject
+                    ? 'Official Rationale & Explanation (English)'
+                    : 'Official Rationale & Explanation (English Only)'}{' '}
+                <span className="text-crimson-600">*</span>
+              </label>
+              <textarea
+                required
+                rows={3}
+                lang={languageOnlyMode === 'ne' ? 'ne' : undefined}
+                placeholder={
+                  languageOnlyMode === 'ne'
+                    ? 'व्याकरणिक नियम वा सन्दर्भ सहित नेपालीमा व्याख्या लेख्नुहोस्...'
+                    : 'Cite the statutory article, Act section, or factual background in English...'
+                }
+                value={explanation}
+                onChange={(e) => setExplanation(e.target.value)}
+                className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div>
+
+            {isBilingualSubject && (
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  आधिकारिक व्याख्या (नेपाली) <span className="text-crimson-600">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  lang="ne"
+                  placeholder="संवैधानिक धारा, ऐन वा तथ्यसहित नेपालीमा व्याख्या लेख्नुहोस्..."
+                  value={explanationNe}
+                  onChange={(e) => setExplanationNe(e.target.value)}
+                  className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+            )}
           </div>
 
           {/* Citation Source */}

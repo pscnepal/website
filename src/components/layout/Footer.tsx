@@ -1,10 +1,12 @@
 import { Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { useAuth } from '../../context/AuthContext';
 import { toggleTheme } from '../../features/settings/settingsSlice';
 
 export function Footer() {
   const dispatch = useAppDispatch();
+  const { isDashboardAdmin } = useAuth();
   const theme = useAppSelector((state) => state.settings.theme);
 
   return (
@@ -58,12 +60,14 @@ export function Footer() {
               aria-label="Footer study navigation"
               className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs"
             >
-              <Link
-                to="/dashboard"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Dashboard &amp; Banks
-              </Link>
+              {isDashboardAdmin && (
+                <Link
+                  to="/dashboard"
+                  className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
+                >
+                  Dashboard &amp; Banks
+                </Link>
+              )}
               <Link
                 to="/syllabus"
                 className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"

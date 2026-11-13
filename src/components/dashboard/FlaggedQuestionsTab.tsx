@@ -17,10 +17,14 @@ import {
 import { useAppDispatch } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
 import {
-  ALL_QUIZ_QUESTIONS,
+  isBilingualQuizQuestion,
   type QuizOptionKey,
   type QuizQuestion,
 } from '../../data/quizData';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../../services/questionStorageService';
 import {
   storageService,
   type FlaggedQuestionRecord,
@@ -46,6 +50,9 @@ export function FlaggedQuestionsTab() {
   const dispatch = useAppDispatch();
 
   // State
+  const [questionBank, setQuestionBank] = useState<QuizQuestion[]>(() =>
+    questionStorageService.loadQuizQuestions()
+  );
   const [flaggedMap, setFlaggedMap] = useState<Record<string, FlaggedQuestionRecord>>(() =>
     storageService.loadFlaggedQuestions()
   );
@@ -62,16 +69,23 @@ export function FlaggedQuestionsTab() {
   const [noteEditQuestion, setNoteEditQuestion] = useState<EnrichedFlaggedQuestion | null>(null);
   const [noteDraft, setNoteDraft] = useState('');
 
-  // Sync with global flag changes
+  // Sync with global flag & question bank changes
   useEffect(() => {
     const handleFlagChange = () => {
       setFlaggedMap(storageService.loadFlaggedQuestions());
     };
+    const handleBankChange = () => {
+      setQuestionBank(questionStorageService.loadQuizQuestions());
+    };
     window.addEventListener('psc_flagged_questions_changed', handleFlagChange);
+    window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleBankChange);
     window.addEventListener('storage', handleFlagChange);
+    window.addEventListener('storage', handleBankChange);
     return () => {
       window.removeEventListener('psc_flagged_questions_changed', handleFlagChange);
+      window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleBankChange);
       window.removeEventListener('storage', handleFlagChange);
+      window.removeEventListener('storage', handleBankChange);
     };
   }, []);
 
@@ -79,7 +93,7 @@ export function FlaggedQuestionsTab() {
   const enrichedQuestions = useMemo<EnrichedFlaggedQuestion[]>(() => {
     const list: EnrichedFlaggedQuestion[] = [];
     for (const [qId, meta] of Object.entries(flaggedMap)) {
-      const q = ALL_QUIZ_QUESTIONS.find((item) => item.id === qId);
+      const q = questionBank.find((item) => item.id === qId);
       if (q) {
         list.push({ question: q, flagMeta: meta });
       }
@@ -90,7 +104,7 @@ export function FlaggedQuestionsTab() {
         new Date(b.flagMeta.flaggedAt).getTime() -
         new Date(a.flagMeta.flaggedAt).getTime()
     );
-  }, [flaggedMap]);
+  }, [flaggedMap, questionBank]);
 
   // Extract unique subjects among flagged items
   const availableSubjects = useMemo(() => {
@@ -121,14 +135,31 @@ export function FlaggedQuestionsTab() {
       }
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
-        const matchesPrompt = question.question.toLowerCase().includes(query);
+        const showBilingual = isBilingualQuizQuestion(question);
+        const matchesPrompt =
+          question.question.toLowerCase().includes(query) ||
+          (showBilingual &&
+            (question.questionNe ?? '').toLowerCase().includes(query));
         const matchesId = question.id.toLowerCase().includes(query);
         const matchesTopic = (question.topic + ' ' + question.subtopic).toLowerCase().includes(query);
         const matchesNote = (flagMeta.note || '').toLowerCase().includes(query);
-        const matchesOptions = question.options.some((opt) =>
-          opt.text.toLowerCase().includes(query)
+        const matchesOptions = question.options.some(
+          (opt) =>
+            opt.text.toLowerCase().includes(query) ||
+            (showBilingual && (opt.textNe ?? '').toLowerCase().includes(query))
         );
-        return matchesPrompt || matchesId || matchesTopic || matchesNote || matchesOptions;
+        const matchesExplanation =
+          question.explanation.toLowerCase().includes(query) ||
+          (showBilingual &&
+            (question.explanationNe ?? '').toLowerCase().includes(query));
+        return (
+          matchesPrompt ||
+          matchesId ||
+          matchesTopic ||
+          matchesNote ||
+          matchesOptions ||
+          matchesExplanation
+        );
       }
       return true;
     });
@@ -160,9 +191,9 @@ export function FlaggedQuestionsTab() {
   }, [enrichedQuestions.length]);
 
   const handlePreloadSamples = useCallback(() => {
-    const sampleIds = ['so-gk-001', 'so-const-001', 'so-adm-001', 'so-iq-001'];
+    const sampleIds = ['PSC-GEO-101', 'PSC-CON-201', 'PSC-ADM-301', 'PSC-LANG-110'];
     sampleIds.forEach((id) => {
-      const q = ALL_QUIZ_QUESTIONS.find((item) => item.id === id);
+      const q = questionBank.find((item) => item.id === id);
       if (q) {
         storageService.toggleFlaggedQuestion(id, {
           source: 'quiz',
@@ -172,12 +203,27 @@ export function FlaggedQuestionsTab() {
       }
     });
     setFlaggedMap(storageService.loadFlaggedQuestions());
-  }, []);
+  }, [questionBank]);
 
   const handleCopyQuestion = useCallback((q: QuizQuestion) => {
-    const text = `Q (${q.id}): ${q.question}\n${q.options
-      .map((o) => `${o.key}. ${o.text}`)
-      .join('\n')}\nAnswer: ${q.correct_options.join(', ')}\nExplanation: ${q.explanation}`;
+    const showBilingual = isBilingualQuizQuestion(q);
+    const questionPart =
+      showBilingual && q.questionNe?.trim()
+        ? `${q.question}\n${q.questionNe}`
+        : q.question;
+    const optionsPart = q.options
+      .map((o) =>
+        showBilingual && o.textNe && o.textNe.trim() !== o.text.trim()
+          ? `${o.key}. ${o.text} (${o.textNe})`
+          : `${o.key}. ${o.text}`
+      )
+      .join('\n');
+    const explanationPart =
+      showBilingual && q.explanationNe?.trim()
+        ? `${q.explanation}\n${q.explanationNe}`
+        : q.explanation;
+
+    const text = `Q (${q.id}): ${questionPart}\n${optionsPart}\nAnswer: ${q.correct_options.join(', ')}\nExplanation: ${explanationPart}`;
     navigator.clipboard.writeText(text).then(() => {
       setCopiedId(q.id);
       setTimeout(() => setCopiedId(null), 2000);
@@ -186,19 +232,28 @@ export function FlaggedQuestionsTab() {
 
   const handleExportDeck = useCallback(() => {
     if (enrichedQuestions.length === 0) return;
-    const payload = enrichedQuestions.map(({ question, flagMeta }) => ({
-      id: question.id,
-      question: question.question,
-      subject: question.subject,
-      topic: question.topic,
-      difficulty: question.difficulty,
-      options: question.options,
-      correct_options: question.correct_options,
-      explanation: question.explanation,
-      flaggedAt: flagMeta.flaggedAt,
-      source: flagMeta.source,
-      userNote: flagMeta.note || null,
-    }));
+    const payload = enrichedQuestions.map(({ question, flagMeta }) => {
+      const showBilingual = isBilingualQuizQuestion(question);
+      return {
+        id: question.id,
+        question: question.question,
+        ...(showBilingual && question.questionNe
+          ? { questionNe: question.questionNe }
+          : {}),
+        subject: question.subject,
+        topic: question.topic,
+        difficulty: question.difficulty,
+        options: question.options,
+        correct_options: question.correct_options,
+        explanation: question.explanation,
+        ...(showBilingual && question.explanationNe
+          ? { explanationNe: question.explanationNe }
+          : {}),
+        flaggedAt: flagMeta.flaggedAt,
+        source: flagMeta.source,
+        userNote: flagMeta.note || null,
+      };
+    });
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
     });
@@ -214,7 +269,7 @@ export function FlaggedQuestionsTab() {
 
   const handleOpenInspect = (q: QuizQuestion) => {
     setSelectedQuestionInspect(q);
-    dispatch(recordView({ itemId: q.id }));
+    dispatch(recordView({ itemId: q.id, itemType: 'question' }));
   };
 
   const setSelectedQuestionInspect = (q: QuizQuestion) => {
@@ -276,9 +331,20 @@ export function FlaggedQuestionsTab() {
         sortKey: (item) => item.question.question,
         render: ({ question, flagMeta }) => (
           <div className="min-w-[260px] space-y-1">
-            <p className="font-serif text-[13px] font-semibold text-zinc-950 dark:text-zinc-100 line-clamp-2">
+            <p
+              lang={question.subject.trim().toLowerCase() === 'nepali' ? 'ne' : undefined}
+              className="font-serif text-[13px] font-semibold text-zinc-950 dark:text-zinc-100 line-clamp-2"
+            >
               {question.question}
             </p>
+            {isBilingualQuizQuestion(question) && question.questionNe?.trim() && (
+              <p
+                lang="ne"
+                className="text-[12px] text-zinc-600 dark:text-zinc-400 line-clamp-1"
+              >
+                {question.questionNe}
+              </p>
+            )}
             <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
               <span className="font-mono">
                 {question.options.length} options · +{question.marks.toFixed(2)}M
@@ -321,20 +387,30 @@ export function FlaggedQuestionsTab() {
         header: 'Key / Answer',
         width: 'w-36',
         hideOnMobile: true,
-        render: ({ question }) => (
-          <div className="space-y-1 text-xs">
-            <span className="inline-flex items-center gap-1 font-mono font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-              <Check className="w-3 h-3" />
-              Opt {question.correct_options.join(', ')}
-            </span>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-1">
-              {question.options
-                .filter((o) => question.correct_options.includes(o.key))
-                .map((o) => o.text)
-                .join('; ')}
-            </p>
-          </div>
-        ),
+        render: ({ question }) => {
+          const showBilingual = isBilingualQuizQuestion(question);
+          return (
+            <div className="space-y-1 text-xs">
+              <span className="inline-flex items-center gap-1 font-mono font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                <Check className="w-3 h-3" />
+                Opt {question.correct_options.join(', ')}
+              </span>
+              <p
+                lang={question.subject.trim().toLowerCase() === 'nepali' ? 'ne' : undefined}
+                className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-1"
+              >
+                {question.options
+                  .filter((o) => question.correct_options.includes(o.key))
+                  .map((o) =>
+                    showBilingual && o.textNe && o.textNe.trim() !== o.text.trim()
+                      ? `${o.text} (${o.textNe})`
+                      : o.text
+                  )
+                  .join('; ')}
+              </p>
+            </div>
+          );
+        },
       },
       {
         id: 'difficulty',
@@ -679,10 +755,24 @@ export function FlaggedQuestionsTab() {
                 </div>
                 <h3
                   id="inspect-dialog-title"
+                  lang={
+                    inspectQuestion.subject.trim().toLowerCase() === 'nepali'
+                      ? 'ne'
+                      : undefined
+                  }
                   className="font-serif font-bold text-base sm:text-lg text-zinc-950 dark:text-zinc-50 pt-1"
                 >
                   {inspectQuestion.question}
                 </h3>
+                {isBilingualQuizQuestion(inspectQuestion) &&
+                  inspectQuestion.questionNe?.trim() && (
+                    <p
+                      lang="ne"
+                      className="text-sm font-medium text-zinc-700 dark:text-zinc-300 leading-relaxed pt-1"
+                    >
+                      {inspectQuestion.questionNe}
+                    </p>
+                  )}
               </div>
               <button
                 type="button"
@@ -706,8 +796,20 @@ export function FlaggedQuestionsTab() {
                     opt.key
                   );
                   const showFeedback = testSelectedOption !== null;
+                  const showBilingual = isBilingualQuizQuestion(inspectQuestion);
+                  const optNe =
+                    showBilingual &&
+                    opt.textNe &&
+                    opt.textNe.trim() !== opt.text.trim()
+                      ? opt.textNe.trim()
+                      : undefined;
                   const isParagraph =
-                    opt.text.length > 55 || opt.text.includes('\n');
+                    opt.text.length > 50 ||
+                    (optNe
+                      ? optNe.length > 50 || opt.text.length + optNe.length > 65
+                      : false) ||
+                    opt.text.includes('\n') ||
+                    Boolean(optNe?.includes('\n'));
 
                   return (
                     <button
@@ -729,8 +831,23 @@ export function FlaggedQuestionsTab() {
                       <span className="font-mono font-bold shrink-0 w-5">
                         {opt.key}.
                       </span>
-                      <span className="flex-1 min-w-0 break-words leading-snug">
-                        {opt.text}
+                      <span
+                        lang={
+                          inspectQuestion.subject.trim().toLowerCase() === 'nepali'
+                            ? 'ne'
+                            : undefined
+                        }
+                        className="flex-1 min-w-0 break-words leading-snug"
+                      >
+                        <span className="block">{opt.text}</span>
+                        {optNe && (
+                          <span
+                            lang="ne"
+                            className="block text-[11px] text-zinc-600 dark:text-zinc-400 mt-0.5 leading-snug"
+                          >
+                            {optNe}
+                          </span>
+                        )}
                       </span>
                       {showFeedback && isCorrect && (
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 ml-auto" />
@@ -749,9 +866,26 @@ export function FlaggedQuestionsTab() {
               <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
                 Official Rationale &amp; Citation:
               </p>
-              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200/80 dark:border-zinc-800">
-                {inspectQuestion.explanation}
-              </p>
+              <div className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200/80 dark:border-zinc-800 space-y-2">
+                <p
+                  lang={
+                    inspectQuestion.subject.trim().toLowerCase() === 'nepali'
+                      ? 'ne'
+                      : undefined
+                  }
+                >
+                  {inspectQuestion.explanation}
+                </p>
+                {isBilingualQuizQuestion(inspectQuestion) &&
+                  inspectQuestion.explanationNe?.trim() && (
+                    <p
+                      lang="ne"
+                      className="pt-2 border-t border-zinc-200/70 dark:border-zinc-800/70 text-zinc-600 dark:text-zinc-400"
+                    >
+                      {inspectQuestion.explanationNe}
+                    </p>
+                  )}
+              </div>
               {inspectQuestion.sourceTitle && (
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
                   Source Document: {inspectQuestion.sourceTitle}
@@ -824,9 +958,24 @@ export function FlaggedQuestionsTab() {
               </button>
             </div>
 
-            <p className="text-xs text-zinc-700 dark:text-zinc-300 font-serif line-clamp-2 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800">
-              {noteEditQuestion.question.question}
-            </p>
+            <div className="text-xs text-zinc-700 dark:text-zinc-300 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 space-y-1">
+              <p
+                lang={
+                  noteEditQuestion.question.subject.trim().toLowerCase() === 'nepali'
+                    ? 'ne'
+                    : undefined
+                }
+                className="font-serif line-clamp-2"
+              >
+                {noteEditQuestion.question.question}
+              </p>
+              {isBilingualQuizQuestion(noteEditQuestion.question) &&
+                noteEditQuestion.question.questionNe?.trim() && (
+                  <p lang="ne" className="text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2">
+                    {noteEditQuestion.question.questionNe}
+                  </p>
+                )}
+            </div>
 
             <div className="space-y-1.5">
               <label
