@@ -20,6 +20,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { formatReverseClock } from '../quiz/QuizSessionDialog';
 import { ReactionButtons } from '../common/ReactionButtons';
+import { SharedTable } from '../common/SharedTable';
 import {
   isBilingualQuizQuestion,
   isQuestionCorrect,
@@ -1083,48 +1084,60 @@ function OmrHallDialogInner({
                   ))}
                 </div>
 
-                {/* Desktop / Tablet View (>= 640px): Full Table */}
-                <div className="hidden sm:block overflow-x-auto border-y border-zinc-200 dark:border-zinc-800">
-                  <table className="w-full text-xs text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400">
-                        <th className="py-2.5 pr-4 font-medium">Subject</th>
-                        <th className="py-2.5 px-3 font-medium text-right">
-                          Items
-                        </th>
-                        <th className="py-2.5 px-3 font-medium text-right">
-                          Correct
-                        </th>
-                        <th className="py-2.5 px-3 font-medium text-right">
-                          Wrong
-                        </th>
-                        <th className="py-2.5 pl-3 font-medium text-right">
-                          Net Marks
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/80 font-mono tabular-nums">
-                      {resultDiagnostic.subjectRows.map((row) => (
-                        <tr key={row.subject}>
-                          <td className="py-2.5 pr-4 font-sans font-medium text-zinc-900 dark:text-zinc-100">
-                            {row.subject}
-                          </td>
-                          <td className="py-2.5 px-3 text-right">
-                            {row.total}
-                          </td>
-                          <td className="py-2.5 px-3 text-right text-emerald-700 dark:text-emerald-400">
-                            {row.correct}
-                          </td>
-                          <td className="py-2.5 px-3 text-right text-red-600 dark:text-red-400">
-                            {row.wrong}
-                          </td>
-                          <td className="py-2.5 pl-3 text-right font-semibold text-zinc-900 dark:text-zinc-100">
-                            {row.net.toFixed(2)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                {/* Desktop / Tablet View (>= 640px): SharedTable */}
+                <div className="hidden sm:block">
+                  <SharedTable
+                    compact
+                    data={resultDiagnostic.subjectRows}
+                    keyExtractor={(row) => row.subject}
+                    caption="Subject performance breakdown"
+                    columns={[
+                      {
+                        id: 'subject',
+                        header: 'Subject',
+                        className: 'font-sans font-medium text-zinc-900 dark:text-zinc-100',
+                        sortable: true,
+                        sortKey: (row) => row.subject,
+                        render: (row) => row.subject,
+                      },
+                      {
+                        id: 'total',
+                        header: 'Items',
+                        align: 'right',
+                        className: 'font-mono tabular-nums',
+                        sortable: true,
+                        sortKey: (row) => row.total,
+                        render: (row) => row.total,
+                      },
+                      {
+                        id: 'correct',
+                        header: 'Correct',
+                        align: 'right',
+                        className: 'font-mono tabular-nums text-emerald-700 dark:text-emerald-400',
+                        sortable: true,
+                        sortKey: (row) => row.correct,
+                        render: (row) => row.correct,
+                      },
+                      {
+                        id: 'wrong',
+                        header: 'Wrong',
+                        align: 'right',
+                        className: 'font-mono tabular-nums text-red-600 dark:text-red-400',
+                        sortable: true,
+                        sortKey: (row) => row.wrong,
+                        render: (row) => row.wrong,
+                      },
+                      {
+                        id: 'net',
+                        header: 'Net Marks',
+                        align: 'right',
+                        className: 'font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100',
+                        sortable: true,
+                        sortKey: (row) => row.net,
+                        render: (row) => row.net.toFixed(2),
+                      },
+                    ]}
+                  />
                 </div>
               </div>
 

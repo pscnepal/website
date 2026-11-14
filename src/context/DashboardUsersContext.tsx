@@ -109,27 +109,22 @@ export function DashboardUsersProvider({ children }: { children: ReactNode }) {
   const handleUpdateUserStatus = useCallback(
     async (params: { uid: string; status: CloudUserStatus; reason?: string }) => {
       await updateAdminUserStatus(params);
-      await refreshUsers();
     },
-    [refreshUsers]
+    []
   );
 
   const handleUpdateUserDetails = useCallback(
     async (params: UpdateAdminUserDetailsInput) => {
       await updateAdminUserDetails(params);
-      await refreshUsers();
     },
-    [refreshUsers]
+    []
   );
 
-  const handleDeleteUser = useCallback(
-    async (uid: string) => {
-      await deleteAdminUserFromFirestore(uid);
-      setUsers((prev) => prev.filter((item) => item.uid !== uid));
-      await refreshUsers();
-    },
-    [refreshUsers]
-  );
+  const handleDeleteUser = useCallback(async (uid: string) => {
+    await deleteAdminUserFromFirestore(uid);
+    setUsers((prev) => prev.filter((item) => item.uid !== uid));
+    setLastSyncedAt(new Date().toISOString());
+  }, []);
 
   const handleSendPasswordReset = useCallback(async (email: string) => {
     await sendUserPasswordReset(email);

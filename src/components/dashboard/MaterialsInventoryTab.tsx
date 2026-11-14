@@ -24,6 +24,7 @@ import {
   type ColumnDef,
   type TableFilterDef,
 } from '../common/SharedDataTable';
+import { useDashboardSearch } from './DashboardLayout';
 
 type MaterialTableRow = ReadingMaterialItem & {
   categoryName: string;
@@ -33,7 +34,7 @@ type MaterialTableRow = ReadingMaterialItem & {
 export function MaterialsInventoryTab() {
   const dispatch = useAppDispatch();
   const userReactions = useAppSelector((state) => state.reactions.userReactions);
-  const [searchQuery, setSearchQuery] = useState('');
+  const { searchQuery, setSearchQuery } = useDashboardSearch();
   const [selectedCat, setSelectedCat] = useState('all');
   const [reactionFilter, setReactionFilter] = useState<'all' | 'liked' | 'disliked' | 'unrated'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);

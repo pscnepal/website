@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { ArrowUpRight } from 'lucide-react';
+import { SharedTable } from '../common/SharedTable';
 
 interface ChatMarkdownProps {
   content: string;
@@ -261,55 +262,42 @@ export function ChatMarkdown({
       }
       const isLastBlock =
         i >= lines.length || lines.slice(i).every((l) => !l.trim());
+      const tableKey = blockKey++;
       blocks.push(
-        <div
-          key={`tbl-${blockKey++}`}
-          className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800"
-        >
-          <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-zinc-100/80 dark:bg-zinc-800/70 text-zinc-800 dark:text-zinc-200">
-              <tr>
-                {headers.map((header, hIdx) => (
-                  <th
-                    key={hIdx}
-                    className="px-2.5 py-1.5 font-semibold border-b border-zinc-200 dark:border-zinc-700"
-                  >
-                    {renderInlineSegments(
-                      header,
-                      onNavigateInternal,
-                      `th-${blockKey}-${hIdx}`
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200/80 dark:divide-zinc-800">
-              {rows.map((row, rIdx) => (
-                <tr key={rIdx} className="bg-white/60 dark:bg-zinc-900/50">
-                  {row.map((cell, cIdx) => {
-                    const isFinalCell =
-                      isLastBlock &&
-                      rIdx === rows.length - 1 &&
-                      cIdx === row.length - 1;
-                    return (
-                      <td
-                        key={cIdx}
-                        className="px-2.5 py-1.5 text-zinc-700 dark:text-zinc-300 align-top"
-                      >
-                        {renderInlineSegments(
-                          cell,
-                          onNavigateInternal,
-                          `td-${blockKey}-${rIdx}-${cIdx}`
-                        )}
-                        {showCursor && isFinalCell && <TypingCursor />}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <SharedTable<string[]>
+          key={`tbl-${tableKey}`}
+          compact
+          emptyMessage="No table rows"
+          emptyDescription=""
+          data={rows}
+          keyExtractor={(_row, rIdx) => `row-${tableKey}-${rIdx}`}
+          columns={headers.map((header, hIdx) => ({
+            id: `col-${tableKey}-${hIdx}`,
+            header: renderInlineSegments(
+              header,
+              onNavigateInternal,
+              `th-${tableKey}-${hIdx}`
+            ),
+            className: 'text-zinc-700 dark:text-zinc-300 align-top',
+            render: (row, rIdx) => {
+              const cell = row[hIdx] ?? '';
+              const isFinalCell =
+                isLastBlock &&
+                rIdx === rows.length - 1 &&
+                hIdx === headers.length - 1;
+              return (
+                <>
+                  {renderInlineSegments(
+                    cell,
+                    onNavigateInternal,
+                    `td-${tableKey}-${rIdx}-${hIdx}`
+                  )}
+                  {showCursor && isFinalCell && <TypingCursor />}
+                </>
+              );
+            },
+          }))}
+        />
       );
       continue;
     }

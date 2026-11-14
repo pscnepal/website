@@ -8,6 +8,7 @@ import {
   formatReadingDuration,
 } from '../../utils/pdfHelpers';
 import { Button } from '../ui/Button';
+import { SharedTable } from '../common/SharedTable';
 
 interface ReadingStatsViewProps {
   open: boolean;
@@ -221,63 +222,72 @@ export function ReadingStatsView({
                     })}
                   </div>
 
-                  {/* Desktop / Tablet View (>= 640px): Full Table */}
-                  <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-zinc-200 dark:border-zinc-800 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
-                          <th className="py-2 pr-4 font-medium">Document</th>
-                          <th className="py-2 px-3 font-medium text-right whitespace-nowrap">
-                            Time Spent
-                          </th>
-                          <th className="py-2 px-3 font-medium text-right whitespace-nowrap">
-                            Pages / Min
-                          </th>
-                          <th className="py-2 pl-3 font-medium text-right whitespace-nowrap">
-                            Progress
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/70 text-xs">
-                        {recentBooks.map((item) => {
-                          const stats = readingStatsMap[item.id];
-                          const secs = stats?.totalReadingSeconds ?? 0;
-                          const ppm = stats?.pagesPerMinute ?? 0;
-                          const pct =
+                  {/* Desktop / Tablet View (>= 640px): SharedTable */}
+                  <div className="hidden sm:block">
+                    <SharedTable
+                      compact
+                      data={recentBooks}
+                      keyExtractor={(item) => item.id}
+                      caption="Document reading activity statistics"
+                      rowClassName={(item) =>
+                        item.id === bookId
+                          ? 'bg-zinc-100/80 dark:bg-zinc-800/50 font-medium'
+                          : ''
+                      }
+                      columns={[
+                        {
+                          id: 'title',
+                          header: 'Document',
+                          className: 'max-w-[220px] truncate text-zinc-900 dark:text-zinc-100',
+                          sortable: true,
+                          sortKey: (item) => item.title,
+                          render: (item) => item.title,
+                        },
+                        {
+                          id: 'timeSpent',
+                          header: 'Time Spent',
+                          align: 'right',
+                          className: 'font-mono tabular-nums text-zinc-700 dark:text-zinc-300 whitespace-nowrap',
+                          sortable: true,
+                          sortKey: (item) => readingStatsMap[item.id]?.totalReadingSeconds ?? 0,
+                          render: (item) =>
+                            formatCompactDuration(
+                              readingStatsMap[item.id]?.totalReadingSeconds ?? 0
+                            ),
+                        },
+                        {
+                          id: 'ppm',
+                          header: 'Pages / Min',
+                          align: 'right',
+                          className: 'font-mono tabular-nums text-zinc-700 dark:text-zinc-300 whitespace-nowrap',
+                          sortable: true,
+                          sortKey: (item) => readingStatsMap[item.id]?.pagesPerMinute ?? 0,
+                          render: (item) =>
+                            (readingStatsMap[item.id]?.pagesPerMinute ?? 0).toFixed(1),
+                        },
+                        {
+                          id: 'progress',
+                          header: 'Progress',
+                          align: 'right',
+                          className: 'font-mono tabular-nums text-zinc-500 dark:text-zinc-400 whitespace-nowrap',
+                          sortable: true,
+                          sortKey: (item) =>
                             item.totalPages > 0
-                              ? Math.min(
-                                  100,
-                                  Math.round((item.lastPage / item.totalPages) * 100)
-                                )
-                              : 0;
-                          const isCurrent = item.id === bookId;
-
-                          return (
-                            <tr
-                              key={item.id}
-                              className={`h-10 transition-colors ${
-                                isCurrent
-                                  ? 'bg-zinc-100/80 dark:bg-zinc-800/50 font-medium'
-                                  : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/30'
-                              }`}
-                            >
-                              <td className="py-2 pr-4 max-w-[220px] truncate text-zinc-900 dark:text-zinc-100">
-                                {item.title}
-                              </td>
-                              <td className="py-2 px-3 text-right font-mono tabular-nums text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
-                                {formatCompactDuration(secs)}
-                              </td>
-                              <td className="py-2 px-3 text-right font-mono tabular-nums text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
-                                {ppm.toFixed(1)}
-                              </td>
-                              <td className="py-2 pl-3 text-right font-mono tabular-nums text-zinc-500 dark:text-zinc-400 whitespace-nowrap">
-                                {item.lastPage}/{item.totalPages} ({pct}%)
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                              ? Math.round((item.lastPage / item.totalPages) * 100)
+                              : 0,
+                          render: (item) => {
+                            const pct =
+                              item.totalPages > 0
+                                ? Math.min(
+                                    100,
+                                    Math.round((item.lastPage / item.totalPages) * 100)
+                                  )
+                                : 0;
+                            return `${item.lastPage}/${item.totalPages} (${pct}%)`;
+                          },
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
               )}

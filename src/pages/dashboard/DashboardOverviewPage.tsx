@@ -10,7 +10,12 @@ export function DashboardOverviewPage() {
 
   // Handle legacy ?tab= query parameter redirects to the separate pages
   useEffect(() => {
-    if (tabParam && ['quiz-bank', 'written-bank', 'materials', 'users', 'data'].includes(tabParam)) {
+    if (
+      tabParam &&
+      ['quiz-bank', 'flagged', 'written-bank', 'materials', 'users', 'data'].includes(
+        tabParam
+      )
+    ) {
       navigate(`/dashboard/${tabParam}`, { replace: true });
     }
   }, [tabParam, navigate]);

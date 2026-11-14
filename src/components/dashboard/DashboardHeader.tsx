@@ -152,29 +152,34 @@ export function DashboardHeader({
         </div>
       </div>
 
-      {/* Center zone: Search Filter Input */}
-      <div className="flex-1 max-w-md hidden md:block">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={`Filter ${tabInfo.title.toLowerCase()}...`}
-            className="w-full h-9 pl-9 pr-8 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/80 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 focus:outline-none focus:bg-white dark:focus:bg-zinc-900 transition-all"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => onSearchChange('')}
-              aria-label="Clear search"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
+      {/* Center zone: Search Filter Input (only shown on filterable tabs) */}
+      {activeTab !== 'overview' && activeTab !== 'data' ? (
+        <div className="flex-1 max-w-md hidden md:block">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder={`Filter ${tabInfo.title.toLowerCase()}...`}
+              aria-label={`Filter ${tabInfo.title}`}
+              className="w-full h-9 pl-9 pr-8 rounded-lg bg-zinc-100/80 dark:bg-zinc-800/80 border border-transparent focus:border-zinc-300 dark:focus:border-zinc-700 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 focus:outline-none focus:bg-white dark:focus:bg-zinc-900 transition-all"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                aria-label="Clear search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 hidden md:block" />
+      )}
 
       {/* Right zone: Actions, Mode Toggle, Public Site Link */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0">

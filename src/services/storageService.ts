@@ -25,6 +25,7 @@ const KEYS = {
   CONTACT_INQUIRIES: 'psc_nepal_contact_inquiries_v1',
   REACTIONS: 'psc_nepal_reactions_v1',
   FLAGGED_QUESTIONS: 'psc_nepal_flagged_questions_v1',
+  LAST_CLOUD_UID: 'psc_nepal_cloud_owner_uid_v1',
 } as const;
 
 const LEGACY_KEY_FALLBACKS: Record<string, string> = {
@@ -114,6 +115,34 @@ function safeWriteJson<T>(key: string, value: T): void {
 export const STORAGE_KEYS = KEYS;
 
 export const storageService = {
+  getLastCloudUid(): string | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(KEYS.LAST_CLOUD_UID);
+      return raw && raw.trim() ? raw.trim() : null;
+    } catch {
+      return null;
+    }
+  },
+
+  setLastCloudUid(uid: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(KEYS.LAST_CLOUD_UID, uid);
+    } catch {
+      // Ignore storage restrictions
+    }
+  },
+
+  clearLastCloudUid(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(KEYS.LAST_CLOUD_UID);
+    } catch {
+      // Ignore storage restrictions
+    }
+  },
+
   loadSettings(): SettingsState {
     const saved = safeReadJson<Partial<SettingsState>>(KEYS.SETTINGS, {});
     return {
@@ -393,6 +422,10 @@ export const storageService = {
         );
       }
     }
+  },
+
+  clearLocalFlaggedQuestionsOnly(): void {
+    this.saveFlaggedQuestions({});
   },
 
   clearAllFlaggedQuestions(): void {

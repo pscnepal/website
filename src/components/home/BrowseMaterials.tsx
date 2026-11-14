@@ -14,7 +14,8 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useAppSelector } from '../../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { recordView } from '../../features/reactions/reactionsSlice';
 import { ALL_QUIZ_QUESTIONS } from '../../data/quizData';
 import {
   READING_MATERIAL_CATEGORIES,
@@ -32,6 +33,7 @@ export function BrowseMaterials() {
   const navigate = useNavigate();
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
+  const dispatch = useAppDispatch();
   const readingProgress = useAppSelector((state) => state.library.readingProgress);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,6 +106,7 @@ export function BrowseMaterials() {
   };
 
   const handleOpenMaterial = (item: ReadingMaterialItem) => {
+    dispatch(recordView({ itemId: item.id, itemType: 'material' }));
     const fullUrl = resolveSampleUrl(item.path);
     navigate(`/read?url=${encodeURIComponent(fullUrl)}`, {
       state: {

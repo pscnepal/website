@@ -7,6 +7,7 @@ import {
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { clearWrittenProgress } from '../../features/written/writtenSlice';
 import { clearAllReactions } from '../../features/reactions/reactionsSlice';
+import { storageService } from '../../services/storageService';
 import { ActionButton } from '../common/ActionButton';
 
 export function DataBackupTab() {
@@ -31,6 +32,7 @@ export function DataBackupTab() {
       simulationRuns,
       userReactions,
       itemViews,
+      flaggedQuestions: storageService.loadFlaggedQuestions(),
       recentBooks,
     };
 
@@ -62,10 +64,10 @@ export function DataBackupTab() {
       <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 space-y-4">
         <div>
           <h3 className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50">
-            Local Browser Storage &amp; Data Sovereignty
+            Workspace Storage &amp; Cloud Sync Overview
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            All your timed written answer scripts, test attempts, rubric scores, and question ratings are stored locally on your device with zero cloud tracking.
+            Written answer scripts and rubric progress stay in local browser storage, while quiz attempts, flagged questions, and ratings sync with your verified Google account in Cloud Firestore.
           </p>
         </div>
 
@@ -136,10 +138,10 @@ export function DataBackupTab() {
           <div>
             <h4 className="font-serif font-bold text-red-950 dark:text-red-200 text-base flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-              <span>Reset Local Study Workspace</span>
+              <span>Reset Study Drafts &amp; Reactions</span>
             </h4>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Permanently clear saved written drafts, rubric criteria checkmarks, and reaction logs from this browser.
+              Permanently clear saved written drafts, rubric criteria checkmarks, and personal reaction logs from this browser and your signed-in Firestore account.
             </p>
           </div>
 

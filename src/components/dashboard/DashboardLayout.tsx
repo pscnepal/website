@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DashboardUsersProvider } from '../../context/DashboardUsersContext';
@@ -6,6 +6,21 @@ import type { DashboardTab } from '../../pages/DashboardPage';
 import { DashboardAdminGate } from '../auth/DashboardAdminGate';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardSidebar } from './DashboardSidebar';
+
+interface DashboardSearchContextValue {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+}
+
+const DashboardSearchContext = createContext<DashboardSearchContextValue | null>(
+  null
+);
+
+export function useDashboardSearch(): DashboardSearchContextValue {
+  const ctx = useContext(DashboardSearchContext);
+  const [fallbackQuery, setFallbackQuery] = useState('');
+  return ctx ?? { searchQuery: fallbackQuery, setSearchQuery: setFallbackQuery };
+}
 
 interface DashboardLayoutProps {
   activeTab?: DashboardTab;
@@ -20,12 +35,28 @@ const STORAGE_KEY_SIDEBAR = 'pscnepal_dashboard_sidebar_collapsed';
 export function DashboardLayout({
   activeTab: propActiveTab,
   onSelectTab,
-  searchQuery,
-  onSearchChange,
+  searchQuery: propSearchQuery,
+  onSearchChange: propOnSearchChange,
   children,
 }: DashboardLayoutProps) {
   const location = useLocation();
   const { isAuthReady, isDashboardAdmin } = useAuth();
+  const [internalSearchQuery, setInternalSearchQuery] = useState('');
+
+  useEffect(() => {
+    setInternalSearchQuery('');
+  }, [location.pathname]);
+
+  const effectiveSearchQuery = propSearchQuery ?? internalSearchQuery;
+  const effectiveOnSearchChange = propOnSearchChange ?? setInternalSearchQuery;
+
+  const searchContextValue = useMemo<DashboardSearchContextValue>(
+    () => ({
+      searchQuery: effectiveSearchQuery,
+      setSearchQuery: effectiveOnSearchChange,
+    }),
+    [effectiveSearchQuery, effectiveOnSearchChange]
+  );
 
   const getActiveTabFromLocation = (pathname: string): DashboardTab => {
     if (pathname.includes('/quiz-bank')) return 'quiz-bank';
@@ -92,41 +123,43 @@ export function DashboardLayout({
 
   return (
     <DashboardUsersProvider>
-      <div className="h-screen w-full flex overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased">
-        {/* Dedicated Dashboard Sidebar (Collapsible on Desktop, Off-Canvas Drawer on Mobile) */}
-        <DashboardSidebar
-          activeTab={activeTab}
-          onSelectTab={onSelectTab}
-          isCollapsed={isCollapsed}
-          onToggleCollapse={toggleCollapse}
-          isMobileOpen={isMobileOpen}
-          onCloseMobile={() => setIsMobileOpen(false)}
-        />
-
-        {/* Main Dashboard Column */}
-        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-          {/* Dedicated Dashboard Header */}
-          <DashboardHeader
+      <DashboardSearchContext.Provider value={searchContextValue}>
+        <div className="h-screen w-full flex overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 font-sans antialiased">
+          {/* Dedicated Dashboard Sidebar (Collapsible on Desktop, Off-Canvas Drawer on Mobile) */}
+          <DashboardSidebar
             activeTab={activeTab}
-            isSidebarCollapsed={isCollapsed}
-            onToggleSidebar={toggleCollapse}
-            onOpenMobileSidebar={() => setIsMobileOpen(true)}
-            searchQuery={searchQuery}
-            onSearchChange={onSearchChange}
+            onSelectTab={onSelectTab}
+            isCollapsed={isCollapsed}
+            onToggleCollapse={toggleCollapse}
+            isMobileOpen={isMobileOpen}
+            onCloseMobile={() => setIsMobileOpen(false)}
           />
 
-          {/* Scrollable Dashboard Contents Area */}
-          <main
-            id="dashboard-main-content"
-            tabIndex={-1}
-            className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 focus:outline-none"
-          >
-            <div className="space-y-6">
-              {children ?? <Outlet />}
-            </div>
-          </main>
+          {/* Main Dashboard Column */}
+          <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+            {/* Dedicated Dashboard Header */}
+            <DashboardHeader
+              activeTab={activeTab}
+              isSidebarCollapsed={isCollapsed}
+              onToggleSidebar={toggleCollapse}
+              onOpenMobileSidebar={() => setIsMobileOpen(true)}
+              searchQuery={effectiveSearchQuery}
+              onSearchChange={effectiveOnSearchChange}
+            />
+
+            {/* Scrollable Dashboard Contents Area */}
+            <main
+              id="dashboard-main-content"
+              tabIndex={-1}
+              className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 focus:outline-none"
+            >
+              <div className="space-y-6">
+                {children ?? <Outlet />}
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
+      </DashboardSearchContext.Provider>
     </DashboardUsersProvider>
   );
 }

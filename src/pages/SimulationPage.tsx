@@ -12,6 +12,7 @@ import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
 import { AssessmentFormatNav } from '../components/quiz/AssessmentFormatNav';
+import { SharedTable } from '../components/common/SharedTable';
 import { formatReverseClock } from '../components/quiz/QuizSessionDialog';
 import {
   ExamSimulationDialog,
@@ -926,51 +927,70 @@ export function SimulationPage() {
                     </div>
                   </div>
 
-                  {/* Desktop / Tablet View (>= 640px): Full Table */}
-                  <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full text-xs border-collapse">
-                      <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 font-mono tabular-nums">
-                        <tr>
-                          <td className="py-2 pr-3 font-sans text-zinc-600 dark:text-zinc-400">
-                            Phase II Main Written Papers Total (0% Stage I
-                            Carryover)
-                          </td>
-                          <td className="py-2 text-right font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                            {meritSimulation.writtenTotal} /{' '}
-                            {meritSimulation.writtenMax}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 pr-3 font-sans text-zinc-600 dark:text-zinc-400">
-                            Final Stage Computer
-                            {labCadre === 'section-officer'
-                              ? ', Group Test'
-                              : ''}{' '}
-                            &amp; Oral Interview
-                          </td>
-                          <td className="py-2 text-right font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                            {meritSimulation.phase3Total} /{' '}
-                            {meritSimulation.phase3Max}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 pr-3 font-sans text-zinc-600 dark:text-zinc-400">
-                            Competitive Standing Assessment
-                          </td>
-                          <td className="py-2 text-right font-sans font-semibold text-zinc-900 dark:text-zinc-100">
-                            {!meritSimulation.phase1Clears
-                              ? 'Filtered at Phase I (<45%)'
-                              : !meritSimulation.writtenAllPass
-                                ? 'Below 40M Written Paper Minimum'
-                                : meritSimulation.finalMeritPct >= 66
-                                  ? 'Strong Merit List Contender'
-                                  : meritSimulation.finalMeritPct >= 56
-                                    ? 'Competitive Selection Zone'
-                                    : 'Pass Zone — Raise Written Depth'}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  {/* Desktop / Tablet View (>= 640px): SharedTable */}
+                  <div className="hidden sm:block">
+                    <SharedTable
+                      hideHeader
+                      compact
+                      hoverable={false}
+                      caption="Merit simulation breakdown summary"
+                      keyExtractor={(row) => row.id}
+                      data={[
+                        {
+                          id: 'written-total',
+                          label:
+                            'Phase II Main Written Papers Total (0% Stage I Carryover)',
+                          value: `${meritSimulation.writtenTotal} / ${meritSimulation.writtenMax}`,
+                          isText: false,
+                        },
+                        {
+                          id: 'final-stage',
+                          label: `Final Stage Computer${
+                            labCadre === 'section-officer' ? ', Group Test' : ''
+                          } & Oral Interview`,
+                          value: `${meritSimulation.phase3Total} / ${meritSimulation.phase3Max}`,
+                          isText: false,
+                        },
+                        {
+                          id: 'standing',
+                          label: 'Competitive Standing Assessment',
+                          value: !meritSimulation.phase1Clears
+                            ? 'Filtered at Phase I (<45%)'
+                            : !meritSimulation.writtenAllPass
+                              ? 'Below 40M Written Paper Minimum'
+                              : meritSimulation.finalMeritPct >= 66
+                                ? 'Strong Merit List Contender'
+                                : meritSimulation.finalMeritPct >= 56
+                                  ? 'Competitive Selection Zone'
+                                  : 'Pass Zone — Raise Written Depth',
+                          isText: true,
+                        },
+                      ]}
+                      columns={[
+                        {
+                          id: 'metric',
+                          header: 'Metric',
+                          className: 'font-sans text-zinc-600 dark:text-zinc-400',
+                          render: (row) => row.label,
+                        },
+                        {
+                          id: 'value',
+                          header: 'Value',
+                          align: 'right',
+                          className:
+                            'font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap',
+                          render: (row) => (
+                            <span
+                              className={
+                                row.isText ? 'font-sans' : 'font-mono tabular-nums'
+                              }
+                            >
+                              {row.value}
+                            </span>
+                          ),
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
               </div>

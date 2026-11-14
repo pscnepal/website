@@ -40,6 +40,7 @@ import {
   type ColumnDef,
   type TableFilterDef,
 } from '../common/SharedDataTable';
+import { useDashboardSearch } from './DashboardLayout';
 
 export interface EnrichedFlaggedQuestion {
   question: QuizQuestion;
@@ -56,7 +57,7 @@ export function FlaggedQuestionsTab() {
   const [flaggedMap, setFlaggedMap] = useState<Record<string, FlaggedQuestionRecord>>(() =>
     storageService.loadFlaggedQuestions()
   );
-  const [searchQuery, setSearchQuery] = useState('');
+  const { searchQuery, setSearchQuery } = useDashboardSearch();
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');

@@ -156,6 +156,12 @@ export const reactionsSlice = createSlice({
       state.syncedUserReactions = {};
       state.syncedItemViews = {};
     },
+    resetLocalUserReactions: (state) => {
+      state.userReactions = {};
+      state.itemViews = {};
+      state.syncedUserReactions = {};
+      state.syncedItemViews = {};
+    },
     clearAllReactions: (state) => {
       state.userReactions = {};
       state.itemViews = {};
@@ -174,6 +180,7 @@ export const {
   hydrateUserCloudReactions,
   applyItemSyncAck,
   resetCloudReactionSyncState,
+  resetLocalUserReactions,
   clearAllReactions,
 } = reactionsSlice.actions;
 

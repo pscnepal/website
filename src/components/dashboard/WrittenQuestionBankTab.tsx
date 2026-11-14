@@ -34,6 +34,7 @@ import {
 } from '../common/SharedDataTable';
 import { WrittenQuestionFormModal } from './WrittenQuestionFormModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { useDashboardSearch } from './DashboardLayout';
 
 export function WrittenQuestionBankTab() {
   const dispatch = useAppDispatch();
@@ -41,7 +42,7 @@ export function WrittenQuestionBankTab() {
   const [questions, setQuestions] = useState<WrittenQuestion[]>(() =>
     questionStorageService.loadWrittenQuestions()
   );
-  const [searchQuery, setSearchQuery] = useState('');
+  const { searchQuery, setSearchQuery } = useDashboardSearch();
   const [paperFilter, setPaperFilter] = useState('all');
   const [marksFilter, setMarksFilter] = useState<'all' | '5' | '10'>('all');
   const [reactionFilter, setReactionFilter] = useState<'all' | 'liked' | 'disliked' | 'unrated'>('all');

@@ -17,6 +17,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { ActionButton } from '../components/common/ActionButton';
+import { SharedTable } from '../components/common/SharedTable';
 import { PdfUpload } from '../components/home/PdfUpload';
 import { PdfUrlInput } from '../components/home/PdfUrlInput';
 import { Footer } from '../components/layout/Footer';
@@ -812,89 +813,100 @@ export function HomePage() {
               )}
             </div>
 
-            {/* Desktop / Tablet View (>= 768px): Full Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500 dark:text-zinc-400">
-                    <th className="py-3.5 px-4 font-medium">Stage / Paper</th>
-                    <th className="py-3.5 px-4 font-medium">Subject &amp; Format</th>
-                    <th className="py-3.5 px-4 font-medium text-right">
-                      Full / Pass
-                    </th>
-                    <th className="py-3.5 px-4 font-medium text-right">
-                      Duration
-                    </th>
-                    <th className="py-3.5 px-4 font-medium text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                  {activeCadre.phases.flatMap((phase) =>
-                    phase.papers.map((paper) => {
-                      const actionHref =
-                        paper.examFormat === 'Objective MCQ (OMR)'
-                          ? `/simulate?preset=${encodeURIComponent(
-                              activeCadre.defaultSimulationPreset
-                            )}&launch=1`
-                          : paper.examFormat === 'Subjective Analytical & Case'
-                            ? '/written'
-                            : `/syllabus/${activeCadre.id}`;
-                      const actionLabel =
-                        paper.examFormat === 'Objective MCQ (OMR)'
-                          ? 'Simulate OMR'
-                          : paper.examFormat === 'Subjective Analytical & Case'
-                            ? 'Practice Written'
-                            : 'View Units';
-
-                      return (
-                        <tr
-                          key={paper.id}
-                          className="hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40 transition-colors"
+            {/* Desktop / Tablet View (>= 768px): SharedTable */}
+            <div className="hidden md:block">
+              <SharedTable
+                className="border-0 rounded-none shadow-none"
+                data={activeCadre.phases.flatMap((phase) =>
+                  phase.papers.map((paper) => ({
+                    phase,
+                    paper,
+                  }))
+                )}
+              keyExtractor={({ paper }) => paper.id}
+              caption={`${activeCadre.title} exam syllabus and papers`}
+              columns={[
+                {
+                  id: 'stagePaper',
+                  header: 'Stage / Paper',
+                  className: 'font-mono tabular-nums text-xs font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap',
+                  render: ({ phase, paper }) =>
+                    `Phase ${phase.phaseNumber} · ${paper.code}`,
+                },
+                {
+                  id: 'subjectFormat',
+                  header: 'Subject & Format',
+                  render: ({ paper }) => (
+                    <>
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {paper.title}{' '}
+                        <span
+                          lang="ne"
+                          className="text-xs font-normal text-zinc-500 dark:text-zinc-400"
                         >
-                          <td className="py-3.5 px-4 font-mono tabular-nums text-xs font-semibold text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
-                            Phase {phase.phaseNumber} · {paper.code}
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                              {paper.title}{' '}
-                              <span
-                                lang="ne"
-                                className="text-xs font-normal text-zinc-500 dark:text-zinc-400"
-                              >
-                                ({paper.nepaliTitle})
-                              </span>
-                            </p>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                              {paper.examFormat} · {paper.questionBreakdown}
-                            </p>
-                          </td>
-                          <td className="py-3.5 px-4 text-right font-mono tabular-nums text-xs whitespace-nowrap">
-                            {paper.fullMarks}M /{' '}
-                            {paper.passMarks !== null
-                              ? `${paper.passMarks}M`
-                              : 'Merit'}
-                          </td>
-                          <td className="py-3.5 px-4 text-right font-mono tabular-nums text-xs text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
-                            {paper.durationLabel}
-                          </td>
-                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                            <ActionButton
-                              to={actionHref}
-                              title={`${actionLabel} for ${paper.title}`}
-                              label={actionLabel}
-                              color="blue"
-                              variant="outline"
-                              size="xs"
-                              icon={ArrowRight}
-                              iconPosition="right"
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                          ({paper.nepaliTitle})
+                        </span>
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {paper.examFormat} · {paper.questionBreakdown}
+                      </p>
+                    </>
+                  ),
+                },
+                {
+                  id: 'marks',
+                  header: 'Full / Pass',
+                  align: 'right',
+                  className: 'font-mono tabular-nums text-xs whitespace-nowrap',
+                  render: ({ paper }) =>
+                    `${paper.fullMarks}M / ${
+                      paper.passMarks !== null ? `${paper.passMarks}M` : 'Merit'
+                    }`,
+                },
+                {
+                  id: 'duration',
+                  header: 'Duration',
+                  align: 'right',
+                  className: 'font-mono tabular-nums text-xs text-zinc-600 dark:text-zinc-400 whitespace-nowrap',
+                  render: ({ paper }) => paper.durationLabel,
+                },
+                {
+                  id: 'action',
+                  header: 'Action',
+                  align: 'right',
+                  className: 'whitespace-nowrap',
+                  render: ({ paper }) => {
+                    const actionHref =
+                      paper.examFormat === 'Objective MCQ (OMR)'
+                        ? `/simulate?preset=${encodeURIComponent(
+                            activeCadre.defaultSimulationPreset
+                          )}&launch=1`
+                        : paper.examFormat === 'Subjective Analytical & Case'
+                          ? '/written'
+                          : `/syllabus/${activeCadre.id}`;
+                    const actionLabel =
+                      paper.examFormat === 'Objective MCQ (OMR)'
+                        ? 'Simulate OMR'
+                        : paper.examFormat === 'Subjective Analytical & Case'
+                          ? 'Practice Written'
+                          : 'View Units';
+
+                    return (
+                      <ActionButton
+                        to={actionHref}
+                        title={`${actionLabel} for ${paper.title}`}
+                        label={actionLabel}
+                        color="blue"
+                        variant="outline"
+                        size="xs"
+                        icon={ArrowRight}
+                        iconPosition="right"
+                      />
+                    );
+                  },
+                },
+              ]}
+              />
             </div>
           </div>
         </section>

@@ -11,6 +11,7 @@ import {
   clearSimulationHistory,
 } from '../features/psc/pscSlice';
 import { clearQuizHistory } from '../features/quiz/quizSlice';
+import { clearAllReactions } from '../features/reactions/reactionsSlice';
 import { clearWrittenProgress } from '../features/written/writtenSlice';
 import { STORAGE_KEYS, storageService } from '../services/storageService';
 
@@ -88,11 +89,13 @@ export function PrivacyPolicyPage() {
     dispatch(clearWrittenProgress());
     dispatch(clearPscSyllabusProgress());
     dispatch(clearSimulationHistory());
+    dispatch(clearAllReactions());
+    storageService.clearAllFlaggedQuestions();
     storageService.clearContactInquiries();
     setInquiriesCount(0);
     setConfirmClearAll(false);
     setStatusMessage(
-      'All local PSC Nepal syllabus, simulation, reading, quiz, written Q&A, and inquiry records have been erased from this browser.'
+      'All PSC Nepal syllabus, simulation, reading, quiz, written Q&A, flagged questions, reactions, and inquiry records have been cleared.'
     );
   };
 

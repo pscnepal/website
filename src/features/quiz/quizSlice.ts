@@ -61,6 +61,9 @@ const quizSlice = createSlice({
     clearQuizHistory(state) {
       state.attempts = [];
     },
+    resetLocalQuizHistory(state) {
+      state.attempts = [];
+    },
   },
 });
 
@@ -69,6 +72,7 @@ export const {
   recordQuizAttempt,
   mergeRemoteQuizAttempts,
   clearQuizHistory,
+  resetLocalQuizHistory,
 } = quizSlice.actions;
 
 export default quizSlice.reducer;

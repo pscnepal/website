@@ -40,6 +40,8 @@ import {
   type ColumnDef,
   type TableFilterDef,
 } from '../common/SharedDataTable';
+import { SharedSearchSelect } from '../common/SharedSearchSelect';
+import { useDashboardSearch } from './DashboardLayout';
 
 function formatShortDate(iso: string | null): string {
   if (!iso) return '—';
@@ -158,7 +160,7 @@ export function UsersDirectoryTab() {
     updateOwnPassword,
   } = useDashboardUsers();
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const { searchQuery, setSearchQuery } = useDashboardSearch();
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activityFilter, setActivityFilter] = useState<string>('all');
@@ -280,6 +282,12 @@ export function UsersDirectoryTab() {
     try {
       const isSelf = currentUser?.uid === editingUser.uid;
       const finalStatus: CloudUserStatus = isSelf ? 'active' : editStatus;
+      const cleanReason =
+        finalStatus === 'active' ? '' : editStatusReason.trim();
+      const statusChanged =
+        finalStatus !== editingUser.status ||
+        cleanReason !== editingUser.statusReason;
+
       await updateUserDetails({
         uid: editingUser.uid,
         displayName: cleanName,
@@ -287,8 +295,8 @@ export function UsersDirectoryTab() {
         photoURL: editPhotoURL.trim(),
         role: editRole,
         status: finalStatus,
-        statusReason: finalStatus === 'active' ? '' : editStatusReason.trim(),
-        statusChanged: finalStatus !== editingUser.status || editStatusReason.trim() !== editingUser.statusReason,
+        statusReason: cleanReason,
+        statusChanged,
         targetCadre: editTargetCadre,
         phone: editPhone.trim(),
         adminNotes: editAdminNotes.trim(),
@@ -1483,56 +1491,65 @@ export function UsersDirectoryTab() {
                   <label className="block font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     Role
                   </label>
-                  <select
+                  <SharedSearchSelect
                     value={editRole}
-                    onChange={(e) =>
-                      setEditRole(
-                        e.target.value === 'admin' ? 'admin' : 'aspirant'
-                      )
+                    onChange={(val) =>
+                      setEditRole(val === 'admin' ? 'admin' : 'aspirant')
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="aspirant">Aspirant</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                    options={[
+                      { value: 'aspirant', label: 'Aspirant' },
+                      { value: 'admin', label: 'Admin' },
+                    ]}
+                    enableSearch={false}
+                    size="sm"
+                    className="w-full"
+                    triggerClassName="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
+                    ariaLabel="Select user role"
+                  />
                 </div>
 
                 <div>
                   <label className="block font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     Target Cadre
                   </label>
-                  <select
+                  <SharedSearchSelect
                     value={editTargetCadre}
-                    onChange={(e) =>
-                      setEditTargetCadre(
-                        e.target.value as CloudUserTargetCadre | ''
-                      )
+                    onChange={(val) =>
+                      setEditTargetCadre(val as CloudUserTargetCadre | '')
                     }
-                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Not specified</option>
-                    <option value="section-officer">Section Officer</option>
-                    <option value="nayab-subba">Nayab Subba</option>
-                    <option value="kharidar">Kharidar</option>
-                  </select>
+                    options={[
+                      { value: '', label: 'Not specified' },
+                      { value: 'section-officer', label: 'Section Officer' },
+                      { value: 'nayab-subba', label: 'Nayab Subba' },
+                      { value: 'kharidar', label: 'Kharidar' },
+                    ]}
+                    enableSearch={false}
+                    size="sm"
+                    className="w-full"
+                    triggerClassName="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
+                    ariaLabel="Select target cadre"
+                  />
                 </div>
 
                 <div>
                   <label className="block font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                     Account Status
                   </label>
-                  <select
+                  <SharedSearchSelect
                     value={editStatus}
                     disabled={currentUser?.uid === editingUser.uid}
-                    onChange={(e) =>
-                      setEditStatus(e.target.value as CloudUserStatus)
-                    }
-                    className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
-                    <option value="active">Active</option>
-                    <option value="disabled">Disabled</option>
-                    <option value="banned">Banned</option>
-                  </select>
+                    onChange={(val) => setEditStatus(val as CloudUserStatus)}
+                    options={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'disabled', label: 'Disabled' },
+                      { value: 'banned', label: 'Banned' },
+                    ]}
+                    enableSearch={false}
+                    size="sm"
+                    className="w-full"
+                    triggerClassName="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
+                    ariaLabel="Select account status"
+                  />
                 </div>
               </div>
 

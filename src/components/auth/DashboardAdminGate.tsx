@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   AlertCircle,
   ArrowLeft,
@@ -20,14 +19,9 @@ export function DashboardAdminGate() {
     isAuthReady,
     isSigningIn,
     authError,
-    clearAuthError,
     signInWithGoogle,
     signOutUser,
   } = useAuth();
-
-  useEffect(() => {
-    clearAuthError();
-  }, [clearAuthError]);
 
   const handleSwitchAccount = async () => {
     await signOutUser();

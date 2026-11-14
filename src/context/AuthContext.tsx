@@ -31,12 +31,14 @@ import { useAppDispatch } from '../app/hooks';
 import { store } from '../app/store';
 import {
   mergeRemoteQuizAttempts,
+  resetLocalQuizHistory,
   type QuizAttemptRecord,
 } from '../features/quiz/quizSlice';
 import {
   applyItemSyncAck,
   hydrateUserCloudReactions,
   resetCloudReactionSyncState,
+  resetLocalUserReactions,
   setCloudItemStats,
 } from '../features/reactions/reactionsSlice';
 import { resolveReactionItemType } from '../features/reactions/reactionUtils';
@@ -364,14 +366,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [isAuthReady, user, dispatch]);
 
-  // Enforce active account status in real time if admin bans/disables a signed-in user
+  // Enforce active account status in real time if admin bans, disables, or deletes a signed-in user
   useEffect(() => {
     if (!isAuthReady || !user || !user.emailVerified) return;
     const userPath = `users/${user.uid}`;
+    let hadProfileSnap = false;
+
     const unsubscribe = onSnapshot(
       doc(db, 'users', user.uid),
       (snap) => {
-        if (!snap.exists()) return;
+        if (!snap.exists()) {
+          if (hadProfileSnap) {
+            setAuthError(
+              'Your account data was removed by an administrator. You have been signed out.'
+            );
+            syncedUidRef.current = null;
+            clearEnsuredProfileCache(user.uid);
+            storageService.clearLastCloudUid();
+            storageService.clearLocalFlaggedQuestionsOnly();
+            dispatch(resetLocalUserReactions());
+            dispatch(resetLocalQuizHistory());
+            void signOut(auth);
+          }
+          return;
+        }
+
+        hadProfileSnap = true;
         const data = snap.data();
         if (data.status === 'banned' || data.status === 'disabled') {
           const reason =
@@ -380,7 +400,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAuthError(blocked.message);
           syncedUidRef.current = null;
           clearEnsuredProfileCache(user.uid);
-          dispatch(resetCloudReactionSyncState());
+          storageService.clearLastCloudUid();
+          storageService.clearLocalFlaggedQuestionsOnly();
+          dispatch(resetLocalUserReactions());
+          dispatch(resetLocalQuizHistory());
           void signOut(auth);
         }
       },
@@ -397,9 +420,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsAuthReady(true);
 
       if (!firebaseUser) {
+        const previousCloudUid = storageService.getLastCloudUid();
         syncedUidRef.current = null;
         clearEnsuredProfileCache();
-        dispatch(resetCloudReactionSyncState());
+        if (previousCloudUid) {
+          storageService.clearLastCloudUid();
+          storageService.clearLocalFlaggedQuestionsOnly();
+          dispatch(resetLocalUserReactions());
+          dispatch(resetLocalQuizHistory());
+        } else {
+          dispatch(resetCloudReactionSyncState());
+        }
         return;
       }
 
@@ -415,6 +446,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           await ensureUserProfileDoc(firebaseUser);
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+
+          const previousCloudUid = storageService.getLastCloudUid();
+          if (previousCloudUid && previousCloudUid !== firebaseUser.uid) {
+            storageService.clearLocalFlaggedQuestionsOnly();
+            dispatch(resetLocalUserReactions());
+            dispatch(resetLocalQuizHistory());
+          }
+          storageService.setLastCloudUid(firebaseUser.uid);
 
           // 1. Sync Quiz & OMR Attempts
           const remoteAttempts = await fetchUserQuizAttempts(firebaseUser.uid);
@@ -484,7 +524,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setAuthError(err.message);
             syncedUidRef.current = null;
             clearEnsuredProfileCache(firebaseUser.uid);
-            dispatch(resetCloudReactionSyncState());
+            storageService.clearLastCloudUid();
+            storageService.clearLocalFlaggedQuestionsOnly();
+            dispatch(resetLocalUserReactions());
+            dispatch(resetLocalQuizHistory());
             void signOut(auth);
             return;
           }
@@ -524,7 +567,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearEnsuredProfileCache(activeUid);
       }
       syncedUidRef.current = null;
-      dispatch(resetCloudReactionSyncState());
+      storageService.clearLastCloudUid();
+      storageService.clearLocalFlaggedQuestionsOnly();
+      dispatch(resetLocalUserReactions());
+      dispatch(resetLocalQuizHistory());
     } catch (error) {
       setAuthError(mapFirebaseAuthError(error));
     }

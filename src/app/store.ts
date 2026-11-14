@@ -9,6 +9,7 @@ import pscReducer from '../features/psc/pscSlice';
 import quizReducer from '../features/quiz/quizSlice';
 import reactionsReducer, {
   applyItemSyncAck,
+  setCloudItemStats,
   type ReactionItemType,
 } from '../features/reactions/reactionsSlice';
 import { resolveReactionItemType } from '../features/reactions/reactionUtils';
@@ -18,6 +19,8 @@ import writtenReducer from '../features/written/writtenSlice';
 import { auth } from '../lib/firebase';
 import {
   clearUserQuizAttemptsInFirestore,
+  clearUserReactionsInFirestore,
+  fetchAllCloudItemStats,
   syncReactionAndStatsToFirestore,
 } from '../services/cloudSyncService';
 import { storageService } from '../services/storageService';
@@ -36,11 +39,31 @@ export type RootState = ReturnType<typeof rootReducer>;
 
 const viewSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+function clearTimersForUser(uid?: string): void {
+  if (!uid) {
+    viewSyncTimers.forEach((timer) => clearTimeout(timer));
+    viewSyncTimers.clear();
+    return;
+  }
+  const prefix = `${uid}:`;
+  for (const [key, timer] of viewSyncTimers.entries()) {
+    if (key.startsWith(prefix)) {
+      clearTimeout(timer);
+      viewSyncTimers.delete(key);
+    }
+  }
+}
+
 const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
   (storeApi) => (next) => (action) => {
     const result = next(action);
 
     if (!isAction(action)) {
+      return result;
+    }
+
+    if (action.type === 'reactions/resetLocalUserReactions') {
+      clearTimersForUser();
       return result;
     }
 
@@ -55,6 +78,21 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
       void clearUserQuizAttemptsInFirestore(uid).catch((err) => {
         console.error('Failed to clear cloud quiz attempts:', err);
       });
+      return result;
+    }
+
+    if (action.type === 'reactions/clearAllReactions') {
+      clearTimersForUser(uid);
+      void clearUserReactionsInFirestore(uid)
+        .then(() => fetchAllCloudItemStats())
+        .then((stats) => {
+          if (auth.currentUser?.uid === uid) {
+            storeApi.dispatch(setCloudItemStats(stats));
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to clear cloud reactions:', err);
+        });
       return result;
     }
 

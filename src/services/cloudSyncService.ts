@@ -348,6 +348,90 @@ export async function syncReactionAndStatsToFirestore(params: {
   });
 }
 
+export async function clearUserReactionsInFirestore(userId: string): Promise<void> {
+  const path = `users/${userId}/itemReactions`;
+  let snapshot;
+  try {
+    const q = query(
+      collection(db, 'users', userId, 'itemReactions'),
+      where('userId', '==', userId),
+      limit(300)
+    );
+    snapshot = await getDocs(q);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+
+  if (snapshot.empty) return;
+
+  for (const docSnap of snapshot.docs) {
+    const data = docSnap.data();
+    const safeId = sanitizeFirestoreId(String(data.itemId ?? docSnap.id), 'item');
+    const prevReaction = data.reaction;
+    const prevViews = Math.max(0, Number(data.viewCount ?? 0));
+
+    if (prevReaction !== 'like' && prevReaction !== 'dislike' && prevViews === 0) {
+      continue;
+    }
+
+    await enqueueItemTask(`${userId}:${safeId}`, async () => {
+      const reactionPath = `users/${userId}/itemReactions/${safeId}`;
+      const statsPath = `itemStats/${safeId}`;
+      const reactionRef = doc(db, 'users', userId, 'itemReactions', safeId);
+      const statsRef = doc(db, 'itemStats', safeId);
+
+      try {
+        await runTransaction(db, async (tx) => {
+          const currentReactionSnap = await tx.get(reactionRef);
+          if (!currentReactionSnap.exists()) return;
+
+          const currentData = currentReactionSnap.data();
+          const currentReaction = currentData.reaction;
+          const likeDelta = currentReaction === 'like' ? -1 : 0;
+          const dislikeDelta = currentReaction === 'dislike' ? -1 : 0;
+
+          if (likeDelta !== 0 || dislikeDelta !== 0) {
+            const statsSnap = await tx.get(statsRef);
+            if (statsSnap.exists()) {
+              const existingViews = Math.max(
+                0,
+                Number(statsSnap.data().viewsCount ?? 0)
+              );
+              const existingLikes = Math.max(
+                0,
+                Number(statsSnap.data().likesCount ?? 0)
+              );
+              const existingDislikes = Math.max(
+                0,
+                Number(statsSnap.data().dislikesCount ?? 0)
+              );
+
+              tx.update(statsRef, {
+                viewsCount: existingViews,
+                likesCount: Math.max(0, existingLikes + likeDelta),
+                dislikesCount: Math.max(0, existingDislikes + dislikeDelta),
+                updatedAt: serverTimestamp(),
+              });
+            }
+          }
+
+          tx.update(reactionRef, {
+            reaction: 'none',
+            viewCount: 0,
+            updatedAt: serverTimestamp(),
+          });
+        });
+      } catch (error) {
+        handleFirestoreError(
+          error,
+          OperationType.WRITE,
+          `${reactionPath} + ${statsPath}`
+        );
+      }
+    });
+  }
+}
+
 // ============================================================================
 // FLAGGED QUESTIONS CLOUD SYNC
 // ============================================================================
@@ -901,15 +985,13 @@ export async function updateAdminUserDetails(
     updatedAt: serverTimestamp(),
   };
 
-  if (params.status) {
+  if (params.statusChanged && params.status) {
     payload.status = params.status;
     payload.statusReason =
       params.status === 'active'
         ? deleteField()
         : cleanReason || deleteField();
-    if (params.statusChanged) {
-      payload.statusUpdatedAt = serverTimestamp();
-    }
+    payload.statusUpdatedAt = serverTimestamp();
   }
 
   try {
@@ -1042,7 +1124,33 @@ export async function updateCurrentAdminPassword(
         : '';
 
     if (code === 'auth/requires-recent-login') {
-      await reauthenticateWithPopup(currentUser, googleProvider);
+      try {
+        await reauthenticateWithPopup(currentUser, googleProvider);
+      } catch (reauthErr) {
+        const reauthCode =
+          typeof reauthErr === 'object' &&
+          reauthErr !== null &&
+          'code' in reauthErr
+            ? String((reauthErr as { code?: unknown }).code)
+            : '';
+        if (reauthCode === 'auth/popup-closed-by-user') {
+          throw new Error(
+            'Re-authentication popup was closed before completing Google verification.'
+          );
+        }
+        if (reauthCode === 'auth/popup-blocked') {
+          throw new Error(
+            'Re-authentication popup was blocked by your browser. Please allow pop-ups and try again.'
+          );
+        }
+        if (reauthCode === 'auth/cancelled-popup-request') {
+          throw new Error('A verification popup is already open.');
+        }
+        throw reauthErr instanceof Error
+          ? reauthErr
+          : new Error('Unable to re-authenticate with Google.');
+      }
+
       if (hasPasswordProvider) {
         await updatePassword(currentUser, newPassword);
         return 'updated';

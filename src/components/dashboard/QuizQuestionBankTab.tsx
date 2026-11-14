@@ -39,6 +39,7 @@ import {
 } from '../common/SharedDataTable';
 import { QuizQuestionFormModal } from './QuizQuestionFormModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { useDashboardSearch } from './DashboardLayout';
 
 export function QuizQuestionBankTab() {
   const dispatch = useAppDispatch();
@@ -46,7 +47,7 @@ export function QuizQuestionBankTab() {
   const [questions, setQuestions] = useState<QuizQuestion[]>(() =>
     questionStorageService.loadQuizQuestions()
   );
-  const [searchQuery, setSearchQuery] = useState('');
+  const { searchQuery, setSearchQuery } = useDashboardSearch();
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [flaggedFilter, setFlaggedFilter] = useState<'all' | 'flagged' | 'unflagged'>('all');

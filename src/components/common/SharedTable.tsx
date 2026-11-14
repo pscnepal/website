@@ -71,6 +71,12 @@ export interface SharedTableProps<T> {
   selectedKeys?: Set<string | number>;
   /** Callback when selected rows change */
   onSelectionChange?: (selected: Set<string | number>) => void;
+  /** Optional custom class per table row */
+  rowClassName?: (item: T, index: number) => string;
+  /** Hide the table header row for key-value summary tables */
+  hideHeader?: boolean;
+  /** Use compact cell padding (suitable for chat & embedded summaries) */
+  compact?: boolean;
 }
 
 export function SharedTable<T>({
@@ -91,6 +97,9 @@ export function SharedTable<T>({
   selectable = false,
   selectedKeys,
   onSelectionChange,
+  rowClassName,
+  hideHeader = false,
+  compact = false,
 }: SharedTableProps<T>) {
   // Sorting state
   const [sortColId, setSortColId] = useState<string | null>(null);
@@ -214,6 +223,9 @@ export function SharedTable<T>({
   const startIdx = safePage * pageSize;
   const endIdx = Math.min(startIdx + pageSize, sortedData.length);
 
+  const cellPadding = compact ? 'py-2 px-2.5' : 'py-3.5 px-3.5 sm:px-4';
+  const headerPadding = compact ? 'py-2 px-2.5' : 'py-3 px-3.5 sm:px-4';
+
   return (
     <div
       className={`rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-xs flex flex-col ${className}`}
@@ -222,10 +234,11 @@ export function SharedTable<T>({
         <table className="w-full text-left border-collapse text-xs">
           {caption && <caption className="sr-only">{caption}</caption>}
 
-          <thead>
-            <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-500 dark:text-zinc-400 font-mono">
-              {selectable && (
-                <th scope="col" className="w-10 py-3 px-3 text-center">
+          {!hideHeader && (
+            <thead>
+              <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-500 dark:text-zinc-400 font-mono">
+                {selectable && (
+                  <th scope="col" className="w-10 py-3 px-3 text-center">
                   <input
                     type="checkbox"
                     checked={Boolean(isAllCurrentSelected)}
@@ -257,7 +270,7 @@ export function SharedTable<T>({
                     key={col.id}
                     scope="col"
                     onClick={() => handleSort(col)}
-                    className={`py-3 px-3.5 sm:px-4 font-semibold text-zinc-600 dark:text-zinc-400 ${alignClass} ${
+                    className={`${headerPadding} font-semibold text-zinc-600 dark:text-zinc-400 ${alignClass} ${
                       col.width || ''
                     } ${responsiveClass} ${col.sortable ? 'cursor-pointer select-none hover:text-zinc-900 dark:hover:text-zinc-100' : ''} ${
                       col.headerClassName || ''
@@ -292,12 +305,15 @@ export function SharedTable<T>({
               })}
             </tr>
           </thead>
+          )}
 
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
             {paginatedData.map((item, index) => {
               const rowKey = keyExtractor(item, index);
               const isEven = index % 2 === 0;
               const isSelected = selectable && selectedKeys?.has(rowKey);
+
+              const customRowClass = rowClassName ? rowClassName(item, index) : '';
 
               return (
                 <tr
@@ -313,7 +329,7 @@ export function SharedTable<T>({
                     hoverable
                       ? 'hover:bg-zinc-50/80 dark:hover:bg-zinc-800/60'
                       : ''
-                  } ${onRowClick ? 'cursor-pointer' : ''}`}
+                  } ${onRowClick ? 'cursor-pointer' : ''} ${customRowClass}`}
                 >
                   {selectable && (
                     <td className="w-10 py-3.5 px-3 text-center">
@@ -352,7 +368,7 @@ export function SharedTable<T>({
                     return (
                       <td
                         key={col.id}
-                        className={`py-3.5 px-3.5 sm:px-4 ${alignClass} ${responsiveClass} ${
+                        className={`${cellPadding} ${alignClass} ${responsiveClass} ${
                           col.className || ''
                         }`}
                       >

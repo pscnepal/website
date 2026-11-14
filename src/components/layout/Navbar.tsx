@@ -441,9 +441,9 @@ export function Navbar() {
           className="bg-crimson-50 dark:bg-crimson-950/60 border-b border-crimson-200 dark:border-crimson-900/70 text-crimson-900 dark:text-crimson-200 text-xs"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <AlertCircle className="w-4 h-4 shrink-0 text-crimson-600 dark:text-crimson-400" />
-              <span className="font-medium truncate sm:whitespace-normal">
+            <div className="flex items-start sm:items-center gap-2 min-w-0">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0 text-crimson-600 dark:text-crimson-400" />
+              <span className="font-medium break-words">
                 {authError}
               </span>
             </div>
