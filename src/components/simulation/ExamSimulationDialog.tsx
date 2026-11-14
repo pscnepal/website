@@ -59,6 +59,9 @@ import {
   useAuth,
 } from '../../context/AuthContext';
 import { QuizAuthGate } from '../auth/QuizAuthGate';
+import { toast } from '../../services/toastService';
+import { formatUserFriendlyError } from '../../utils/errorHelpers';
+import { FlagReasonModal } from '../common/FlagReasonModal';
 
 export {
   deterministicPermute,
@@ -194,6 +197,8 @@ function OmrHallDialogInner({
   const [confirmingSubmit, setConfirmingSubmit] = useState<boolean>(false);
   const [mobilePane, setMobilePane] = useState<MobileOmrPane>('paper');
   const [reviewFilter, setReviewFilter] = useState<OmrReviewFilter>('all');
+  const [flagModalQuestion, setFlagModalQuestion] =
+    useState<QuizQuestion | null>(null);
 
   const bodyScrollRef = useRef<HTMLDivElement>(null);
   const deadlineTimestampRef = useRef<number>(
@@ -371,6 +376,13 @@ function OmrHallDialogInner({
       if (user) {
         void saveQuizAttemptToFirestore(user, attemptRecord).catch((err) => {
           console.error('Failed to persist OMR attempt to Firestore:', err);
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Exam score saved locally, but cloud sync failed.'
+            ),
+            { id: 'cloud-attempt-sync-err' }
+          );
         });
       }
 
@@ -440,14 +452,19 @@ function OmrHallDialogInner({
   const handleToggleFlag = useCallback(
     (questionId: string) => {
       if (phase !== 'sitting') return;
-      const isNowFlagged = storageService.toggleFlaggedQuestion(questionId, {
-        source: 'simulation',
-        deckTitle: preset.title,
-        cadreId: preset.cadreId,
-      });
-      setFlagged((prev) => ({ ...prev, [questionId]: isNowFlagged }));
+      if (flagged[questionId]) {
+        storageService.removeFlaggedQuestion(questionId);
+        setFlagged((prev) => ({ ...prev, [questionId]: false }));
+        toast.info(`Removed flag from ${questionId}.`);
+        return;
+      }
+      const target =
+        questions.find((item) => item.id === questionId) ?? activeQuestion;
+      if (target) {
+        setFlagModalQuestion(target);
+      }
     },
-    [phase, preset.title, preset.cadreId]
+    [phase, flagged, questions, activeQuestion]
   );
 
   const requestClose = useCallback(() => {
@@ -513,6 +530,8 @@ function OmrHallDialogInner({
   // Keyboard shortcuts inside OMR Dialog
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (flagModalQuestion) return;
+
       if (event.key === 'Escape') {
         event.preventDefault();
         if (confirmingExit) {
@@ -568,6 +587,7 @@ function OmrHallDialogInner({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
+    flagModalQuestion,
     phase,
     confirmingExit,
     confirmingSubmit,
@@ -1795,6 +1815,38 @@ function OmrHallDialogInner({
           )}
         </div>
       </motion.div>
+
+      <FlagReasonModal
+        open={Boolean(flagModalQuestion)}
+        question={
+          flagModalQuestion
+            ? {
+                id: flagModalQuestion.id,
+                question: flagModalQuestion.question,
+                questionNe: isBilingualQuizQuestion(flagModalQuestion)
+                  ? flagModalQuestion.questionNe
+                  : undefined,
+                subject: flagModalQuestion.subject,
+              }
+            : null
+        }
+        onConfirm={(reason) => {
+          if (!flagModalQuestion) return;
+          storageService.flagQuestionWithReason(flagModalQuestion.id, {
+            source: 'simulation',
+            deckTitle: preset.title,
+            cadreId: preset.cadreId,
+            reason,
+          });
+          setFlagged((prev) => ({
+            ...prev,
+            [flagModalQuestion.id]: true,
+          }));
+          toast.success(`Question ${flagModalQuestion.id} flagged for review.`);
+          setFlagModalQuestion(null);
+        }}
+        onCancel={() => setFlagModalQuestion(null)}
+      />
     </>
   );
 }

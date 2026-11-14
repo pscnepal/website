@@ -30,6 +30,7 @@ import {
   type NoticeCategory,
   type PscNotice,
 } from '../data/pscCalendarData';
+import { copyWithToast } from '../utils/clipboardHelpers';
 
 export type CalendarPageTab = 'calendar' | 'notices' | 'guidelines';
 
@@ -79,9 +80,12 @@ export function NoticeCalendarPage() {
 
   const handleCopyNotice = (notice: PscNotice) => {
     const text = `[लोक सेवा आयोग सूचना] ${notice.titleNe}\n${notice.noticeNumber} | मिति: ${notice.publishedDateBS}\nस्रोत: ${notice.officialSource}\n\n${notice.summaryNe}`;
-    navigator.clipboard.writeText(text);
-    setCopiedNoticeId(notice.id);
-    setTimeout(() => setCopiedNoticeId(null), 2000);
+    void copyWithToast(text, 'Official notice copied to clipboard.').then((ok) => {
+      if (ok) {
+        setCopiedNoticeId(notice.id);
+        setTimeout(() => setCopiedNoticeId(null), 2000);
+      }
+    });
   };
 
   // Filtered Calendar Events

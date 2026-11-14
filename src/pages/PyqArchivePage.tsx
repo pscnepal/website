@@ -31,6 +31,7 @@ import {
   type PyqQuestion,
 } from '../data/pyqData';
 import { recordView } from '../features/reactions/reactionsSlice';
+import { copyWithToast } from '../utils/clipboardHelpers';
 
 export type PyqPageTab = 'archive' | 'heatmap' | 'challenge';
 
@@ -82,9 +83,12 @@ export function PyqArchivePage() {
 
   const handleCopyQuestion = (q: PyqQuestion) => {
     const text = `[लोक सेवा आयोग विगतको प्रश्न (${q.yearBS} - ${q.cadreLabelNe})]\nपत्र: ${q.paperNameNe} (${q.marks} अङ्क)\n\nप्रश्न:\n${q.questionNe}\n(${q.questionEn})\n\nउत्तर संरचना बुँदाहरू:\n${q.outlineHintsNe.map((h) => `• ${h}`).join('\n')}`;
-    navigator.clipboard.writeText(text);
-    setCopiedId(q.id);
-    setTimeout(() => setCopiedId(null), 2000);
+    void copyWithToast(text, 'Past question copied to clipboard.').then((ok) => {
+      if (ok) {
+        setCopiedId(q.id);
+        setTimeout(() => setCopiedId(null), 2000);
+      }
+    });
   };
 
   // Filtered Questions

@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
+import { toast } from '../services/toastService';
 
 const app = initializeApp(firebaseConfig);
 
@@ -75,6 +76,10 @@ async function testConnection() {
       error.message.includes('the client is offline')
     ) {
       console.error('Please check your Firebase configuration.');
+      toast.warning(
+        'Cloud database appears offline. Local progress will still be saved on this device.',
+        { id: 'firebase-offline', title: 'Cloud Sync Unavailable' }
+      );
     }
   }
 }

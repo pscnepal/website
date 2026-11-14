@@ -31,6 +31,15 @@ import {
   handleFirestoreError,
   OperationType,
 } from '../lib/firebase';
+import type { QuizDifficulty, QuizOptionKey, QuizQuestion } from '../data/quizData';
+import {
+  WRITTEN_PAPERS,
+  type BilingualRubricPoint,
+  type BilingualSection,
+  type WrittenPaperCode,
+  type WrittenQuestion,
+  type WrittenQuestionType,
+} from '../data/writtenQuestionsData';
 import type { FlaggedQuestionRecord } from './storageService';
 
 export type CloudItemType = 'question' | 'material';
@@ -161,7 +170,8 @@ export async function fetchAllCloudItemStats(): Promise<
 }
 
 export function subscribeToCloudItemStats(
-  onData: (stats: Record<string, CloudItemStatsEntry>) => void
+  onData: (stats: Record<string, CloudItemStatsEntry>) => void,
+  onError?: (error: unknown) => void
 ): Unsubscribe {
   const path = 'itemStats';
   const q = query(
@@ -185,6 +195,9 @@ export function subscribeToCloudItemStats(
       onData(map);
     },
     (error) => {
+      if (onError) {
+        onError(error);
+      }
       handleFirestoreError(error, OperationType.LIST, path);
     }
   );
@@ -466,6 +479,7 @@ export async function fetchUserFlaggedQuestions(
         ...(typeof data.cadreId === 'string' && data.cadreId
           ? { cadreId: data.cadreId }
           : {}),
+        ...(typeof data.reason === 'string' ? { reason: data.reason } : { reason: '' }),
         ...(typeof data.note === 'string' ? { note: data.note } : { note: '' }),
       };
     });
@@ -506,6 +520,9 @@ export async function upsertFlaggedQuestionInFirestore(
     }
     if (record.cadreId && record.cadreId.trim()) {
       optionalFields.cadreId = record.cadreId.trim().slice(0, 64);
+    }
+    if (typeof record.reason === 'string') {
+      optionalFields.reason = record.reason.trim().slice(0, 500);
     }
     if (typeof record.note === 'string') {
       optionalFields.note = record.note.slice(0, 1000);
@@ -635,6 +652,16 @@ export interface CloudUserQuizAttemptSummary {
   completedAt: string;
 }
 
+export interface CloudUserFlaggedQuestionSummary {
+  questionId: string;
+  flaggedAt: string;
+  source: 'quiz' | 'simulation' | 'dashboard';
+  deckTitle: string;
+  cadreId: string;
+  reason: string;
+  note: string;
+}
+
 export interface CloudUserDirectoryEntry {
   uid: string;
   displayName: string;
@@ -658,6 +685,7 @@ export interface CloudUserDirectoryEntry {
   reactionsCount: number;
   viewsCount: number;
   recentAttempts: CloudUserQuizAttemptSummary[];
+  flaggedQuestions: CloudUserFlaggedQuestionSummary[];
 }
 
 function toIsoStringOrNull(raw: unknown): string | null {
@@ -687,6 +715,7 @@ async function fetchUserDirectoryTelemetry(uid: string): Promise<{
   reactionsCount: number;
   viewsCount: number;
   recentAttempts: CloudUserQuizAttemptSummary[];
+  flaggedQuestions: CloudUserFlaggedQuestionSummary[];
 }> {
   const attemptsPath = `users/${uid}/quizAttempts`;
   const flagsPath = `users/${uid}/flaggedQuestions`;
@@ -779,6 +808,26 @@ async function fetchUserDirectoryTelemetry(uid: string): Promise<{
     viewsCount += Math.max(0, Number(data.viewCount ?? 0));
   });
 
+  const flaggedQuestions: CloudUserFlaggedQuestionSummary[] = flagsSnap.docs
+    .map((docSnap) => {
+      const data = docSnap.data();
+      return {
+        questionId: String(data.questionId ?? docSnap.id),
+        flaggedAt: String(data.flaggedAt ?? ''),
+        source:
+          data.source === 'simulation'
+            ? ('simulation' as const)
+            : data.source === 'dashboard'
+              ? ('dashboard' as const)
+              : ('quiz' as const),
+        deckTitle: typeof data.deckTitle === 'string' ? data.deckTitle : '',
+        cadreId: typeof data.cadreId === 'string' ? data.cadreId : '',
+        reason: typeof data.reason === 'string' ? data.reason : '',
+        note: typeof data.note === 'string' ? data.note : '',
+      };
+    })
+    .sort((a, b) => b.flaggedAt.localeCompare(a.flaggedAt));
+
   return {
     quizAttemptsCount,
     questionsAnswered,
@@ -788,6 +837,7 @@ async function fetchUserDirectoryTelemetry(uid: string): Promise<{
     reactionsCount,
     viewsCount,
     recentAttempts: attempts.slice(0, 10),
+    flaggedQuestions,
   };
 }
 
@@ -1177,3 +1227,633 @@ export async function updateCurrentAdminPassword(
       : new Error('Failed to update Firebase Auth password.');
   }
 }
+
+// ============================================================================
+// QUESTION BANK CLOUD SYNC (MCQ & WRITTEN OVERRIDES / ADDITIONS / DELETIONS)
+// ============================================================================
+
+export interface CloudQuizQuestionOverride {
+  question: QuizQuestion;
+  isDeleted: boolean;
+  updatedAtMs: number;
+}
+
+export interface CloudWrittenQuestionOverride {
+  question: WrittenQuestion;
+  isDeleted: boolean;
+  updatedAtMs: number;
+}
+
+function toEpochMs(raw: unknown): number {
+  if (!raw) return 0;
+  if (
+    typeof raw === 'object' &&
+    raw !== null &&
+    'toMillis' in raw &&
+    typeof (raw as { toMillis?: () => number }).toMillis === 'function'
+  ) {
+    try {
+      return (raw as { toMillis: () => number }).toMillis();
+    } catch {
+      return 0;
+    }
+  }
+  if (typeof raw === 'string') {
+    const parsed = Date.parse(raw);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+}
+
+function parseQuizOverrideDoc(
+  docId: string,
+  data: Record<string, unknown>
+): CloudQuizQuestionOverride | null {
+  const id = String(data.id ?? docId).trim();
+  if (!id) return null;
+
+  const rawOptions = Array.isArray(data.options) ? data.options : [];
+  const options = rawOptions
+    .map((opt) => {
+      if (!opt || typeof opt !== 'object') return null;
+      const o = opt as Record<string, unknown>;
+      const key = String(o.key ?? 'A') as QuizOptionKey;
+      const text = String(o.text ?? '');
+      const textNe = typeof o.textNe === 'string' && o.textNe.trim() ? o.textNe : undefined;
+      return { key, text, ...(textNe ? { textNe } : {}) };
+    })
+    .filter((o): o is QuizQuestion['options'][number] => Boolean(o));
+
+  const rawCorrect = Array.isArray(data.correct_options)
+    ? data.correct_options.map((k) => String(k) as QuizOptionKey)
+    : (['A'] as QuizOptionKey[]);
+
+  const difficulty: QuizDifficulty =
+    data.difficulty === 'Easy' || data.difficulty === 'Hard'
+      ? data.difficulty
+      : 'Medium';
+
+  const question: QuizQuestion = {
+    id,
+    level: String(data.level ?? 'Gazetted Third Class'),
+    service: String(data.service ?? 'Federal Civil Service preparation'),
+    group: String(data.group ?? 'General Administration'),
+    post: String(data.post ?? 'Section Officer / general competitive examination target'),
+    paper: String(data.paper ?? 'Paper I: Administrative Aptitude Test'),
+    subject: String(data.subject ?? 'Geography of Nepal'),
+    topicId: String(data.topicId ?? 'custom-topic'),
+    topic: String(data.topic ?? 'General Overview'),
+    subtopicId: String(data.subtopicId ?? 'custom-subtopic'),
+    subtopic: String(data.subtopic ?? 'Core Analysis'),
+    question: String(data.question ?? ''),
+    ...(typeof data.questionNe === 'string' && data.questionNe.trim()
+      ? { questionNe: data.questionNe }
+      : {}),
+    options:
+      options.length >= 2
+        ? options
+        : [
+            { key: 'A', text: 'Option A' },
+            { key: 'B', text: 'Option B' },
+            { key: 'C', text: 'Option C' },
+            { key: 'D', text: 'Option D' },
+          ],
+    correct_options: rawCorrect.length > 0 ? rawCorrect : ['A'],
+    is_multi_select: Boolean(data.is_multi_select),
+    explanation: String(data.explanation ?? ''),
+    ...(typeof data.explanationNe === 'string' && data.explanationNe.trim()
+      ? { explanationNe: data.explanationNe }
+      : {}),
+    difficulty,
+    marks: Number(data.marks) || 1,
+    ...(typeof data.sourceTitle === 'string' && data.sourceTitle.trim()
+      ? { sourceTitle: data.sourceTitle }
+      : {}),
+    ...(typeof data.sourcePath === 'string' && data.sourcePath.trim()
+      ? { sourcePath: data.sourcePath }
+      : {}),
+  };
+
+  return {
+    question,
+    isDeleted: Boolean(data.isDeleted),
+    updatedAtMs: toEpochMs(data.updatedAt) || toEpochMs(data.createdAt),
+  };
+}
+
+function parseWrittenOverrideDoc(
+  docId: string,
+  data: Record<string, unknown>
+): CloudWrittenQuestionOverride | null {
+  const id = String(data.id ?? docId).trim();
+  if (!id) return null;
+
+  const paperRaw = String(data.paper ?? '');
+  const paper: WrittenPaperCode = (WRITTEN_PAPERS as readonly string[]).includes(
+    paperRaw
+  )
+    ? (paperRaw as WrittenPaperCode)
+    : 'Paper II: Governance Systems';
+
+  const marks = Number(data.marks) === 5 ? 5 : 10;
+  const questionType: WrittenQuestionType =
+    data.questionType === 'Short Analytical' || data.questionType === 'Case Study'
+      ? data.questionType
+      : 'Long Analytical';
+
+  const parseLocalizedBlock = (
+    raw: unknown,
+    fallbackMarksLabel: string
+  ): WrittenQuestion['en'] => {
+    const obj = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+    const rawSections = Array.isArray(obj.sections) ? obj.sections : [];
+    const sections: BilingualSection[] = rawSections
+      .map((s) => {
+        if (!s || typeof s !== 'object') return null;
+        const sec = s as Record<string, unknown>;
+        const heading = String(sec.heading ?? '').trim();
+        const points = Array.isArray(sec.points)
+          ? sec.points.map((p) => String(p ?? '').trim()).filter(Boolean)
+          : [];
+        if (!heading && points.length === 0) return null;
+        return {
+          heading: heading || 'Key Analytical Points',
+          points: points.length > 0 ? points : ['Analysis point'],
+        };
+      })
+      .filter((s): s is BilingualSection => Boolean(s));
+
+    return {
+      title: String(obj.title ?? 'Written Question'),
+      question: String(obj.question ?? ''),
+      marksAllocation: String(obj.marksAllocation ?? fallbackMarksLabel),
+      introduction: String(obj.introduction ?? ''),
+      sections:
+        sections.length > 0
+          ? sections
+          : [{ heading: 'Key Analytical Points', points: ['Analysis point'] }],
+      conclusion: String(obj.conclusion ?? ''),
+    };
+  };
+
+  const rawRubric = Array.isArray(data.rubric) ? data.rubric : [];
+  const rubric: BilingualRubricPoint[] = rawRubric
+    .map((r) => {
+      if (!r || typeof r !== 'object') return null;
+      const item = r as Record<string, unknown>;
+      return {
+        en: String(item.en ?? ''),
+        ne: String(item.ne ?? ''),
+      };
+    })
+    .filter((r): r is BilingualRubricPoint => Boolean(r && (r.en || r.ne)));
+
+  const question: WrittenQuestion = {
+    id,
+    paper,
+    subject: String(data.subject ?? 'Governance & Administration'),
+    postTarget: String(data.postTarget ?? 'Section Officer / Nayab Subba'),
+    marks,
+    recommendedMinutes: Math.max(
+      1,
+      Number(data.recommendedMinutes) || (marks === 5 ? 9 : 18)
+    ),
+    questionType,
+    sourceTitle: String(
+      data.sourceTitle ?? 'Constitution of Nepal (2072) — Core Articles & Rights'
+    ),
+    sourcePath: String(
+      data.sourcePath ?? '/materials/constitution-of-nepal-2072.pdf'
+    ),
+    en: parseLocalizedBlock(data.en, `${marks} Marks`),
+    ne: parseLocalizedBlock(data.ne, `${marks} अङ्क`),
+    rubric:
+      rubric.length > 0
+        ? rubric
+        : [{ en: 'Core statutory points covered.', ne: 'मुख्य कानुनी पक्ष समेटिएको ।' }],
+  };
+
+  return {
+    question,
+    isDeleted: Boolean(data.isDeleted),
+    updatedAtMs: toEpochMs(data.updatedAt) || toEpochMs(data.createdAt),
+  };
+}
+
+export async function fetchAllCloudQuizOverrides(): Promise<
+  CloudQuizQuestionOverride[]
+> {
+  const path = 'quizQuestions';
+  try {
+    const q = query(
+      collection(db, 'quizQuestions'),
+      where('isDeleted', 'in', [true, false]),
+      limit(1000)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .map((docSnap) =>
+        parseQuizOverrideDoc(docSnap.id, docSnap.data() as Record<string, unknown>)
+      )
+      .filter((item): item is CloudQuizQuestionOverride => Boolean(item))
+      .sort((a, b) => b.updatedAtMs - a.updatedAtMs);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+}
+
+export function subscribeToCloudQuizOverrides(
+  onData: (overrides: CloudQuizQuestionOverride[]) => void,
+  onError?: (error: unknown) => void
+): Unsubscribe {
+  const path = 'quizQuestions';
+  const q = query(
+    collection(db, 'quizQuestions'),
+    where('isDeleted', 'in', [true, false]),
+    limit(1000)
+  );
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const items = snapshot.docs
+        .map((docSnap) =>
+          parseQuizOverrideDoc(
+            docSnap.id,
+            docSnap.data() as Record<string, unknown>
+          )
+        )
+        .filter((item): item is CloudQuizQuestionOverride => Boolean(item))
+        .sort((a, b) => b.updatedAtMs - a.updatedAtMs);
+      onData(items);
+    },
+    (error) => {
+      if (onError) {
+        onError(error);
+      }
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
+  );
+}
+
+export async function upsertQuizQuestionInFirestore(
+  question: QuizQuestion,
+  isDeleted = false
+): Promise<void> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('Admin authentication is required to save questions to cloud.');
+  }
+
+  const safeId = sanitizeFirestoreId(question.id, 'PSC-MCQ');
+  const docPath = `quizQuestions/${safeId}`;
+  const docRef = doc(db, 'quizQuestions', safeId);
+
+  return enqueueItemTask(`quiz-bank:${safeId}`, async () => {
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(docRef);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const sanitizedOptions = (question.options || [])
+      .slice(0, 6)
+      .map((opt) => ({
+        key: opt.key,
+        text: (opt.text || `Option ${opt.key}`).trim().slice(0, 500) || `Option ${opt.key}`,
+        ...(opt.textNe?.trim()
+          ? { textNe: opt.textNe.trim().slice(0, 500) }
+          : {}),
+      }));
+
+    while (sanitizedOptions.length < 2) {
+      const nextKey = sanitizedOptions.length === 0 ? 'A' : 'B';
+      sanitizedOptions.push({ key: nextKey as QuizOptionKey, text: `Option ${nextKey}` });
+    }
+
+    const sanitizedCorrect = (question.correct_options || [])
+      .slice(0, 6)
+      .filter(Boolean);
+
+    const basePayload: Record<string, unknown> = {
+      id: safeId,
+      isDeleted: Boolean(isDeleted),
+      level: (question.level || 'Gazetted Third Class').trim().slice(0, 160) || 'Gazetted Third Class',
+      service:
+        (question.service || 'Federal Civil Service preparation').trim().slice(0, 160) ||
+        'Federal Civil Service preparation',
+      group: (question.group || 'General Administration').trim().slice(0, 160) || 'General Administration',
+      post:
+        (question.post || 'Section Officer / general competitive examination target')
+          .trim()
+          .slice(0, 200) || 'Section Officer / general competitive examination target',
+      paper:
+        (question.paper || 'Paper I: Administrative Aptitude Test').trim().slice(0, 160) ||
+        'Paper I: Administrative Aptitude Test',
+      subject: (question.subject || 'Geography of Nepal').trim().slice(0, 160) || 'Geography of Nepal',
+      topicId: (question.topicId || 'custom-topic').trim().slice(0, 128) || 'custom-topic',
+      topic: (question.topic || 'General Overview').trim().slice(0, 200) || 'General Overview',
+      subtopicId: (question.subtopicId || 'custom-subtopic').trim().slice(0, 128) || 'custom-subtopic',
+      subtopic: (question.subtopic || 'Core Analysis').trim().slice(0, 200) || 'Core Analysis',
+      question: (question.question || '').trim().slice(0, 3000) || 'Question stem',
+      options: sanitizedOptions,
+      correct_options: sanitizedCorrect.length > 0 ? sanitizedCorrect : ['A'],
+      is_multi_select: Boolean(question.is_multi_select),
+      explanation:
+        (question.explanation || '').trim().slice(0, 5000) || 'Official rationale pending.',
+      difficulty:
+        question.difficulty === 'Easy' || question.difficulty === 'Hard'
+          ? question.difficulty
+          : 'Medium',
+      marks: Math.min(20, Math.max(0.5, Number(question.marks) || 1)),
+      updatedBy: currentUser.uid,
+      updatedAt: serverTimestamp(),
+    };
+
+    const qNe = question.questionNe?.trim().slice(0, 3000);
+    const eNe = question.explanationNe?.trim().slice(0, 5000);
+    const sTitle = question.sourceTitle?.trim().slice(0, 300);
+    const sPath = question.sourcePath?.trim().slice(0, 512);
+
+    if (!existingSnap.exists()) {
+      const createPayload: Record<string, unknown> = {
+        ...basePayload,
+        createdAt: serverTimestamp(),
+      };
+      if (qNe) createPayload.questionNe = qNe;
+      if (eNe) createPayload.explanationNe = eNe;
+      if (sTitle) createPayload.sourceTitle = sTitle;
+      if (sPath) createPayload.sourcePath = sPath;
+
+      try {
+        await setDoc(docRef, createPayload);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      const updatePayload: Record<string, unknown> = {
+        ...basePayload,
+        questionNe: qNe ? qNe : deleteField(),
+        explanationNe: eNe ? eNe : deleteField(),
+        sourceTitle: sTitle ? sTitle : deleteField(),
+        sourcePath: sPath ? sPath : deleteField(),
+      };
+      delete updatePayload.id;
+
+      try {
+        await updateDoc(docRef, updatePayload);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  });
+}
+
+export async function resetAllQuizOverridesInFirestore(): Promise<void> {
+  const path = 'quizQuestions';
+  let snapshot;
+  try {
+    const q = query(
+      collection(db, 'quizQuestions'),
+      where('isDeleted', 'in', [true, false]),
+      limit(1000)
+    );
+    snapshot = await getDocs(q);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+
+  if (snapshot.empty) return;
+
+  try {
+    for (let i = 0; i < snapshot.docs.length; i += 400) {
+      const batch = writeBatch(db);
+      snapshot.docs.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+export async function fetchAllCloudWrittenOverrides(): Promise<
+  CloudWrittenQuestionOverride[]
+> {
+  const path = 'writtenQuestions';
+  try {
+    const q = query(
+      collection(db, 'writtenQuestions'),
+      where('isDeleted', 'in', [true, false]),
+      limit(500)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .map((docSnap) =>
+        parseWrittenOverrideDoc(
+          docSnap.id,
+          docSnap.data() as Record<string, unknown>
+        )
+      )
+      .filter((item): item is CloudWrittenQuestionOverride => Boolean(item))
+      .sort((a, b) => b.updatedAtMs - a.updatedAtMs);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+}
+
+export function subscribeToCloudWrittenOverrides(
+  onData: (overrides: CloudWrittenQuestionOverride[]) => void,
+  onError?: (error: unknown) => void
+): Unsubscribe {
+  const path = 'writtenQuestions';
+  const q = query(
+    collection(db, 'writtenQuestions'),
+    where('isDeleted', 'in', [true, false]),
+    limit(500)
+  );
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const items = snapshot.docs
+        .map((docSnap) =>
+          parseWrittenOverrideDoc(
+            docSnap.id,
+            docSnap.data() as Record<string, unknown>
+          )
+        )
+        .filter((item): item is CloudWrittenQuestionOverride => Boolean(item))
+        .sort((a, b) => b.updatedAtMs - a.updatedAtMs);
+      onData(items);
+    },
+    (error) => {
+      if (onError) {
+        onError(error);
+      }
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
+  );
+}
+
+export async function upsertWrittenQuestionInFirestore(
+  question: WrittenQuestion,
+  isDeleted = false
+): Promise<void> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('Admin authentication is required to save written questions to cloud.');
+  }
+
+  const safeId = sanitizeFirestoreId(question.id, 'PSC-WR');
+  const docPath = `writtenQuestions/${safeId}`;
+  const docRef = doc(db, 'writtenQuestions', safeId);
+
+  return enqueueItemTask(`written-bank:${safeId}`, async () => {
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(docRef);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const validPaper: WrittenPaperCode = (
+      WRITTEN_PAPERS as readonly string[]
+    ).includes(question.paper)
+      ? question.paper
+      : 'Paper II: Governance Systems';
+
+    const marks = question.marks === 5 ? 5 : 10;
+
+    const sanitizeBlock = (
+      block: WrittenQuestion['en'],
+      fallbackMarks: string,
+      fallbackHeading: string
+    ) => {
+      const sections = (block.sections || [])
+        .slice(0, 20)
+        .map((s) => ({
+          heading: (s.heading || fallbackHeading).trim().slice(0, 300) || fallbackHeading,
+          points: (s.points || [])
+            .map((p) => p.trim().slice(0, 1200))
+            .filter(Boolean),
+        }))
+        .map((s) => ({
+          ...s,
+          points: s.points.length > 0 ? s.points : [fallbackHeading],
+        }));
+
+      return {
+        title: (block.title || 'Written Question').trim().slice(0, 400) || 'Written Question',
+        question: (block.question || 'Exam prompt').trim().slice(0, 3000) || 'Exam prompt',
+        marksAllocation:
+          (block.marksAllocation || fallbackMarks).trim().slice(0, 120) || fallbackMarks,
+        introduction:
+          (block.introduction || block.question || 'Introduction').trim().slice(0, 5000) ||
+          'Introduction',
+        sections:
+          sections.length > 0
+            ? sections
+            : [{ heading: fallbackHeading, points: [fallbackHeading] }],
+        conclusion:
+          (block.conclusion || 'Conclusion & way forward.').trim().slice(0, 3000) ||
+          'Conclusion & way forward.',
+      };
+    };
+
+    const sanitizedRubric = (question.rubric || [])
+      .slice(0, 30)
+      .map((r) => ({
+        en: (r.en || r.ne || 'Core analytical criteria').trim().slice(0, 800),
+        ne: (r.ne || r.en || 'मुख्य विश्लेषणात्मक आधार').trim().slice(0, 800),
+      }))
+      .filter((r) => r.en || r.ne);
+
+    if (sanitizedRubric.length === 0) {
+      sanitizedRubric.push({
+        en: 'Core statutory and analytical points covered.',
+        ne: 'मुख्य कानुनी तथा विश्लेषणात्मक पक्ष समेटिएको ।',
+      });
+    }
+
+    const basePayload: Record<string, unknown> = {
+      id: safeId,
+      isDeleted: Boolean(isDeleted),
+      paper: validPaper,
+      subject:
+        (question.subject || 'Governance & Public Management').trim().slice(0, 200) ||
+        'Governance & Public Management',
+      postTarget:
+        (question.postTarget || 'Section Officer / Nayab Subba').trim().slice(0, 200) ||
+        'Section Officer / Nayab Subba',
+      marks,
+      recommendedMinutes: Math.min(
+        120,
+        Math.max(1, Math.round(Number(question.recommendedMinutes) || (marks === 5 ? 9 : 18)))
+      ),
+      questionType:
+        question.questionType === 'Short Analytical' ||
+        question.questionType === 'Case Study'
+          ? question.questionType
+          : 'Long Analytical',
+      sourceTitle:
+        (question.sourceTitle || 'Official PSC Nepal Syllabus & Statutes')
+          .trim()
+          .slice(0, 300) || 'Official PSC Nepal Syllabus & Statutes',
+      sourcePath:
+        (question.sourcePath || '/materials/constitution-of-nepal-2072.pdf')
+          .trim()
+          .slice(0, 512) || '/materials/constitution-of-nepal-2072.pdf',
+      en: sanitizeBlock(question.en, `${marks} Marks`, 'Key Analytical Points'),
+      ne: sanitizeBlock(question.ne, `${marks} अङ्क`, 'मुख्य विश्लेषणात्मक बुँदाहरू'),
+      rubric: sanitizedRubric,
+      updatedBy: currentUser.uid,
+      updatedAt: serverTimestamp(),
+    };
+
+    if (!existingSnap.exists()) {
+      try {
+        await setDoc(docRef, {
+          ...basePayload,
+          createdAt: serverTimestamp(),
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      const updatePayload = { ...basePayload };
+      delete updatePayload.id;
+      try {
+        await updateDoc(docRef, updatePayload);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  });
+}
+
+export async function resetAllWrittenOverridesInFirestore(): Promise<void> {
+  const path = 'writtenQuestions';
+  let snapshot;
+  try {
+    const q = query(
+      collection(db, 'writtenQuestions'),
+      where('isDeleted', 'in', [true, false]),
+      limit(500)
+    );
+    snapshot = await getDocs(q);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+
+  if (snapshot.empty) return;
+
+  try {
+    for (let i = 0; i < snapshot.docs.length; i += 400) {
+      const batch = writeBatch(db);
+      snapshot.docs.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+

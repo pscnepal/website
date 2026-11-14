@@ -8,6 +8,8 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { clearWrittenProgress } from '../../features/written/writtenSlice';
 import { clearAllReactions } from '../../features/reactions/reactionsSlice';
 import { storageService } from '../../services/storageService';
+import { toast } from '../../services/toastService';
+import { formatUserFriendlyError } from '../../utils/errorHelpers';
 import { ActionButton } from '../common/ActionButton';
 
 export function DataBackupTab() {
@@ -23,39 +25,47 @@ export function DataBackupTab() {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   const handleExportData = () => {
-    const backupData = {
-      version: '1.0',
-      exportedAt: new Date().toISOString(),
-      platform: 'PSC Nepal Preparation Workspace',
-      quizAttempts,
-      writtenRecords,
-      simulationRuns,
-      userReactions,
-      itemViews,
-      flaggedQuestions: storageService.loadFlaggedQuestions(),
-      recentBooks,
-    };
+    try {
+      const backupData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        platform: 'PSC Nepal Preparation Workspace',
+        quizAttempts,
+        writtenRecords,
+        simulationRuns,
+        userReactions,
+        itemViews,
+        flaggedQuestions: storageService.loadFlaggedQuestions(),
+        recentBooks,
+      };
 
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `psc_nepal_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `psc_nepal_backup_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-    setDownloadSuccess(true);
-    setTimeout(() => setDownloadSuccess(false), 3000);
+      setDownloadSuccess(true);
+      toast.success('Candidate backup exported as JSON.');
+      setTimeout(() => setDownloadSuccess(false), 3000);
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to generate backup JSON file.')
+      );
+    }
   };
 
   const handleClearData = () => {
     dispatch(clearWrittenProgress());
     dispatch(clearAllReactions());
     setConfirmReset(false);
+    toast.info('Written drafts and reactions cleared.');
   };
 
   return (

@@ -14,6 +14,11 @@ import {
 } from 'react-router-dom';
 import { useAppSelector } from './app/hooks';
 import { PscChatbot } from './components/chat/PscChatbot';
+import {
+  ErrorBoundary,
+  GlobalErrorListener,
+} from './components/common/ErrorBoundary';
+import { ToastViewport } from './components/common/ToastViewport';
 import { ScrollToTopButton } from './components/layout/ScrollToTopButton';
 import { SeoManager } from './components/seo/SeoManager';
 import { AboutPage } from './pages/AboutPage';
@@ -118,8 +123,10 @@ export default function App() {
     <BrowserRouter>
       <SeoManager />
       <ScrollManager />
+      <GlobalErrorListener />
       <LayoutGroup>
-        <Routes>
+        <ErrorBoundary>
+          <Routes>
           <Route path="/" element={<HomePage />} />
           {/* Dedicated Dashboard Section as Separate Pages */}
           <Route path="/dashboard" element={<DashboardLayout />}>
@@ -209,9 +216,11 @@ export default function App() {
           />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </ErrorBoundary>
       </LayoutGroup>
       <ScrollToTopButton />
       <PscChatbot />
+      <ToastViewport />
     </BrowserRouter>
   );
 }

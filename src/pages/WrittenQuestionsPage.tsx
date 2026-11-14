@@ -21,7 +21,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   Link,
   useNavigate,
@@ -29,6 +29,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { QuizAuthGate } from '../components/auth/QuizAuthGate';
 import { ActionButton } from '../components/common/ActionButton';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { Footer } from '../components/layout/Footer';
@@ -37,6 +38,7 @@ import { PageTransition } from '../components/layout/PageTransition';
 import { AssessmentFormatNav } from '../components/quiz/AssessmentFormatNav';
 import { formatReverseClock } from '../components/quiz/QuizSessionDialog';
 import { ReactionButtons } from '../components/common/ReactionButtons';
+import { useAuth } from '../context/AuthContext';
 import { recordView } from '../features/reactions/reactionsSlice';
 import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
 import {
@@ -58,6 +60,7 @@ import {
 } from '../features/written/writtenSlice';
 import { formatCompactDuration } from '../utils/pdfHelpers';
 import { resolveSampleUrl } from '../utils/urlHelpers';
+import { toast } from '../services/toastService';
 
 type MarksFilter = 'all' | '5' | '10';
 type StatusFilter = 'all' | WrittenMasteryStatus;
@@ -253,6 +256,7 @@ export function WrittenQuestionsPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const shouldReduceMotion = Boolean(useReducedMotion());
+  const { user } = useAuth();
 
   const preferredLanguage = useAppSelector(
     (state) => state.written.preferredLanguage
@@ -268,6 +272,8 @@ export function WrittenQuestionsPage() {
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [pendingTimedQuestion, setPendingTimedQuestion] =
+    useState<WrittenQuestion | null>(null);
 
   // Focused studio state (for /written/:questionId)
   const activeQuestion = useMemo(
@@ -280,9 +286,18 @@ export function WrittenQuestionsPage() {
   const [showModelAnswerInStudio, setShowModelAnswerInStudio] = useState(true);
   const unsavedElapsedRef = useRef<number>(0);
 
-  // Reset studio timer when switching active question
+  // Proceed to timed writing studio immediately once guest completes Google Sign-In
   useEffect(() => {
-    if (!activeQuestion) {
+    if (user && pendingTimedQuestion) {
+      const targetId = pendingTimedQuestion.id;
+      setPendingTimedQuestion(null);
+      navigate(`/written/${targetId}`);
+    }
+  }, [user, pendingTimedQuestion, navigate]);
+
+  // Reset studio timer when switching active question (only after signed in)
+  useEffect(() => {
+    if (!activeQuestion || !user) {
       setTimerRunning(false);
       return;
     }
@@ -291,22 +306,15 @@ export function WrittenQuestionsPage() {
     setRemainingSeconds(activeQuestion.recommendedMinutes * 60);
     setShowModelAnswerInStudio(true);
     unsavedElapsedRef.current = 0;
-  }, [activeQuestion, dispatch]);
+  }, [activeQuestion, user, dispatch]);
 
   // Countdown tick & practice time persistence for active studio
   useEffect(() => {
-    if (!timerRunning || !activeQuestion) return;
+    if (!timerRunning || !activeQuestion || !user) return;
 
     const qId = activeQuestion.id;
     const interval = window.setInterval(() => {
-      setRemainingSeconds((prev) => {
-        if (prev <= 1) {
-          setTimerRunning(false);
-          setShowModelAnswerInStudio(true);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setRemainingSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
 
       unsavedElapsedRef.current += 1;
       if (unsavedElapsedRef.current >= 5) {
@@ -332,7 +340,15 @@ export function WrittenQuestionsPage() {
         unsavedElapsedRef.current = 0;
       }
     };
-  }, [timerRunning, activeQuestion, dispatch]);
+  }, [timerRunning, activeQuestion, user, dispatch]);
+
+  // Stop timer and reveal model answer cleanly when countdown reaches zero
+  useEffect(() => {
+    if (timerRunning && remainingSeconds === 0) {
+      setTimerRunning(false);
+      setShowModelAnswerInStudio(true);
+    }
+  }, [timerRunning, remainingSeconds]);
 
   const summaryStats = useMemo(() => {
     let masteredCount = 0;
@@ -429,11 +445,14 @@ export function WrittenQuestionsPage() {
       const formatted = formatQuestionForClipboard(q, preferredLanguage);
       await navigator.clipboard.writeText(formatted);
       setCopiedId(q.id);
+      toast.success('Model answer copied to clipboard.');
       window.setTimeout(() => {
         setCopiedId((prev) => (prev === q.id ? null : prev));
       }, 1800);
     } catch {
-      // Clipboard restricted in some embedded contexts
+      toast.error(
+        'Clipboard access is restricted in this browser. Select and copy manually.'
+      );
     }
   };
 
@@ -448,16 +467,14 @@ export function WrittenQuestionsPage() {
   };
 
   const toggleExpandCard = (id: string) => {
-    setExpandedIds((prev) => {
-      const nextExpanded = !prev[id];
-      if (nextExpanded) {
-        dispatch(recordView({ itemId: id, itemType: 'question' }));
-      }
-      return {
-        ...prev,
-        [id]: nextExpanded,
-      };
-    });
+    const nextExpanded = !expandedIds[id];
+    setExpandedIds((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+    if (nextExpanded) {
+      dispatch(recordView({ itemId: id, itemType: 'question' }));
+    }
   };
 
   const renderLanguageSegmentedControl = (layoutGroupId: string) => (
@@ -504,6 +521,42 @@ export function WrittenQuestionsPage() {
   // FOCUSED STUDIO VIEW (/written/:questionId)
   // ============================================================================
   if (questionId && activeQuestion) {
+    if (!user) {
+      return (
+        <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+          <Navbar />
+          <main className="flex-1" />
+          <Footer />
+          <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 lg:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quiz-dialog-title"
+          >
+            <QuizAuthGate
+              title={
+                preferredLanguage === 'ne'
+                  ? activeQuestion.ne.title
+                  : activeQuestion.en.title
+              }
+              subtitle={`${activeQuestion.paper} · ${activeQuestion.subject}`}
+              metaItems={[
+                `${activeQuestion.marks} Marks`,
+                `${activeQuestion.recommendedMinutes}:00 Timed Writing`,
+                activeQuestion.id,
+              ]}
+              description="All written questions and bilingual model answers are free to read publicly. Sign in with Google to open the timed answer writing pad."
+              benefits={[
+                '1.8 min/mark timed writing pad & active recall mode',
+                'Keeps drafts, practice time & examiner rubric checkmarks organized',
+              ]}
+              actionLabel="Continue with Google to Write"
+              onClose={() => navigate('/written')}
+            />
+          </div>
+        </div>
+      );
+    }
     const activeIndex = WRITTEN_QUESTIONS.findIndex(
       (q) => q.id === activeQuestion.id
     );
@@ -1161,6 +1214,7 @@ export function WrittenQuestionsPage() {
                   onClick={() => {
                     dispatch(clearWrittenProgress());
                     setConfirmClearAll(false);
+                    toast.info('All written answer drafts and checkmarks cleared.');
                   }}
                   className="h-8 px-3 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors cursor-pointer"
                 >
@@ -1426,15 +1480,28 @@ export function WrittenQuestionsPage() {
                     {/* Card Action Bar */}
                     <div className="mt-5 pt-4 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-3">
                       <div className="flex flex-wrap items-center gap-2.5">
-                        <Link
-                          to={`/written/${q.id}`}
-                          className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 text-xs font-medium transition-colors whitespace-nowrap shrink-0"
-                        >
-                          <PenLine className="w-3.5 h-3.5" />
-                          <span>
-                            Write Timed Answer ({q.recommendedMinutes}:00)
-                          </span>
-                        </Link>
+                        {user ? (
+                          <Link
+                            to={`/written/${q.id}`}
+                            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 text-xs font-medium transition-colors whitespace-nowrap shrink-0"
+                          >
+                            <PenLine className="w-3.5 h-3.5" />
+                            <span>
+                              Write Timed Answer ({q.recommendedMinutes}:00)
+                            </span>
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setPendingTimedQuestion(q)}
+                            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                          >
+                            <PenLine className="w-3.5 h-3.5" />
+                            <span>
+                              Write Timed Answer ({q.recommendedMinutes}:00)
+                            </span>
+                          </button>
+                        )}
 
                         <button
                           type="button"
@@ -1621,6 +1688,38 @@ export function WrittenQuestionsPage() {
 
         <Footer />
       </PageTransition>
+
+      <AnimatePresence>
+        {pendingTimedQuestion && !user && (
+          <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 lg:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quiz-dialog-title"
+          >
+            <QuizAuthGate
+              title={
+                preferredLanguage === 'ne'
+                  ? pendingTimedQuestion.ne.title
+                  : pendingTimedQuestion.en.title
+              }
+              subtitle={`${pendingTimedQuestion.paper} · ${pendingTimedQuestion.subject}`}
+              metaItems={[
+                `${pendingTimedQuestion.marks} Marks`,
+                `${pendingTimedQuestion.recommendedMinutes}:00 Timed Writing`,
+                pendingTimedQuestion.id,
+              ]}
+              description="All written questions and bilingual model answers are free to read publicly. Sign in with Google to open the timed answer writing pad."
+              benefits={[
+                '1.8 min/mark timed writing pad & active recall mode',
+                'Keeps drafts, practice time & examiner rubric checkmarks organized',
+              ]}
+              actionLabel="Continue with Google to Write"
+              onClose={() => setPendingTimedQuestion(null)}
+            />
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

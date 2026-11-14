@@ -29,6 +29,7 @@ import {
   type CurrentAffairCategory,
   type CurrentAffairItem,
 } from '../data/currentAffairsData';
+import { copyWithToast } from '../utils/clipboardHelpers';
 
 const STORAGE_KEY_LIKES = 'psc_affairs_likes_v1';
 const STORAGE_KEY_DISLIKES = 'psc_affairs_dislikes_v1';
@@ -125,9 +126,14 @@ export function CurrentAffairsPage() {
 
   const handleCopyCitation = (item: CurrentAffairItem) => {
     const text = `[PSC Nepal Samasamayik] ${item.titleNe} (${item.titleEn})\nमिति: ${item.dateBS} / ${item.dateAD}\nस्रोत: ${item.source}\nप्रमुख बुँदाहरू:\n${item.keyFacts.map((f) => `• ${f}`).join('\n')}`;
-    navigator.clipboard.writeText(text);
-    setCopiedId(item.id);
-    setTimeout(() => setCopiedId(null), 2000);
+    void copyWithToast(text, 'Briefing citation copied to clipboard.').then(
+      (ok) => {
+        if (ok) {
+          setCopiedId(item.id);
+          setTimeout(() => setCopiedId(null), 2000);
+        }
+      }
+    );
   };
 
   const filteredItems = useMemo(() => {

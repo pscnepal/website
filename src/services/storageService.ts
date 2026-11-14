@@ -13,6 +13,8 @@ import {
   deleteFlaggedQuestionInFirestore,
   upsertFlaggedQuestionInFirestore,
 } from './cloudSyncService';
+import { toast } from './toastService';
+import { formatUserFriendlyError } from '../utils/errorHelpers';
 
 const KEYS = {
   SETTINGS: 'psc_nepal_settings_v2',
@@ -63,6 +65,7 @@ export interface FlaggedQuestionRecord {
   source?: 'quiz' | 'simulation' | 'dashboard';
   deckTitle?: string;
   cadreId?: string;
+  reason?: string;
   note?: string;
 }
 
@@ -107,8 +110,13 @@ function safeWriteJson<T>(key: string, value: T): void {
   if (typeof window === 'undefined') return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Ignore storage quota or private-mode errors gracefully
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'QuotaExceededError') {
+      toast.warning(
+        'Browser storage is full. Export a backup or clear old drafts to keep saving locally.',
+        { id: 'local-storage-quota', title: 'Storage Limit Reached' }
+      );
+    }
   }
 }
 
@@ -371,6 +379,13 @@ export const storageService = {
       if (uid) {
         void deleteFlaggedQuestionInFirestore(uid, questionId).catch((err) => {
           console.error('Failed to remove flagged question from Firestore:', err);
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Flag removed locally, but cloud sync failed.'
+            ),
+            { id: 'cloud-flag-sync-err' }
+          );
         });
       }
       return false;
@@ -381,6 +396,7 @@ export const storageService = {
         source: meta?.source || 'quiz',
         deckTitle: meta?.deckTitle,
         cadreId: meta?.cadreId,
+        reason: (meta?.reason ?? '').trim().slice(0, 500),
         note: meta?.note || '',
       };
       current[questionId] = record;
@@ -388,10 +404,51 @@ export const storageService = {
       if (uid) {
         void upsertFlaggedQuestionInFirestore(uid, record).catch((err) => {
           console.error('Failed to sync flagged question to Firestore:', err);
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Question flagged locally, but cloud sync failed.'
+            ),
+            { id: 'cloud-flag-sync-err' }
+          );
         });
       }
       return true;
     }
+  },
+
+  flagQuestionWithReason(
+    questionId: string,
+    meta: Omit<FlaggedQuestionRecord, 'questionId' | 'flaggedAt'> & {
+      reason: string;
+    }
+  ): FlaggedQuestionRecord {
+    const current = this.loadFlaggedQuestions();
+    const uid = getVerifiedUid();
+    const record: FlaggedQuestionRecord = {
+      questionId,
+      flaggedAt: new Date().toISOString(),
+      source: meta.source || 'quiz',
+      deckTitle: meta.deckTitle,
+      cadreId: meta.cadreId,
+      reason: meta.reason.trim().slice(0, 500),
+      note: meta.note ?? current[questionId]?.note ?? '',
+    };
+    current[questionId] = record;
+    this.saveFlaggedQuestions(current);
+    if (uid) {
+      void upsertFlaggedQuestionInFirestore(uid, record).catch((err) => {
+        console.error('Failed to sync flagged question to Firestore:', err);
+        toast.error(
+          formatUserFriendlyError(
+            err,
+            'Question flagged locally, but cloud sync failed.'
+          ),
+          { id: 'cloud-flag-sync-err' }
+        );
+      });
+    }
+    return record;
   },
 
   removeFlaggedQuestion(questionId: string): void {
@@ -403,6 +460,13 @@ export const storageService = {
       if (uid) {
         void deleteFlaggedQuestionInFirestore(uid, questionId).catch((err) => {
           console.error('Failed to delete flagged question in Firestore:', err);
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Could not remove flagged question from cloud.'
+            ),
+            { id: 'cloud-flag-sync-err' }
+          );
         });
       }
     }
@@ -418,6 +482,47 @@ export const storageService = {
         void upsertFlaggedQuestionInFirestore(uid, current[questionId]).catch(
           (err) => {
             console.error('Failed to update flagged question note in Firestore:', err);
+            toast.error(
+              formatUserFriendlyError(
+                err,
+                'Note saved locally, but cloud sync failed.'
+              ),
+              { id: 'cloud-flag-sync-err' }
+            );
+          }
+        );
+      }
+    }
+  },
+
+  updateFlaggedQuestionDetails(
+    questionId: string,
+    updates: { reason?: string; note?: string }
+  ): void {
+    const current = this.loadFlaggedQuestions();
+    if (current[questionId]) {
+      if (typeof updates.reason === 'string') {
+        current[questionId].reason = updates.reason.trim().slice(0, 500);
+      }
+      if (typeof updates.note === 'string') {
+        current[questionId].note = updates.note.slice(0, 1000);
+      }
+      this.saveFlaggedQuestions(current);
+      const uid = getVerifiedUid();
+      if (uid) {
+        void upsertFlaggedQuestionInFirestore(uid, current[questionId]).catch(
+          (err) => {
+            console.error(
+              'Failed to update flagged question details in Firestore:',
+              err
+            );
+            toast.error(
+              formatUserFriendlyError(
+                err,
+                'Changes saved locally, but cloud sync failed.'
+              ),
+              { id: 'cloud-flag-sync-err' }
+            );
           }
         );
       }
@@ -434,6 +539,13 @@ export const storageService = {
     if (uid) {
       void clearAllFlaggedQuestionsInFirestore(uid).catch((err) => {
         console.error('Failed to clear flagged questions in Firestore:', err);
+        toast.error(
+          formatUserFriendlyError(
+            err,
+            'Could not clear cloud flagged questions.'
+          ),
+          { id: 'cloud-flag-sync-err' }
+        );
       });
     }
   },
@@ -469,6 +581,9 @@ export const storageService = {
         const older = localTime >= cloudTime ? cloudRec : localRec;
         const resolvedNote =
           (newer.note && newer.note.trim() ? newer.note : older.note) ?? '';
+        const resolvedReason =
+          (newer.reason && newer.reason.trim() ? newer.reason : older.reason) ??
+          '';
 
         const combined: FlaggedQuestionRecord = {
           questionId: id,
@@ -480,11 +595,13 @@ export const storageService = {
           ...(newer.cadreId || older.cadreId
             ? { cadreId: newer.cadreId || older.cadreId }
             : {}),
+          reason: resolvedReason,
           note: resolvedNote,
         };
         merged[id] = combined;
 
         if (
+          (combined.reason ?? '') !== (cloudRec.reason ?? '') ||
           (combined.note ?? '') !== (cloudRec.note ?? '') ||
           combined.flaggedAt !== cloudRec.flaggedAt
         ) {

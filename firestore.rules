@@ -174,7 +174,7 @@ service cloud.firestore {
     // Entity Validation Blueprint: FlaggedQuestion
     function isValidFlaggedQuestion(data) {
       return data.keys().hasAll(['questionId', 'userId', 'flaggedAt', 'source', 'createdAt', 'updatedAt'])
-        && data.keys().hasOnly(['questionId', 'userId', 'flaggedAt', 'source', 'deckTitle', 'cadreId', 'note', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['questionId', 'userId', 'flaggedAt', 'source', 'deckTitle', 'cadreId', 'reason', 'note', 'createdAt', 'updatedAt'])
         && isValidId(data.questionId)
         && isValidId(data.userId)
         && data.userId == request.auth.uid
@@ -184,6 +184,7 @@ service cloud.firestore {
         && data.source in ['quiz', 'simulation', 'dashboard']
         && (!('deckTitle' in data) || (data.deckTitle is string && data.deckTitle.size() <= 220))
         && (!('cadreId' in data) || (data.cadreId is string && data.cadreId.size() <= 64))
+        && (!('reason' in data) || (data.reason is string && data.reason.size() <= 500))
         && (!('note' in data) || (data.note is string && data.note.size() <= 1000))
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
@@ -359,7 +360,7 @@ service cloud.firestore {
           && incoming().userId == existing().userId
           && incoming().createdAt == existing().createdAt
           && incoming().updatedAt == request.time
-          && incoming().diff(existing()).affectedKeys().hasOnly(['flaggedAt', 'source', 'deckTitle', 'cadreId', 'note', 'updatedAt']);
+          && incoming().diff(existing()).affectedKeys().hasOnly(['flaggedAt', 'source', 'deckTitle', 'cadreId', 'reason', 'note', 'updatedAt']);
         allow delete: if isValidId(userId) && isValidId(questionId) && (
           (isOwner(userId) && isActiveAccount(userId))
           || (isAdmin() && userId != request.auth.uid)
@@ -396,6 +397,243 @@ service cloud.firestore {
           || (isAdmin() && userId != request.auth.uid)
         );
       }
+    }
+
+    // Entity Validation Blueprint: QuizQuestionOverride
+    function isValidQuizQuestionOverride(data, questionId) {
+      return data.keys().hasAll([
+        'id',
+        'isDeleted',
+        'level',
+        'service',
+        'group',
+        'post',
+        'paper',
+        'subject',
+        'topicId',
+        'topic',
+        'subtopicId',
+        'subtopic',
+        'question',
+        'options',
+        'correct_options',
+        'is_multi_select',
+        'explanation',
+        'difficulty',
+        'marks',
+        'updatedBy',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'id',
+          'isDeleted',
+          'level',
+          'service',
+          'group',
+          'post',
+          'paper',
+          'subject',
+          'topicId',
+          'topic',
+          'subtopicId',
+          'subtopic',
+          'question',
+          'questionNe',
+          'options',
+          'correct_options',
+          'is_multi_select',
+          'explanation',
+          'explanationNe',
+          'difficulty',
+          'marks',
+          'sourceTitle',
+          'sourcePath',
+          'updatedBy',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == questionId
+        && data.isDeleted is bool
+        && data.level is string && data.level.size() >= 1 && data.level.size() <= 160
+        && data['service'] is string && data['service'].size() >= 1 && data['service'].size() <= 160
+        && data.group is string && data.group.size() >= 1 && data.group.size() <= 160
+        && data.post is string && data.post.size() >= 1 && data.post.size() <= 200
+        && data.paper is string && data.paper.size() >= 1 && data.paper.size() <= 160
+        && data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 160
+        && data.topicId is string && data.topicId.size() >= 1 && data.topicId.size() <= 128
+        && data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 200
+        && data.subtopicId is string && data.subtopicId.size() >= 1 && data.subtopicId.size() <= 128
+        && data.subtopic is string && data.subtopic.size() >= 1 && data.subtopic.size() <= 200
+        && data.question is string && data.question.size() >= 1 && data.question.size() <= 3000
+        && (!('questionNe' in data) || (data.questionNe is string && data.questionNe.size() <= 3000))
+        && data.options is list && data.options.size() >= 2 && data.options.size() <= 6 && data.options[0] is map
+        && data.correct_options is list && data.correct_options.size() >= 1 && data.correct_options.size() <= 6 && data.correct_options[0] is string
+        && data.is_multi_select is bool
+        && data.explanation is string && data.explanation.size() >= 1 && data.explanation.size() <= 5000
+        && (!('explanationNe' in data) || (data.explanationNe is string && data.explanationNe.size() <= 5000))
+        && data.difficulty in ['Easy', 'Medium', 'Hard']
+        && data.marks is number && data.marks >= 0.5 && data.marks <= 20
+        && (!('sourceTitle' in data) || (data.sourceTitle is string && data.sourceTitle.size() <= 300))
+        && (!('sourcePath' in data) || (data.sourcePath is string && data.sourcePath.size() <= 512))
+        && isValidId(data.updatedBy)
+        && data.updatedBy == request.auth.uid
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Entity Validation Blueprint: LocalizedWrittenAnswerBlock
+    function isValidWrittenLocalizedBlock(block) {
+      return block is map
+        && block.keys().hasAll(['title', 'question', 'marksAllocation', 'introduction', 'sections', 'conclusion'])
+        && block.keys().hasOnly(['title', 'question', 'marksAllocation', 'introduction', 'sections', 'conclusion'])
+        && block.title is string && block.title.size() >= 1 && block.title.size() <= 400
+        && block.question is string && block.question.size() >= 1 && block.question.size() <= 3000
+        && block.marksAllocation is string && block.marksAllocation.size() >= 1 && block.marksAllocation.size() <= 120
+        && block.introduction is string && block.introduction.size() >= 1 && block.introduction.size() <= 5000
+        && block.sections is list && block.sections.size() >= 1 && block.sections.size() <= 20 && block.sections[0] is map
+        && block.conclusion is string && block.conclusion.size() >= 1 && block.conclusion.size() <= 3000;
+    }
+
+    // Entity Validation Blueprint: WrittenQuestionOverride
+    function isValidWrittenQuestionOverride(data, questionId) {
+      return data.keys().hasAll([
+        'id',
+        'isDeleted',
+        'paper',
+        'subject',
+        'postTarget',
+        'marks',
+        'recommendedMinutes',
+        'questionType',
+        'sourceTitle',
+        'sourcePath',
+        'en',
+        'ne',
+        'rubric',
+        'updatedBy',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'id',
+          'isDeleted',
+          'paper',
+          'subject',
+          'postTarget',
+          'marks',
+          'recommendedMinutes',
+          'questionType',
+          'sourceTitle',
+          'sourcePath',
+          'en',
+          'ne',
+          'rubric',
+          'updatedBy',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == questionId
+        && data.isDeleted is bool
+        && data.paper in [
+          'Paper II: Governance Systems',
+          'Paper III: Contemporary Issues & Development',
+          'Paper IV: Service Delivery & Case Analysis'
+        ]
+        && data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 200
+        && data.postTarget is string && data.postTarget.size() >= 1 && data.postTarget.size() <= 200
+        && data.marks in [5, 10]
+        && data.recommendedMinutes is number && data.recommendedMinutes >= 1 && data.recommendedMinutes <= 120
+        && data.questionType in ['Short Analytical', 'Long Analytical', 'Case Study']
+        && data.sourceTitle is string && data.sourceTitle.size() >= 1 && data.sourceTitle.size() <= 300
+        && data.sourcePath is string && data.sourcePath.size() >= 1 && data.sourcePath.size() <= 512
+        && isValidWrittenLocalizedBlock(data.en)
+        && isValidWrittenLocalizedBlock(data.ne)
+        && data.rubric is list && data.rubric.size() >= 1 && data.rubric.size() <= 30 && data.rubric[0] is map
+        && isValidId(data.updatedBy)
+        && data.updatedBy == request.auth.uid
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Public Non-PII Admin-Managed Objective MCQ Question Overrides
+    match /quizQuestions/{questionId} {
+      allow get: if isValidId(questionId);
+      allow list: if existing().isDeleted in [true, false];
+      allow create: if isAdmin()
+        && isValidId(questionId)
+        && isValidQuizQuestionOverride(incoming(), questionId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(questionId)
+        && isValidQuizQuestionOverride(incoming(), questionId)
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'isDeleted',
+          'level',
+          'service',
+          'group',
+          'post',
+          'paper',
+          'subject',
+          'topicId',
+          'topic',
+          'subtopicId',
+          'subtopic',
+          'question',
+          'questionNe',
+          'options',
+          'correct_options',
+          'is_multi_select',
+          'explanation',
+          'explanationNe',
+          'difficulty',
+          'marks',
+          'sourceTitle',
+          'sourcePath',
+          'updatedBy',
+          'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(questionId);
+    }
+
+    // Public Non-PII Admin-Managed Written Question Overrides
+    match /writtenQuestions/{questionId} {
+      allow get: if isValidId(questionId);
+      allow list: if existing().isDeleted in [true, false];
+      allow create: if isAdmin()
+        && isValidId(questionId)
+        && isValidWrittenQuestionOverride(incoming(), questionId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(questionId)
+        && isValidWrittenQuestionOverride(incoming(), questionId)
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'isDeleted',
+          'paper',
+          'subject',
+          'postTarget',
+          'marks',
+          'recommendedMinutes',
+          'questionType',
+          'sourceTitle',
+          'sourcePath',
+          'en',
+          'ne',
+          'rubric',
+          'updatedBy',
+          'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(questionId);
     }
   }
 }

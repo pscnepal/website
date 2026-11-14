@@ -29,6 +29,9 @@ import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
 import { WRITTEN_QUESTIONS } from '../data/writtenQuestionsData';
+import { toast } from '../services/toastService';
+import { copyWithToast } from '../utils/clipboardHelpers';
+import { formatUserFriendlyError } from '../utils/errorHelpers';
 
 interface EvaluationRecord {
   id: string;
@@ -219,12 +222,13 @@ export function WrittenEvaluatorPage() {
 
   const handleCopyDraft = async () => {
     if (!userDraft) return;
-    try {
-      await navigator.clipboard.writeText(userDraft);
+    const ok = await copyWithToast(
+      userDraft,
+      'Practice answer draft copied to clipboard.'
+    );
+    if (ok) {
       setCopiedDraft(true);
       setTimeout(() => setCopiedDraft(false), 2000);
-    } catch {
-      // ignore
     }
   };
 
@@ -243,40 +247,47 @@ export function WrittenEvaluatorPage() {
   };
 
   const handleExportMarkdown = () => {
-    const content = [
-      `# लोक सेवा आयोग - लिखित उत्तर मूल्याङ्कन प्रतिवेदन (PSC Answer Evaluation Report)`,
-      `**Question ID**: ${selectedQuestion.id}`,
-      `**Paper**: ${selectedQuestion.paper} | **Marks**: ${selectedQuestion.marks}M`,
-      `**Date**: ${new Date().toLocaleDateString('ne-NP')}`,
-      `**Question (नेपाली)**: ${selectedQuestion.ne.question}`,
-      `**Question (English)**: ${selectedQuestion.en.question}`,
-      '',
-      `## मूल्याङ्कन नतिजा (Evaluation Summary)`,
-      `- कुल प्राप्ताङ्क: ${totalScore} / ${maxMarks} (${scorePercentage}%)`,
-      `- मेरिट स्तर: ${getMeritLevel(scorePercentage).labelNe} (${getMeritLevel(scorePercentage).labelEn})`,
-      `- शब्द संख्या: ${wordCount} words (Est. ${estimatedPages} pages)`,
-      `- समय: ${formatTimer(totalRecommendedSeconds - remainingSeconds)} खर्च`,
-      '',
-      `### ४-आयामी रुब्रिक प्राप्ताङ्क (Rubric Breakdown)`,
-      `1. परिचय तथा अवधारणागत स्पष्टता (१५%): ${scoreIntro} / ${maxIntro}`,
-      `2. मुख्य विषयवस्तुको बुँदागत विश्लेषण (५५%): ${scoreCore} / ${maxCore}`,
-      `3. संवैधानिक तथा कानुनी आधार (१५%): ${scoreStatutes} / ${maxStatutes}`,
-      `4. सन्तुलित निष्कर्ष तथा भावी मार्गचित्र (१५%): ${scoreConclusion} / ${maxConclusion}`,
-      '',
-      evaluatorNotes ? `### परीक्षकको सुझाव (Evaluator Feedback)\n${evaluatorNotes}\n` : '',
-      `## परीक्षार्थीको उत्तर (Candidate's Drafted Answer)`,
-      userDraft || '_No answer provided._',
-    ].filter(Boolean).join('\n');
+    try {
+      const content = [
+        `# लोक सेवा आयोग - लिखित उत्तर मूल्याङ्कन प्रतिवेदन (PSC Answer Evaluation Report)`,
+        `**Question ID**: ${selectedQuestion.id}`,
+        `**Paper**: ${selectedQuestion.paper} | **Marks**: ${selectedQuestion.marks}M`,
+        `**Date**: ${new Date().toLocaleDateString('ne-NP')}`,
+        `**Question (नेपाली)**: ${selectedQuestion.ne.question}`,
+        `**Question (English)**: ${selectedQuestion.en.question}`,
+        '',
+        `## मूल्याङ्कन नतिजा (Evaluation Summary)`,
+        `- कुल प्राप्ताङ्क: ${totalScore} / ${maxMarks} (${scorePercentage}%)`,
+        `- मेरिट स्तर: ${getMeritLevel(scorePercentage).labelNe} (${getMeritLevel(scorePercentage).labelEn})`,
+        `- शब्द संख्या: ${wordCount} words (Est. ${estimatedPages} pages)`,
+        `- समय: ${formatTimer(totalRecommendedSeconds - remainingSeconds)} खर्च`,
+        '',
+        `### ४-आयामी रुब्रिक प्राप्ताङ्क (Rubric Breakdown)`,
+        `1. परिचय तथा अवधारणागत स्पष्टता (१५%): ${scoreIntro} / ${maxIntro}`,
+        `2. मुख्य विषयवस्तुको बुँदागत विश्लेषण (५५%): ${scoreCore} / ${maxCore}`,
+        `3. संवैधानिक तथा कानुनी आधार (१५%): ${scoreStatutes} / ${maxStatutes}`,
+        `4. सन्तुलित निष्कर्ष तथा भावी मार्गचित्र (१५%): ${scoreConclusion} / ${maxConclusion}`,
+        '',
+        evaluatorNotes ? `### परीक्षकको सुझाव (Evaluator Feedback)\n${evaluatorNotes}\n` : '',
+        `## परीक्षार्थीको उत्तर (Candidate's Drafted Answer)`,
+        userDraft || '_No answer provided._',
+      ].filter(Boolean).join('\n');
 
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `PSC_Evaluation_${selectedQuestion.id}_${Date.now()}.md`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `PSC_Evaluation_${selectedQuestion.id}_${Date.now()}.md`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success('Evaluation report exported as Markdown.');
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to export evaluation report.')
+      );
+    }
   };
 
   const handleDeleteHistoryRecord = (id: string) => {
@@ -284,7 +295,12 @@ export function WrittenEvaluatorPage() {
     setEvalHistory(next);
     try {
       localStorage.setItem(STORAGE_KEY_EVALUATIONS, JSON.stringify(next));
-    } catch {}
+      toast.info('Removed evaluation record.');
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to update saved history.')
+      );
+    }
   };
 
   const handleClearAllHistory = () => {
@@ -292,7 +308,12 @@ export function WrittenEvaluatorPage() {
       setEvalHistory([]);
       try {
         localStorage.removeItem(STORAGE_KEY_EVALUATIONS);
-      } catch {}
+        toast.info('Cleared all evaluation records.');
+      } catch (err) {
+        toast.error(
+          formatUserFriendlyError(err, 'Failed to clear saved history.')
+        );
+      }
     }
   };
 

@@ -24,6 +24,8 @@ import {
   syncReactionAndStatsToFirestore,
 } from '../services/cloudSyncService';
 import { storageService } from '../services/storageService';
+import { toast } from '../services/toastService';
+import { formatUserFriendlyError } from '../utils/errorHelpers';
 
 const rootReducer = combineReducers({
   reader: readerReducer,
@@ -77,6 +79,13 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
     if (action.type === 'quiz/clearQuizHistory') {
       void clearUserQuizAttemptsInFirestore(uid).catch((err) => {
         console.error('Failed to clear cloud quiz attempts:', err);
+        toast.error(
+          formatUserFriendlyError(
+            err,
+            'Cleared locally, but failed to clear cloud quiz history.'
+          ),
+          { id: 'cloud-clear-quiz-err' }
+        );
       });
       return result;
     }
@@ -92,6 +101,13 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
         })
         .catch((err) => {
           console.error('Failed to clear cloud reactions:', err);
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Cleared locally, but failed to clear cloud reactions.'
+            ),
+            { id: 'cloud-clear-reactions-err' }
+          );
         });
       return result;
     }
@@ -142,6 +158,13 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
           })
           .catch((err) => {
             console.error('Cloud reaction sync failed:', err);
+            toast.error(
+              formatUserFriendlyError(
+                err,
+                'Your rating was saved locally, but cloud sync failed.'
+              ),
+              { id: 'cloud-reaction-sync-err' }
+            );
           });
       } else if (isViewMutation) {
         const existingTimer = viewSyncTimers.get(timerKey);
@@ -178,6 +201,10 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
             })
             .catch((err) => {
               console.error('Cloud view sync failed:', err);
+              toast.error(
+                formatUserFriendlyError(err, 'Could not sync view count to cloud.'),
+                { id: 'cloud-view-sync-err' }
+              );
             });
         }, 1200);
 

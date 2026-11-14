@@ -20,6 +20,8 @@ import {
   type CloudUserStatus,
   type UpdateAdminUserDetailsInput,
 } from '../services/cloudSyncService';
+import { toast } from '../services/toastService';
+import { formatUserFriendlyError } from '../utils/errorHelpers';
 
 interface DashboardUsersContextValue {
   users: CloudUserDirectoryEntry[];
@@ -73,11 +75,12 @@ export function DashboardUsersProvider({ children }: { children: ReactNode }) {
       (err) => {
         setIsLoading(false);
         setIsRefreshing(false);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Unable to load registered users from Firestore.'
+        const friendly = formatUserFriendlyError(
+          err,
+          'Unable to load registered users from Firestore.'
         );
+        setError(friendly);
+        toast.error(friendly, { id: 'dashboard-users-load-err' });
       }
     );
 
@@ -94,12 +97,16 @@ export function DashboardUsersProvider({ children }: { children: ReactNode }) {
       const entries = await fetchAdminUsersDirectory(DASHBOARD_ADMIN_EMAIL);
       setUsers(entries);
       setLastSyncedAt(new Date().toISOString());
+      toast.success('User directory synced with Firestore.', {
+        id: 'dashboard-users-refresh',
+      });
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Failed to refresh users from Firestore.'
+      const friendly = formatUserFriendlyError(
+        err,
+        'Failed to refresh users from Firestore.'
       );
+      setError(friendly);
+      toast.error(friendly, { id: 'dashboard-users-load-err' });
     } finally {
       setIsRefreshing(false);
       setIsLoading(false);

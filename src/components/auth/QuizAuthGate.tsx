@@ -34,13 +34,27 @@ interface QuizAuthGateProps {
   title: string;
   subtitle?: string;
   metaItems?: string[];
+  description?: string;
+  benefits?: string[];
+  actionLabel?: string;
   onClose: () => void;
 }
+
+const DEFAULT_DESCRIPTION =
+  'All study materials, syllabus guides, and quiz decks are free to browse publicly. Sign in with Google to start taking this timed quiz.';
+
+const DEFAULT_BENEFITS = [
+  'Reverse countdown begins only after you sign in',
+  'Tracks PSC net scores & attempt history to your account',
+];
 
 export function QuizAuthGate({
   title,
   subtitle,
   metaItems = [],
+  description = DEFAULT_DESCRIPTION,
+  benefits = DEFAULT_BENEFITS,
+  actionLabel = 'Continue with Google to Start',
   onClose,
 }: QuizAuthGateProps) {
   const shouldReduceMotion = Boolean(useReducedMotion());
@@ -139,20 +153,18 @@ export function QuizAuthGate({
 
               <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-800 space-y-2.5">
                 <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                  All study materials, syllabus guides, and quiz decks are free
-                  to browse publicly. Sign in with Google to start taking this
-                  timed quiz.
+                  {description}
                 </p>
-                <ul className="space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Reverse countdown begins only after you sign in</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Tracks PSC net scores &amp; attempt history to your account</span>
-                  </li>
-                </ul>
+                {benefits.length > 0 && (
+                  <ul className="space-y-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                    {benefits.map((item) => (
+                      <li key={item} className="flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               {authError && (
@@ -180,7 +192,7 @@ export function QuizAuthGate({
                   <span>
                     {isSigningIn
                       ? 'Opening Google Sign-In...'
-                      : 'Continue with Google to Start'}
+                      : actionLabel}
                   </span>
                 </button>
 

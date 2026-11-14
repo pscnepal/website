@@ -40,6 +40,10 @@ import {
 import { QuizQuestionFormModal } from './QuizQuestionFormModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { useDashboardSearch } from './DashboardLayout';
+import { toast } from '../../services/toastService';
+import { copyWithToast } from '../../utils/clipboardHelpers';
+import { formatUserFriendlyError } from '../../utils/errorHelpers';
+import { FlagReasonModal } from '../common/FlagReasonModal';
 
 export function QuizQuestionBankTab() {
   const dispatch = useAppDispatch();
@@ -63,6 +67,7 @@ export function QuizQuestionBankTab() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState<QuizQuestion | null>(null);
   const [questionToDelete, setQuestionToDelete] = useState<QuizQuestion | null>(null);
+  const [questionToFlag, setQuestionToFlag] = useState<QuizQuestion | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   useEffect(() => {
@@ -158,40 +163,70 @@ export function QuizQuestionBankTab() {
   ]);
 
   const handleSaveQuestion = (saved: QuizQuestion) => {
-    if (questionToEdit) {
-      questionStorageService.updateQuizQuestion(saved);
-    } else {
-      questionStorageService.createQuizQuestion(saved);
+    try {
+      if (questionToEdit) {
+        questionStorageService.updateQuizQuestion(saved);
+        toast.success(`Updated question ${saved.id}.`);
+      } else {
+        questionStorageService.createQuizQuestion(saved);
+        toast.success(`Added question ${saved.id} to MCQ bank.`);
+      }
+      setQuestions(questionStorageService.loadQuizQuestions());
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to save MCQ question.')
+      );
     }
-    setQuestions(questionStorageService.loadQuizQuestions());
   };
 
   const handleDeleteQuestion = () => {
     if (!questionToDelete) return;
-    questionStorageService.deleteQuizQuestion(questionToDelete.id);
-    setQuestions(questionStorageService.loadQuizQuestions());
-    if (selectedQuestion?.id === questionToDelete.id) {
-      setSelectedQuestion(null);
+    try {
+      const targetId = questionToDelete.id;
+      questionStorageService.deleteQuizQuestion(targetId);
+      setQuestions(questionStorageService.loadQuizQuestions());
+      if (selectedQuestion?.id === targetId) {
+        setSelectedQuestion(null);
+      }
+      setQuestionToDelete(null);
+      toast.success(`Deleted question ${targetId}.`);
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to delete MCQ question.')
+      );
     }
-    setQuestionToDelete(null);
   };
 
   const handleResetToDefault = () => {
-    questionStorageService.resetQuizQuestionsToDefault();
-    setQuestions(questionStorageService.loadQuizQuestions());
-    setIsResetConfirmOpen(false);
+    try {
+      questionStorageService.resetQuizQuestionsToDefault();
+      setQuestions(questionStorageService.loadQuizQuestions());
+      setIsResetConfirmOpen(false);
+      toast.info('MCQ question bank restored to defaults.');
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to reset MCQ question bank.')
+      );
+    }
   };
 
   const handleExportJson = () => {
-    const dataStr =
-      'data:text/json;charset=utf-8,' +
-      encodeURIComponent(JSON.stringify(questions, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', 'psc-nepal-mcq-question-bank.json');
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    try {
+      const dataStr =
+        'data:text/json;charset=utf-8,' +
+        encodeURIComponent(JSON.stringify(questions, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', 'psc-nepal-mcq-question-bank.json');
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      toast.success(`Exported ${questions.length} MCQ questions as JSON.`);
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to export MCQ bank JSON.')
+      );
+    }
   };
 
   const handleCopyQuestion = (q: QuizQuestion) => {
@@ -213,10 +248,16 @@ export function QuizQuestionBankTab() {
         : q.explanation;
 
     const text = `Q (${q.id}): ${questionPart}\n${optionsPart}\nAnswer: ${q.correct_options.join(', ')}\nExplanation: ${explanationPart}`;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedId(q.id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopiedId(q.id);
+        toast.success(`Copied ${q.id} to clipboard.`);
+        setTimeout(() => setCopiedId(null), 2000);
+      })
+      .catch(() => {
+        toast.error('Clipboard access was denied by your browser.');
+      });
   };
 
   // Shared table columns definition with sorting
@@ -377,15 +418,17 @@ export function QuizQuestionBankTab() {
               label: Boolean(flaggedMap[q.id])
                 ? 'Remove from Flagged'
                 : 'Flag for Review',
-              description: 'Bookmark tricky MCQ for dedicated dashboard review',
+              description: 'Bookmark tricky MCQ with a flag reason for review',
               icon: Bookmark,
               color: 'amber',
               onClick: () => {
-                storageService.toggleFlaggedQuestion(q.id, {
-                  source: 'quiz',
-                  deckTitle: q.subject,
-                });
-                setFlaggedMap(storageService.loadFlaggedQuestions());
+                if (Boolean(flaggedMap[q.id])) {
+                  storageService.removeFlaggedQuestion(q.id);
+                  setFlaggedMap(storageService.loadFlaggedQuestions());
+                  toast.info(`Removed flag from ${q.id}.`);
+                } else {
+                  setQuestionToFlag(q);
+                }
               },
               divider: true,
             },
@@ -403,9 +446,14 @@ export function QuizQuestionBankTab() {
               icon: FileText,
               color: 'purple',
               onClick: () => {
-                navigator.clipboard.writeText(q.id);
-                setCopiedId(q.id);
-                setTimeout(() => setCopiedId(null), 2000);
+                void copyWithToast(q.id, `Copied code ${q.id} to clipboard.`).then(
+                  (ok) => {
+                    if (ok) {
+                      setCopiedId(q.id);
+                      setTimeout(() => setCopiedId(null), 2000);
+                    }
+                  }
+                );
               },
             },
           ];
@@ -810,6 +858,34 @@ export function QuizQuestionBankTab() {
         confirmColor="crimson"
         onConfirm={handleResetToDefault}
         onClose={() => setIsResetConfirmOpen(false)}
+      />
+
+      <FlagReasonModal
+        open={Boolean(questionToFlag)}
+        question={
+          questionToFlag
+            ? {
+                id: questionToFlag.id,
+                question: questionToFlag.question,
+                questionNe: isBilingualQuizQuestion(questionToFlag)
+                  ? questionToFlag.questionNe
+                  : undefined,
+                subject: questionToFlag.subject,
+              }
+            : null
+        }
+        onConfirm={(reason) => {
+          if (!questionToFlag) return;
+          storageService.flagQuestionWithReason(questionToFlag.id, {
+            source: 'dashboard',
+            deckTitle: questionToFlag.subject,
+            reason,
+          });
+          setFlaggedMap(storageService.loadFlaggedQuestions());
+          toast.success(`Question ${questionToFlag.id} flagged for review.`);
+          setQuestionToFlag(null);
+        }}
+        onCancel={() => setQuestionToFlag(null)}
       />
     </div>
   );

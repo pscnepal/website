@@ -18,6 +18,8 @@ import {
   type InquiryCategory,
 } from '../services/storageService';
 import { formatRelativeDate } from '../utils/pdfHelpers';
+import { copyWithToast } from '../utils/clipboardHelpers';
+import { toast } from '../services/toastService';
 
 const SUPPORT_EMAIL = 'info.pscnepal@gmail.com';
 
@@ -74,12 +76,13 @@ export function ContactPage() {
     CATEGORY_OPTIONS.find((c) => c.value === category) ?? CATEGORY_OPTIONS[0];
 
   const handleCopyEmail = async () => {
-    try {
-      await navigator.clipboard.writeText(SUPPORT_EMAIL);
+    const ok = await copyWithToast(
+      SUPPORT_EMAIL,
+      'Support email copied to clipboard.'
+    );
+    if (ok) {
       setCopiedEmail(true);
       window.setTimeout(() => setCopiedEmail(false), 2000);
-    } catch {
-      // Fail quietly if clipboard is restricted
     }
   };
 
@@ -122,6 +125,7 @@ export function ContactPage() {
     setInquiries(updated);
     storageService.saveContactInquiries(updated);
     setLastSubmitted(record);
+    toast.success(`Support note ${record.ticketCode} prepared.`);
 
     setReference('');
     setMessage('');
@@ -134,12 +138,14 @@ export function ContactPage() {
     if (lastSubmitted?.id === id) {
       setLastSubmitted(null);
     }
+    toast.info('Removed inquiry draft.');
   };
 
   const handleClearInquiries = () => {
     setInquiries([]);
     setLastSubmitted(null);
     storageService.clearContactInquiries();
+    toast.info('Cleared saved inquiry history.');
   };
 
   const buildMailtoHref = (item: ContactInquiryRecord): string => {

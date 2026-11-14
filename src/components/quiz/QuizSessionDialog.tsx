@@ -51,6 +51,9 @@ import {
   useAuth,
 } from '../../context/AuthContext';
 import { QuizAuthGate } from '../auth/QuizAuthGate';
+import { toast } from '../../services/toastService';
+import { formatUserFriendlyError } from '../../utils/errorHelpers';
+import { FlagReasonModal } from '../common/FlagReasonModal';
 
 type ReviewFilter = 'all' | 'incorrect' | 'unanswered' | 'correct' | 'flagged';
 
@@ -320,6 +323,8 @@ function QuizDialogInner({
   const [timedOut, setTimedOut] = useState(false);
   const [confirmingExit, setConfirmingExit] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [flagModalQuestion, setFlagModalQuestion] =
+    useState<QuizQuestion | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number>(
     deadlineSeconds
   );
@@ -371,15 +376,17 @@ function QuizDialogInner({
 
   const toggleFlagCurrent = useCallback(() => {
     if (isSubmitted || !currentQuestion) return;
-    const isNowFlagged = storageService.toggleFlaggedQuestion(currentQuestion.id, {
-      source: 'quiz',
-      deckTitle: deck.title,
-    });
-    setFlaggedIds((prev) => ({
-      ...prev,
-      [currentQuestion.id]: isNowFlagged,
-    }));
-  }, [isSubmitted, currentQuestion, deck.title]);
+    if (flaggedIds[currentQuestion.id]) {
+      storageService.removeFlaggedQuestion(currentQuestion.id);
+      setFlaggedIds((prev) => ({
+        ...prev,
+        [currentQuestion.id]: false,
+      }));
+      toast.info(`Removed flag from ${currentQuestion.id}.`);
+      return;
+    }
+    setFlagModalQuestion(currentQuestion);
+  }, [isSubmitted, currentQuestion, flaggedIds]);
 
   const handleClearCurrentSelection = useCallback(() => {
     if (isSubmitted || !currentQuestion) return;
@@ -468,6 +475,13 @@ function QuizDialogInner({
       if (user) {
         void saveQuizAttemptToFirestore(user, attemptRecord).catch((err) => {
           console.error('Failed to persist quiz attempt to Firestore:', err);
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Quiz score saved locally, but cloud sync failed.'
+            ),
+            { id: 'cloud-attempt-sync-err' }
+          );
         });
       }
 
@@ -602,6 +616,8 @@ function QuizDialogInner({
   // Keyboard shortcuts (Escape, 1-4 / A-D, Enter to check multi-select in study mode, F to flag, Backspace to clear, Left/Right arrows)
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (flagModalQuestion) return;
+
       if (event.key === 'Escape') {
         event.preventDefault();
         if (confirmingExit) {
@@ -664,6 +680,7 @@ function QuizDialogInner({
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
+    flagModalQuestion,
     isSubmitted,
     confirmingExit,
     currentIndex,
@@ -2288,6 +2305,37 @@ function QuizDialogInner({
           )}
         </div>
       </motion.div>
+
+      <FlagReasonModal
+        open={Boolean(flagModalQuestion)}
+        question={
+          flagModalQuestion
+            ? {
+                id: flagModalQuestion.id,
+                question: flagModalQuestion.question,
+                questionNe: isBilingualQuizQuestion(flagModalQuestion)
+                  ? flagModalQuestion.questionNe
+                  : undefined,
+                subject: flagModalQuestion.subject,
+              }
+            : null
+        }
+        onConfirm={(reason) => {
+          if (!flagModalQuestion) return;
+          storageService.flagQuestionWithReason(flagModalQuestion.id, {
+            source: 'quiz',
+            deckTitle: deck.title,
+            reason,
+          });
+          setFlaggedIds((prev) => ({
+            ...prev,
+            [flagModalQuestion.id]: true,
+          }));
+          toast.success(`Question ${flagModalQuestion.id} flagged for review.`);
+          setFlagModalQuestion(null);
+        }}
+        onCancel={() => setFlagModalQuestion(null)}
+      />
     </>
   );
 }

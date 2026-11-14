@@ -35,6 +35,8 @@ import {
 import { WrittenQuestionFormModal } from './WrittenQuestionFormModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { useDashboardSearch } from './DashboardLayout';
+import { toast } from '../../services/toastService';
+import { formatUserFriendlyError } from '../../utils/errorHelpers';
 
 export function WrittenQuestionBankTab() {
   const dispatch = useAppDispatch();
@@ -99,48 +101,87 @@ export function WrittenQuestionBankTab() {
   }, [questions, searchQuery, paperFilter, marksFilter, reactionFilter, userReactions]);
 
   const handleSaveQuestion = (saved: WrittenQuestion) => {
-    if (questionToEdit) {
-      questionStorageService.updateWrittenQuestion(saved);
-    } else {
-      questionStorageService.createWrittenQuestion(saved);
+    try {
+      if (questionToEdit) {
+        questionStorageService.updateWrittenQuestion(saved);
+        toast.success(`Updated written question ${saved.id}.`);
+      } else {
+        questionStorageService.createWrittenQuestion(saved);
+        toast.success(`Added written question ${saved.id}.`);
+      }
+      setQuestions(questionStorageService.loadWrittenQuestions());
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to save written question.')
+      );
     }
-    setQuestions(questionStorageService.loadWrittenQuestions());
   };
 
   const handleDeleteQuestion = () => {
     if (!questionToDelete) return;
-    questionStorageService.deleteWrittenQuestion(questionToDelete.id);
-    setQuestions(questionStorageService.loadWrittenQuestions());
-    if (selectedQuestion?.id === questionToDelete.id) {
-      setSelectedQuestion(null);
+    try {
+      const targetId = questionToDelete.id;
+      questionStorageService.deleteWrittenQuestion(targetId);
+      setQuestions(questionStorageService.loadWrittenQuestions());
+      if (selectedQuestion?.id === targetId) {
+        setSelectedQuestion(null);
+      }
+      setQuestionToDelete(null);
+      toast.success(`Deleted written question ${targetId}.`);
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to delete written question.')
+      );
     }
-    setQuestionToDelete(null);
   };
 
   const handleResetToDefault = () => {
-    questionStorageService.resetWrittenQuestionsToDefault();
-    setQuestions(questionStorageService.loadWrittenQuestions());
-    setIsResetConfirmOpen(false);
+    try {
+      questionStorageService.resetWrittenQuestionsToDefault();
+      setQuestions(questionStorageService.loadWrittenQuestions());
+      setIsResetConfirmOpen(false);
+      toast.info('Written question bank restored to defaults.');
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to reset written question bank.')
+      );
+    }
   };
 
   const handleExportJson = () => {
-    const dataStr =
-      'data:text/json;charset=utf-8,' +
-      encodeURIComponent(JSON.stringify(questions, null, 2));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute('href', dataStr);
-    downloadAnchor.setAttribute('download', 'psc-nepal-written-question-bank.json');
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    try {
+      const dataStr =
+        'data:text/json;charset=utf-8,' +
+        encodeURIComponent(JSON.stringify(questions, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute(
+        'download',
+        'psc-nepal-written-question-bank.json'
+      );
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      toast.success(`Exported ${questions.length} written questions as JSON.`);
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to export written bank JSON.')
+      );
+    }
   };
 
   const handleCopy = (q: WrittenQuestion) => {
     const text = `PSC Written (${q.id}) - ${q.paper} [${q.marks} Marks]:\n\nEnglish:\n${q.en.title}\n${q.en.question}\n\nNepali:\n${q.ne.title}\n${q.ne.question}\n\nModel Answer (Intro):\n${q.en.introduction}\n\nExaminer Criteria:\n${q.rubric.map((r, i) => `${i + 1}. ${r.en}`).join('\n')}`;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedId(q.id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopiedId(q.id);
+        toast.success(`Copied ${q.id} to clipboard.`);
+        setTimeout(() => setCopiedId(null), 2000);
+      })
+      .catch(() => {
+        toast.error('Clipboard access was denied by your browser.');
+      });
   };
 
   // Shared table columns definition with sorting

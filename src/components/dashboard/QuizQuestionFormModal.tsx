@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check, CheckCircle2, HelpCircle, Languages, X } from 'lucide-react';
+import {
+  Check,
+  CheckCircle2,
+  HelpCircle,
+  Languages,
+  X,
+} from 'lucide-react';
 import {
   isLanguageOnlySubject,
   QUIZ_OPTION_KEYS,
@@ -7,8 +13,14 @@ import {
   type QuizOptionKey,
   type QuizQuestion,
 } from '../../data/quizData';
+import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
+import { questionStorageService } from '../../services/questionStorageService';
 import { ActionButton } from '../common/ActionButton';
-import { SharedSearchSelect } from '../common/SharedSearchSelect';
+import {
+  SharedSearchSelect,
+  type SearchSelectOption,
+} from '../common/SharedSearchSelect';
+import { SelectOrCustomField } from './SelectOrCustomField';
 
 export interface QuizQuestionFormModalProps {
   isOpen: boolean;
@@ -17,22 +29,23 @@ export interface QuizQuestionFormModalProps {
   onSave: (question: QuizQuestion) => void;
 }
 
-const BASE_SUBJECT_OPTIONS = [
-  { value: 'Geography of Nepal', label: 'Geography of Nepal (Bilingual EN/NE)' },
-  { value: 'History & Culture of Nepal', label: 'History & Culture of Nepal (Bilingual EN/NE)' },
-  { value: 'Constitution & Governance', label: 'Constitution & Governance (Bilingual EN/NE)' },
-  { value: 'Public Administration & Law', label: 'Public Administration & Law (Bilingual EN/NE)' },
-  { value: 'Development Planning', label: 'Development Planning (Bilingual EN/NE)' },
-  { value: 'General Mental Ability (IQ)', label: 'General Mental Ability / IQ (Bilingual EN/NE)' },
-  { value: 'English', label: 'English (English Only)' },
-  { value: 'Nepali', label: 'Nepali / नेपाली (Nepali Only)' },
-];
-
-const DIFFICULTY_OPTIONS = [
+const DIFFICULTY_OPTIONS: SearchSelectOption[] = [
   { value: 'Easy', label: 'Easy (Recall & Direct Statutes)' },
   { value: 'Medium', label: 'Medium (Standard Examination Level)' },
   { value: 'Hard', label: 'Hard (Deep Analytical / Tricky)' },
 ];
+
+const CUSTOM_SOURCE_SENTINEL = '__CUSTOM_SOURCE_PATH__';
+
+function slugifyId(raw: string, fallback: string): string {
+  const cleaned = raw
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+  return cleaned || fallback;
+}
 
 export function QuizQuestionFormModal({
   isOpen,
@@ -42,11 +55,21 @@ export function QuizQuestionFormModal({
 }: QuizQuestionFormModalProps) {
   const isEditing = Boolean(questionToEdit);
 
+  // Taxonomy & Classification
   const [subject, setSubject] = useState('Geography of Nepal');
   const [topic, setTopic] = useState('');
+  const [topicId, setTopicId] = useState('');
   const [subtopic, setSubtopic] = useState('');
+  const [subtopicId, setSubtopicId] = useState('');
   const [difficulty, setDifficulty] = useState<QuizDifficulty>('Medium');
-  const [marks, setMarks] = useState<number>(2);
+  const [marks, setMarks] = useState<number>(1);
+  const [paper, setPaper] = useState('Paper I: General Knowledge');
+  const [level, setLevel] = useState('Gazetted Third Class');
+  const [service, setService] = useState('Federal Civil Service preparation');
+  const [group, setGroup] = useState('General Administration');
+  const [post, setPost] = useState('Section Officer / Nayab Subba target');
+
+  // Content
   const [questionText, setQuestionText] = useState('');
   const [questionNe, setQuestionNe] = useState('');
   const [options, setOptions] = useState<Record<QuizOptionKey, string>>({
@@ -65,36 +88,159 @@ export function QuizQuestionFormModal({
   const [isMultiSelect, setIsMultiSelect] = useState(false);
   const [explanation, setExplanation] = useState('');
   const [explanationNe, setExplanationNe] = useState('');
+
+  // Citation & PDF Linkage
+  const [sourcePath, setSourcePath] = useState('');
   const [sourceTitle, setSourceTitle] = useState('');
+  const [forceCustomSourcePath, setForceCustomSourcePath] = useState(false);
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Snapshot live question bank whenever modal opens so options reflect latest website taxonomy
+  const liveBank = useMemo(() => {
+    if (!isOpen) return [];
+    return questionStorageService.loadQuizQuestions();
+  }, [isOpen]);
 
   const languageOnlyMode = isLanguageOnlySubject(subject); // 'en' | 'ne' | null
   const isBilingualSubject = languageOnlyMode === null;
 
-  const subjectOptions = useMemo(() => {
-    if (
-      questionToEdit?.subject &&
-      !BASE_SUBJECT_OPTIONS.some((opt) => opt.value === questionToEdit.subject)
-    ) {
-      return [
-        {
-          value: questionToEdit.subject,
-          label: `${questionToEdit.subject} (Bilingual EN/NE)`,
-        },
-        ...BASE_SUBJECT_OPTIONS,
-      ];
+  // Dynamic taxonomy options extracted from live website question bank
+  const subjectOptions = useMemo<SearchSelectOption[]>(() => {
+    const counts = new Map<string, number>();
+    for (const q of liveBank) {
+      if (q.subject) {
+        counts.set(q.subject, (counts.get(q.subject) ?? 0) + 1);
+      }
     }
-    return BASE_SUBJECT_OPTIONS;
-  }, [questionToEdit?.subject]);
+    return Array.from(counts.entries()).map(([subj, count]) => {
+      const mode = isLanguageOnlySubject(subj);
+      const langBadge =
+        mode === 'en' ? 'EN Only' : mode === 'ne' ? 'NE Only' : 'EN / ने';
+      return {
+        value: subj,
+        label: subj,
+        badge: `${count} Qs · ${langBadge}`,
+      };
+    });
+  }, [liveBank]);
+
+  const topicOptions = useMemo<SearchSelectOption[]>(() => {
+    const map = new Map<string, { id: string; count: number }>();
+    for (const q of liveBank) {
+      if (q.subject === subject && q.topic) {
+        const existing = map.get(q.topic);
+        map.set(q.topic, {
+          id: existing?.id || q.topicId,
+          count: (existing?.count ?? 0) + 1,
+        });
+      }
+    }
+    return Array.from(map.entries()).map(([name, info]) => ({
+      value: name,
+      label: name,
+      badge: `${info.count} Qs`,
+      description: info.id ? `ID: ${info.id}` : undefined,
+    }));
+  }, [liveBank, subject]);
+
+  const subtopicOptions = useMemo<SearchSelectOption[]>(() => {
+    const map = new Map<string, { id: string; count: number }>();
+    for (const q of liveBank) {
+      if (q.subject === subject && (!topic || q.topic === topic) && q.subtopic) {
+        const existing = map.get(q.subtopic);
+        map.set(q.subtopic, {
+          id: existing?.id || q.subtopicId,
+          count: (existing?.count ?? 0) + 1,
+        });
+      }
+    }
+    return Array.from(map.entries()).map(([name, info]) => ({
+      value: name,
+      label: name,
+      badge: `${info.count} Qs`,
+      description: info.id ? `ID: ${info.id}` : undefined,
+    }));
+  }, [liveBank, subject, topic]);
+
+  const paperOptions = useMemo<SearchSelectOption[]>(() => {
+    const vals = Array.from(new Set(liveBank.map((q) => q.paper).filter(Boolean)));
+    return vals.map((v) => ({ value: v, label: v }));
+  }, [liveBank]);
+
+  const levelOptions = useMemo<SearchSelectOption[]>(() => {
+    const vals = Array.from(new Set(liveBank.map((q) => q.level).filter(Boolean)));
+    return vals.map((v) => ({ value: v, label: v }));
+  }, [liveBank]);
+
+  const serviceOptions = useMemo<SearchSelectOption[]>(() => {
+    const vals = Array.from(
+      new Set([
+        'Federal Civil Service preparation',
+        ...liveBank.map((q) => q.service).filter(Boolean),
+      ])
+    );
+    return vals.map((v) => ({ value: v, label: v }));
+  }, [liveBank]);
+
+  const groupOptions = useMemo<SearchSelectOption[]>(() => {
+    const vals = Array.from(new Set(liveBank.map((q) => q.group).filter(Boolean)));
+    return vals.map((v) => ({ value: v, label: v }));
+  }, [liveBank]);
+
+  const postOptions = useMemo<SearchSelectOption[]>(() => {
+    const vals = Array.from(new Set(liveBank.map((q) => q.post).filter(Boolean)));
+    return vals.map((v) => ({ value: v, label: v }));
+  }, [liveBank]);
+
+  const materialOptions = useMemo<SearchSelectOption[]>(() => {
+    const items: SearchSelectOption[] = [
+      { value: '', label: 'None (No linked source PDF)' },
+    ];
+    for (const cat of READING_MATERIAL_CATEGORIES) {
+      for (const item of cat.items) {
+        items.push({
+          value: item.path,
+          label: item.title,
+          description: `${cat.name} · ${item.codeOrEdition}`,
+        });
+      }
+    }
+    items.push({
+      value: CUSTOM_SOURCE_SENTINEL,
+      label: '+ Custom Source PDF URL / Path...',
+      description: 'Link to an external official PDF or custom /materials/ path',
+    });
+    return items;
+  }, []);
+
+  const isKnownMaterialPath = useMemo(() => {
+    if (!sourcePath) return true;
+    return READING_MATERIAL_CATEGORIES.some((c) =>
+      c.items.some((i) => i.path === sourcePath)
+    );
+  }, [sourcePath]);
+
+  const showCustomSourceInput =
+    forceCustomSourcePath || (Boolean(sourcePath.trim()) && !isKnownMaterialPath);
 
   // Populate on open or question change
   useEffect(() => {
+    if (!isOpen) return;
+
     if (questionToEdit) {
       setSubject(questionToEdit.subject || 'Geography of Nepal');
       setTopic(questionToEdit.topic || '');
+      setTopicId(questionToEdit.topicId || '');
       setSubtopic(questionToEdit.subtopic || '');
+      setSubtopicId(questionToEdit.subtopicId || '');
       setDifficulty(questionToEdit.difficulty || 'Medium');
-      setMarks(questionToEdit.marks || 2);
+      setMarks(questionToEdit.marks || 1);
+      setPaper(questionToEdit.paper || 'Paper I: General Knowledge');
+      setLevel(questionToEdit.level || 'Gazetted Third Class');
+      setService(questionToEdit.service || 'Federal Civil Service preparation');
+      setGroup(questionToEdit.group || 'General Administration');
+      setPost(questionToEdit.post || 'Section Officer / Nayab Subba target');
       setQuestionText(questionToEdit.question || '');
       setQuestionNe(questionToEdit.questionNe || '');
 
@@ -109,19 +255,38 @@ export function QuizQuestionFormModal({
       setOptions(optMap);
       setOptionsNe(optNeMap);
       setCorrectOptions(
-        questionToEdit.correct_options.length > 0 ? questionToEdit.correct_options : ['A']
+        questionToEdit.correct_options.length > 0
+          ? questionToEdit.correct_options
+          : ['A']
       );
       setIsMultiSelect(Boolean(questionToEdit.is_multi_select));
       setExplanation(questionToEdit.explanation || '');
       setExplanationNe(questionToEdit.explanationNe || '');
       setSourceTitle(questionToEdit.sourceTitle || '');
+      setSourcePath(questionToEdit.sourcePath || '');
+      setForceCustomSourcePath(false);
     } else {
-      // Default blank template
-      setSubject('Geography of Nepal');
-      setTopic('General Overview');
-      setSubtopic('Core Context');
+      const defaultSubject = 'Geography of Nepal';
+      const firstMatch = liveBank.find((q) => q.subject === defaultSubject);
+      const firstMat = READING_MATERIAL_CATEGORIES.flatMap((c) => c.items).find(
+        (m) => m.id === 'nepal-parichaya-13th-edition-2082'
+      );
+
+      setSubject(defaultSubject);
+      setTopic(firstMatch?.topic || 'Physical Geography & Ecological Belts');
+      setTopicId(firstMatch?.topicId || 'geo-physical');
+      setSubtopic(firstMatch?.subtopic || 'Area & Physiographic Divisions');
+      setSubtopicId(firstMatch?.subtopicId || 'geo-area-belts');
       setDifficulty('Medium');
       setMarks(1);
+      setPaper(firstMatch?.paper || 'Paper I: General Knowledge');
+      setLevel(firstMatch?.level || 'General PSC practice');
+      setService(firstMatch?.service || 'Federal Civil Service preparation');
+      setGroup(firstMatch?.group || 'General Administration');
+      setPost(
+        firstMatch?.post ||
+          'Section Officer / general competitive examination target'
+      );
       setQuestionText('');
       setQuestionNe('');
       setOptions({ A: '', B: '', C: '', D: '' });
@@ -130,12 +295,98 @@ export function QuizQuestionFormModal({
       setIsMultiSelect(false);
       setExplanation('');
       setExplanationNe('');
-      setSourceTitle('Constitution of Nepal / Official Gazette');
+      setSourcePath(firstMat?.path || '');
+      setSourceTitle(firstMat?.title || '');
+      setForceCustomSourcePath(false);
     }
     setErrorMsg(null);
-  }, [questionToEdit, isOpen]);
+  }, [questionToEdit, isOpen, liveBank]);
 
   if (!isOpen) return null;
+
+  const handleSubjectSelect = (nextSubject: string) => {
+    setSubject(nextSubject);
+    // Cascade matching Topic / Subtopic / Paper / Group if current topic doesn't exist under nextSubject
+    const matchingQuestions = liveBank.filter((q) => q.subject === nextSubject);
+    if (matchingQuestions.length > 0) {
+      const stillMatchesTopic = matchingQuestions.some((q) => q.topic === topic);
+      if (!stillMatchesTopic) {
+        const first = matchingQuestions[0];
+        setTopic(first.topic);
+        setTopicId(first.topicId);
+        setSubtopic(first.subtopic);
+        setSubtopicId(first.subtopicId);
+        if (!isEditing) {
+          setPaper(first.paper);
+          setGroup(first.group);
+        }
+      }
+    } else if (!isEditing) {
+      setTopic('');
+      setTopicId('');
+      setSubtopic('');
+      setSubtopicId('');
+    }
+  };
+
+  const handleTopicSelect = (nextTopic: string) => {
+    setTopic(nextTopic);
+    const matchedQ = liveBank.find(
+      (q) => q.subject === subject && q.topic === nextTopic
+    );
+    if (matchedQ) {
+      setTopicId(matchedQ.topicId);
+      const stillMatchesSub = liveBank.some(
+        (q) =>
+          q.subject === subject &&
+          q.topic === nextTopic &&
+          q.subtopic === subtopic
+      );
+      if (!stillMatchesSub) {
+        setSubtopic(matchedQ.subtopic);
+        setSubtopicId(matchedQ.subtopicId);
+      }
+    } else {
+      setTopicId(slugifyId(nextTopic, 'custom-topic'));
+    }
+  };
+
+  const handleSubtopicSelect = (nextSubtopic: string) => {
+    setSubtopic(nextSubtopic);
+    const matchedQ = liveBank.find(
+      (q) =>
+        q.subject === subject &&
+        (!topic || q.topic === topic) &&
+        q.subtopic === nextSubtopic
+    );
+    if (matchedQ) {
+      setSubtopicId(matchedQ.subtopicId);
+    } else {
+      setSubtopicId(slugifyId(nextSubtopic, 'custom-subtopic'));
+    }
+  };
+
+  const handleSourceSelect = (nextVal: string) => {
+    if (nextVal === CUSTOM_SOURCE_SENTINEL) {
+      setForceCustomSourcePath(true);
+      if (isKnownMaterialPath) {
+        setSourcePath('');
+      }
+      return;
+    }
+
+    setForceCustomSourcePath(false);
+    setSourcePath(nextVal);
+    if (!nextVal) {
+      return;
+    }
+    const matchedItem = READING_MATERIAL_CATEGORIES.flatMap((c) => c.items).find(
+      (i) => i.path === nextVal
+    );
+    if (matchedItem) {
+      setSourceTitle(matchedItem.title);
+    }
+  };
 
   const handleToggleCorrectOption = (key: QuizOptionKey) => {
     if (isMultiSelect) {
@@ -155,6 +406,23 @@ export function QuizQuestionFormModal({
     e.preventDefault();
     setErrorMsg(null);
 
+    const cleanSubject = subject.trim();
+    const cleanTopic = topic.trim();
+    const cleanSubtopic = subtopic.trim();
+
+    if (!cleanSubject) {
+      setErrorMsg('Please select or enter a Subject.');
+      return;
+    }
+    if (!cleanTopic) {
+      setErrorMsg('Please select or enter a Topic.');
+      return;
+    }
+    if (!cleanSubtopic) {
+      setErrorMsg('Please select or enter a Subtopic.');
+      return;
+    }
+
     if (!questionText.trim()) {
       setErrorMsg(
         languageOnlyMode === 'ne'
@@ -166,7 +434,7 @@ export function QuizQuestionFormModal({
 
     if (isBilingualSubject && !questionNe.trim()) {
       setErrorMsg(
-        'Nepali translation of the question prompt (प्रश्न नेपालीमा) is required for non-language categories.'
+        'Nepali translation of the question prompt (प्रश्न नेपालीमा) is required for bilingual categories.'
       );
       return;
     }
@@ -214,24 +482,33 @@ export function QuizQuestionFormModal({
 
     const compiledOptions = QUIZ_OPTION_KEYS.map((k) => ({
       key: k,
-      text: options[k].trim() || (languageOnlyMode === 'ne' ? `विकल्प ${k}` : `Option ${k}`),
+      text:
+        options[k].trim() ||
+        (languageOnlyMode === 'ne' ? `विकल्प ${k}` : `Option ${k}`),
       ...(isBilingualSubject && optionsNe[k].trim()
         ? { textNe: optionsNe[k].trim() }
         : {}),
     }));
 
+    const resolvedTopicId =
+      topicId.trim() || slugifyId(cleanTopic, 'custom-topic');
+    const resolvedSubtopicId =
+      subtopicId.trim() || slugifyId(cleanSubtopic, 'custom-subtopic');
+
     const finalQuestion: QuizQuestion = {
-      id: questionToEdit ? questionToEdit.id : `PSC-MCQ-${Date.now().toString().slice(-6)}`,
-      level: questionToEdit?.level || 'Gazetted Third Class',
-      service: questionToEdit?.service || 'Nepal Administration Service',
-      group: questionToEdit?.group || 'General Administration',
-      post: questionToEdit?.post || 'Section Officer (Sakha Adhikrit)',
-      paper: questionToEdit?.paper || 'Paper I: General Studies & IQ',
-      subject: subject.trim(),
-      topicId: questionToEdit?.topicId || 'custom-topic',
-      topic: topic.trim() || 'General Overview',
-      subtopicId: questionToEdit?.subtopicId || 'custom-subtopic',
-      subtopic: subtopic.trim() || 'Core Analysis',
+      id: questionToEdit
+        ? questionToEdit.id
+        : `PSC-MCQ-${Date.now().toString().slice(-6)}`,
+      level: level.trim() || 'Gazetted Third Class',
+      service: service.trim() || 'Federal Civil Service preparation',
+      group: group.trim() || 'General Administration',
+      post: post.trim() || 'Section Officer / Nayab Subba target',
+      paper: paper.trim() || 'Paper I: General Knowledge',
+      subject: cleanSubject,
+      topicId: resolvedTopicId,
+      topic: cleanTopic,
+      subtopicId: resolvedSubtopicId,
+      subtopic: cleanSubtopic,
       question: questionText.trim(),
       ...(isBilingualSubject ? { questionNe: questionNe.trim() } : {}),
       options: compiledOptions,
@@ -240,9 +517,9 @@ export function QuizQuestionFormModal({
       explanation: explanation.trim(),
       ...(isBilingualSubject ? { explanationNe: explanationNe.trim() } : {}),
       difficulty,
-      marks: Number(marks) || 1,
-      sourceTitle: sourceTitle.trim() || undefined,
-      sourcePath: questionToEdit?.sourcePath,
+      marks: Math.min(20, Math.max(0.5, Number(marks) || 1)),
+      ...(sourceTitle.trim() ? { sourceTitle: sourceTitle.trim() } : {}),
+      ...(sourcePath.trim() ? { sourcePath: sourcePath.trim() } : {}),
     };
 
     onSave(finalQuestion);
@@ -262,7 +539,7 @@ export function QuizQuestionFormModal({
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 z-10 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-3xl bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 z-10 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
           <div className="flex items-center gap-2">
@@ -274,10 +551,12 @@ export function QuizQuestionFormModal({
                 id="quiz-form-modal-title"
                 className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50"
               >
-                {isEditing ? `Edit MCQ Question (${questionToEdit?.id})` : 'Create New MCQ Question'}
+                {isEditing
+                  ? `Edit MCQ Question (${questionToEdit?.id})`
+                  : 'Create New MCQ Question'}
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                Stage I Objective Preliminary Examination Question Database
+                Full PSC Paper I schema synced directly with website quiz filters &amp; study cards
               </p>
             </div>
           </div>
@@ -297,15 +576,20 @@ export function QuizQuestionFormModal({
           <div>
             {languageOnlyMode === 'en' ? (
               <span>
-                <strong>English Category Mode:</strong> Questions, answer options, and explanations are stored and displayed <strong>exclusively in English</strong>.
+                <strong>English Category Mode:</strong> Questions, options, and
+                explanations are displayed <strong>exclusively in English</strong>.
               </span>
             ) : languageOnlyMode === 'ne' ? (
               <span lang="ne">
-                <strong>नेपाली विषय मोड:</strong> यस श्रेणीका प्रश्न, विकल्प र व्याख्या <strong>नेपाली भाषामा मात्र</strong> राखिन्छन् र देखाइन्छन्।
+                <strong>नेपाली विषय मोड:</strong> यस श्रेणीका प्रश्न, विकल्प र
+                व्याख्या <strong>नेपाली भाषामा मात्र</strong> देखाइन्छन्।
               </span>
             ) : (
               <span>
-                <strong>Bilingual Mode (English &amp; नेपाली):</strong> Provide questions, options, and explanations in <strong>both English and Nepali</strong>.
+                <strong>Bilingual Mode (English &amp; नेपाली):</strong> Provide
+                questions, options, and explanations in{' '}
+                <strong>both English and Nepali</strong> for complete website
+                parity.
               </span>
             )}
           </div>
@@ -317,267 +601,403 @@ export function QuizQuestionFormModal({
           </div>
         )}
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                Subject
-              </label>
-              <SharedSearchSelect
-                options={subjectOptions}
-                value={subject}
-                onChange={setSubject}
-                size="sm"
-                searchPlaceholder="Search subjects..."
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* 1. Cascading Subject, Topic & Subtopic */}
+          <div className="space-y-3 p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/40">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              1. Subject, Topic &amp; Subtopic Taxonomy (Matched on /quiz Filters)
+            </p>
 
-            <div>
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                Difficulty Level
-              </label>
-              <SharedSearchSelect
-                options={DIFFICULTY_OPTIONS}
-                value={difficulty}
-                onChange={(val) => setDifficulty(val as QuizDifficulty)}
-                size="sm"
-                searchPlaceholder="Search difficulty..."
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="sm:col-span-1">
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                Marks
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={10}
-                value={marks}
-                onChange={(e) => setMarks(Number(e.target.value))}
-                className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
-            <div className="sm:col-span-1">
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                Topic
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Constitutional Law"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
-            <div className="sm:col-span-1">
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                Subtopic
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Fundamental Rights"
-                value={subtopic}
-                onChange={(e) => setSubtopic(e.target.value)}
-                className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
-          </div>
-
-          {/* Question Text */}
-          <div className={isBilingualSubject ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'space-y-2'}>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                {languageOnlyMode === 'ne'
-                  ? 'Question Prompt (नेपालीमा मात्र)'
-                  : isBilingualSubject
-                    ? 'Question Prompt (English)'
-                    : 'Question Prompt (English Only)'}{' '}
-                <span className="text-crimson-600">*</span>
-              </label>
-              <textarea
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <SelectOrCustomField
+                label="Subject"
                 required
-                rows={3}
-                lang={languageOnlyMode === 'ne' ? 'ne' : undefined}
-                placeholder={
-                  languageOnlyMode === 'ne'
-                    ? 'नेपाली भाषामा आधिकारिक वस्तुगत प्रश्न लेख्नुहोस्...'
-                    : 'Enter official objective question stem in English...'
-                }
-                value={questionText}
-                onChange={(e) => setQuestionText(e.target.value)}
-                className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 leading-relaxed"
+                value={subject}
+                onChange={handleSubjectSelect}
+                options={subjectOptions}
+                placeholder="Select subject..."
+                customPlaceholder="Enter subject name..."
+                searchPlaceholder="Search subjects..."
+                customOptionLabel="+ Add custom subject..."
+              />
+
+              <SelectOrCustomField
+                label="Topic"
+                required
+                value={topic}
+                onChange={handleTopicSelect}
+                options={topicOptions}
+                placeholder="Select topic..."
+                customPlaceholder="e.g. Constitutional Law"
+                searchPlaceholder="Search topics..."
+                customOptionLabel="+ Add custom topic..."
+              />
+
+              <SelectOrCustomField
+                label="Subtopic"
+                required
+                value={subtopic}
+                onChange={handleSubtopicSelect}
+                options={subtopicOptions}
+                placeholder="Select subtopic..."
+                customPlaceholder="e.g. Fundamental Rights"
+                searchPlaceholder="Search subtopics..."
+                customOptionLabel="+ Add custom subtopic..."
               />
             </div>
 
-            {isBilingualSubject && (
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
+              <div>
+                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                  Topic Slug ID
+                </label>
+                <input
+                  type="text"
+                  value={topicId}
+                  onChange={(e) => setTopicId(e.target.value)}
+                  placeholder="auto-generated"
+                  className="w-full text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                  Subtopic Slug ID
+                </label>
+                <input
+                  type="text"
+                  value={subtopicId}
+                  onChange={(e) => setSubtopicId(e.target.value)}
+                  placeholder="auto-generated"
+                  className="w-full text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                  Difficulty <span className="text-crimson-600">*</span>
+                </label>
+                <SharedSearchSelect
+                  options={DIFFICULTY_OPTIONS}
+                  value={difficulty}
+                  onChange={(val) => setDifficulty(val as QuizDifficulty)}
+                  size="sm"
+                  enableSearch={false}
+                  className="w-full"
+                  popoverWidth="w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+                  Marks Weightage <span className="text-crimson-600">*</span>
+                </label>
+                <input
+                  type="number"
+                  min={0.5}
+                  max={20}
+                  step={0.5}
+                  value={marks}
+                  onChange={(e) => setMarks(Number(e.target.value))}
+                  className="w-full h-8 sm:h-9 text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 2. PSC Exam Item Classification (Displayed inside Quiz Dialog Sidebar) */}
+          <div className="space-y-3 p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/40">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              2. PSC Item Classification (Displayed on Quiz Question Card)
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <SelectOrCustomField
+                label="Paper"
+                required
+                value={paper}
+                onChange={setPaper}
+                options={paperOptions}
+                searchPlaceholder="Search papers..."
+                customOptionLabel="+ Custom paper..."
+              />
+              <SelectOrCustomField
+                label="Cadre / Level"
+                required
+                value={level}
+                onChange={setLevel}
+                options={levelOptions}
+                searchPlaceholder="Search levels..."
+                customOptionLabel="+ Custom level..."
+              />
+              <SelectOrCustomField
+                label="Service Branch"
+                required
+                value={service}
+                onChange={setService}
+                options={serviceOptions}
+                searchPlaceholder="Search services..."
+                customOptionLabel="+ Custom service..."
+              />
+              <SelectOrCustomField
+                label="Service Group"
+                required
+                value={group}
+                onChange={setGroup}
+                options={groupOptions}
+                searchPlaceholder="Search groups..."
+                customOptionLabel="+ Custom group..."
+              />
+              <div className="sm:col-span-2">
+                <SelectOrCustomField
+                  label="Target Post"
+                  required
+                  value={post}
+                  onChange={setPost}
+                  options={postOptions}
+                  searchPlaceholder="Search target posts..."
+                  customOptionLabel="+ Custom target post..."
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Question Stem & Options */}
+          <div className="space-y-4">
+            <div
+              className={
+                isBilingualSubject
+                  ? 'grid grid-cols-1 sm:grid-cols-2 gap-3'
+                  : 'space-y-2'
+              }
+            >
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                  Question Prompt (नेपाली) <span className="text-crimson-600">*</span>
+                  {languageOnlyMode === 'ne'
+                    ? 'Question Prompt (नेपालीमा मात्र)'
+                    : isBilingualSubject
+                      ? 'Question Prompt (English)'
+                      : 'Question Prompt (English Only)'}{' '}
+                  <span className="text-crimson-600">*</span>
                 </label>
                 <textarea
                   required
                   rows={3}
-                  lang="ne"
-                  placeholder="नेपालीमा वस्तुगत प्रश्न लेख्नुहोस्..."
-                  value={questionNe}
-                  onChange={(e) => setQuestionNe(e.target.value)}
+                  lang={languageOnlyMode === 'ne' ? 'ne' : undefined}
+                  placeholder={
+                    languageOnlyMode === 'ne'
+                      ? 'नेपाली भाषामा आधिकारिक वस्तुगत प्रश्न लेख्नुहोस्...'
+                      : 'Enter official objective question stem in English...'
+                  }
+                  value={questionText}
+                  onChange={(e) => setQuestionText(e.target.value)}
                   className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 leading-relaxed"
                 />
               </div>
-            )}
-          </div>
 
-          {/* Options & Key Selector */}
-          <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                Options &amp; Correct Answer Key <span className="text-crimson-600">*</span>
-              </label>
-              <label className="inline-flex items-center gap-1.5 text-[11px] text-zinc-500 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isMultiSelect}
-                  onChange={(e) => {
-                    setIsMultiSelect(e.target.checked);
-                    if (!e.target.checked && correctOptions.length > 1) {
-                      setCorrectOptions([correctOptions[0]]);
-                    }
-                  }}
-                  className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
-                />
-                Multiple correct options
-              </label>
+              {isBilingualSubject && (
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                    Question Prompt (नेपाली) <span className="text-crimson-600">*</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    lang="ne"
+                    placeholder="नेपालीमा वस्तुगत प्रश्न लेख्नुहोस्..."
+                    value={questionNe}
+                    onChange={(e) => setQuestionNe(e.target.value)}
+                    className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600 leading-relaxed"
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              {QUIZ_OPTION_KEYS.map((k) => {
-                const isSelected = correctOptions.includes(k);
-                return (
-                  <div
-                    key={k}
-                    className={`flex items-start gap-2.5 p-2 rounded-lg border transition-colors ${
-                      isSelected
-                        ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20'
-                        : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleToggleCorrectOption(k)}
-                      title={`Mark Option ${k} as ${isSelected ? 'incorrect' : 'correct'}`}
-                      className={`mt-0.5 w-7 h-7 rounded-md font-mono text-xs font-bold flex items-center justify-center shrink-0 transition-colors ${
+            {/* Options & Key Selector */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                  Options &amp; Correct Answer Key{' '}
+                  <span className="text-crimson-600">*</span>
+                </label>
+                <label className="inline-flex items-center gap-1.5 text-[11px] text-zinc-500 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isMultiSelect}
+                    onChange={(e) => {
+                      setIsMultiSelect(e.target.checked);
+                      if (!e.target.checked && correctOptions.length > 1) {
+                        setCorrectOptions([correctOptions[0]]);
+                      }
+                    }}
+                    className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  Multiple correct options
+                </label>
+              </div>
+
+              <div className="space-y-2">
+                {QUIZ_OPTION_KEYS.map((k) => {
+                  const isSelected = correctOptions.includes(k);
+                  return (
+                    <div
+                      key={k}
+                      className={`flex items-start gap-2.5 p-2 rounded-lg border transition-colors ${
                         isSelected
-                          ? 'bg-emerald-600 text-white shadow-xs'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                          ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20'
+                          : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'
                       }`}
                     >
-                      {isSelected ? <Check className="w-3.5 h-3.5" /> : k}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleCorrectOption(k)}
+                        title={`Mark Option ${k} as ${isSelected ? 'incorrect' : 'correct'}`}
+                        className={`mt-0.5 w-7 h-7 rounded-md font-mono text-xs font-bold flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white shadow-xs'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                        }`}
+                      >
+                        {isSelected ? <Check className="w-3.5 h-3.5" /> : k}
+                      </button>
 
-                    <div className="flex-1 min-w-0 space-y-1.5">
-                      <input
-                        type="text"
-                        lang={languageOnlyMode === 'ne' ? 'ne' : undefined}
-                        placeholder={
-                          languageOnlyMode === 'ne'
-                            ? `विकल्प ${k} (नेपालीमा)...`
-                            : isBilingualSubject
-                              ? `Option ${k} (English)...`
-                              : `Text for Option ${k}...`
-                        }
-                        value={options[k]}
-                        onChange={(e) =>
-                          setOptions({ ...options, [k]: e.target.value })
-                        }
-                        className="w-full text-xs bg-white/80 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 rounded px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-600"
-                      />
-
-                      {isBilingualSubject && (
+                      <div className="flex-1 min-w-0 space-y-1.5">
                         <input
                           type="text"
-                          lang="ne"
-                          placeholder={`विकल्प ${k} (नेपालीमा)...`}
-                          value={optionsNe[k]}
-                          onChange={(e) =>
-                            setOptionsNe({ ...optionsNe, [k]: e.target.value })
+                          lang={languageOnlyMode === 'ne' ? 'ne' : undefined}
+                          placeholder={
+                            languageOnlyMode === 'ne'
+                              ? `विकल्प ${k} (नेपालीमा)...`
+                              : isBilingualSubject
+                                ? `Option ${k} (English)...`
+                                : `Text for Option ${k}...`
                           }
-                          className="w-full text-xs bg-zinc-50/80 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-700/80 rounded px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                          value={options[k]}
+                          onChange={(e) =>
+                            setOptions({ ...options, [k]: e.target.value })
+                          }
+                          className="w-full text-xs bg-white/80 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 rounded px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-600"
                         />
-                      )}
+
+                        {isBilingualSubject && (
+                          <input
+                            type="text"
+                            lang="ne"
+                            placeholder={`विकल्प ${k} (नेपालीमा)...`}
+                            value={optionsNe[k]}
+                            onChange={(e) =>
+                              setOptionsNe({ ...optionsNe, [k]: e.target.value })
+                            }
+                            className="w-full text-xs bg-zinc-50/80 dark:bg-zinc-950/60 border border-zinc-200/80 dark:border-zinc-700/80 rounded px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                          />
+                        )}
+                      </div>
+
+                      <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 pt-1.5 pr-1 shrink-0">
+                        {isSelected ? 'Correct' : 'Distractor'}
+                      </span>
                     </div>
-
-                    <span className="text-[10px] font-mono text-zinc-400 dark:text-zinc-500 pt-1.5 pr-1 shrink-0">
-                      {isSelected ? 'Correct' : 'Distractor'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-            <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
-              Click the letter badge on the left to set which option is the official answer key.
-            </p>
-          </div>
-
-          {/* Explanation */}
-          <div className={isBilingualSubject ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'space-y-2'}>
-            <div>
-              <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                {languageOnlyMode === 'ne'
-                  ? 'आधिकारिक व्याख्या (नेपालीमा मात्र)'
-                  : isBilingualSubject
-                    ? 'Official Rationale & Explanation (English)'
-                    : 'Official Rationale & Explanation (English Only)'}{' '}
-                <span className="text-crimson-600">*</span>
-              </label>
-              <textarea
-                required
-                rows={3}
-                lang={languageOnlyMode === 'ne' ? 'ne' : undefined}
-                placeholder={
-                  languageOnlyMode === 'ne'
-                    ? 'व्याकरणिक नियम वा सन्दर्भ सहित नेपालीमा व्याख्या लेख्नुहोस्...'
-                    : 'Cite the statutory article, Act section, or factual background in English...'
-                }
-                value={explanation}
-                onChange={(e) => setExplanation(e.target.value)}
-                className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                Click the letter badge on the left to set which option is the
+                official answer key.
+              </p>
             </div>
 
-            {isBilingualSubject && (
+            {/* Explanation */}
+            <div
+              className={
+                isBilingualSubject
+                  ? 'grid grid-cols-1 sm:grid-cols-2 gap-3'
+                  : 'space-y-2'
+              }
+            >
               <div>
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-                  आधिकारिक व्याख्या (नेपाली) <span className="text-crimson-600">*</span>
+                  {languageOnlyMode === 'ne'
+                    ? 'आधिकारिक व्याख्या (नेपालीमा मात्र)'
+                    : isBilingualSubject
+                      ? 'Official Rationale & Explanation (English)'
+                      : 'Official Rationale & Explanation (English Only)'}{' '}
+                  <span className="text-crimson-600">*</span>
                 </label>
                 <textarea
                   required
                   rows={3}
-                  lang="ne"
-                  placeholder="संवैधानिक धारा, ऐन वा तथ्यसहित नेपालीमा व्याख्या लेख्नुहोस्..."
-                  value={explanationNe}
-                  onChange={(e) => setExplanationNe(e.target.value)}
+                  lang={languageOnlyMode === 'ne' ? 'ne' : undefined}
+                  placeholder={
+                    languageOnlyMode === 'ne'
+                      ? 'व्याकरणिक नियम वा सन्दर्भ सहित नेपालीमा व्याख्या लेख्नुहोस्...'
+                      : 'Cite the statutory article, Act section, or factual background in English...'
+                  }
+                  value={explanation}
+                  onChange={(e) => setExplanation(e.target.value)}
                   className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
-            )}
+
+              {isBilingualSubject && (
+                <div>
+                  <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                    आधिकारिक व्याख्या (नेपाली) <span className="text-crimson-600">*</span>
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    lang="ne"
+                    placeholder="संवैधानिक धारा, ऐन वा तथ्यसहित नेपालीमा व्याख्या लेख्नुहोस्..."
+                    value={explanationNe}
+                    onChange={(e) => setExplanationNe(e.target.value)}
+                    className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Citation Source */}
-          <div>
-            <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
-              Source Document / Citation (Optional)
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Nepal Parichaya 13th Edition, Page 142"
-              value={sourceTitle}
-              onChange={(e) => setSourceTitle(e.target.value)}
-              className="w-full text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
+          {/* 4. Linked Source Material & Citation */}
+          <div className="space-y-3 p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-950/40">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              4. Linked Study Document &amp; Citation (Read Source PDF Link)
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                  Source Reading Material PDF
+                </label>
+                <SharedSearchSelect
+                  options={materialOptions}
+                  value={
+                    showCustomSourceInput ? CUSTOM_SOURCE_SENTINEL : sourcePath
+                  }
+                  onChange={handleSourceSelect}
+                  size="sm"
+                  className="w-full"
+                  popoverWidth="w-full"
+                  searchPlaceholder="Search reading materials..."
+                />
+                {showCustomSourceInput && (
+                  <input
+                    type="text"
+                    placeholder="https://... or /materials/document.pdf"
+                    value={sourcePath}
+                    onChange={(e) => setSourcePath(e.target.value)}
+                    className="w-full text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+                  Source Citation Label (Displayed on PDF Link)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Nepal Parichaya 13th Edition, Page 142"
+                  value={sourceTitle}
+                  onChange={(e) => setSourceTitle(e.target.value)}
+                  className="w-full h-8 sm:h-9 text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Footer Actions */}

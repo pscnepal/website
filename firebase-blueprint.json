@@ -233,6 +233,11 @@
           "description": "Optional PSC cadre identifier.",
           "maxLength": 64
         },
+        "reason": {
+          "type": "string",
+          "description": "User-provided reason explaining why the question was flagged.",
+          "maxLength": 500
+        },
         "note": {
           "type": "string",
           "description": "Personal study mnemonic or revision note.",
@@ -361,6 +366,289 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "QuizQuestionOverride": {
+      "title": "QuizQuestionOverride",
+      "description": "Admin-managed objective MCQ creation, edit, or tombstone deletion synced across website and dashboard.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique MCQ identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "description": "Tombstone flag hiding deleted seed questions across devices."
+        },
+        "level": {
+          "type": "string",
+          "description": "Exam level classification.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "service": {
+          "type": "string",
+          "description": "Civil service branch.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "group": {
+          "type": "string",
+          "description": "Service group classification.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "post": {
+          "type": "string",
+          "description": "Target examination post.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "paper": {
+          "type": "string",
+          "description": "PSC examination paper.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "subject": {
+          "type": "string",
+          "description": "Primary subject category.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "topicId": {
+          "type": "string",
+          "description": "Structured topic slug identifier.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "topic": {
+          "type": "string",
+          "description": "Human-readable topic name.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "subtopicId": {
+          "type": "string",
+          "description": "Structured subtopic slug identifier.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "subtopic": {
+          "type": "string",
+          "description": "Human-readable subtopic name.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "question": {
+          "type": "string",
+          "description": "Primary question prompt stem.",
+          "minLength": 1,
+          "maxLength": 3000
+        },
+        "questionNe": {
+          "type": "string",
+          "description": "Optional Nepali translation of the question stem.",
+          "maxLength": 3000
+        },
+        "options": {
+          "type": "array",
+          "description": "Answer options A-D with English and optional Nepali text."
+        },
+        "correct_options": {
+          "type": "array",
+          "description": "Verified correct option key(s)."
+        },
+        "is_multi_select": {
+          "type": "boolean",
+          "description": "Whether multiple answer keys are valid."
+        },
+        "explanation": {
+          "type": "string",
+          "description": "Official rationale and statutory citation.",
+          "minLength": 1,
+          "maxLength": 5000
+        },
+        "explanationNe": {
+          "type": "string",
+          "description": "Optional Nepali translation of explanation.",
+          "maxLength": 5000
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["Easy", "Medium", "Hard"],
+          "description": "Question difficulty tier."
+        },
+        "marks": {
+          "type": "number",
+          "description": "Positive mark weightage."
+        },
+        "sourceTitle": {
+          "type": "string",
+          "description": "Optional source reading material title.",
+          "maxLength": 300
+        },
+        "sourcePath": {
+          "type": "string",
+          "description": "Optional source PDF path or URL.",
+          "maxLength": 512
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Admin Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when override was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest update."
+        }
+      },
+      "required": [
+        "id",
+        "isDeleted",
+        "level",
+        "service",
+        "group",
+        "post",
+        "paper",
+        "subject",
+        "topicId",
+        "topic",
+        "subtopicId",
+        "subtopic",
+        "question",
+        "options",
+        "correct_options",
+        "is_multi_select",
+        "explanation",
+        "difficulty",
+        "marks",
+        "updatedBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WrittenQuestionOverride": {
+      "title": "WrittenQuestionOverride",
+      "description": "Admin-managed subjective written question creation, edit, or tombstone deletion synced across website and dashboard.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique written question identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "description": "Tombstone flag hiding deleted seed written questions across devices."
+        },
+        "paper": {
+          "type": "string",
+          "enum": [
+            "Paper II: Governance Systems",
+            "Paper III: Contemporary Issues & Development",
+            "Paper IV: Service Delivery & Case Analysis"
+          ],
+          "description": "Subjective PSC examination paper."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Subject or syllabus domain.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "postTarget": {
+          "type": "string",
+          "description": "Target examination cadre/post.",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "marks": {
+          "type": "number",
+          "description": "Question mark weightage (5 or 10)."
+        },
+        "recommendedMinutes": {
+          "type": "number",
+          "description": "Recommended writing time in minutes."
+        },
+        "questionType": {
+          "type": "string",
+          "enum": ["Short Analytical", "Long Analytical", "Case Study"],
+          "description": "Subjective question classification."
+        },
+        "sourceTitle": {
+          "type": "string",
+          "description": "Reference source document title.",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "sourcePath": {
+          "type": "string",
+          "description": "Reference source PDF path or URL.",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "en": {
+          "type": "object",
+          "description": "English prompt, marks allocation, introduction, structured sections, and conclusion."
+        },
+        "ne": {
+          "type": "object",
+          "description": "Nepali prompt, marks allocation, introduction, structured sections, and conclusion."
+        },
+        "rubric": {
+          "type": "array",
+          "description": "Bilingual examiner evaluation criteria points."
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Admin Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when override was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest update."
+        }
+      },
+      "required": [
+        "id",
+        "isDeleted",
+        "paper",
+        "subject",
+        "postTarget",
+        "marks",
+        "recommendedMinutes",
+        "questionType",
+        "sourceTitle",
+        "sourcePath",
+        "en",
+        "ne",
+        "rubric",
+        "updatedBy",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -393,6 +681,18 @@
         "$ref": "#/entities/ItemStats"
       },
       "description": "Community view, like, and dislike counters updated atomically alongside UserItemReaction."
+    },
+    "/quizQuestions/{questionId}": {
+      "schema": {
+        "$ref": "#/entities/QuizQuestionOverride"
+      },
+      "description": "Publicly readable, admin-managed MCQ question overrides and additions."
+    },
+    "/writtenQuestions/{questionId}": {
+      "schema": {
+        "$ref": "#/entities/WrittenQuestionOverride"
+      },
+      "description": "Publicly readable, admin-managed written question overrides and additions."
     }
   }
 }

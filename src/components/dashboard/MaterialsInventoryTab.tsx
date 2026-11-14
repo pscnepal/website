@@ -25,6 +25,7 @@ import {
   type TableFilterDef,
 } from '../common/SharedDataTable';
 import { useDashboardSearch } from './DashboardLayout';
+import { copyWithToast } from '../../utils/clipboardHelpers';
 
 type MaterialTableRow = ReadingMaterialItem & {
   categoryName: string;
@@ -76,10 +77,14 @@ export function MaterialsInventoryTab() {
   }, [allItems, selectedCat, reactionFilter, userReactions, searchQuery]);
 
   const handleCopy = (fullUrl: string, id: string) => {
-    navigator.clipboard.writeText(fullUrl).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
+    void copyWithToast(fullUrl, 'Material link copied to clipboard.').then(
+      (ok) => {
+        if (ok) {
+          setCopiedId(id);
+          setTimeout(() => setCopiedId(null), 2000);
+        }
+      }
+    );
   };
 
   const columns: ColumnDef<MaterialTableRow>[] = useMemo(

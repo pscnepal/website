@@ -52,13 +52,20 @@ import {
 import {
   clearEnsuredProfileCache,
   fetchAllCloudItemStats,
+  fetchAllCloudQuizOverrides,
+  fetchAllCloudWrittenOverrides,
   fetchUserCloudReactions,
   fetchUserFlaggedQuestions,
   subscribeToCloudItemStats,
+  subscribeToCloudQuizOverrides,
+  subscribeToCloudWrittenOverrides,
   syncReactionAndStatsToFirestore,
   upsertFlaggedQuestionInFirestore,
 } from '../services/cloudSyncService';
+import { questionStorageService } from '../services/questionStorageService';
 import { storageService } from '../services/storageService';
+import { toast } from '../services/toastService';
+import { formatUserFriendlyError } from '../utils/errorHelpers';
 
 export const DASHBOARD_ADMIN_EMAIL = 'info.pscnepal@gmail.com';
 
@@ -342,12 +349,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     void (async () => {
       try {
-        const stats = await fetchAllCloudItemStats();
+        const [stats, quizOverrides, writtenOverrides] = await Promise.all([
+          fetchAllCloudItemStats(),
+          fetchAllCloudQuizOverrides(),
+          fetchAllCloudWrittenOverrides(),
+        ]);
         if (!cancelled) {
           dispatch(setCloudItemStats(stats));
+          questionStorageService.applyCloudQuizOverrides(quizOverrides);
+          questionStorageService.applyCloudWrittenOverrides(writtenOverrides);
         }
       } catch (err) {
-        console.error('Failed to load community item stats:', err);
+        console.error('Failed to load community item stats or question banks:', err);
+        if (!cancelled) {
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Could not load community view and rating counts.'
+            ),
+            { id: 'cloud-stats-load-err' }
+          );
+        }
       }
     })();
     return () => {
@@ -355,14 +377,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [dispatch]);
 
-  // Real-time community itemStats listener when user is authenticated
+  // Real-time community itemStats and question bank listeners when user is authenticated
   useEffect(() => {
     if (!isAuthReady || !user) return;
-    const unsubscribe = subscribeToCloudItemStats((stats) => {
-      dispatch(setCloudItemStats(stats));
-    });
+    const unsubscribeStats = subscribeToCloudItemStats(
+      (stats) => {
+        dispatch(setCloudItemStats(stats));
+      },
+      (err) => {
+        toast.error(
+          formatUserFriendlyError(
+            err,
+            'Live community ratings sync was interrupted.'
+          ),
+          { id: 'cloud-stats-sub-err' }
+        );
+      }
+    );
+    const unsubscribeQuizBank = subscribeToCloudQuizOverrides(
+      (overrides) => {
+        questionStorageService.applyCloudQuizOverrides(overrides);
+      },
+      (err) => {
+        console.error('Quiz bank live sync error:', err);
+      }
+    );
+    const unsubscribeWrittenBank = subscribeToCloudWrittenOverrides(
+      (overrides) => {
+        questionStorageService.applyCloudWrittenOverrides(overrides);
+      },
+      (err) => {
+        console.error('Written bank live sync error:', err);
+      }
+    );
     return () => {
-      unsubscribe();
+      unsubscribeStats();
+      unsubscribeQuizBank();
+      unsubscribeWrittenBank();
     };
   }, [isAuthReady, user, dispatch]);
 
@@ -377,9 +428,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (snap) => {
         if (!snap.exists()) {
           if (hadProfileSnap) {
-            setAuthError(
-              'Your account data was removed by an administrator. You have been signed out.'
-            );
+            const msg =
+              'Your account data was removed by an administrator. You have been signed out.';
+            setAuthError(msg);
+            toast.error(msg, {
+              id: 'auth-account-blocked',
+              title: 'Account Removed',
+              duration: 9000,
+            });
             syncedUidRef.current = null;
             clearEnsuredProfileCache(user.uid);
             storageService.clearLastCloudUid();
@@ -398,6 +454,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             typeof data.statusReason === 'string' ? data.statusReason : '';
           const blocked = new AccountBlockedError(data.status, reason);
           setAuthError(blocked.message);
+          toast.error(blocked.message, {
+            id: 'auth-account-blocked',
+            title:
+              data.status === 'banned' ? 'Account Banned' : 'Account Disabled',
+            duration: 9000,
+          });
           syncedUidRef.current = null;
           clearEnsuredProfileCache(user.uid);
           storageService.clearLastCloudUid();
@@ -408,6 +470,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       (error) => {
+        toast.error(
+          formatUserFriendlyError(
+            error,
+            'Unable to verify account status in real time.'
+          ),
+          { id: 'auth-profile-watch-err' }
+        );
         handleFirestoreError(error, OperationType.GET, userPath);
       }
     );
@@ -522,6 +591,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (err) {
           if (err instanceof AccountBlockedError) {
             setAuthError(err.message);
+            toast.error(err.message, {
+              id: 'auth-account-blocked',
+              title:
+                err.status === 'banned' ? 'Account Banned' : 'Account Disabled',
+              duration: 9000,
+            });
             syncedUidRef.current = null;
             clearEnsuredProfileCache(firebaseUser.uid);
             storageService.clearLastCloudUid();
@@ -532,6 +607,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
           }
           console.error('Failed to sync authenticated user data:', err);
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Could not sync your cloud study progress right now.'
+            ),
+            { id: 'auth-cloud-sync-err', title: 'Cloud Sync Error' }
+          );
         }
       })();
     });
@@ -549,9 +631,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const credential = await signInWithPopup(auth, googleProvider);
       setUser(credential.user);
+      const name =
+        credential.user.displayName || credential.user.email || 'your account';
+      toast.success(`Signed in as ${name}.`, {
+        id: 'auth-status',
+        title: 'Welcome Back',
+      });
       return credential.user;
     } catch (error) {
-      setAuthError(mapFirebaseAuthError(error));
+      const mapped = mapFirebaseAuthError(error);
+      setAuthError(mapped);
+      toast.error(mapped, {
+        id: 'auth-err',
+        title: 'Sign-In Unsuccessful',
+      });
       return null;
     } finally {
       setIsSigningIn(false);
@@ -571,8 +664,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       storageService.clearLocalFlaggedQuestionsOnly();
       dispatch(resetLocalUserReactions());
       dispatch(resetLocalQuizHistory());
+      toast.info('Signed out successfully.', { id: 'auth-status' });
     } catch (error) {
-      setAuthError(mapFirebaseAuthError(error));
+      const mapped = mapFirebaseAuthError(error);
+      setAuthError(mapped);
+      toast.error(mapped, {
+        id: 'auth-err',
+        title: 'Sign-Out Failed',
+      });
     }
   }, [dispatch]);
 

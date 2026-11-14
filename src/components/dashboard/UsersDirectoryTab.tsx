@@ -8,6 +8,7 @@ import {
   Edit3,
   Eye,
   EyeOff,
+  Flag,
   KeyRound,
   LayoutGrid,
   List,
@@ -42,6 +43,10 @@ import {
 } from '../common/SharedDataTable';
 import { SharedSearchSelect } from '../common/SharedSearchSelect';
 import { useDashboardSearch } from './DashboardLayout';
+import { toast } from '../../services/toastService';
+import { copyWithToast } from '../../utils/clipboardHelpers';
+import { formatUserFriendlyError } from '../../utils/errorHelpers';
+import { questionStorageService } from '../../services/questionStorageService';
 
 function formatShortDate(iso: string | null): string {
   if (!iso) return '—';
@@ -219,6 +224,14 @@ export function UsersDirectoryTab() {
     message: string;
   } | null>(null);
 
+  const questionPromptById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const q of questionStorageService.loadQuizQuestions()) {
+      map.set(q.id, q.question);
+    }
+    return map;
+  }, []);
+
   // Keep open dossier synced if user list refreshes
   useEffect(() => {
     if (!selectedUser) return;
@@ -301,15 +314,20 @@ export function UsersDirectoryTab() {
         phone: editPhone.trim(),
         adminNotes: editAdminNotes.trim(),
       });
+      const msg = `Updated account details for ${cleanName}.`;
       setActionBanner({
         type: 'success',
-        message: `Updated account details for ${cleanName}.`,
+        message: msg,
       });
+      toast.success(msg);
       setEditingUser(null);
     } catch (err) {
-      setEditError(
-        err instanceof Error ? err.message : 'Failed to update user details.'
+      const friendly = formatUserFriendlyError(
+        err,
+        'Failed to update user details.'
       );
+      setEditError(friendly);
+      toast.error(friendly);
     } finally {
       setIsSavingDetails(false);
     }
@@ -333,15 +351,20 @@ export function UsersDirectoryTab() {
           : statusAction.targetStatus === 'disabled'
             ? 'disabled'
             : 'restored to active';
+      const msg = `${statusAction.user.displayName} has been ${verb}.`;
       setActionBanner({
         type: 'success',
-        message: `${statusAction.user.displayName} has been ${verb}.`,
+        message: msg,
       });
+      toast.success(msg);
       setStatusAction(null);
     } catch (err) {
-      setStatusModalError(
-        err instanceof Error ? err.message : 'Failed to update account status.'
+      const friendly = formatUserFriendlyError(
+        err,
+        'Failed to update account status.'
       );
+      setStatusModalError(friendly);
+      toast.error(friendly);
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -364,14 +387,19 @@ export function UsersDirectoryTab() {
         setSelectedUser(null);
       }
       setDeletingUser(null);
+      const msg = `Deleted Firestore profile and study telemetry for ${targetName}.`;
       setActionBanner({
         type: 'success',
-        message: `Deleted Firestore profile and study telemetry for ${targetName}.`,
+        message: msg,
       });
+      toast.success(msg);
     } catch (err) {
-      setDeleteError(
-        err instanceof Error ? err.message : 'Failed to delete user record.'
+      const friendly = formatUserFriendlyError(
+        err,
+        'Failed to delete user record.'
       );
+      setDeleteError(friendly);
+      toast.error(friendly);
     } finally {
       setIsDeleting(false);
     }
@@ -383,18 +411,22 @@ export function UsersDirectoryTab() {
     setPasswordModalFeedback(null);
     try {
       await sendPasswordReset(passwordModalUser.email);
+      const msg = `Password reset / setup email dispatched to ${passwordModalUser.email}.`;
       setPasswordModalFeedback({
         type: 'success',
-        message: `Password reset / setup email dispatched to ${passwordModalUser.email}.`,
+        message: msg,
       });
+      toast.success(msg);
     } catch (err) {
+      const friendly = formatUserFriendlyError(
+        err,
+        'Unable to send password reset email.'
+      );
       setPasswordModalFeedback({
         type: 'error',
-        message:
-          err instanceof Error
-            ? err.message
-            : 'Unable to send password reset email.',
+        message: friendly,
       });
+      toast.error(friendly);
     } finally {
       setIsPasswordBusy(false);
     }
@@ -424,19 +456,25 @@ export function UsersDirectoryTab() {
       const result = await updateOwnPassword(newPassword);
       setNewPassword('');
       setConfirmPassword('');
+      const msg =
+        result === 'linked'
+          ? 'Email/password sign-in credential linked and password set for your account.'
+          : 'Your Firebase Auth password has been updated.';
       setPasswordModalFeedback({
         type: 'success',
-        message:
-          result === 'linked'
-            ? 'Email/password sign-in credential linked and password set for your account.'
-            : 'Your Firebase Auth password has been updated.',
+        message: msg,
       });
+      toast.success(msg);
     } catch (err) {
+      const friendly = formatUserFriendlyError(
+        err,
+        'Failed to update password.'
+      );
       setPasswordModalFeedback({
         type: 'error',
-        message:
-          err instanceof Error ? err.message : 'Failed to update password.',
+        message: friendly,
       });
+      toast.error(friendly);
     } finally {
       setIsPasswordBusy(false);
     }
@@ -605,7 +643,7 @@ export function UsersDirectoryTab() {
               color: 'zinc' as const,
               divider: true,
               onClick: () => {
-                navigator.clipboard.writeText(u.email);
+                void copyWithToast(u.email, `Copied ${u.email} to clipboard.`);
               },
             },
           ]
@@ -618,7 +656,7 @@ export function UsersDirectoryTab() {
         color: 'zinc',
         divider: !u.email,
         onClick: () => {
-          navigator.clipboard.writeText(u.uid);
+          void copyWithToast(u.uid, 'Copied Firebase UID to clipboard.');
         },
       },
     ];
@@ -1295,6 +1333,57 @@ export function UsersDirectoryTab() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <span className="font-mono font-semibold text-zinc-700 dark:text-zinc-300 block">
+                  Flagged Questions &amp; Reasons ({selectedUser.flaggedQuestions.length})
+                </span>
+                {selectedUser.flaggedQuestions.length === 0 ? (
+                  <p className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 text-zinc-500">
+                    No flagged questions recorded in Firestore for this user.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-zinc-100 dark:divide-zinc-800 rounded-lg border border-zinc-200/80 dark:border-zinc-800 overflow-hidden">
+                    {selectedUser.flaggedQuestions.map((flagItem) => {
+                      const promptText = questionPromptById.get(
+                        flagItem.questionId
+                      );
+                      return (
+                        <div
+                          key={flagItem.questionId}
+                          className="px-3 py-2.5 bg-zinc-50/70 dark:bg-zinc-950/70 space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Flag className="w-3 h-3 text-amber-500 shrink-0" />
+                              <span className="font-mono font-bold text-zinc-900 dark:text-zinc-100">
+                                {flagItem.questionId}
+                              </span>
+                              <span className="font-mono text-[10px] uppercase px-1.5 py-0.5 rounded bg-zinc-200/70 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                                {flagItem.source}
+                              </span>
+                            </div>
+                            <span className="text-[10.5px] text-zinc-400 font-mono shrink-0">
+                              {formatShortDate(flagItem.flaggedAt || null)}
+                            </span>
+                          </div>
+                          {promptText && (
+                            <p className="font-serif text-zinc-700 dark:text-zinc-300 line-clamp-1">
+                              {promptText}
+                            </p>
+                          )}
+                          <p className="text-[11px] text-amber-900 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60 px-2 py-1 rounded">
+                            Reason:{' '}
+                            {flagItem.reason?.trim() ||
+                              flagItem.note?.trim() ||
+                              'No reason recorded'}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

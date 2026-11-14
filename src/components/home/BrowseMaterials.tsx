@@ -27,6 +27,7 @@ import { createBookIdFromUrl, resolveSampleUrl } from '../../utils/urlHelpers';
 import { ReactionButtons } from '../common/ReactionButtons';
 import { BookCoverVector } from '../vectors/BookCoverVector';
 import studyParichayaDeskImg from '../../assets/images/study_parichaya_desk_1793889771100.jpg';
+import { copyWithToast } from '../../utils/clipboardHelpers';
 
 export function BrowseMaterials() {
   const { categoryId } = useParams<{ categoryId?: string }>();
@@ -148,14 +149,12 @@ export function BrowseMaterials() {
     itemId: string
   ) => {
     event.stopPropagation();
-    try {
-      await navigator.clipboard.writeText(fullUrl);
+    const ok = await copyWithToast(fullUrl, 'Material link copied to clipboard.');
+    if (ok) {
       setCopiedId(itemId);
       window.setTimeout(() => {
         setCopiedId((prev) => (prev === itemId ? null : prev));
       }, 1800);
-    } catch {
-      // Clipboard may be restricted in some iframe contexts; fail silently
     }
   };
 
