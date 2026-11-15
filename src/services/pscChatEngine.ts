@@ -4,14 +4,9 @@ import {
   type PscSyllabusPaper,
   type PscSyllabusTopic,
 } from '../data/pscSyllabusData';
-import {
-  ALL_QUIZ_QUESTIONS,
-  type QuizQuestion,
-} from '../data/quizData';
-import {
-  WRITTEN_QUESTIONS,
-  type WrittenQuestion,
-} from '../data/writtenQuestionsData';
+import type { QuizQuestion } from '../data/quizData';
+import type { WrittenQuestion } from '../data/writtenQuestionsData';
+import { questionStorageService } from './questionStorageService';
 
 export interface ClientStudyContext {
   currentPath?: string;
@@ -189,7 +184,7 @@ function handleCandidateProgress(clientContext?: ClientStudyContext): string {
 - **Examination Simulations**: **${simulationRunsCount} exam hall runs** completed in the [Simulation Hall](/simulate).
 - **Personal Library**: **${recentBooksCount} documents** opened in the [Reader & Library](/library).
 
-Keep up the disciplined preparation! All progress is securely saved in your browser storage.`;
+Keep up the disciplined preparation! Your cloud-synced progress and optional local cache stay ready for your next session.`;
 }
 
 // -------------------------------------------------------------
@@ -305,6 +300,8 @@ export function generatePscChatResponse(
   const query = userQuery.trim();
   const lowerQuery = query.toLowerCase();
   const keywords = extractKeywords(query);
+  const liveQuizQuestions = questionStorageService.loadQuizQuestions();
+  const liveWrittenQuestions = questionStorageService.loadWrittenQuestions();
 
   // 1. Starter Prompts & High-Priority Direct Patterns
   if (/about( psc nepal)?|who are you|mission|हाम्रो बारेमा/i.test(query)) {
@@ -317,7 +314,7 @@ export function generatePscChatResponse(
 - **Realistic Exam Hall Simulator**: Phase I OMR screening with -20% negative marking and Phase II Timed Written Hall (1.8 mins/mark) with rubric self-evaluation.
 - **Bilingual Model Answers**: Structured 5M and 10M subjective answers formatted in English and नेपाली.
 - **3D Flipbook Reader**: Two-page spread viewing of the Constitution 2072, Civil Service Act 2049, Local Government Operation Act 2074, and Nepal Parichaya.
-- **Local-First Privacy**: 100% of study progress, quiz scores, and bookmarks remain private in your browser.
+- **Cloud-First Sync & Privacy**: Sync your quiz history, flags, and study progress with your Google account in Cloud Firestore, backed by an optional local browser cache for offline access.
 
 Read more about our mission on the [About PSC Nepal Page](/about) or reach our editorial desk at \`info.pscnepal@gmail.com\`.`;
   }
@@ -337,13 +334,13 @@ Read more about our mission on the [About PSC Nepal Page](/about) or reach our e
     lowerQuery.includes('practice 3 psc mcqs')
   ) {
     // Pick 3 high-yield questions across Constitution, Governance, and Planning
-    const candidates = ALL_QUIZ_QUESTIONS.filter((q) =>
+    const candidates = liveQuizQuestions.filter((q) =>
       ['Constitution & Public Law', 'Governance & Civil Service', 'Economic Development & Planning'].includes(
         q.subject
       )
     ).slice(0, 3);
 
-    const questionsFormatted = (candidates.length > 0 ? candidates : ALL_QUIZ_QUESTIONS.slice(0, 3))
+    const questionsFormatted = (candidates.length > 0 ? candidates : liveQuizQuestions.slice(0, 3))
       .map((q, idx) => `#### Question ${idx + 1}:\n${formatQuizQuestionDetail(q)}`)
       .join('\n\n---\n\n');
 
@@ -354,8 +351,10 @@ Read more about our mission on the [About PSC Nepal Page](/about) or reach our e
     /bilingual.*(10m|model|answer|rubric)|psc-wr-201/i.test(lowerQuery) ||
     lowerQuery.includes('psc-wr-201')
   ) {
-    const targetWq = WRITTEN_QUESTIONS.find((w) => w.id === 'PSC-WR-201') || WRITTEN_QUESTIONS[0];
-    return formatWrittenQuestionDetail(targetWq);
+    const targetWq = liveWrittenQuestions.find((w) => w.id === 'PSC-WR-201') || liveWrittenQuestions[0];
+    if (targetWq) {
+      return formatWrittenQuestionDetail(targetWq);
+    }
   }
 
   if (
@@ -381,7 +380,7 @@ Read more about our mission on the [About PSC Nepal Page](/about) or reach our e
   // 2. Direct ID lookups (e.g., PSC-WR-*, PSC-CONST-*, etc.)
   const writtenIdMatch = query.toUpperCase().match(/PSC-WR-\d+/);
   if (writtenIdMatch) {
-    const found = WRITTEN_QUESTIONS.find((w) => w.id === writtenIdMatch[0]);
+    const found = liveWrittenQuestions.find((w) => w.id === writtenIdMatch[0]);
     if (found) {
       return formatWrittenQuestionDetail(found);
     }
@@ -389,7 +388,7 @@ Read more about our mission on the [About PSC Nepal Page](/about) or reach our e
 
   const quizIdMatch = query.toUpperCase().match(/PSC-[A-Z]+-\d+/);
   if (quizIdMatch) {
-    const found = ALL_QUIZ_QUESTIONS.find((q) => q.id === quizIdMatch[0]);
+    const found = liveQuizQuestions.find((q) => q.id === quizIdMatch[0]);
     if (found) {
       return formatQuizQuestionDetail(found);
     }
@@ -462,7 +461,7 @@ View all topics and checklists on the [Kharidar Syllabus Explorer](/syllabus/kha
 
   // 4. Constitution of Nepal (संविधान) specific inquiry
   if (/constitution|संविधान|2072|मौलिक हक|directive principles/i.test(query)) {
-    const relatedWritten = WRITTEN_QUESTIONS.find((w) =>
+    const relatedWritten = liveWrittenQuestions.find((w) =>
       w.en.title.toLowerCase().includes('constitution') || w.subject.toLowerCase().includes('constitutional')
     );
 
@@ -489,7 +488,7 @@ Read the complete official document in the [3D Constitution Flipbook](/read?samp
   // 5. General Search across Written Questions
   let bestWritten: WrittenQuestion | null = null;
   let bestWrittenScore = 0;
-  for (const wq of WRITTEN_QUESTIONS) {
+  for (const wq of liveWrittenQuestions) {
     const text = `${wq.id} ${wq.paper} ${wq.subject} ${wq.postTarget} ${wq.en.title} ${wq.en.question} ${wq.ne.title} ${wq.ne.question}`.toLowerCase();
     let score = 0;
     for (const kw of keywords) {
@@ -504,7 +503,7 @@ Read the complete official document in the [3D Constitution Flipbook](/read?samp
   // 6. General Search across MCQ Quiz Questions
   let bestQuiz: QuizQuestion | null = null;
   let bestQuizScore = 0;
-  for (const q of ALL_QUIZ_QUESTIONS) {
+  for (const q of liveQuizQuestions) {
     const text = `${q.id} ${q.subject} ${q.topic} ${q.subtopic} ${q.question} ${q.questionNe ?? ''} ${q.explanation} ${q.explanationNe ?? ''}`.toLowerCase();
     let score = 0;
     for (const kw of keywords) {

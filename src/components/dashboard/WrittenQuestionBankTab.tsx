@@ -15,7 +15,7 @@ import {
   WRITTEN_PAPERS,
   type WrittenQuestion,
 } from '../../data/writtenQuestionsData';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { useAppDispatch } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
 import {
   QUESTION_EVENTS,
@@ -40,14 +40,12 @@ import { formatUserFriendlyError } from '../../utils/errorHelpers';
 
 export function WrittenQuestionBankTab() {
   const dispatch = useAppDispatch();
-  const userReactions = useAppSelector((state) => state.reactions.userReactions);
   const [questions, setQuestions] = useState<WrittenQuestion[]>(() =>
     questionStorageService.loadWrittenQuestions()
   );
   const { searchQuery, setSearchQuery } = useDashboardSearch();
   const [paperFilter, setPaperFilter] = useState('all');
   const [marksFilter, setMarksFilter] = useState<'all' | '5' | '10'>('all');
-  const [reactionFilter, setReactionFilter] = useState<'all' | 'liked' | 'disliked' | 'unrated'>('all');
   const [selectedQuestion, setSelectedQuestion] = useState<WrittenQuestion | null>(null);
   const [modalLang, setModalLang] = useState<'bilingual' | 'en' | 'ne'>('bilingual');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -79,15 +77,6 @@ export function WrittenQuestionBankTab() {
       if (marksFilter !== 'all' && q.marks !== Number(marksFilter)) {
         return false;
       }
-      if (reactionFilter === 'liked' && userReactions[q.id] !== 'like') {
-        return false;
-      }
-      if (reactionFilter === 'disliked' && userReactions[q.id] !== 'dislike') {
-        return false;
-      }
-      if (reactionFilter === 'unrated' && userReactions[q.id]) {
-        return false;
-      }
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const matchesEn = (q.en.title + ' ' + q.en.question).toLowerCase().includes(query);
@@ -98,7 +87,7 @@ export function WrittenQuestionBankTab() {
       }
       return true;
     });
-  }, [questions, searchQuery, paperFilter, marksFilter, reactionFilter, userReactions]);
+  }, [questions, searchQuery, paperFilter, marksFilter]);
 
   const handleSaveQuestion = (saved: WrittenQuestion) => {
     try {
@@ -268,10 +257,10 @@ export function WrittenQuestionBankTab() {
       },
       {
         id: 'ratings',
-        header: 'Views & Ratings',
+        header: 'Views & Counts',
         width: 'w-44',
         render: (q) => (
-          <ReactionButtons itemId={q.id} itemType="question" size="xs" />
+          <ReactionButtons itemId={q.id} itemType="question" size="xs" readOnly />
         ),
       },
       {
@@ -380,33 +369,19 @@ export function WrittenQuestionBankTab() {
           { label: '5 Marks (9m)', value: '5' },
         ],
       },
-      {
-        id: 'rating',
-        label: 'Rating',
-        value: reactionFilter,
-        onChange: (val) => setReactionFilter(val as any),
-        options: [
-          { label: 'All Ratings', value: 'all' },
-          { label: 'Liked (★ Saved)', value: 'liked' },
-          { label: 'Disliked', value: 'disliked' },
-          { label: 'Unrated Only', value: 'unrated' },
-        ],
-      },
     ],
-    [paperFilter, marksFilter, reactionFilter]
+    [paperFilter, marksFilter, questions.length]
   );
 
   const isFiltered =
     paperFilter !== 'all' ||
     marksFilter !== 'all' ||
-    reactionFilter !== 'all' ||
     Boolean(searchQuery.trim());
 
   const handleResetFilters = () => {
     setSearchQuery('');
     setPaperFilter('all');
     setMarksFilter('all');
-    setReactionFilter('all');
   };
 
   return (
@@ -560,6 +535,17 @@ export function WrittenQuestionBankTab() {
 
             {/* Model Structure Preview */}
             <div className="space-y-4 pt-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-mono text-zinc-500 dark:text-zinc-400">
+                <span>Subject: {selectedQuestion.subject}</span>
+                <span>Post: {selectedQuestion.postTarget}</span>
+                <span>Type: {selectedQuestion.questionType}</span>
+                {selectedQuestion.sourceTitle && (
+                  <span className="break-all">
+                    Source: {selectedQuestion.sourceTitle} ({selectedQuestion.sourcePath})
+                  </span>
+                )}
+              </div>
+
               <div>
                 <h5 className="font-serif text-sm font-bold text-zinc-900 dark:text-zinc-100">
                   1. Official Introduction
@@ -595,7 +581,17 @@ export function WrittenQuestionBankTab() {
 
               <div>
                 <h5 className="font-serif text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                  3. Examiner Evaluation Rubric ({selectedQuestion.rubric.length} Criteria)
+                  3. Conclusion &amp; Way Forward
+                </h5>
+                <div className="mt-1 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed space-y-1.5">
+                  {modalLang !== 'ne' && <p>{selectedQuestion.en.conclusion}</p>}
+                  {modalLang !== 'en' && <p lang="ne">{selectedQuestion.ne.conclusion}</p>}
+                </div>
+              </div>
+
+              <div>
+                <h5 className="font-serif text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                  4. Examiner Evaluation Rubric ({selectedQuestion.rubric.length} Criteria)
                 </h5>
                 <div className="mt-2 divide-y divide-zinc-100 dark:divide-zinc-800/80 border-t border-b border-zinc-100 dark:border-zinc-800/80">
                   {selectedQuestion.rubric.map((r, rIdx) => (
@@ -624,6 +620,7 @@ export function WrittenQuestionBankTab() {
                 itemType="question"
                 size="sm"
                 showLabels
+                readOnly
               />
 
               <div className="flex items-center gap-2">

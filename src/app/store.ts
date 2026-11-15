@@ -25,7 +25,28 @@ import {
 } from '../services/cloudSyncService';
 import { storageService } from '../services/storageService';
 import { toast } from '../services/toastService';
-import { formatUserFriendlyError } from '../utils/errorHelpers';
+import {
+  formatUserFriendlyError,
+  isFirestoreOfflineError,
+} from '../utils/errorHelpers';
+
+function handleMiddlewareSyncError(
+  label: string,
+  err: unknown,
+  toastId: string,
+  fallback: string
+) {
+  if (isFirestoreOfflineError(err)) {
+    console.warn(`${label} (offline):`, err instanceof Error ? err.message : err);
+    toast.warning(
+      'Cloud database is offline. Changes are saved locally and will sync when reconnected.',
+      { id: 'firebase-offline', title: 'Offline Mode' }
+    );
+    return;
+  }
+  console.error(`${label}:`, err);
+  toast.error(formatUserFriendlyError(err, fallback), { id: toastId });
+}
 
 const rootReducer = combineReducers({
   reader: readerReducer,
@@ -78,13 +99,11 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
 
     if (action.type === 'quiz/clearQuizHistory') {
       void clearUserQuizAttemptsInFirestore(uid).catch((err) => {
-        console.error('Failed to clear cloud quiz attempts:', err);
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            'Cleared locally, but failed to clear cloud quiz history.'
-          ),
-          { id: 'cloud-clear-quiz-err' }
+        handleMiddlewareSyncError(
+          'Failed to clear cloud quiz attempts',
+          err,
+          'cloud-clear-quiz-err',
+          'Cleared locally, but failed to clear cloud quiz history.'
         );
       });
       return result;
@@ -100,13 +119,11 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
           }
         })
         .catch((err) => {
-          console.error('Failed to clear cloud reactions:', err);
-          toast.error(
-            formatUserFriendlyError(
-              err,
-              'Cleared locally, but failed to clear cloud reactions.'
-            ),
-            { id: 'cloud-clear-reactions-err' }
+          handleMiddlewareSyncError(
+            'Failed to clear cloud reactions',
+            err,
+            'cloud-clear-reactions-err',
+            'Cleared locally, but failed to clear cloud reactions.'
           );
         });
       return result;
@@ -157,13 +174,11 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
             }
           })
           .catch((err) => {
-            console.error('Cloud reaction sync failed:', err);
-            toast.error(
-              formatUserFriendlyError(
-                err,
-                'Your rating was saved locally, but cloud sync failed.'
-              ),
-              { id: 'cloud-reaction-sync-err' }
+            handleMiddlewareSyncError(
+              'Cloud reaction sync failed',
+              err,
+              'cloud-reaction-sync-err',
+              'Your rating was saved locally, but cloud sync failed.'
             );
           });
       } else if (isViewMutation) {
@@ -200,10 +215,11 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
               }
             })
             .catch((err) => {
-              console.error('Cloud view sync failed:', err);
-              toast.error(
-                formatUserFriendlyError(err, 'Could not sync view count to cloud.'),
-                { id: 'cloud-view-sync-err' }
+              handleMiddlewareSyncError(
+                'Cloud view sync failed',
+                err,
+                'cloud-view-sync-err',
+                'Could not sync view count to cloud.'
               );
             });
         }, 1200);

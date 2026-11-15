@@ -120,7 +120,9 @@ export function SharedSearchSelect({
   const [popoverPos, setPopoverPos] = useState<{
     top: number;
     left: number;
+    width?: number;
     minWidth?: number;
+    maxWidth?: number;
     ready: boolean;
   }>({ top: 0, left: 0, ready: false });
 
@@ -178,7 +180,18 @@ export function SharedSearchSelect({
           Math.max(margin, viewportH - popRect.height - margin)
         );
 
-    const effectiveWidth = Math.max(popRect.width, !popoverWidth ? triggerRect.width : 0);
+    const isMatchTriggerWidth = popoverWidth === 'w-full';
+    const maxAllowedWidth = Math.max(120, viewportW - margin * 2);
+    const targetWidth = isMatchTriggerWidth
+      ? Math.min(Math.round(triggerRect.width), maxAllowedWidth)
+      : undefined;
+
+    const effectiveWidth = targetWidth
+      ? targetWidth
+      : Math.min(
+          Math.max(popRect.width, !popoverWidth ? triggerRect.width : 0),
+          maxAllowedWidth
+        );
     let left =
       align === 'right'
         ? triggerRect.right - effectiveWidth
@@ -192,7 +205,11 @@ export function SharedSearchSelect({
     setPopoverPos({
       top: Math.round(top),
       left: Math.round(left),
-      minWidth: !popoverWidth ? Math.round(triggerRect.width) : undefined,
+      width: targetWidth,
+      minWidth: !popoverWidth
+        ? Math.min(Math.max(Math.round(triggerRect.width), 200), maxAllowedWidth)
+        : undefined,
+      maxWidth: maxAllowedWidth,
       ready: true,
     });
   }, [align, popoverWidth]);
@@ -310,7 +327,9 @@ export function SharedSearchSelect({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-block text-left ${className}`}
+      className={`relative max-w-full min-w-0 text-left ${
+        className.includes('w-full') ? 'block' : 'inline-block'
+      } ${className}`}
       onKeyDown={handleKeyDown}
     >
       {/* Optional Top Label */}
@@ -333,7 +352,7 @@ export function SharedSearchSelect({
         aria-expanded={isOpen}
         aria-label={ariaLabel || label || placeholder}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
-        className={`w-full flex items-center justify-between border transition-all text-left select-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-zinc-50 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-600/50 dark:focus:ring-blue-500/50 ${
+        className={`w-full min-w-0 overflow-hidden flex items-center justify-between border transition-all text-left select-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-zinc-50 dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-900 border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-600/50 dark:focus:ring-blue-500/50 ${
           isOpen
             ? 'ring-2 ring-blue-600/40 border-blue-500 dark:border-blue-500'
             : ''
@@ -388,11 +407,13 @@ export function SharedSearchSelect({
               position: 'fixed',
               top: popoverPos.top,
               left: popoverPos.left,
+              width: popoverPos.width,
               minWidth: popoverPos.minWidth,
+              maxWidth: popoverPos.maxWidth,
               visibility: popoverPos.ready ? 'visible' : 'hidden',
             }}
-            className={`z-[9999] min-w-[200px] ${
-              popoverWidth || ''
+            className={`z-[9999] ${
+              popoverWidth && popoverWidth !== 'w-full' ? popoverWidth : ''
             } rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl py-1 focus:outline-none ${popoverClassName}`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -444,7 +465,7 @@ export function SharedSearchSelect({
 
                 return (
                   <div
-                    key={opt.value}
+                    key={`${opt.value}__${idx}`}
                     role="option"
                     aria-selected={isSelected}
                     aria-disabled={isOptDisabled}

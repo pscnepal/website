@@ -16,7 +16,7 @@ import type {
   WrittenQuestionType,
 } from '../../data/writtenQuestionsData';
 import { WRITTEN_PAPERS } from '../../data/writtenQuestionsData';
-import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
+import { materialStorageService } from '../../services/materialStorageService';
 import { questionStorageService } from '../../services/questionStorageService';
 import { ActionButton } from '../common/ActionButton';
 import {
@@ -140,10 +140,18 @@ export function WrittenQuestionFormModal({
     return vals.map((v) => ({ value: v, label: v }));
   }, [liveBank]);
 
+  const liveMaterials = useMemo(() => {
+    if (!isOpen) return [];
+    return materialStorageService.loadMaterialCategories();
+  }, [isOpen]);
+
   const materialOptions = useMemo<SearchSelectOption[]>(() => {
     const items: SearchSelectOption[] = [];
-    for (const cat of READING_MATERIAL_CATEGORIES) {
+    const seenPaths = new Set<string>();
+    for (const cat of liveMaterials) {
       for (const item of cat.items) {
+        if (!item.path || seenPaths.has(item.path)) continue;
+        seenPaths.add(item.path);
         items.push({
           value: item.path,
           label: item.title,
@@ -157,14 +165,14 @@ export function WrittenQuestionFormModal({
       description: 'Link to an external official PDF or custom /materials/ path',
     });
     return items;
-  }, []);
+  }, [liveMaterials]);
 
   const isKnownMaterialPath = useMemo(() => {
     if (!sourcePath) return false;
-    return READING_MATERIAL_CATEGORIES.some((c) =>
+    return liveMaterials.some((c) =>
       c.items.some((i) => i.path === sourcePath)
     );
-  }, [sourcePath]);
+  }, [sourcePath, liveMaterials]);
 
   const showCustomSourceInput =
     forceCustomSourcePath || (Boolean(sourcePath.trim()) && !isKnownMaterialPath);
@@ -227,9 +235,9 @@ export function WrittenQuestionFormModal({
       }
     } else {
       const defaultMat =
-        READING_MATERIAL_CATEGORIES.flatMap((c) => c.items).find(
+        liveMaterials.flatMap((c) => c.items).find(
           (i) => i.id === 'law-constitution-2072'
-        ) || READING_MATERIAL_CATEGORIES[0]?.items[0];
+        ) || liveMaterials[0]?.items[0];
 
       setPaper('Paper II: Governance Systems');
       setSubject('Constitution & Fundamental Rights');
@@ -305,7 +313,7 @@ export function WrittenQuestionFormModal({
     }
     setForceCustomSourcePath(false);
     setSourcePath(nextVal);
-    const matched = READING_MATERIAL_CATEGORIES.flatMap((c) => c.items).find(
+    const matched = liveMaterials.flatMap((c) => c.items).find(
       (i) => i.path === nextVal
     );
     if (matched) {
@@ -449,6 +457,16 @@ export function WrittenQuestionFormModal({
       return;
     }
 
+    if (!sourcePath.trim()) {
+      setErrorMsg('Please select a source PDF or enter a valid custom PDF path.');
+      return;
+    }
+
+    if (!sourceTitle.trim()) {
+      setErrorMsg('Please provide a Source Citation Label for this written question.');
+      return;
+    }
+
     const filteredRubrics = rubrics
       .filter((r) => r.en.trim() || r.ne.trim())
       .map((r) => ({
@@ -490,10 +508,8 @@ export function WrittenQuestionFormModal({
         Math.max(1, Math.round(Number(recommendedMinutes) || (marks === 5 ? 9 : 18)))
       ),
       questionType,
-      sourceTitle:
-        sourceTitle.trim() || 'Official PSC Nepal Syllabus & Statutes',
-      sourcePath:
-        sourcePath.trim() || '/materials/constitution-of-nepal-2072.pdf',
+      sourceTitle: sourceTitle.trim(),
+      sourcePath: sourcePath.trim(),
       en: {
         title: titleEn,
         question: qTextEn,
@@ -535,7 +551,7 @@ export function WrittenQuestionFormModal({
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 z-10 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-4xl min-w-0 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 z-10 space-y-5 my-8 max-h-[90vh] overflow-y-auto overflow-x-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
           <div className="flex items-center gap-2">
@@ -580,8 +596,8 @@ export function WrittenQuestionFormModal({
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
+              <div className="min-w-0">
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5 truncate">
                   PSC Written Paper <span className="text-crimson-600">*</span>
                 </label>
                 <SharedSearchSelect
@@ -623,8 +639,8 @@ export function WrittenQuestionFormModal({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+              <div className="min-w-0">
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1 truncate">
                   Marks Weightage <span className="text-crimson-600">*</span>
                 </label>
                 <SharedSearchSelect
@@ -644,8 +660,8 @@ export function WrittenQuestionFormModal({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+              <div className="min-w-0">
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1 truncate">
                   Question Type <span className="text-crimson-600">*</span>
                 </label>
                 <SharedSearchSelect
@@ -659,8 +675,8 @@ export function WrittenQuestionFormModal({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
+              <div className="min-w-0">
+                <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1 truncate">
                   Recommended Time (Minutes) <span className="text-crimson-600">*</span>
                 </label>
                 <input
@@ -681,7 +697,7 @@ export function WrittenQuestionFormModal({
               2. Linked Source PDF &amp; Citation (Read Source PDF Button)
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                   Source Reading Material PDF <span className="text-crimson-600">*</span>
                 </label>
@@ -707,7 +723,7 @@ export function WrittenQuestionFormModal({
                 )}
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
                   Source Citation Label <span className="text-crimson-600">*</span>
                 </label>

@@ -649,6 +649,115 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "ReadingMaterialOverride": {
+      "title": "ReadingMaterialOverride",
+      "description": "Admin-managed study material creation, edit, or tombstone deletion synced across website and dashboard.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique reading material identifier.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "description": "Tombstone flag hiding deleted seed reading materials across devices."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Target reading collection slug identifier.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "categoryName": {
+          "type": "string",
+          "description": "Optional human-readable collection title for custom collections.",
+          "maxLength": 200
+        },
+        "categorySubtitle": {
+          "type": "string",
+          "description": "Optional subtitle for custom collections.",
+          "maxLength": 240
+        },
+        "categoryDescription": {
+          "type": "string",
+          "description": "Optional description for custom collections.",
+          "maxLength": 800
+        },
+        "title": {
+          "type": "string",
+          "description": "Study material document title.",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        "authority": {
+          "type": "string",
+          "description": "Publishing authority or statutory body.",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "codeOrEdition": {
+          "type": "string",
+          "description": "Edition, statute code, or official approval date.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "pages": {
+          "type": "number",
+          "description": "Approximate or exact document page count."
+        },
+        "path": {
+          "type": "string",
+          "description": "Direct PDF URL or relative /materials/ path.",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "description": {
+          "type": "string",
+          "description": "Summary of contents and PSC exam relevance.",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "externalSourceUrl": {
+          "type": "string",
+          "description": "Optional official government source link.",
+          "maxLength": 1000
+        },
+        "updatedBy": {
+          "type": "string",
+          "description": "Admin Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when override was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest update."
+        }
+      },
+      "required": [
+        "id",
+        "isDeleted",
+        "categoryId",
+        "title",
+        "authority",
+        "codeOrEdition",
+        "pages",
+        "path",
+        "description",
+        "updatedBy",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -693,6 +802,12 @@
         "$ref": "#/entities/WrittenQuestionOverride"
       },
       "description": "Publicly readable, admin-managed written question overrides and additions."
+    },
+    "/readingMaterials/{materialId}": {
+      "schema": {
+        "$ref": "#/entities/ReadingMaterialOverride"
+      },
+      "description": "Publicly readable, admin-managed reading material overrides and additions."
     }
   }
 }

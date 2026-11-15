@@ -13,7 +13,7 @@ import {
   type QuizOptionKey,
   type QuizQuestion,
 } from '../../data/quizData';
-import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
+import { materialStorageService } from '../../services/materialStorageService';
 import { questionStorageService } from '../../services/questionStorageService';
 import { ActionButton } from '../common/ActionButton';
 import {
@@ -193,12 +193,20 @@ export function QuizQuestionFormModal({
     return vals.map((v) => ({ value: v, label: v }));
   }, [liveBank]);
 
+  const liveMaterials = useMemo(() => {
+    if (!isOpen) return [];
+    return materialStorageService.loadMaterialCategories();
+  }, [isOpen]);
+
   const materialOptions = useMemo<SearchSelectOption[]>(() => {
     const items: SearchSelectOption[] = [
       { value: '', label: 'None (No linked source PDF)' },
     ];
-    for (const cat of READING_MATERIAL_CATEGORIES) {
+    const seenPaths = new Set<string>();
+    for (const cat of liveMaterials) {
       for (const item of cat.items) {
+        if (!item.path || seenPaths.has(item.path)) continue;
+        seenPaths.add(item.path);
         items.push({
           value: item.path,
           label: item.title,
@@ -212,14 +220,14 @@ export function QuizQuestionFormModal({
       description: 'Link to an external official PDF or custom /materials/ path',
     });
     return items;
-  }, []);
+  }, [liveMaterials]);
 
   const isKnownMaterialPath = useMemo(() => {
     if (!sourcePath) return true;
-    return READING_MATERIAL_CATEGORIES.some((c) =>
+    return liveMaterials.some((c) =>
       c.items.some((i) => i.path === sourcePath)
     );
-  }, [sourcePath]);
+  }, [sourcePath, liveMaterials]);
 
   const showCustomSourceInput =
     forceCustomSourcePath || (Boolean(sourcePath.trim()) && !isKnownMaterialPath);
@@ -268,7 +276,7 @@ export function QuizQuestionFormModal({
     } else {
       const defaultSubject = 'Geography of Nepal';
       const firstMatch = liveBank.find((q) => q.subject === defaultSubject);
-      const firstMat = READING_MATERIAL_CATEGORIES.flatMap((c) => c.items).find(
+      const firstMat = liveMaterials.flatMap((c) => c.items).find(
         (m) => m.id === 'nepal-parichaya-13th-edition-2082'
       );
 
@@ -380,7 +388,7 @@ export function QuizQuestionFormModal({
     if (!nextVal) {
       return;
     }
-    const matchedItem = READING_MATERIAL_CATEGORIES.flatMap((c) => c.items).find(
+    const matchedItem = liveMaterials.flatMap((c) => c.items).find(
       (i) => i.path === nextVal
     );
     if (matchedItem) {
@@ -480,11 +488,9 @@ export function QuizQuestionFormModal({
       return;
     }
 
-    const compiledOptions = QUIZ_OPTION_KEYS.map((k) => ({
+    const compiledOptions = filledOptions.map((k) => ({
       key: k,
-      text:
-        options[k].trim() ||
-        (languageOnlyMode === 'ne' ? `विकल्प ${k}` : `Option ${k}`),
+      text: options[k].trim(),
       ...(isBilingualSubject && optionsNe[k].trim()
         ? { textNe: optionsNe[k].trim() }
         : {}),
@@ -539,7 +545,7 @@ export function QuizQuestionFormModal({
         aria-hidden="true"
       />
 
-      <div className="relative w-full max-w-3xl bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 z-10 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-3xl min-w-0 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 z-10 space-y-5 my-8 max-h-[90vh] overflow-y-auto overflow-x-hidden">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
           <div className="flex items-center gap-2">
@@ -647,8 +653,8 @@ export function QuizQuestionFormModal({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
-              <div>
-                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1 truncate">
                   Topic Slug ID
                 </label>
                 <input
@@ -659,8 +665,8 @@ export function QuizQuestionFormModal({
                   className="w-full text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
-              <div>
-                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1 truncate">
                   Subtopic Slug ID
                 </label>
                 <input
@@ -671,8 +677,8 @@ export function QuizQuestionFormModal({
                   className="w-full text-xs font-mono rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
-              <div>
-                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1 truncate">
                   Difficulty <span className="text-crimson-600">*</span>
                 </label>
                 <SharedSearchSelect
@@ -685,8 +691,8 @@ export function QuizQuestionFormModal({
                   popoverWidth="w-full"
                 />
               </div>
-              <div>
-                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1">
+              <div className="min-w-0">
+                <label className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1 truncate">
                   Marks Weightage <span className="text-crimson-600">*</span>
                 </label>
                 <input
@@ -744,7 +750,7 @@ export function QuizQuestionFormModal({
                 searchPlaceholder="Search groups..."
                 customOptionLabel="+ Custom group..."
               />
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-2 min-w-0">
                 <SelectOrCustomField
                   label="Target Post"
                   required
@@ -959,7 +965,7 @@ export function QuizQuestionFormModal({
               4. Linked Study Document &amp; Citation (Read Source PDF Link)
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+              <div className="min-w-0 space-y-1.5">
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                   Source Reading Material PDF
                 </label>
@@ -985,7 +991,7 @@ export function QuizQuestionFormModal({
                 )}
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-1">
                   Source Citation Label (Displayed on PDF Link)
                 </label>

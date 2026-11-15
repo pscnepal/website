@@ -62,8 +62,8 @@ export function SelectOrCustomField({
   const selectValue = showCustomInput ? CUSTOM_SENTINEL : value;
 
   return (
-    <div className="space-y-1.5">
-      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+    <div className="min-w-0 w-full space-y-1.5">
+      <label className="block text-xs font-semibold text-zinc-700 dark:text-zinc-300 truncate">
         {label} {required && <span className="text-crimson-600">*</span>}
       </label>
 

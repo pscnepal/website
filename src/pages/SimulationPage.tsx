@@ -21,10 +21,11 @@ import {
   type BookletKey,
 } from '../components/simulation/ExamSimulationDialog';
 import type { PscCadreId } from '../data/pscSyllabusData';
+import type { WrittenQuestion } from '../data/writtenQuestionsData';
 import {
-  WRITTEN_QUESTIONS,
-  type WrittenQuestion,
-} from '../data/writtenQuestionsData';
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../services/questionStorageService';
 import { clearSimulationHistory } from '../features/psc/pscSlice';
 import type { WrittenLanguageMode } from '../features/written/writtenSlice';
 import {
@@ -63,10 +64,25 @@ export function SimulationPage() {
   }, [modeParam, presetParam]);
 
   const [activeTab, setActiveTab] = useState<SimulatorTab>(derivedTab);
+  const [writtenQuestions, setWrittenQuestions] = useState<WrittenQuestion[]>(
+    () => questionStorageService.loadWrittenQuestions()
+  );
 
   useEffect(() => {
     setActiveTab(derivedTab);
   }, [derivedTab]);
+
+  useEffect(() => {
+    const syncWritten = () => {
+      setWrittenQuestions(questionStorageService.loadWrittenQuestions());
+    };
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+    window.addEventListener('storage', syncWritten);
+    return () => {
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+      window.removeEventListener('storage', syncWritten);
+    };
+  }, []);
 
   // ---------------- CANDIDATE SETUP & PRESETS ----------------
   const defaultOmrPresetId = useMemo(() => {
@@ -596,7 +612,7 @@ export function SimulationPage() {
                   {WRITTEN_PRESETS.map((preset) => {
                     const isSelected = preset.id === selectedWrittenPreset.id;
                     const qItems = preset.questionIds
-                      .map((id) => WRITTEN_QUESTIONS.find((q) => q.id === id))
+                      .map((id) => writtenQuestions.find((q) => q.id === id))
                       .filter((q): q is WrittenQuestion => Boolean(q));
                     const totalM = qItems.reduce((s, q) => s + q.marks, 0);
 

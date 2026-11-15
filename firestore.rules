@@ -635,5 +635,93 @@ service cloud.firestore {
         ]);
       allow delete: if isAdmin() && isValidId(questionId);
     }
+
+    // Entity Validation Blueprint: ReadingMaterialOverride
+    function isValidReadingMaterialOverride(data, materialId) {
+      return data.keys().hasAll([
+        'id',
+        'isDeleted',
+        'categoryId',
+        'title',
+        'authority',
+        'codeOrEdition',
+        'pages',
+        'path',
+        'description',
+        'updatedBy',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'id',
+          'isDeleted',
+          'categoryId',
+          'categoryName',
+          'categorySubtitle',
+          'categoryDescription',
+          'title',
+          'authority',
+          'codeOrEdition',
+          'pages',
+          'path',
+          'description',
+          'externalSourceUrl',
+          'updatedBy',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == materialId
+        && data.isDeleted is bool
+        && data.categoryId is string && data.categoryId.size() >= 1 && data.categoryId.size() <= 128
+        && (!('categoryName' in data) || (data.categoryName is string && data.categoryName.size() <= 200))
+        && (!('categorySubtitle' in data) || (data.categorySubtitle is string && data.categorySubtitle.size() <= 240))
+        && (!('categoryDescription' in data) || (data.categoryDescription is string && data.categoryDescription.size() <= 800))
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 300
+        && data.authority is string && data.authority.size() >= 1 && data.authority.size() <= 240
+        && data.codeOrEdition is string && data.codeOrEdition.size() >= 1 && data.codeOrEdition.size() <= 160
+        && data.pages is number && data.pages >= 1 && data.pages <= 5000
+        && data.path is string && data.path.size() >= 1 && data.path.size() <= 1000
+        && data.description is string && data.description.size() >= 1 && data.description.size() <= 2000
+        && (!('externalSourceUrl' in data) || (data.externalSourceUrl is string && data.externalSourceUrl.size() <= 1000))
+        && isValidId(data.updatedBy)
+        && data.updatedBy == request.auth.uid
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Public Non-PII Admin-Managed Reading Material Overrides
+    match /readingMaterials/{materialId} {
+      allow get: if isValidId(materialId);
+      allow list: if existing().isDeleted in [true, false];
+      allow create: if isAdmin()
+        && isValidId(materialId)
+        && isValidReadingMaterialOverride(incoming(), materialId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(materialId)
+        && isValidReadingMaterialOverride(incoming(), materialId)
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'isDeleted',
+          'categoryId',
+          'categoryName',
+          'categorySubtitle',
+          'categoryDescription',
+          'title',
+          'authority',
+          'codeOrEdition',
+          'pages',
+          'path',
+          'description',
+          'externalSourceUrl',
+          'updatedBy',
+          'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(materialId);
+    }
   }
 }

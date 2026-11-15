@@ -192,7 +192,7 @@ export function Footer() {
             study &amp; exam preparation platform.
           </span>
           <span>
-            Zero server uploads · All progress saved in local browser storage.
+            Cloud-first sync with Google · Optional offline local cache.
           </span>
         </div>
       </div>

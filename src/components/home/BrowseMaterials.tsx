@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,13 +16,20 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
-import { ALL_QUIZ_QUESTIONS } from '../../data/quizData';
-import {
-  READING_MATERIAL_CATEGORIES,
-  type ReadingMaterialCategory,
-  type ReadingMaterialItem,
+import type { QuizQuestion } from '../../data/quizData';
+import type {
+  ReadingMaterialCategory,
+  ReadingMaterialItem,
 } from '../../data/readingMaterials';
-import { WRITTEN_QUESTIONS } from '../../data/writtenQuestionsData';
+import type { WrittenQuestion } from '../../data/writtenQuestionsData';
+import {
+  MATERIAL_EVENTS,
+  materialStorageService,
+} from '../../services/materialStorageService';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../../services/questionStorageService';
 import { createBookIdFromUrl, resolveSampleUrl } from '../../utils/urlHelpers';
 import { ReactionButtons } from '../common/ReactionButtons';
 import { BookCoverVector } from '../vectors/BookCoverVector';
@@ -39,10 +46,43 @@ export function BrowseMaterials() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(() =>
+    questionStorageService.loadQuizQuestions()
+  );
+  const [writtenQuestions, setWrittenQuestions] = useState<WrittenQuestion[]>(
+    () => questionStorageService.loadWrittenQuestions()
+  );
+
+  const [categories, setCategories] = useState<ReadingMaterialCategory[]>(() =>
+    materialStorageService.loadMaterialCategories()
+  );
+
+  useEffect(() => {
+    const syncQuiz = () =>
+      setQuizQuestions(questionStorageService.loadQuizQuestions());
+    const syncWritten = () =>
+      setWrittenQuestions(questionStorageService.loadWrittenQuestions());
+    const syncMaterials = () =>
+      setCategories(materialStorageService.loadMaterialCategories());
+    window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, syncQuiz);
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+    window.addEventListener(MATERIAL_EVENTS.CHANGED, syncMaterials);
+    window.addEventListener('storage', syncQuiz);
+    window.addEventListener('storage', syncWritten);
+    window.addEventListener('storage', syncMaterials);
+    return () => {
+      window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, syncQuiz);
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+      window.removeEventListener(MATERIAL_EVENTS.CHANGED, syncMaterials);
+      window.removeEventListener('storage', syncQuiz);
+      window.removeEventListener('storage', syncWritten);
+      window.removeEventListener('storage', syncMaterials);
+    };
+  }, []);
 
   const quizCountBySourcePath = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const q of ALL_QUIZ_QUESTIONS) {
+    for (const q of quizQuestions) {
       if (q.sourcePath) {
         map[q.sourcePath] = (map[q.sourcePath] ?? 0) + 1;
         const resolved = resolveSampleUrl(q.sourcePath);
@@ -52,11 +92,11 @@ export function BrowseMaterials() {
       }
     }
     return map;
-  }, []);
+  }, [quizQuestions]);
 
   const writtenCountBySourcePath = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const q of WRITTEN_QUESTIONS) {
+    for (const q of writtenQuestions) {
       if (q.sourcePath) {
         map[q.sourcePath] = (map[q.sourcePath] ?? 0) + 1;
         const resolved = resolveSampleUrl(q.sourcePath);
@@ -66,15 +106,15 @@ export function BrowseMaterials() {
       }
     }
     return map;
-  }, []);
+  }, [writtenQuestions]);
 
   const selectedCategory: ReadingMaterialCategory | null = useMemo(
     () =>
       categoryId
-        ? READING_MATERIAL_CATEGORIES.find((cat) => cat.id === categoryId) ??
+        ? categories.find((cat) => cat.id === categoryId) ??
           null
         : null,
-    [categoryId]
+    [categoryId, categories]
   );
 
   const isUnknownCategory = Boolean(categoryId && !selectedCategory);
@@ -237,8 +277,8 @@ export function BrowseMaterials() {
               </span>
             ) : (
               <span>
-                {READING_MATERIAL_CATEGORIES.length} collections ·{' '}
-                {READING_MATERIAL_CATEGORIES.reduce(
+                {categories.length} collections ·{' '}
+                {categories.reduce(
                   (acc, cat) => acc + cat.items.length,
                   0
                 )}{' '}
@@ -277,7 +317,7 @@ export function BrowseMaterials() {
               transition={transitionProps}
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
-              {READING_MATERIAL_CATEGORIES.map((category, index) => {
+              {categories.map((category, index) => {
                 const totalCategoryPages = category.items.reduce(
                   (sum, item) => sum + item.pages,
                   0
@@ -402,7 +442,7 @@ export function BrowseMaterials() {
                     aria-label="Reading material collections"
                     className="max-w-full overflow-x-auto flex items-center gap-1 p-1 rounded-lg bg-zinc-200/70 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800"
                   >
-                    {READING_MATERIAL_CATEGORIES.map((cat) => {
+                    {categories.map((cat) => {
                       const isActive = cat.id === selectedCategory.id;
                       return (
                         <button

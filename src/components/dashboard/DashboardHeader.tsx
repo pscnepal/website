@@ -49,8 +49,8 @@ const TAB_TITLES: Record<
     category: 'Question Banks',
   },
   flagged: {
-    title: 'Flagged for Review',
-    subtitle: 'High-priority questions bookmarked during quiz & exam sittings',
+    title: 'User Flag Reports',
+    subtitle: 'Question flags, total counts & reasons submitted by aspirants',
     category: 'Question Banks',
   },
   'written-bank': {
@@ -70,7 +70,7 @@ const TAB_TITLES: Record<
   },
   data: {
     title: 'Data, Backup & Export',
-    subtitle: 'Manage local browser study progress and offline archives',
+    subtitle: 'Manage cloud-synced workspace data, exports & optional local cache',
     category: 'System',
   },
 };
@@ -204,8 +204,8 @@ export function DashboardHeader({
             },
             {
               id: 'flagged',
-              label: 'Flagged for Review',
-              description: 'Saved tricky questions & revision notes',
+              label: 'User Flag Reports',
+              description: 'User-submitted flags & reasons',
               icon: Bookmark,
               color: 'amber',
               to: '/dashboard/flagged',

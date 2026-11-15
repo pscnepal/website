@@ -2,6 +2,7 @@ import React from 'react';
 import { Eye, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { useAuth } from '../../context/AuthContext';
 import {
   selectItemReactionData,
   toggleDislike,
@@ -15,6 +16,7 @@ export interface ReactionButtonsProps {
   size?: 'xs' | 'sm' | 'md';
   showLabels?: boolean;
   showViews?: boolean;
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -24,27 +26,32 @@ export function ReactionButtons({
   size = 'sm',
   showLabels = false,
   showViews = true,
+  readOnly = false,
   className = '',
 }: ReactionButtonsProps) {
   const dispatch = useAppDispatch();
+  const { isDashboardAdmin } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
   const { likes, dislikes, views, userReaction } = useAppSelector((state) =>
     selectItemReactionData(state, itemId, itemType)
   );
 
-  const isLiked = userReaction === 'like';
-  const isDisliked = userReaction === 'dislike';
+  const isCountOnly = Boolean(readOnly || isDashboardAdmin);
+  const isLiked = !isCountOnly && userReaction === 'like';
+  const isDisliked = !isCountOnly && userReaction === 'dislike';
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    if (isCountOnly) return;
     dispatch(toggleLike({ itemId, itemType }));
   };
 
   const handleDislike = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    if (isCountOnly) return;
     dispatch(toggleDislike({ itemId, itemType }));
   };
 
@@ -89,57 +96,97 @@ export function ReactionButtons({
         </span>
       )}
 
-      {/* Like Button */}
-      <motion.button
-        type="button"
-        onClick={handleLike}
-        aria-pressed={isLiked}
-        aria-label={`Helpful / Like ${itemType} (${likes} likes)`}
-        title={isLiked ? 'Unlike this item' : `Mark as helpful (${likes} likes)`}
-        whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}
-        transition={motionTransition}
-        className={`inline-flex items-center gap-1.5 rounded-lg border transition-all cursor-pointer select-none font-medium ${paddingClass} ${textSizeClass} ${
-          isLiked
-            ? 'border-emerald-300 dark:border-emerald-700/80 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-semibold shadow-2xs'
-            : 'border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60'
-        } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600`}
-      >
-        <ThumbsUp
-          className={`${iconSizeClass} transition-transform ${
-            isLiked
-              ? 'fill-emerald-600 dark:fill-emerald-400 text-emerald-600 dark:text-emerald-400'
-              : 'text-zinc-500 dark:text-zinc-400'
-          }`}
-        />
-        <span className="font-mono tabular-nums leading-none">{likes}</span>
-        {showLabels && <span className="hidden sm:inline font-sans font-normal">Like</span>}
-      </motion.button>
+      {isCountOnly ? (
+        <>
+          {/* Read-only Likes Count */}
+          <span
+            aria-label={`${likes.toLocaleString()} total likes`}
+            title={`${likes.toLocaleString()} total likes`}
+            className={`inline-flex items-center gap-1.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 select-none font-medium ${paddingClass} ${textSizeClass}`}
+          >
+            <ThumbsUp className={`${iconSizeClass} text-emerald-600/80 dark:text-emerald-400/80`} />
+            <span className="font-mono tabular-nums leading-none">
+              {formatCompactCount(likes)}
+            </span>
+            {showLabels && (
+              <span className="hidden sm:inline font-sans font-normal text-zinc-400">
+                Likes
+              </span>
+            )}
+          </span>
 
-      {/* Dislike Button */}
-      <motion.button
-        type="button"
-        onClick={handleDislike}
-        aria-pressed={isDisliked}
-        aria-label={`Unhelpful / Dislike ${itemType} (${dislikes} dislikes)`}
-        title={isDisliked ? 'Remove dislike' : `Report or mark unhelpful (${dislikes} dislikes)`}
-        whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}
-        transition={motionTransition}
-        className={`inline-flex items-center gap-1.5 rounded-lg border transition-all cursor-pointer select-none font-medium ${paddingClass} ${textSizeClass} ${
-          isDisliked
-            ? 'border-rose-300 dark:border-rose-700/80 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-semibold shadow-2xs'
-            : 'border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60'
-        } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600`}
-      >
-        <ThumbsDown
-          className={`${iconSizeClass} transition-transform ${
-            isDisliked
-              ? 'fill-rose-600 dark:fill-rose-400 text-rose-600 dark:text-rose-400'
-              : 'text-zinc-500 dark:text-zinc-400'
-          }`}
-        />
-        <span className="font-mono tabular-nums leading-none">{dislikes}</span>
-        {showLabels && <span className="hidden sm:inline font-sans font-normal">Dislike</span>}
-      </motion.button>
+          {/* Read-only Dislikes Count */}
+          <span
+            aria-label={`${dislikes.toLocaleString()} total dislikes`}
+            title={`${dislikes.toLocaleString()} total dislikes`}
+            className={`inline-flex items-center gap-1.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 select-none font-medium ${paddingClass} ${textSizeClass}`}
+          >
+            <ThumbsDown className={`${iconSizeClass} text-rose-600/80 dark:text-rose-400/80`} />
+            <span className="font-mono tabular-nums leading-none">
+              {formatCompactCount(dislikes)}
+            </span>
+            {showLabels && (
+              <span className="hidden sm:inline font-sans font-normal text-zinc-400">
+                Dislikes
+              </span>
+            )}
+          </span>
+        </>
+      ) : (
+        <>
+          {/* Like Button */}
+          <motion.button
+            type="button"
+            onClick={handleLike}
+            aria-pressed={isLiked}
+            aria-label={`Helpful / Like ${itemType} (${likes} likes)`}
+            title={isLiked ? 'Unlike this item' : `Mark as helpful (${likes} likes)`}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}
+            transition={motionTransition}
+            className={`inline-flex items-center gap-1.5 rounded-lg border transition-all cursor-pointer select-none font-medium ${paddingClass} ${textSizeClass} ${
+              isLiked
+                ? 'border-emerald-300 dark:border-emerald-700/80 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 font-semibold shadow-2xs'
+                : 'border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60'
+            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600`}
+          >
+            <ThumbsUp
+              className={`${iconSizeClass} transition-transform ${
+                isLiked
+                  ? 'fill-emerald-600 dark:fill-emerald-400 text-emerald-600 dark:text-emerald-400'
+                  : 'text-zinc-500 dark:text-zinc-400'
+              }`}
+            />
+            <span className="font-mono tabular-nums leading-none">{likes}</span>
+            {showLabels && <span className="hidden sm:inline font-sans font-normal">Like</span>}
+          </motion.button>
+
+          {/* Dislike Button */}
+          <motion.button
+            type="button"
+            onClick={handleDislike}
+            aria-pressed={isDisliked}
+            aria-label={`Unhelpful / Dislike ${itemType} (${dislikes} dislikes)`}
+            title={isDisliked ? 'Remove dislike' : `Report or mark unhelpful (${dislikes} dislikes)`}
+            whileTap={shouldReduceMotion ? undefined : { scale: 0.92 }}
+            transition={motionTransition}
+            className={`inline-flex items-center gap-1.5 rounded-lg border transition-all cursor-pointer select-none font-medium ${paddingClass} ${textSizeClass} ${
+              isDisliked
+                ? 'border-rose-300 dark:border-rose-700/80 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-semibold shadow-2xs'
+                : 'border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60'
+            } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600`}
+          >
+            <ThumbsDown
+              className={`${iconSizeClass} transition-transform ${
+                isDisliked
+                  ? 'fill-rose-600 dark:fill-rose-400 text-rose-600 dark:text-rose-400'
+                  : 'text-zinc-500 dark:text-zinc-400'
+              }`}
+            />
+            <span className="font-mono tabular-nums leading-none">{dislikes}</span>
+            {showLabels && <span className="hidden sm:inline font-sans font-normal">Dislike</span>}
+          </motion.button>
+        </>
+      )}
     </div>
   );
 }

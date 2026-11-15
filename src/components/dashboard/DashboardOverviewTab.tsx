@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
-  Bookmark,
   Database,
+  Flag,
   HelpCircle,
   PenLine,
   Users,
@@ -11,8 +11,11 @@ import {
 import { useAppSelector } from '../../app/hooks';
 import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import { ActionButton } from '../common/ActionButton';
-import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
-import { storageService } from '../../services/storageService';
+import type { ReadingMaterialCategory } from '../../data/readingMaterials';
+import {
+  MATERIAL_EVENTS,
+  materialStorageService,
+} from '../../services/materialStorageService';
 import {
   QUESTION_EVENTS,
   questionStorageService,
@@ -52,41 +55,50 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
     }
   };
 
-  const [flaggedCount, setFlaggedCount] = useState<number>(() => {
-    return Object.keys(storageService.loadFlaggedQuestions()).length;
-  });
   const [quizCount, setQuizCount] = useState<number>(() => {
     return questionStorageService.loadQuizQuestions().length;
   });
   const [writtenCount, setWrittenCount] = useState<number>(() => {
     return questionStorageService.loadWrittenQuestions().length;
   });
+  const [materialCategories, setMaterialCategories] = useState<
+    ReadingMaterialCategory[]
+  >(() => materialStorageService.loadMaterialCategories());
+
+  const flaggedCount = useMemo(
+    () =>
+      dbUsers.reduce(
+        (sum, dbUser) => sum + (dbUser.flaggedQuestions?.length ?? 0),
+        0
+      ),
+    [dbUsers]
+  );
 
   useEffect(() => {
-    const handleSync = () => {
-      setFlaggedCount(Object.keys(storageService.loadFlaggedQuestions()).length);
-    };
     const handleSyncQuiz = () => {
       setQuizCount(questionStorageService.loadQuizQuestions().length);
     };
     const handleSyncWritten = () => {
       setWrittenCount(questionStorageService.loadWrittenQuestions().length);
     };
+    const handleSyncMaterials = () => {
+      setMaterialCategories(materialStorageService.loadMaterialCategories());
+    };
 
-    window.addEventListener('psc_flagged_questions_changed', handleSync);
     window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuiz);
     window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncWritten);
-    window.addEventListener('storage', handleSync);
+    window.addEventListener(MATERIAL_EVENTS.CHANGED, handleSyncMaterials);
     window.addEventListener('storage', handleSyncQuiz);
     window.addEventListener('storage', handleSyncWritten);
+    window.addEventListener('storage', handleSyncMaterials);
 
     return () => {
-      window.removeEventListener('psc_flagged_questions_changed', handleSync);
       window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuiz);
       window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncWritten);
-      window.removeEventListener('storage', handleSync);
+      window.removeEventListener(MATERIAL_EVENTS.CHANGED, handleSyncMaterials);
       window.removeEventListener('storage', handleSyncQuiz);
       window.removeEventListener('storage', handleSyncWritten);
+      window.removeEventListener('storage', handleSyncMaterials);
     };
   }, []);
 
@@ -94,26 +106,29 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
   const writtenRecords = useAppSelector((state) => state.written.records);
   const simulationRuns = useAppSelector((state) => state.psc.simulationHistory);
   const targetCadreId = useAppSelector((state) => state.psc.targetCadreId);
-  const userReactions = useAppSelector((state) => state.reactions.userReactions);
+  const cloudStats = useAppSelector((state) => state.reactions.cloudStats);
 
-  const totalLiked = useMemo(() => {
-    return Object.values(userReactions).filter((r) => r === 'like').length;
-  }, [userReactions]);
+  const totalCommunityLikes = useMemo(() => {
+    return Object.values(cloudStats).reduce(
+      (sum, item) => sum + (item.likes || 0),
+      0
+    );
+  }, [cloudStats]);
 
   // Compute aggregate statistics
   const totalMaterialsCount = useMemo(() => {
-    return READING_MATERIAL_CATEGORIES.reduce(
+    return materialCategories.reduce(
       (sum, cat) => sum + cat.items.length,
       0
     );
-  }, []);
+  }, [materialCategories]);
 
   const totalPagesCount = useMemo(() => {
-    return READING_MATERIAL_CATEGORIES.reduce(
+    return materialCategories.reduce(
       (sum, cat) => sum + cat.items.reduce((s, it) => s + it.pages, 0),
       0
     );
-  }, []);
+  }, [materialCategories]);
 
   const masteredWrittenCount = useMemo(() => {
     return Object.values(writtenRecords).filter(
@@ -164,15 +179,15 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
           >
             <div className="flex items-center justify-between text-zinc-500 dark:text-zinc-400">
               <span className="text-xs font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
-                Flagged for Review
+                User Flag Reports
               </span>
-              <Bookmark className="w-4 h-4 text-amber-500 fill-amber-500" />
+              <Flag className="w-4 h-4 text-amber-500" />
             </div>
             <p className="font-mono tabular-nums text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">
-              {flaggedCount}
+              {isUsersLoading ? '—' : flaggedCount}
             </p>
             <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-              Review saved questions &rarr;
+              Review user-submitted flags &rarr;
             </p>
           </button>
 
@@ -292,10 +307,10 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
 
             <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 col-span-2 sm:col-span-1">
               <span className="text-zinc-500 dark:text-zinc-400 block font-sans">
-                Saved for Revision
+                Community Likes
               </span>
-              <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
-                {totalLiked}
+              <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                {totalCommunityLikes}
               </span>
             </div>
           </div>

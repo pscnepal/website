@@ -18,6 +18,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocFromCache,
   getDocs,
   limit,
   onSnapshot,
@@ -48,24 +49,31 @@ import {
   googleProvider,
   handleFirestoreError,
   OperationType,
+  reportFirestoreSnapshotError,
 } from '../lib/firebase';
 import {
   clearEnsuredProfileCache,
   fetchAllCloudItemStats,
+  fetchAllCloudMaterialOverrides,
   fetchAllCloudQuizOverrides,
   fetchAllCloudWrittenOverrides,
   fetchUserCloudReactions,
   fetchUserFlaggedQuestions,
   subscribeToCloudItemStats,
+  subscribeToCloudMaterialOverrides,
   subscribeToCloudQuizOverrides,
   subscribeToCloudWrittenOverrides,
   syncReactionAndStatsToFirestore,
   upsertFlaggedQuestionInFirestore,
 } from '../services/cloudSyncService';
+import { materialStorageService } from '../services/materialStorageService';
 import { questionStorageService } from '../services/questionStorageService';
 import { storageService } from '../services/storageService';
 import { toast } from '../services/toastService';
-import { formatUserFriendlyError } from '../utils/errorHelpers';
+import {
+  formatUserFriendlyError,
+  isFirestoreOfflineError,
+} from '../utils/errorHelpers';
 
 export const DASHBOARD_ADMIN_EMAIL = 'info.pscnepal@gmail.com';
 
@@ -141,6 +149,29 @@ export class AccountBlockedError extends Error {
   }
 }
 
+async function getDocWithOfflineResilience(userRef: ReturnType<typeof doc>) {
+  try {
+    return await getDoc(userRef);
+  } catch (error) {
+    if (!isFirestoreOfflineError(error)) {
+      throw error;
+    }
+
+    try {
+      return await getDocFromCache(userRef);
+    } catch {
+      // Cache miss; wait briefly in case initial Firestore channel is still connecting
+    }
+
+    if (typeof navigator === 'undefined' || navigator.onLine !== false) {
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      return await getDoc(userRef);
+    }
+
+    throw error;
+  }
+}
+
 export async function ensureUserProfileDoc(user: User): Promise<void> {
   const userPath = `users/${user.uid}`;
   const userRef = doc(db, 'users', user.uid);
@@ -148,7 +179,7 @@ export async function ensureUserProfileDoc(user: User): Promise<void> {
 
   let snap;
   try {
-    snap = await getDoc(userRef);
+    snap = await getDocWithOfflineResilience(userRef);
   } catch (error) {
     handleFirestoreError(error, OperationType.GET, userPath);
   }
@@ -167,7 +198,7 @@ export async function ensureUserProfileDoc(user: User): Promise<void> {
       handleFirestoreError(error, OperationType.CREATE, userPath);
     }
   } else {
-    const existingData = snap.data();
+    const existingData = snap.data() as Record<string, unknown>;
     const existingStatus = existingData.status;
     if (existingStatus === 'banned' || existingStatus === 'disabled') {
       const reason =
@@ -180,14 +211,31 @@ export async function ensureUserProfileDoc(user: User): Promise<void> {
     const patch: Record<string, unknown> = {
       lastLoginAt: serverTimestamp(),
     };
+    let hasProfileBackfill = false;
     if (!existingData.displayName && fields.displayName) {
       patch.displayName = fields.displayName;
+      hasProfileBackfill = true;
     }
     if (!existingData.email && fields.email) {
       patch.email = fields.email;
+      hasProfileBackfill = true;
     }
     if (!existingData.photoURL && fields.photoURL) {
       patch.photoURL = fields.photoURL;
+      hasProfileBackfill = true;
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      return;
+    }
+
+    if (!hasProfileBackfill) {
+      void updateDoc(userRef, patch).catch((error) => {
+        if (!isFirestoreOfflineError(error)) {
+          reportFirestoreSnapshotError(error, OperationType.UPDATE, userPath);
+        }
+      });
+      return;
     }
 
     try {
@@ -343,54 +391,140 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const syncedUidRef = useRef<string | null>(null);
+  const syncingUidRef = useRef<string | null>(null);
+  const needsPublicCloudReloadRef = useRef(false);
 
-  // Load public non-PII community itemStats (views, likes, dislikes) once on mount for guests
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const [stats, quizOverrides, writtenOverrides] = await Promise.all([
+  const loadPublicCloudData = useCallback(
+    async (isCancelled?: () => boolean) => {
+      const [statsRes, quizRes, writtenRes, materialsRes] =
+        await Promise.allSettled([
           fetchAllCloudItemStats(),
           fetchAllCloudQuizOverrides(),
           fetchAllCloudWrittenOverrides(),
+          fetchAllCloudMaterialOverrides(),
         ]);
-        if (!cancelled) {
-          dispatch(setCloudItemStats(stats));
-          questionStorageService.applyCloudQuizOverrides(quizOverrides);
-          questionStorageService.applyCloudWrittenOverrides(writtenOverrides);
-        }
-      } catch (err) {
-        console.error('Failed to load community item stats or question banks:', err);
-        if (!cancelled) {
-          toast.error(
-            formatUserFriendlyError(
-              err,
-              'Could not load community view and rating counts.'
-            ),
-            { id: 'cloud-stats-load-err' }
-          );
-        }
+      if (isCancelled?.()) return;
+
+      let hadOfflineFailure = false;
+
+      if (statsRes.status === 'fulfilled') {
+        dispatch(setCloudItemStats(statsRes.value));
+      } else if (isFirestoreOfflineError(statsRes.reason)) {
+        hadOfflineFailure = true;
+        console.warn('Deferred community item stats load while offline.');
+      } else {
+        console.error('Failed to load community item stats:', statsRes.reason);
+        toast.error(
+          formatUserFriendlyError(
+            statsRes.reason,
+            'Could not load community view and rating counts.'
+          ),
+          { id: 'cloud-stats-load-err' }
+        );
       }
-    })();
+
+      if (quizRes.status === 'fulfilled') {
+        questionStorageService.applyCloudQuizOverrides(quizRes.value);
+      } else if (isFirestoreOfflineError(quizRes.reason)) {
+        hadOfflineFailure = true;
+        console.warn('Deferred cloud MCQ bank load while offline.');
+      } else {
+        console.error('Failed to load cloud MCQ bank overrides:', quizRes.reason);
+        toast.error(
+          formatUserFriendlyError(
+            quizRes.reason,
+            'Could not load updated MCQ question bank from cloud. Using cached questions.'
+          ),
+          { id: 'cloud-quiz-load-err' }
+        );
+      }
+
+      if (writtenRes.status === 'fulfilled') {
+        questionStorageService.applyCloudWrittenOverrides(writtenRes.value);
+      } else if (isFirestoreOfflineError(writtenRes.reason)) {
+        hadOfflineFailure = true;
+        console.warn('Deferred cloud written bank load while offline.');
+      } else {
+        console.error('Failed to load cloud written bank overrides:', writtenRes.reason);
+        toast.error(
+          formatUserFriendlyError(
+            writtenRes.reason,
+            'Could not load updated written question bank from cloud. Using cached questions.'
+          ),
+          { id: 'cloud-written-load-err' }
+        );
+      }
+
+      if (materialsRes.status === 'fulfilled') {
+        materialStorageService.applyCloudMaterialOverrides(materialsRes.value);
+      } else if (isFirestoreOfflineError(materialsRes.reason)) {
+        hadOfflineFailure = true;
+        console.warn('Deferred cloud reading materials load while offline.');
+      } else {
+        console.error(
+          'Failed to load cloud reading materials overrides:',
+          materialsRes.reason
+        );
+        toast.error(
+          formatUserFriendlyError(
+            materialsRes.reason,
+            'Could not load updated reading materials catalog from cloud. Using cached catalog.'
+          ),
+          { id: 'cloud-materials-load-err' }
+        );
+      }
+
+      needsPublicCloudReloadRef.current = hadOfflineFailure;
+      if (hadOfflineFailure) {
+        toast.warning(
+          'Cloud database is currently offline. Using locally cached data until reconnected.',
+          { id: 'firebase-offline', title: 'Offline Mode' }
+        );
+      }
+    },
+    [dispatch]
+  );
+
+  // Load public non-PII community itemStats and question banks independently on mount
+  useEffect(() => {
+    let cancelled = false;
+    void loadPublicCloudData(() => cancelled);
     return () => {
       cancelled = true;
     };
-  }, [dispatch]);
+  }, [loadPublicCloudData]);
 
-  // Real-time community itemStats and question bank listeners when user is authenticated
+  // Real-time community itemStats, question banks, and reading materials listeners when user is authenticated
   useEffect(() => {
     if (!isAuthReady || !user) return;
+    const handleLiveSyncError = (
+      label: string,
+      err: unknown,
+      toastId: string,
+      fallbackMsg: string
+    ) => {
+      if (isFirestoreOfflineError(err)) {
+        console.warn(`${label} paused while offline.`);
+        toast.warning(
+          'Cloud connection interrupted. Changes are saved locally and will sync when back online.',
+          { id: 'firebase-offline', title: 'Offline Mode' }
+        );
+        return;
+      }
+      console.error(`${label}:`, err);
+      toast.error(formatUserFriendlyError(err, fallbackMsg), { id: toastId });
+    };
+
     const unsubscribeStats = subscribeToCloudItemStats(
       (stats) => {
         dispatch(setCloudItemStats(stats));
       },
       (err) => {
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            'Live community ratings sync was interrupted.'
-          ),
-          { id: 'cloud-stats-sub-err' }
+        handleLiveSyncError(
+          'Community stats live sync error',
+          err,
+          'cloud-stats-sub-err',
+          'Live community ratings sync was interrupted.'
         );
       }
     );
@@ -399,7 +533,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         questionStorageService.applyCloudQuizOverrides(overrides);
       },
       (err) => {
-        console.error('Quiz bank live sync error:', err);
+        handleLiveSyncError(
+          'Quiz bank live sync error',
+          err,
+          'cloud-quiz-sub-err',
+          'Live MCQ question bank sync was interrupted.'
+        );
       }
     );
     const unsubscribeWrittenBank = subscribeToCloudWrittenOverrides(
@@ -407,13 +546,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         questionStorageService.applyCloudWrittenOverrides(overrides);
       },
       (err) => {
-        console.error('Written bank live sync error:', err);
+        handleLiveSyncError(
+          'Written bank live sync error',
+          err,
+          'cloud-written-sub-err',
+          'Live written question bank sync was interrupted.'
+        );
+      }
+    );
+    const unsubscribeMaterials = subscribeToCloudMaterialOverrides(
+      (overrides) => {
+        materialStorageService.applyCloudMaterialOverrides(overrides);
+      },
+      (err) => {
+        handleLiveSyncError(
+          'Reading materials live sync error',
+          err,
+          'cloud-materials-sub-err',
+          'Live reading materials catalog sync was interrupted.'
+        );
       }
     );
     return () => {
       unsubscribeStats();
       unsubscribeQuizBank();
       unsubscribeWrittenBank();
+      unsubscribeMaterials();
     };
   }, [isAuthReady, user, dispatch]);
 
@@ -470,6 +628,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
       (error) => {
+        reportFirestoreSnapshotError(error, OperationType.GET, userPath);
+        if (isFirestoreOfflineError(error)) {
+          toast.warning(
+            'Cloud connection interrupted. Using cached session until reconnected.',
+            { id: 'firebase-offline', title: 'Offline Mode' }
+          );
+          return;
+        }
         toast.error(
           formatUserFriendlyError(
             error,
@@ -477,11 +643,153 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ),
           { id: 'auth-profile-watch-err' }
         );
-        handleFirestoreError(error, OperationType.GET, userPath);
       }
     );
     return () => unsubscribe();
   }, [isAuthReady, user, dispatch]);
+
+  const syncAuthenticatedUser = useCallback(
+    async (firebaseUser: User) => {
+      if (!firebaseUser.emailVerified) {
+        syncedUidRef.current = firebaseUser.uid;
+        return;
+      }
+      if (
+        syncedUidRef.current === firebaseUser.uid ||
+        syncingUidRef.current === firebaseUser.uid
+      ) {
+        return;
+      }
+
+      syncingUidRef.current = firebaseUser.uid;
+      try {
+        await ensureUserProfileDoc(firebaseUser);
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
+
+        const previousCloudUid = storageService.getLastCloudUid();
+        if (previousCloudUid && previousCloudUid !== firebaseUser.uid) {
+          storageService.clearLocalFlaggedQuestionsOnly();
+          dispatch(resetLocalUserReactions());
+          dispatch(resetLocalQuizHistory());
+        }
+        storageService.setLastCloudUid(firebaseUser.uid);
+
+        // 1. Sync Quiz & OMR Attempts
+        const remoteAttempts = await fetchUserQuizAttempts(firebaseUser.uid);
+        if (remoteAttempts.length > 0) {
+          dispatch(mergeRemoteQuizAttempts(remoteAttempts));
+        }
+
+        // 2. Sync Flagged Questions & Revision Notes (two-way merge)
+        const cloudFlags = await fetchUserFlaggedQuestions(firebaseUser.uid);
+        const { toPushToCloud } =
+          storageService.mergeCloudFlaggedQuestions(cloudFlags);
+        for (const flagRecord of toPushToCloud) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          await upsertFlaggedQuestionInFirestore(firebaseUser.uid, flagRecord);
+        }
+
+        // 3. Sync User Reactions & Views (two-way merge + community stats sync)
+        const cloudReactions = await fetchUserCloudReactions(firebaseUser.uid);
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
+        dispatch(hydrateUserCloudReactions(cloudReactions));
+
+        // Push any offline/guest reactions or views not yet reflected in Firestore
+        const localReactionsState = store.getState().reactions;
+        const candidateIds = new Set<string>([
+          ...Object.keys(localReactionsState.userReactions),
+          ...Object.keys(localReactionsState.itemViews),
+        ]);
+
+        let pushedAny = false;
+        for (const itemId of candidateIds) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+
+          const localReaction =
+            localReactionsState.userReactions[itemId] ?? 'none';
+          const cloudReaction = cloudReactions.userReactions[itemId] ?? 'none';
+          const localViews = localReactionsState.itemViews[itemId] ?? 0;
+          const cloudViews = cloudReactions.itemViews[itemId] ?? 0;
+          const finalViews = Math.max(localViews, cloudViews);
+
+          if (localReaction !== cloudReaction || localViews > cloudViews) {
+            const itemType = resolveReactionItemType(
+              itemId,
+              localReactionsState.itemTypes[itemId]
+            );
+            const ack = await syncReactionAndStatsToFirestore({
+              userId: firebaseUser.uid,
+              itemId,
+              itemType,
+              targetReaction: localReaction,
+              targetUserViews: finalViews,
+            });
+            if (auth.currentUser?.uid === firebaseUser.uid) {
+              dispatch(applyItemSyncAck(ack));
+            }
+            pushedAny = true;
+          }
+        }
+
+        if (pushedAny && auth.currentUser?.uid === firebaseUser.uid) {
+          const refreshedStats = await fetchAllCloudItemStats();
+          if (auth.currentUser?.uid === firebaseUser.uid) {
+            dispatch(setCloudItemStats(refreshedStats));
+          }
+        }
+
+        if (auth.currentUser?.uid === firebaseUser.uid) {
+          syncedUidRef.current = firebaseUser.uid;
+        }
+      } catch (err) {
+        if (err instanceof AccountBlockedError) {
+          setAuthError(err.message);
+          toast.error(err.message, {
+            id: 'auth-account-blocked',
+            title:
+              err.status === 'banned' ? 'Account Banned' : 'Account Disabled',
+            duration: 9000,
+          });
+          syncedUidRef.current = null;
+          clearEnsuredProfileCache(firebaseUser.uid);
+          storageService.clearLastCloudUid();
+          storageService.clearLocalFlaggedQuestionsOnly();
+          dispatch(resetLocalUserReactions());
+          dispatch(resetLocalQuizHistory());
+          void signOut(auth);
+          return;
+        }
+
+        syncedUidRef.current = null;
+
+        if (isFirestoreOfflineError(err)) {
+          console.warn(
+            'Authenticated user cloud sync deferred while offline:',
+            err instanceof Error ? err.message : err
+          );
+          toast.warning(
+            'Cloud database is currently offline. Local progress is saved and will sync automatically when reconnected.',
+            { id: 'firebase-offline', title: 'Offline Mode' }
+          );
+          return;
+        }
+
+        console.error('Failed to sync authenticated user data:', err);
+        toast.error(
+          formatUserFriendlyError(
+            err,
+            'Could not sync your cloud study progress right now.'
+          ),
+          { id: 'auth-cloud-sync-err', title: 'Cloud Sync Error' }
+        );
+      } finally {
+        if (syncingUidRef.current === firebaseUser.uid) {
+          syncingUidRef.current = null;
+        }
+      }
+    },
+    [dispatch]
+  );
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -491,6 +799,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!firebaseUser) {
         const previousCloudUid = storageService.getLastCloudUid();
         syncedUidRef.current = null;
+        syncingUidRef.current = null;
         clearEnsuredProfileCache();
         if (previousCloudUid) {
           storageService.clearLastCloudUid();
@@ -503,123 +812,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (syncedUidRef.current === firebaseUser.uid) {
-        return;
-      }
-      syncedUidRef.current = firebaseUser.uid;
-
-      void (async () => {
-        try {
-          if (!firebaseUser.emailVerified) {
-            return;
-          }
-
-          await ensureUserProfileDoc(firebaseUser);
-          if (auth.currentUser?.uid !== firebaseUser.uid) return;
-
-          const previousCloudUid = storageService.getLastCloudUid();
-          if (previousCloudUid && previousCloudUid !== firebaseUser.uid) {
-            storageService.clearLocalFlaggedQuestionsOnly();
-            dispatch(resetLocalUserReactions());
-            dispatch(resetLocalQuizHistory());
-          }
-          storageService.setLastCloudUid(firebaseUser.uid);
-
-          // 1. Sync Quiz & OMR Attempts
-          const remoteAttempts = await fetchUserQuizAttempts(firebaseUser.uid);
-          if (remoteAttempts.length > 0) {
-            dispatch(mergeRemoteQuizAttempts(remoteAttempts));
-          }
-
-          // 2. Sync Flagged Questions & Revision Notes (two-way merge)
-          const cloudFlags = await fetchUserFlaggedQuestions(firebaseUser.uid);
-          const { toPushToCloud } = storageService.mergeCloudFlaggedQuestions(cloudFlags);
-          for (const flagRecord of toPushToCloud) {
-            if (auth.currentUser?.uid !== firebaseUser.uid) return;
-            await upsertFlaggedQuestionInFirestore(firebaseUser.uid, flagRecord);
-          }
-
-          // 3. Sync User Reactions & Views (two-way merge + community stats sync)
-          const cloudReactions = await fetchUserCloudReactions(firebaseUser.uid);
-          if (auth.currentUser?.uid !== firebaseUser.uid) return;
-          dispatch(hydrateUserCloudReactions(cloudReactions));
-
-          // Push any offline/guest reactions or views not yet reflected in Firestore
-          const localReactionsState = store.getState().reactions;
-          const candidateIds = new Set<string>([
-            ...Object.keys(localReactionsState.userReactions),
-            ...Object.keys(localReactionsState.itemViews),
-          ]);
-
-          let pushedAny = false;
-          for (const itemId of candidateIds) {
-            if (auth.currentUser?.uid !== firebaseUser.uid) return;
-
-            const localReaction =
-              localReactionsState.userReactions[itemId] ?? 'none';
-            const cloudReaction =
-              cloudReactions.userReactions[itemId] ?? 'none';
-            const localViews = localReactionsState.itemViews[itemId] ?? 0;
-            const cloudViews = cloudReactions.itemViews[itemId] ?? 0;
-            const finalViews = Math.max(localViews, cloudViews);
-
-            if (localReaction !== cloudReaction || localViews > cloudViews) {
-              const itemType = resolveReactionItemType(
-                itemId,
-                localReactionsState.itemTypes[itemId]
-              );
-              const ack = await syncReactionAndStatsToFirestore({
-                userId: firebaseUser.uid,
-                itemId,
-                itemType,
-                targetReaction: localReaction,
-                targetUserViews: finalViews,
-              });
-              if (auth.currentUser?.uid === firebaseUser.uid) {
-                dispatch(applyItemSyncAck(ack));
-              }
-              pushedAny = true;
-            }
-          }
-
-          if (pushedAny && auth.currentUser?.uid === firebaseUser.uid) {
-            const refreshedStats = await fetchAllCloudItemStats();
-            if (auth.currentUser?.uid === firebaseUser.uid) {
-              dispatch(setCloudItemStats(refreshedStats));
-            }
-          }
-        } catch (err) {
-          if (err instanceof AccountBlockedError) {
-            setAuthError(err.message);
-            toast.error(err.message, {
-              id: 'auth-account-blocked',
-              title:
-                err.status === 'banned' ? 'Account Banned' : 'Account Disabled',
-              duration: 9000,
-            });
-            syncedUidRef.current = null;
-            clearEnsuredProfileCache(firebaseUser.uid);
-            storageService.clearLastCloudUid();
-            storageService.clearLocalFlaggedQuestionsOnly();
-            dispatch(resetLocalUserReactions());
-            dispatch(resetLocalQuizHistory());
-            void signOut(auth);
-            return;
-          }
-          console.error('Failed to sync authenticated user data:', err);
-          toast.error(
-            formatUserFriendlyError(
-              err,
-              'Could not sync your cloud study progress right now.'
-            ),
-            { id: 'auth-cloud-sync-err', title: 'Cloud Sync Error' }
-          );
-        }
-      })();
+      void syncAuthenticatedUser(firebaseUser);
     });
 
     return () => unsubscribe();
-  }, [dispatch]);
+  }, [dispatch, syncAuthenticatedUser]);
+
+  // Automatically retry deferred cloud sync once browser connectivity returns
+  useEffect(() => {
+    const handleOnline = () => {
+      if (needsPublicCloudReloadRef.current) {
+        void loadPublicCloudData();
+      }
+      const activeUser = auth.currentUser;
+      if (activeUser && syncedUidRef.current !== activeUser.uid) {
+        void syncAuthenticatedUser(activeUser);
+      }
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [loadPublicCloudData, syncAuthenticatedUser]);
 
   const clearAuthError = useCallback(() => {
     setAuthError(null);

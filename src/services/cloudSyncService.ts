@@ -30,8 +30,10 @@ import {
   googleProvider,
   handleFirestoreError,
   OperationType,
+  reportFirestoreSnapshotError,
 } from '../lib/firebase';
 import type { QuizDifficulty, QuizOptionKey, QuizQuestion } from '../data/quizData';
+import type { ReadingMaterialItem } from '../data/readingMaterials';
 import {
   WRITTEN_PAPERS,
   type BilingualRubricPoint,
@@ -195,10 +197,10 @@ export function subscribeToCloudItemStats(
       onData(map);
     },
     (error) => {
+      reportFirestoreSnapshotError(error, OperationType.LIST, path);
       if (onError) {
         onError(error);
       }
-      handleFirestoreError(error, OperationType.LIST, path);
     }
   );
 }
@@ -950,10 +952,10 @@ export function subscribeToAdminUsersDirectory(
         });
     },
     (error) => {
+      reportFirestoreSnapshotError(error, OperationType.LIST, path);
       if (onError) {
         onError(error);
       }
-      handleFirestoreError(error, OperationType.LIST, path);
     }
   );
 
@@ -1487,10 +1489,10 @@ export function subscribeToCloudQuizOverrides(
       onData(items);
     },
     (error) => {
+      reportFirestoreSnapshotError(error, OperationType.LIST, path);
       if (onError) {
         onError(error);
       }
-      handleFirestoreError(error, OperationType.LIST, path);
     }
   );
 }
@@ -1686,10 +1688,10 @@ export function subscribeToCloudWrittenOverrides(
       onData(items);
     },
     (error) => {
+      reportFirestoreSnapshotError(error, OperationType.LIST, path);
       if (onError) {
         onError(error);
       }
-      handleFirestoreError(error, OperationType.LIST, path);
     }
   );
 }
@@ -1836,6 +1838,265 @@ export async function resetAllWrittenOverridesInFirestore(): Promise<void> {
   try {
     const q = query(
       collection(db, 'writtenQuestions'),
+      where('isDeleted', 'in', [true, false]),
+      limit(500)
+    );
+    snapshot = await getDocs(q);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+
+  if (snapshot.empty) return;
+
+  try {
+    for (let i = 0; i < snapshot.docs.length; i += 400) {
+      const batch = writeBatch(db);
+      snapshot.docs.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+// ============================================================================
+// READING MATERIALS CLOUD SYNC (OVERRIDES / ADDITIONS / DELETIONS)
+// ============================================================================
+
+export interface CloudMaterialOverride {
+  material: ReadingMaterialItem;
+  categoryId: string;
+  categoryName?: string;
+  categorySubtitle?: string;
+  categoryDescription?: string;
+  isDeleted: boolean;
+  updatedAtMs: number;
+}
+
+export interface UpsertMaterialPayload {
+  item: ReadingMaterialItem;
+  categoryId: string;
+  categoryName?: string;
+  categorySubtitle?: string;
+  categoryDescription?: string;
+}
+
+function parseMaterialOverrideDoc(
+  docId: string,
+  data: Record<string, unknown>
+): CloudMaterialOverride | null {
+  const id = String(data.id ?? docId).trim();
+  if (!id) return null;
+
+  const pagesNum = Math.round(Number(data.pages) || 1);
+  const externalSourceUrl =
+    typeof data.externalSourceUrl === 'string' && data.externalSourceUrl.trim()
+      ? data.externalSourceUrl.trim()
+      : undefined;
+
+  const material: ReadingMaterialItem = {
+    id,
+    title: String(data.title ?? 'Untitled Study Material'),
+    authority: String(data.authority ?? 'Public Service Commission, Nepal'),
+    codeOrEdition: String(data.codeOrEdition ?? 'Official Release'),
+    pages: Math.min(5000, Math.max(1, pagesNum)),
+    path: String(data.path ?? ''),
+    description: String(data.description ?? ''),
+    ...(externalSourceUrl ? { externalSourceUrl } : {}),
+  };
+
+  return {
+    material,
+    categoryId: String(data.categoryId ?? 'official-psc-syllabi').trim() || 'official-psc-syllabi',
+    ...(typeof data.categoryName === 'string' && data.categoryName.trim()
+      ? { categoryName: data.categoryName.trim() }
+      : {}),
+    ...(typeof data.categorySubtitle === 'string' && data.categorySubtitle.trim()
+      ? { categorySubtitle: data.categorySubtitle.trim() }
+      : {}),
+    ...(typeof data.categoryDescription === 'string' && data.categoryDescription.trim()
+      ? { categoryDescription: data.categoryDescription.trim() }
+      : {}),
+    isDeleted: Boolean(data.isDeleted),
+    updatedAtMs: toEpochMs(data.updatedAt) || toEpochMs(data.createdAt),
+  };
+}
+
+export async function fetchAllCloudMaterialOverrides(): Promise<
+  CloudMaterialOverride[]
+> {
+  const path = 'readingMaterials';
+  try {
+    const q = query(
+      collection(db, 'readingMaterials'),
+      where('isDeleted', 'in', [true, false]),
+      limit(500)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .map((docSnap) =>
+        parseMaterialOverrideDoc(
+          docSnap.id,
+          docSnap.data() as Record<string, unknown>
+        )
+      )
+      .filter((item): item is CloudMaterialOverride => Boolean(item))
+      .sort((a, b) => b.updatedAtMs - a.updatedAtMs);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+}
+
+export function subscribeToCloudMaterialOverrides(
+  onData: (overrides: CloudMaterialOverride[]) => void,
+  onError?: (error: unknown) => void
+): Unsubscribe {
+  const path = 'readingMaterials';
+  const q = query(
+    collection(db, 'readingMaterials'),
+    where('isDeleted', 'in', [true, false]),
+    limit(500)
+  );
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const items = snapshot.docs
+        .map((docSnap) =>
+          parseMaterialOverrideDoc(
+            docSnap.id,
+            docSnap.data() as Record<string, unknown>
+          )
+        )
+        .filter((item): item is CloudMaterialOverride => Boolean(item))
+        .sort((a, b) => b.updatedAtMs - a.updatedAtMs);
+      onData(items);
+    },
+    (error) => {
+      reportFirestoreSnapshotError(error, OperationType.LIST, path);
+      if (onError) {
+        onError(error);
+      }
+    }
+  );
+}
+
+export async function upsertReadingMaterialInFirestore(
+  payloadInput: UpsertMaterialPayload,
+  isDeleted = false
+): Promise<void> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error(
+      'Admin authentication is required to save reading materials to cloud.'
+    );
+  }
+
+  const { item } = payloadInput;
+  const safeId = sanitizeFirestoreId(item.id, 'psc-mat');
+  const docPath = `readingMaterials/${safeId}`;
+  const docRef = doc(db, 'readingMaterials', safeId);
+
+  return enqueueItemTask(`reading-mat:${safeId}`, async () => {
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(docRef);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const cleanCategoryId =
+      (payloadInput.categoryId || 'official-psc-syllabi')
+        .trim()
+        .slice(0, 128) || 'official-psc-syllabi';
+    const cleanTitle =
+      (item.title || 'Untitled Study Material').trim().slice(0, 300) ||
+      'Untitled Study Material';
+    const cleanAuthority =
+      (item.authority || 'Public Service Commission, Nepal')
+        .trim()
+        .slice(0, 240) || 'Public Service Commission, Nepal';
+    const cleanCode =
+      (item.codeOrEdition || 'Official Release').trim().slice(0, 160) ||
+      'Official Release';
+    const cleanPages = Math.min(
+      5000,
+      Math.max(1, Math.round(Number(item.pages) || 1))
+    );
+    const cleanPath =
+      (item.path || '/materials/document.pdf').trim().slice(0, 1000) ||
+      '/materials/document.pdf';
+    const cleanDescription =
+      (item.description || cleanTitle).trim().slice(0, 2000) || cleanTitle;
+
+    const cleanCategoryName = payloadInput.categoryName?.trim().slice(0, 200);
+    const cleanCategorySubtitle = payloadInput.categorySubtitle
+      ?.trim()
+      .slice(0, 240);
+    const cleanCategoryDescription = payloadInput.categoryDescription
+      ?.trim()
+      .slice(0, 800);
+    const cleanExternalUrl = item.externalSourceUrl?.trim().slice(0, 1000);
+
+    const basePayload: Record<string, unknown> = {
+      id: safeId,
+      isDeleted: Boolean(isDeleted),
+      categoryId: cleanCategoryId,
+      title: cleanTitle,
+      authority: cleanAuthority,
+      codeOrEdition: cleanCode,
+      pages: cleanPages,
+      path: cleanPath,
+      description: cleanDescription,
+      updatedBy: currentUser.uid,
+      updatedAt: serverTimestamp(),
+    };
+
+    if (!existingSnap.exists()) {
+      const createPayload: Record<string, unknown> = {
+        ...basePayload,
+        createdAt: serverTimestamp(),
+      };
+      if (cleanCategoryName) createPayload.categoryName = cleanCategoryName;
+      if (cleanCategorySubtitle) createPayload.categorySubtitle = cleanCategorySubtitle;
+      if (cleanCategoryDescription) {
+        createPayload.categoryDescription = cleanCategoryDescription;
+      }
+      if (cleanExternalUrl) createPayload.externalSourceUrl = cleanExternalUrl;
+
+      try {
+        await setDoc(docRef, createPayload);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      const updatePayload: Record<string, unknown> = {
+        ...basePayload,
+        categoryName: cleanCategoryName ? cleanCategoryName : deleteField(),
+        categorySubtitle: cleanCategorySubtitle
+          ? cleanCategorySubtitle
+          : deleteField(),
+        categoryDescription: cleanCategoryDescription
+          ? cleanCategoryDescription
+          : deleteField(),
+        externalSourceUrl: cleanExternalUrl ? cleanExternalUrl : deleteField(),
+      };
+      delete updatePayload.id;
+
+      try {
+        await updateDoc(docRef, updatePayload);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  });
+}
+
+export async function resetAllMaterialOverridesInFirestore(): Promise<void> {
+  const path = 'readingMaterials';
+  let snapshot;
+  try {
+    const q = query(
+      collection(db, 'readingMaterials'),
       where('isDeleted', 'in', [true, false]),
       limit(500)
     );

@@ -40,14 +40,16 @@ import { formatReverseClock } from '../components/quiz/QuizSessionDialog';
 import { ReactionButtons } from '../components/common/ReactionButtons';
 import { useAuth } from '../context/AuthContext';
 import { recordView } from '../features/reactions/reactionsSlice';
-import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
+import { materialStorageService } from '../services/materialStorageService';
 import {
-  getWrittenQuestionById,
   WRITTEN_PAPERS,
-  WRITTEN_QUESTIONS,
   type LocalizedAnswerContent,
   type WrittenQuestion,
 } from '../data/writtenQuestionsData';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../services/questionStorageService';
 import {
   addWrittenPracticeSeconds,
   clearWrittenProgress,
@@ -153,7 +155,7 @@ function StructuredModelAnswer({ question, languageMode }: AnswerBlockProps) {
           const neSec = question.ne.sections[idx];
           return (
             <div
-              key={enSec.heading}
+              key={`${idx}-${enSec.heading}`}
               className="pt-5 border-t border-zinc-100 dark:border-zinc-800/80 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:divide-x lg:divide-zinc-200/80 dark:lg:divide-zinc-800/80"
             >
               <div className="space-y-2.5 lg:pr-6">
@@ -161,8 +163,8 @@ function StructuredModelAnswer({ question, languageMode }: AnswerBlockProps) {
                   {enSec.heading}
                 </h4>
                 <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed list-disc pl-4 marker:text-zinc-400">
-                  {enSec.points.map((pt) => (
-                    <li key={pt}>{pt}</li>
+                  {enSec.points.map((pt, pIdx) => (
+                    <li key={`${pIdx}-${pt}`}>{pt}</li>
                   ))}
                 </ul>
               </div>
@@ -173,8 +175,8 @@ function StructuredModelAnswer({ question, languageMode }: AnswerBlockProps) {
                     {neSec.heading}
                   </h4>
                   <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed list-disc pl-4 marker:text-zinc-400">
-                    {neSec.points.map((pt) => (
-                      <li key={pt}>{pt}</li>
+                    {neSec.points.map((pt, pIdx) => (
+                      <li key={`${pIdx}-${pt}`}>{pt}</li>
                     ))}
                   </ul>
                 </div>
@@ -220,17 +222,17 @@ function StructuredModelAnswer({ question, languageMode }: AnswerBlockProps) {
         </p>
       </div>
 
-      {content.sections.map((sec) => (
+      {content.sections.map((sec, idx) => (
         <div
-          key={sec.heading}
+          key={`${idx}-${sec.heading}`}
           className="pt-4 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2.5"
         >
           <h4 className="text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50">
             {sec.heading}
           </h4>
           <ul className="space-y-2 text-fluid-body text-zinc-700 dark:text-zinc-300 list-disc pl-5 marker:text-zinc-400">
-            {sec.points.map((pt) => (
-              <li key={pt}>{pt}</li>
+            {sec.points.map((pt, pIdx) => (
+              <li key={`${pIdx}-${pt}`}>{pt}</li>
             ))}
           </ul>
         </div>
@@ -263,6 +265,31 @@ export function WrittenQuestionsPage() {
   );
   const records = useAppSelector((state) => state.written.records);
 
+  const [allWrittenQuestions, setAllWrittenQuestions] = useState<WrittenQuestion[]>(
+    () => questionStorageService.loadWrittenQuestions()
+  );
+
+  useEffect(() => {
+    const syncWritten = () => {
+      setAllWrittenQuestions(questionStorageService.loadWrittenQuestions());
+    };
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+    window.addEventListener('storage', syncWritten);
+    return () => {
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+      window.removeEventListener('storage', syncWritten);
+    };
+  }, []);
+
+  const availablePapers = useMemo(() => {
+    return Array.from(
+      new Set([
+        ...WRITTEN_PAPERS,
+        ...allWrittenQuestions.map((q) => q.paper).filter(Boolean),
+      ])
+    );
+  }, [allWrittenQuestions]);
+
   // Catalog filter states
   const sourceParam = searchParams.get('source') ?? '';
   const [searchQuery, setSearchQuery] = useState('');
@@ -277,8 +304,11 @@ export function WrittenQuestionsPage() {
 
   // Focused studio state (for /written/:questionId)
   const activeQuestion = useMemo(
-    () => (questionId ? getWrittenQuestionById(questionId) ?? null : null),
-    [questionId]
+    () =>
+      questionId
+        ? allWrittenQuestions.find((q) => q.id === questionId) ?? null
+        : null,
+    [questionId, allWrittenQuestions]
   );
 
   const [timerRunning, setTimerRunning] = useState(false);
@@ -357,7 +387,7 @@ export function WrittenQuestionsPage() {
     let checkedRubricTotal = 0;
     let totalPracticeSeconds = 0;
 
-    for (const q of WRITTEN_QUESTIONS) {
+    for (const q of allWrittenQuestions) {
       const rec = records[q.id];
       if (!rec) continue;
       if (rec.status === 'mastered') masteredCount += 1;
@@ -367,13 +397,13 @@ export function WrittenQuestionsPage() {
       totalPracticeSeconds += rec.timeSpentSeconds;
     }
 
-    const totalRubricPossible = WRITTEN_QUESTIONS.reduce(
+    const totalRubricPossible = allWrittenQuestions.reduce(
       (sum, q) => sum + q.rubric.length,
       0
     );
 
     return {
-      totalQuestions: WRITTEN_QUESTIONS.length,
+      totalQuestions: allWrittenQuestions.length,
       masteredCount,
       practicingCount,
       draftsCount,
@@ -382,19 +412,17 @@ export function WrittenQuestionsPage() {
       totalPracticeSeconds,
       hasAnyActivity: Object.keys(records).length > 0,
     };
-  }, [records]);
+  }, [records, allWrittenQuestions]);
 
   const sourceMaterialTitle = useMemo(() => {
     if (!sourceParam) return null;
-    const match = READING_MATERIAL_CATEGORIES.flatMap((c) => c.items).find(
-      (i) => i.path === sourceParam
-    );
+    const match = materialStorageService.findMaterialByPathOrUrl(sourceParam);
     return match?.title ?? sourceParam;
   }, [sourceParam]);
 
   const filteredQuestions = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    return WRITTEN_QUESTIONS.filter((q) => {
+    return allWrittenQuestions.filter((q) => {
       if (sourceParam && q.sourcePath !== sourceParam) return false;
       if (paperFilter !== 'all' && q.paper !== paperFilter) return false;
       if (marksFilter !== 'all' && String(q.marks) !== marksFilter) return false;
@@ -421,7 +449,7 @@ export function WrittenQuestionsPage() {
 
       return searchable.includes(query);
     });
-  }, [sourceParam, paperFilter, marksFilter, statusFilter, searchQuery, records]);
+  }, [allWrittenQuestions, sourceParam, paperFilter, marksFilter, statusFilter, searchQuery, records]);
 
   const hasActiveFilters =
     Boolean(sourceParam) ||
@@ -557,14 +585,14 @@ export function WrittenQuestionsPage() {
         </div>
       );
     }
-    const activeIndex = WRITTEN_QUESTIONS.findIndex(
+    const activeIndex = allWrittenQuestions.findIndex(
       (q) => q.id === activeQuestion.id
     );
     const prevQuestion =
-      activeIndex > 0 ? WRITTEN_QUESTIONS[activeIndex - 1] : null;
+      activeIndex > 0 ? allWrittenQuestions[activeIndex - 1] : null;
     const nextQuestion =
-      activeIndex < WRITTEN_QUESTIONS.length - 1
-        ? WRITTEN_QUESTIONS[activeIndex + 1]
+      activeIndex < allWrittenQuestions.length - 1
+        ? allWrittenQuestions[activeIndex + 1]
         : null;
 
     const record = records[activeQuestion.id];
@@ -594,7 +622,7 @@ export function WrittenQuestionsPage() {
                 </Link>
 
                 <span className="text-xs font-mono tabular-nums text-zinc-500 dark:text-zinc-400">
-                  Question {activeIndex + 1} of {WRITTEN_QUESTIONS.length} ·{' '}
+                  Question {activeIndex + 1} of {allWrittenQuestions.length} ·{' '}
                   {activeQuestion.id}
                 </span>
               </div>
@@ -738,7 +766,7 @@ export function WrittenQuestionsPage() {
                     <span className="font-mono tabular-nums">
                       {targetWordRange}
                     </span>
-                    ). Drafts save automatically in your browser.
+                    ). Drafts save automatically for quick resumption.
                   </p>
                 </div>
 
@@ -832,7 +860,7 @@ export function WrittenQuestionsPage() {
                     <>
                       <span aria-hidden="true">·</span>
                       <span className="font-sans text-emerald-700 dark:text-emerald-400">
-                        Saved in browser
+                        Draft auto-saved
                       </span>
                     </>
                   )}
@@ -974,7 +1002,7 @@ export function WrittenQuestionsPage() {
                   const checked = checkedIndices.includes(idx);
                   return (
                     <label
-                      key={item.en}
+                      key={`${idx}-${item.en}`}
                       className="py-3 flex items-start gap-3 cursor-pointer group"
                     >
                       <input
@@ -1239,7 +1267,7 @@ export function WrittenQuestionsPage() {
                   onClick={() => setSearchParams({})}
                   className="font-medium text-blue-700 dark:text-blue-400 hover:underline underline-offset-4 cursor-pointer"
                 >
-                  Show all {WRITTEN_QUESTIONS.length} questions
+                  Show all {allWrittenQuestions.length} questions
                 </button>
               </div>
             )}
@@ -1285,7 +1313,7 @@ export function WrittenQuestionsPage() {
                   onChange={setPaperFilter}
                   options={[
                     { label: 'All Papers (Papers II, III & IV)', value: 'all' },
-                    ...WRITTEN_PAPERS.map((paper) => ({ label: paper, value: paper })),
+                    ...availablePapers.map((paper) => ({ label: paper, value: paper })),
                   ]}
                   size="sm"
                   className="w-full"
@@ -1354,7 +1382,7 @@ export function WrittenQuestionsPage() {
               <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between gap-3 text-xs text-zinc-500 dark:text-zinc-400">
                 <span className="font-mono tabular-nums">
                   Showing {filteredQuestions.length} of{' '}
-                  {WRITTEN_QUESTIONS.length} written questions
+                  {allWrittenQuestions.length} written questions
                 </span>
                 <button
                   type="button"
@@ -1407,6 +1435,14 @@ export function WrittenQuestionsPage() {
                         </span>
                         <span aria-hidden="true">·</span>
                         <span className="font-sans">{q.paper}</span>
+                        <span aria-hidden="true">·</span>
+                        <span className="font-sans">{q.subject}</span>
+                        {q.postTarget && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="font-sans">{q.postTarget}</span>
+                          </>
+                        )}
                         <span aria-hidden="true">·</span>
                         <span className="font-semibold text-zinc-800 dark:text-zinc-200">
                           {q.marks} Marks ({q.en.marksAllocation})
@@ -1624,7 +1660,7 @@ export function WrittenQuestionsPage() {
                               const isChecked = checkedIndices.includes(rIdx);
                               return (
                                 <label
-                                  key={rub.en}
+                                  key={`${rIdx}-${rub.en}`}
                                   className="flex items-start gap-2.5 text-fluid-option text-zinc-700 dark:text-zinc-300 cursor-pointer break-words"
                                 >
                                   <input

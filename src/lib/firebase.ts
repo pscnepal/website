@@ -1,13 +1,49 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { doc, getDocFromServer, getFirestore } from 'firebase/firestore';
+import {
+  doc,
+  getDocFromServer,
+  getFirestore,
+  initializeFirestore,
+  memoryLocalCache,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  type Firestore,
+} from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { toast } from '../services/toastService';
+import { isFirestoreOfflineError } from '../utils/errorHelpers';
 
 const app = initializeApp(firebaseConfig);
 
+function createFirestoreInstance(): Firestore {
+  try {
+    return initializeFirestore(
+      app,
+      {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager(),
+        }),
+      },
+      firebaseConfig.firestoreDatabaseId
+    );
+  } catch {
+    try {
+      return initializeFirestore(
+        app,
+        {
+          localCache: memoryLocalCache(),
+        },
+        firebaseConfig.firestoreDatabaseId
+      );
+    } catch {
+      return getFirestore(app, firebaseConfig.firestoreDatabaseId);
+    }
+  }
+}
+
 // CRITICAL: Pass the provisioned named firestoreDatabaseId from firebase-applet-config.json
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = createFirestoreInstance();
 export const auth = getAuth(app);
 
 export const googleProvider = new GoogleAuthProvider();
@@ -41,12 +77,19 @@ export interface FirestoreErrorInfo {
   };
 }
 
-export function handleFirestoreError(
+export class FirestoreOfflineError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'FirestoreOfflineError';
+  }
+}
+
+function buildFirestoreErrorInfo(
   error: unknown,
   operationType: OperationType,
   path: string | null
-): never {
-  const errInfo: FirestoreErrorInfo = {
+): FirestoreErrorInfo {
+  return {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
       userId: auth.currentUser?.uid,
@@ -63,19 +106,42 @@ export function handleFirestoreError(
     operationType,
     path,
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+}
+
+export function reportFirestoreSnapshotError(
+  error: unknown,
+  operationType: OperationType,
+  path: string | null
+): void {
+  const errInfo = buildFirestoreErrorInfo(error, operationType, path);
+  if (isFirestoreOfflineError(error)) {
+    console.warn('Firestore Snapshot Offline: ', JSON.stringify(errInfo));
+    return;
+  }
+  console.error('Firestore Snapshot Error: ', JSON.stringify(errInfo));
+}
+
+export function handleFirestoreError(
+  error: unknown,
+  operationType: OperationType,
+  path: string | null
+): never {
+  const errInfo = buildFirestoreErrorInfo(error, operationType, path);
+  const serialized = JSON.stringify(errInfo);
+  if (isFirestoreOfflineError(error)) {
+    console.warn('Firestore Offline/Unavailable: ', serialized);
+    throw new FirestoreOfflineError(serialized);
+  }
+  console.error('Firestore Error: ', serialized);
+  throw new Error(serialized);
 }
 
 async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes('the client is offline')
-    ) {
-      console.error('Please check your Firebase configuration.');
+    if (isFirestoreOfflineError(error)) {
+      console.warn('Firestore initial connection check: client is offline.');
       toast.warning(
         'Cloud database appears offline. Local progress will still be saved on this device.',
         { id: 'firebase-offline', title: 'Cloud Sync Unavailable' }

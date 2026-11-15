@@ -1,4 +1,4 @@
-import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
+import { materialStorageService } from '../services/materialStorageService';
 import type { SampleEdition } from '../types/pdf';
 
 export const SAMPLE_EDITIONS: SampleEdition[] = [
@@ -175,8 +175,9 @@ export function deriveTitleFromSource(urlOrFileName: string): string {
   try {
     const trimmed = urlOrFileName.trim();
 
-    // Direct match against reading material catalog items (by path, externalSourceUrl, or id)
-    for (const category of READING_MATERIAL_CATEGORIES) {
+    // Direct match against live reading material catalog items (by path, externalSourceUrl, or id)
+    const liveCategories = materialStorageService.loadMaterialCategories();
+    for (const category of liveCategories) {
       const directMatch = category.items.find(
         (item) =>
           item.path === trimmed ||
@@ -195,7 +196,7 @@ export function deriveTitleFromSource(urlOrFileName: string): string {
         typeof window !== 'undefined' ? window.location.origin : 'https://localhost'
       );
 
-      for (const category of READING_MATERIAL_CATEGORIES) {
+      for (const category of liveCategories) {
         const matched = category.items.find(
           (item) =>
             item.path === parsed.href ||
@@ -250,9 +251,9 @@ export function resolveSampleUrl(path: string): string {
     return LEGACY_MATERIAL_PATH_MAP[trimmed];
   }
 
-  // Look up legacy relative path or material ID in catalog to get updated official web URL
+  // Look up legacy relative path or material ID in live catalog to get updated official web URL
   const legacyFilename = trimmed.split('/').pop() || trimmed;
-  for (const category of READING_MATERIAL_CATEGORIES) {
+  for (const category of materialStorageService.loadMaterialCategories()) {
     const matched = category.items.find((item) => {
       if (item.path === trimmed || item.id === trimmed) return true;
       const itemFilename = item.path.split('/').pop();

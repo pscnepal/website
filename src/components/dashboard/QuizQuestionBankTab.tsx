@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Bookmark,
   Check,
   CheckCircle2,
   Copy,
@@ -8,20 +7,21 @@ import {
   Edit3,
   Eye,
   FileText,
+  Flag,
   Plus,
   RotateCcw,
   Trash2,
   X,
   XCircle,
 } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { useAppDispatch } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
+import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import {
   isBilingualQuizQuestion,
   type QuizOptionKey,
   type QuizQuestion,
 } from '../../data/quizData';
-import { storageService } from '../../services/storageService';
 import {
   QUESTION_EVENTS,
   questionStorageService,
@@ -43,11 +43,10 @@ import { useDashboardSearch } from './DashboardLayout';
 import { toast } from '../../services/toastService';
 import { copyWithToast } from '../../utils/clipboardHelpers';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
-import { FlagReasonModal } from '../common/FlagReasonModal';
 
 export function QuizQuestionBankTab() {
   const dispatch = useAppDispatch();
-  const userReactions = useAppSelector((state) => state.reactions.userReactions);
+  const { users: directoryUsers } = useDashboardUsers();
   const [questions, setQuestions] = useState<QuizQuestion[]>(() =>
     questionStorageService.loadQuizQuestions()
   );
@@ -55,38 +54,36 @@ export function QuizQuestionBankTab() {
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [flaggedFilter, setFlaggedFilter] = useState<'all' | 'flagged' | 'unflagged'>('all');
-  const [reactionFilter, setReactionFilter] = useState<'all' | 'liked' | 'disliked' | 'unrated'>('all');
   const [selectedQuestion, setSelectedQuestion] = useState<QuizQuestion | null>(null);
   const [testSelectedOption, setTestSelectedOption] = useState<QuizOptionKey | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [flaggedMap, setFlaggedMap] = useState<Record<string, unknown>>(() =>
-    storageService.loadFlaggedQuestions()
-  );
 
   // CRUD State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState<QuizQuestion | null>(null);
   const [questionToDelete, setQuestionToDelete] = useState<QuizQuestion | null>(null);
-  const [questionToFlag, setQuestionToFlag] = useState<QuizQuestion | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
+  const userFlagCounts = useMemo<Record<string, number>>(() => {
+    const counts: Record<string, number> = {};
+    for (const u of directoryUsers) {
+      for (const f of u.flaggedQuestions ?? []) {
+        counts[f.questionId] = (counts[f.questionId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [directoryUsers]);
+
   useEffect(() => {
-    const handleSync = () => {
-      setFlaggedMap(storageService.loadFlaggedQuestions());
-    };
     const handleSyncQuestions = () => {
       setQuestions(questionStorageService.loadQuizQuestions());
     };
 
-    window.addEventListener('psc_flagged_questions_changed', handleSync);
     window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuestions);
-    window.addEventListener('storage', handleSync);
     window.addEventListener('storage', handleSyncQuestions);
 
     return () => {
-      window.removeEventListener('psc_flagged_questions_changed', handleSync);
       window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuestions);
-      window.removeEventListener('storage', handleSync);
       window.removeEventListener('storage', handleSyncQuestions);
     };
   }, []);
@@ -109,20 +106,11 @@ export function QuizQuestionBankTab() {
       if (difficultyFilter !== 'all' && q.difficulty !== difficultyFilter) {
         return false;
       }
-      const isFlagged = Boolean(flaggedMap[q.id]);
-      if (flaggedFilter === 'flagged' && !isFlagged) {
+      const flagCount = userFlagCounts[q.id] ?? 0;
+      if (flaggedFilter === 'flagged' && flagCount === 0) {
         return false;
       }
-      if (flaggedFilter === 'unflagged' && isFlagged) {
-        return false;
-      }
-      if (reactionFilter === 'liked' && userReactions[q.id] !== 'like') {
-        return false;
-      }
-      if (reactionFilter === 'disliked' && userReactions[q.id] !== 'dislike') {
-        return false;
-      }
-      if (reactionFilter === 'unrated' && userReactions[q.id]) {
+      if (flaggedFilter === 'unflagged' && flagCount > 0) {
         return false;
       }
       if (searchQuery.trim()) {
@@ -157,9 +145,7 @@ export function QuizQuestionBankTab() {
     subjectFilter,
     difficultyFilter,
     flaggedFilter,
-    flaggedMap,
-    reactionFilter,
-    userReactions,
+    userFlagCounts,
   ]);
 
   const handleSaveQuestion = (saved: QuizQuestion) => {
@@ -270,15 +256,22 @@ export function QuizQuestionBankTab() {
         sortable: true,
         sortKey: (q) => q.id,
         render: (q) => {
-          const isFlagged = Boolean(flaggedMap[q.id]);
+          const flagCount = userFlagCounts[q.id] ?? 0;
           return (
-            <div className="flex items-center gap-1.5">
-              {isFlagged && (
-                <Bookmark className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
-              )}
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span className="font-mono font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
                 {q.id}
               </span>
+              {flagCount > 0 && (
+                <span
+                  title={`${flagCount} user flag report${flagCount === 1 ? '' : 's'}`}
+                  aria-label={`${flagCount} user flag report${flagCount === 1 ? '' : 's'}`}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/80 font-mono text-[10px] font-semibold text-amber-700 dark:text-amber-300"
+                >
+                  <Flag className="w-2.5 h-2.5 shrink-0" />
+                  <span>{flagCount}</span>
+                </span>
+              )}
             </div>
           );
         },
@@ -364,10 +357,10 @@ export function QuizQuestionBankTab() {
       },
       {
         id: 'ratings',
-        header: 'Views & Ratings',
+        header: 'Views & Counts',
         width: 'w-44',
         render: (q) => (
-          <ReactionButtons itemId={q.id} itemType="question" size="xs" />
+          <ReactionButtons itemId={q.id} itemType="question" size="xs" readOnly />
         ),
       },
       {
@@ -414,31 +407,13 @@ export function QuizQuestionBankTab() {
               },
             },
             {
-              id: 'toggle-flag',
-              label: Boolean(flaggedMap[q.id])
-                ? 'Remove from Flagged'
-                : 'Flag for Review',
-              description: 'Bookmark tricky MCQ with a flag reason for review',
-              icon: Bookmark,
-              color: 'amber',
-              onClick: () => {
-                if (Boolean(flaggedMap[q.id])) {
-                  storageService.removeFlaggedQuestion(q.id);
-                  setFlaggedMap(storageService.loadFlaggedQuestions());
-                  toast.info(`Removed flag from ${q.id}.`);
-                } else {
-                  setQuestionToFlag(q);
-                }
-              },
-              divider: true,
-            },
-            {
               id: 'copy-text',
               label: isCopied ? 'Question Copied!' : 'Copy Question Text',
               description: 'Formatted with options & explanation',
               icon: isCopied ? Check : Copy,
               color: isCopied ? 'emerald' : 'zinc',
               onClick: () => handleCopyQuestion(q),
+              divider: true,
             },
             {
               id: 'copy-id',
@@ -475,7 +450,7 @@ export function QuizQuestionBankTab() {
         },
       },
     ];
-  }, [copiedId, dispatch, flaggedMap]);
+  }, [copiedId, dispatch, userFlagCounts]);
 
   const tableFilters: TableFilterDef[] = useMemo(
     () => [
@@ -503,25 +478,13 @@ export function QuizQuestionBankTab() {
       },
       {
         id: 'flagged',
-        label: 'Flagged for Review',
+        label: 'User Flag Reports',
         value: flaggedFilter,
         onChange: (val) => setFlaggedFilter(val as typeof flaggedFilter),
         options: [
           { label: 'All Questions', value: 'all' },
-          { label: 'Flagged Only', value: 'flagged' },
-          { label: 'Unflagged Only', value: 'unflagged' },
-        ],
-      },
-      {
-        id: 'rating',
-        label: 'Rating',
-        value: reactionFilter,
-        onChange: (val) => setReactionFilter(val as any),
-        options: [
-          { label: 'All Ratings', value: 'all' },
-          { label: 'Liked (★ Saved)', value: 'liked' },
-          { label: 'Disliked', value: 'disliked' },
-          { label: 'Unrated Only', value: 'unrated' },
+          { label: 'With User Flags (>0)', value: 'flagged' },
+          { label: 'No User Flags (0)', value: 'unflagged' },
         ],
       },
     ],
@@ -529,7 +492,6 @@ export function QuizQuestionBankTab() {
       subjectFilter,
       difficultyFilter,
       flaggedFilter,
-      reactionFilter,
       availableSubjects,
       questions.length,
     ]
@@ -539,7 +501,6 @@ export function QuizQuestionBankTab() {
     subjectFilter !== 'all' ||
     difficultyFilter !== 'all' ||
     flaggedFilter !== 'all' ||
-    reactionFilter !== 'all' ||
     Boolean(searchQuery.trim());
 
   const handleResetFilters = () => {
@@ -547,7 +508,6 @@ export function QuizQuestionBankTab() {
     setSubjectFilter('all');
     setDifficultyFilter('all');
     setFlaggedFilter('all');
-    setReactionFilter('all');
   };
 
   return (
@@ -635,6 +595,16 @@ export function QuizQuestionBankTab() {
                 <span>{selectedQuestion.subject}</span>
                 <span aria-hidden="true">·</span>
                 <span>{selectedQuestion.difficulty}</span>
+                {(userFlagCounts[selectedQuestion.id] ?? 0) > 0 && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-300 font-semibold">
+                      <Flag className="w-3 h-3" />
+                      {userFlagCounts[selectedQuestion.id]} user flag
+                      {userFlagCounts[selectedQuestion.id] === 1 ? '' : 's'}
+                    </span>
+                  </>
+                )}
               </div>
               <ActionButton
                 title="Close modal"
@@ -668,8 +638,26 @@ export function QuizQuestionBankTab() {
                   </p>
                 )}
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                {selectedQuestion.topic} / {selectedQuestion.subtopic}
+                {selectedQuestion.topic}
+                {selectedQuestion.subtopic ? ` / ${selectedQuestion.subtopic}` : ''}
               </p>
+              {(selectedQuestion.paper ||
+                selectedQuestion.level ||
+                selectedQuestion.service ||
+                selectedQuestion.group ||
+                selectedQuestion.post) && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-mono text-zinc-500 dark:text-zinc-400 pt-1">
+                  {selectedQuestion.paper && <span>Paper: {selectedQuestion.paper}</span>}
+                  {selectedQuestion.level && <span>Level: {selectedQuestion.level}</span>}
+                  {selectedQuestion.service && <span>Service: {selectedQuestion.service}</span>}
+                  {selectedQuestion.group && <span>Group: {selectedQuestion.group}</span>}
+                  {selectedQuestion.post && <span>Post: {selectedQuestion.post}</span>}
+                  <span>
+                    Mode: {selectedQuestion.is_multi_select ? 'Multi-Select' : 'Single Choice'} ·{' '}
+                    {selectedQuestion.marks}M
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Test Interactive Options */}
@@ -772,9 +760,13 @@ export function QuizQuestionBankTab() {
                     </p>
                   )}
               </div>
-              {selectedQuestion.sourceTitle && (
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">
-                  Source Document: {selectedQuestion.sourceTitle}
+              {(selectedQuestion.sourceTitle || selectedQuestion.sourcePath) && (
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-mono break-all">
+                  Source Document:{' '}
+                  {selectedQuestion.sourceTitle || selectedQuestion.sourcePath}
+                  {selectedQuestion.sourceTitle && selectedQuestion.sourcePath
+                    ? ` (${selectedQuestion.sourcePath})`
+                    : ''}
                 </p>
               )}
             </div>
@@ -785,6 +777,7 @@ export function QuizQuestionBankTab() {
                 itemType="question"
                 size="sm"
                 showLabels
+                readOnly
               />
               <div className="flex items-center gap-2">
                 <ActionButton
@@ -858,34 +851,6 @@ export function QuizQuestionBankTab() {
         confirmColor="crimson"
         onConfirm={handleResetToDefault}
         onClose={() => setIsResetConfirmOpen(false)}
-      />
-
-      <FlagReasonModal
-        open={Boolean(questionToFlag)}
-        question={
-          questionToFlag
-            ? {
-                id: questionToFlag.id,
-                question: questionToFlag.question,
-                questionNe: isBilingualQuizQuestion(questionToFlag)
-                  ? questionToFlag.questionNe
-                  : undefined,
-                subject: questionToFlag.subject,
-              }
-            : null
-        }
-        onConfirm={(reason) => {
-          if (!questionToFlag) return;
-          storageService.flagQuestionWithReason(questionToFlag.id, {
-            source: 'dashboard',
-            deckTitle: questionToFlag.subject,
-            reason,
-          });
-          setFlaggedMap(storageService.loadFlaggedQuestions());
-          toast.success(`Question ${questionToFlag.id} flagged for review.`);
-          setQuestionToFlag(null);
-        }}
-        onCancel={() => setQuestionToFlag(null)}
       />
     </div>
   );

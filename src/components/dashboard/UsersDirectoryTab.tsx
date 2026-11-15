@@ -1501,7 +1501,7 @@ export function UsersDirectoryTab() {
         >
           <form
             onSubmit={(e) => void handleSaveDetails(e)}
-            className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 space-y-4 shadow-2xl"
+            className="w-full max-w-lg max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 space-y-4 shadow-2xl"
           >
             <div className="flex items-start justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
               <div>
@@ -1592,6 +1592,7 @@ export function UsersDirectoryTab() {
                     enableSearch={false}
                     size="sm"
                     className="w-full"
+                    popoverWidth="w-full"
                     triggerClassName="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
                     ariaLabel="Select user role"
                   />
@@ -1615,6 +1616,7 @@ export function UsersDirectoryTab() {
                     enableSearch={false}
                     size="sm"
                     className="w-full"
+                    popoverWidth="w-full"
                     triggerClassName="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
                     ariaLabel="Select target cadre"
                   />
@@ -1636,6 +1638,7 @@ export function UsersDirectoryTab() {
                     enableSearch={false}
                     size="sm"
                     className="w-full"
+                    popoverWidth="w-full"
                     triggerClassName="bg-white dark:bg-zinc-950 border-zinc-300 dark:border-zinc-700"
                     ariaLabel="Select account status"
                   />

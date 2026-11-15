@@ -208,11 +208,11 @@ export function AboutPage() {
                     <Lock className="w-4 h-4" />
                   </div>
                   <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm sm:text-base">
-                    Local-First Privacy
+                    Cloud-First Sync &amp; Privacy
                   </h3>
                   <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    Zero required user accounts, zero server databases, and no tracking telemetry. All quiz records,
-                    written drafts, and bookmarks remain 100% private in your local browser storage.
+                    Sign in with Google for cloud-first Firestore sync across devices, or study with optional local
+                    browser caching for offline access—with zero third-party ad tracking.
                   </p>
                   <Link
                     to="/privacy"

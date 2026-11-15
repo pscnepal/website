@@ -28,12 +28,11 @@ import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import {
   getDeckTotalMarks,
   getQuizDeadlineSeconds,
-  QUIZ_DECKS,
   type QuizDeck,
   type QuizDifficulty,
   type QuizQuestion,
 } from '../data/quizData';
-import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
+import { materialStorageService } from '../services/materialStorageService';
 import {
   clearQuizHistory,
   setPreferredQuizMode,
@@ -103,13 +102,7 @@ export function QuizPage() {
   }, []);
 
   const hydratedQuizDecks = useMemo<QuizDeck[]>(() => {
-    const byId = new Map(allQuestions.map((q) => [q.id, q]));
-    return QUIZ_DECKS.map((deck) => ({
-      ...deck,
-      questions: deck.questions
-        .map((q) => byId.get(q.id))
-        .filter((q): q is QuizQuestion => Boolean(q)),
-    }));
+    return questionStorageService.hydrateQuizDecks(allQuestions);
   }, [allQuestions]);
 
   const availableTopics = useMemo(() => {
@@ -216,9 +209,7 @@ export function QuizPage() {
         );
         if (questions.length === 0) return null;
 
-        const materialMatch = READING_MATERIAL_CATEGORIES.flatMap(
-          (c) => c.items
-        ).find((item) => item.path === qSource);
+        const materialMatch = materialStorageService.findMaterialByPathOrUrl(qSource);
 
         const title = materialMatch
           ? `Quiz: ${materialMatch.title}`
@@ -749,12 +740,20 @@ export function QuizPage() {
                   <motion.article
                     key={deck.id}
                     role="button"
-                    tabIndex={0}
+                    tabIndex={deck.questions.length > 0 ? 0 : -1}
                     aria-haspopup="dialog"
+                    aria-disabled={deck.questions.length === 0}
                     aria-label={`Open ${deck.title} in quiz dialog`}
-                    onClick={() => handleOpenQuizDialog(deck.id)}
+                    onClick={() => {
+                      if (deck.questions.length > 0) {
+                        handleOpenQuizDialog(deck.id);
+                      }
+                    }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
+                      if (
+                        (e.key === 'Enter' || e.key === ' ') &&
+                        deck.questions.length > 0
+                      ) {
                         e.preventDefault();
                         handleOpenQuizDialog(deck.id);
                       }
@@ -888,7 +887,7 @@ export function QuizPage() {
 
               <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800">
                 {attempts.slice(0, 6).map((attempt) => {
-                  const isCuratedDeck = QUIZ_DECKS.some(
+                  const isCuratedDeck = hydratedQuizDecks.some(
                     (d) => d.id === attempt.deckId
                   );
                   return (

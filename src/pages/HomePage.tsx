@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -32,9 +32,16 @@ import {
   PSC_CADRE_SYLLABI,
   type PscCadreId,
 } from '../data/pscSyllabusData';
-import { ALL_QUIZ_QUESTIONS, QUIZ_DECKS } from '../data/quizData';
-import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
-import { WRITTEN_QUESTIONS } from '../data/writtenQuestionsData';
+import type { QuizQuestion } from '../data/quizData';
+import {
+  MATERIAL_EVENTS,
+  materialStorageService,
+} from '../services/materialStorageService';
+import type { WrittenQuestion } from '../data/writtenQuestionsData';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../services/questionStorageService';
 import { setTargetCadre } from '../features/psc/pscSlice';
 import {
   setReadingMode,
@@ -140,12 +147,46 @@ export function HomePage() {
     [completedUnitIds]
   );
 
-  const totalCatalogCount = READING_MATERIAL_CATEGORIES.reduce(
-    (sum, cat) => sum + cat.items.length,
-    0
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(() =>
+    questionStorageService.loadQuizQuestions()
   );
-  const totalQuizQuestions = ALL_QUIZ_QUESTIONS.length;
-  const totalWrittenQuestions = WRITTEN_QUESTIONS.length;
+  const [writtenQuestions, setWrittenQuestions] = useState<WrittenQuestion[]>(
+    () => questionStorageService.loadWrittenQuestions()
+  );
+  const [totalCatalogCount, setTotalCatalogCount] = useState<number>(() =>
+    materialStorageService.loadAllMaterialsFlat().length
+  );
+
+  useEffect(() => {
+    const syncQuiz = () =>
+      setQuizQuestions(questionStorageService.loadQuizQuestions());
+    const syncWritten = () =>
+      setWrittenQuestions(questionStorageService.loadWrittenQuestions());
+    const syncMaterials = () =>
+      setTotalCatalogCount(materialStorageService.loadAllMaterialsFlat().length);
+    window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, syncQuiz);
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+    window.addEventListener(MATERIAL_EVENTS.CHANGED, syncMaterials);
+    window.addEventListener('storage', syncQuiz);
+    window.addEventListener('storage', syncWritten);
+    window.addEventListener('storage', syncMaterials);
+    return () => {
+      window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, syncQuiz);
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+      window.removeEventListener(MATERIAL_EVENTS.CHANGED, syncMaterials);
+      window.removeEventListener('storage', syncQuiz);
+      window.removeEventListener('storage', syncWritten);
+      window.removeEventListener('storage', syncMaterials);
+    };
+  }, []);
+
+  const hydratedDecks = useMemo(
+    () => questionStorageService.hydrateQuizDecks(quizQuestions),
+    [quizQuestions]
+  );
+
+  const totalQuizQuestions = quizQuestions.length;
+  const totalWrittenQuestions = writtenQuestions.length;
   const totalSyllabusUnits = ALL_SYLLABUS_UNITS.length;
 
   const activeCadreUnitStats = useMemo(() => {
@@ -591,7 +632,7 @@ export function HomePage() {
                   </span>
                   <span aria-hidden="true">·</span>
                   <span>
-                    {QUIZ_DECKS.length} decks · {totalQuizQuestions} MCQs
+                    {hydratedDecks.length} decks · {totalQuizQuestions} MCQs
                   </span>
                 </div>
                 <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between gap-2">

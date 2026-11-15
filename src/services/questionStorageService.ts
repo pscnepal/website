@@ -33,6 +33,11 @@ const SEED_WRITTEN_BY_ID = new Map<string, WrittenQuestion>(
   WRITTEN_QUESTIONS.map((q) => [q.id, q])
 );
 
+const pendingQuizMutations = new Set<string>();
+const pendingWrittenMutations = new Set<string>();
+let pendingQuizReset = false;
+let pendingWrittenReset = false;
+
 function isAuthenticatedAdmin(): boolean {
   const user = auth.currentUser;
   return Boolean(
@@ -190,7 +195,12 @@ export const questionStorageService = {
   },
 
   applyCloudQuizOverrides(overrides: CloudQuizQuestionOverride[]): void {
+    if (pendingQuizReset) return;
+
     if (!overrides || overrides.length === 0) {
+      if (pendingQuizMutations.size > 0) {
+        return;
+      }
       if (typeof window !== 'undefined' && window.localStorage.getItem(QUIZ_STORAGE_KEY)) {
         window.localStorage.removeItem(QUIZ_STORAGE_KEY);
         window.dispatchEvent(
@@ -201,6 +211,8 @@ export const questionStorageService = {
       }
       return;
     }
+
+    const localById = new Map(this.loadQuizQuestions().map((q) => [q.id, q]));
 
     const overrideMap = new Map<string, CloudQuizQuestionOverride>();
     for (const item of overrides) {
@@ -226,7 +238,19 @@ export const questionStorageService = {
       }
     }
 
-    const merged = [...customNew, ...mergedSeed];
+    const mergedBase = [...customNew, ...mergedSeed];
+    const mergedById = new Map(mergedBase.map((q) => [q.id, q]));
+
+    for (const pendingId of pendingQuizMutations) {
+      const localVersion = localById.get(pendingId);
+      if (localVersion) {
+        mergedById.set(pendingId, sanitizeQuizQuestionLanguage(localVersion));
+      } else {
+        mergedById.delete(pendingId);
+      }
+    }
+
+    const merged = Array.from(mergedById.values());
     this.saveQuizQuestions(merged);
   },
 
@@ -246,15 +270,20 @@ export const questionStorageService = {
     this.saveQuizQuestions(updated);
 
     if (isAuthenticatedAdmin()) {
-      void upsertQuizQuestionInFirestore(fullQuestion, false).catch((err) => {
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            `Saved ${fullQuestion.id} locally, but cloud sync failed.`
-          ),
-          { id: `cloud-quiz-save-${fullQuestion.id}` }
-        );
-      });
+      pendingQuizMutations.add(id);
+      void upsertQuizQuestionInFirestore(fullQuestion, false)
+        .catch((err) => {
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              `Saved ${fullQuestion.id} locally, but cloud sync failed.`
+            ),
+            { id: `cloud-quiz-save-${fullQuestion.id}` }
+          );
+        })
+        .finally(() => {
+          pendingQuizMutations.delete(id);
+        });
     }
 
     return fullQuestion;
@@ -276,15 +305,20 @@ export const questionStorageService = {
     this.saveQuizQuestions(updated);
 
     if (isAuthenticatedAdmin()) {
-      void upsertQuizQuestionInFirestore(sanitized, false).catch((err) => {
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            `Updated ${sanitized.id} locally, but cloud sync failed.`
-          ),
-          { id: `cloud-quiz-save-${sanitized.id}` }
-        );
-      });
+      pendingQuizMutations.add(sanitized.id);
+      void upsertQuizQuestionInFirestore(sanitized, false)
+        .catch((err) => {
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              `Updated ${sanitized.id} locally, but cloud sync failed.`
+            ),
+            { id: `cloud-quiz-save-${sanitized.id}` }
+          );
+        })
+        .finally(() => {
+          pendingQuizMutations.delete(sanitized.id);
+        });
     }
 
     return sanitized;
@@ -298,21 +332,27 @@ export const questionStorageService = {
     this.saveQuizQuestions(updated);
 
     if (isAuthenticatedAdmin() && target) {
-      void upsertQuizQuestionInFirestore(target, true).catch((err) => {
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            `Deleted ${questionId} locally, but cloud sync failed.`
-          ),
-          { id: `cloud-quiz-del-${questionId}` }
-        );
-      });
+      pendingQuizMutations.add(questionId);
+      void upsertQuizQuestionInFirestore(target, true)
+        .catch((err) => {
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              `Deleted ${questionId} locally, but cloud sync failed.`
+            ),
+            { id: `cloud-quiz-del-${questionId}` }
+          );
+        })
+        .finally(() => {
+          pendingQuizMutations.delete(questionId);
+        });
     }
 
     return true;
   },
 
   resetQuizQuestionsToDefault(): void {
+    pendingQuizMutations.clear();
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(QUIZ_STORAGE_KEY);
       window.dispatchEvent(
@@ -323,15 +363,20 @@ export const questionStorageService = {
     }
 
     if (isAuthenticatedAdmin()) {
-      void resetAllQuizOverridesInFirestore().catch((err) => {
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            'Restored defaults locally, but failed to clear cloud overrides.'
-          ),
-          { id: 'cloud-quiz-reset' }
-        );
-      });
+      pendingQuizReset = true;
+      void resetAllQuizOverridesInFirestore()
+        .catch((err) => {
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Restored defaults locally, but failed to clear cloud overrides.'
+            ),
+            { id: 'cloud-quiz-reset' }
+          );
+        })
+        .finally(() => {
+          pendingQuizReset = false;
+        });
     }
   },
 
@@ -366,7 +411,12 @@ export const questionStorageService = {
   },
 
   applyCloudWrittenOverrides(overrides: CloudWrittenQuestionOverride[]): void {
+    if (pendingWrittenReset) return;
+
     if (!overrides || overrides.length === 0) {
+      if (pendingWrittenMutations.size > 0) {
+        return;
+      }
       if (typeof window !== 'undefined' && window.localStorage.getItem(WRITTEN_STORAGE_KEY)) {
         window.localStorage.removeItem(WRITTEN_STORAGE_KEY);
         window.dispatchEvent(
@@ -377,6 +427,8 @@ export const questionStorageService = {
       }
       return;
     }
+
+    const localById = new Map(this.loadWrittenQuestions().map((q) => [q.id, q]));
 
     const overrideMap = new Map<string, CloudWrittenQuestionOverride>();
     for (const item of overrides) {
@@ -402,7 +454,19 @@ export const questionStorageService = {
       }
     }
 
-    const merged = [...customNew, ...mergedSeed];
+    const mergedBase = [...customNew, ...mergedSeed];
+    const mergedById = new Map(mergedBase.map((q) => [q.id, q]));
+
+    for (const pendingId of pendingWrittenMutations) {
+      const localVersion = localById.get(pendingId);
+      if (localVersion) {
+        mergedById.set(pendingId, localVersion);
+      } else {
+        mergedById.delete(pendingId);
+      }
+    }
+
+    const merged = Array.from(mergedById.values());
     this.saveWrittenQuestions(merged);
   },
 
@@ -421,15 +485,20 @@ export const questionStorageService = {
     this.saveWrittenQuestions(updated);
 
     if (isAuthenticatedAdmin()) {
-      void upsertWrittenQuestionInFirestore(fullQuestion, false).catch((err) => {
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            `Saved ${fullQuestion.id} locally, but cloud sync failed.`
-          ),
-          { id: `cloud-written-save-${fullQuestion.id}` }
-        );
-      });
+      pendingWrittenMutations.add(id);
+      void upsertWrittenQuestionInFirestore(fullQuestion, false)
+        .catch((err) => {
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              `Saved ${fullQuestion.id} locally, but cloud sync failed.`
+            ),
+            { id: `cloud-written-save-${fullQuestion.id}` }
+          );
+        })
+        .finally(() => {
+          pendingWrittenMutations.delete(id);
+        });
     }
 
     return fullQuestion;
@@ -450,15 +519,20 @@ export const questionStorageService = {
     this.saveWrittenQuestions(updated);
 
     if (isAuthenticatedAdmin()) {
-      void upsertWrittenQuestionInFirestore(question, false).catch((err) => {
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            `Updated ${question.id} locally, but cloud sync failed.`
-          ),
-          { id: `cloud-written-save-${question.id}` }
-        );
-      });
+      pendingWrittenMutations.add(question.id);
+      void upsertWrittenQuestionInFirestore(question, false)
+        .catch((err) => {
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              `Updated ${question.id} locally, but cloud sync failed.`
+            ),
+            { id: `cloud-written-save-${question.id}` }
+          );
+        })
+        .finally(() => {
+          pendingWrittenMutations.delete(question.id);
+        });
     }
 
     return question;
@@ -472,21 +546,27 @@ export const questionStorageService = {
     this.saveWrittenQuestions(updated);
 
     if (isAuthenticatedAdmin() && target) {
-      void upsertWrittenQuestionInFirestore(target, true).catch((err) => {
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            `Deleted ${questionId} locally, but cloud sync failed.`
-          ),
-          { id: `cloud-written-del-${questionId}` }
-        );
-      });
+      pendingWrittenMutations.add(questionId);
+      void upsertWrittenQuestionInFirestore(target, true)
+        .catch((err) => {
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              `Deleted ${questionId} locally, but cloud sync failed.`
+            ),
+            { id: `cloud-written-del-${questionId}` }
+          );
+        })
+        .finally(() => {
+          pendingWrittenMutations.delete(questionId);
+        });
     }
 
     return true;
   },
 
   resetWrittenQuestionsToDefault(): void {
+    pendingWrittenMutations.clear();
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(WRITTEN_STORAGE_KEY);
       window.dispatchEvent(
@@ -497,15 +577,20 @@ export const questionStorageService = {
     }
 
     if (isAuthenticatedAdmin()) {
-      void resetAllWrittenOverridesInFirestore().catch((err) => {
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            'Restored defaults locally, but failed to clear cloud overrides.'
-          ),
-          { id: 'cloud-written-reset' }
-        );
-      });
+      pendingWrittenReset = true;
+      void resetAllWrittenOverridesInFirestore()
+        .catch((err) => {
+          toast.error(
+            formatUserFriendlyError(
+              err,
+              'Restored defaults locally, but failed to clear cloud overrides.'
+            ),
+            { id: 'cloud-written-reset' }
+          );
+        })
+        .finally(() => {
+          pendingWrittenReset = false;
+        });
     }
   },
 

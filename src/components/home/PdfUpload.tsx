@@ -124,7 +124,7 @@ export function PdfUpload({ compact = false }: PdfUploadProps) {
                   : 'Or drag and drop a local PDF file'}
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                Reads directly from your device with zero server uploads or CORS limits
+                Opens directly from your device with instant in-browser PDF rendering
               </p>
             </div>
           </div>

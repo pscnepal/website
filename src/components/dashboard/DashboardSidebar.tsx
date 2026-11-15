@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   BookOpen,
-  Bookmark,
   Database,
+  Flag,
   HelpCircle,
   LayoutDashboard,
   PanelLeftClose,
@@ -17,8 +17,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import type { DashboardTab } from '../../pages/DashboardPage';
-import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
-import { storageService } from '../../services/storageService';
+import {
+  MATERIAL_EVENTS,
+  materialStorageService,
+} from '../../services/materialStorageService';
 import {
   QUESTION_EVENTS,
   questionStorageService,
@@ -52,48 +54,52 @@ export function DashboardSidebar({
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('') || 'AD';
-  const [flaggedCount, setFlaggedCount] = useState<number>(() => {
-    return Object.keys(storageService.loadFlaggedQuestions()).length;
-  });
   const [quizCount, setQuizCount] = useState<number>(() => {
     return questionStorageService.loadQuizQuestions().length;
   });
   const [writtenCount, setWrittenCount] = useState<number>(() => {
     return questionStorageService.loadWrittenQuestions().length;
   });
+  const [totalMaterialsCount, setTotalMaterialsCount] = useState<number>(() => {
+    return materialStorageService.loadAllMaterialsFlat().length;
+  });
+
+  const flaggedCount = useMemo(
+    () =>
+      dbUsers.reduce(
+        (sum, dbUser) => sum + (dbUser.flaggedQuestions?.length ?? 0),
+        0
+      ),
+    [dbUsers]
+  );
 
   useEffect(() => {
-    const handleSync = () => {
-      setFlaggedCount(Object.keys(storageService.loadFlaggedQuestions()).length);
-    };
     const handleSyncQuiz = () => {
       setQuizCount(questionStorageService.loadQuizQuestions().length);
     };
     const handleSyncWritten = () => {
       setWrittenCount(questionStorageService.loadWrittenQuestions().length);
     };
+    const handleSyncMaterials = () => {
+      setTotalMaterialsCount(materialStorageService.loadAllMaterialsFlat().length);
+    };
 
-    window.addEventListener('psc_flagged_questions_changed', handleSync);
     window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuiz);
     window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncWritten);
-    window.addEventListener('storage', handleSync);
+    window.addEventListener(MATERIAL_EVENTS.CHANGED, handleSyncMaterials);
     window.addEventListener('storage', handleSyncQuiz);
     window.addEventListener('storage', handleSyncWritten);
+    window.addEventListener('storage', handleSyncMaterials);
 
     return () => {
-      window.removeEventListener('psc_flagged_questions_changed', handleSync);
       window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, handleSyncQuiz);
       window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, handleSyncWritten);
-      window.removeEventListener('storage', handleSync);
+      window.removeEventListener(MATERIAL_EVENTS.CHANGED, handleSyncMaterials);
       window.removeEventListener('storage', handleSyncQuiz);
       window.removeEventListener('storage', handleSyncWritten);
+      window.removeEventListener('storage', handleSyncMaterials);
     };
   }, []);
-
-  const totalMaterialsCount = READING_MATERIAL_CATEGORIES.reduce(
-    (acc, cat) => acc + cat.items.length,
-    0
-  );
 
   const coreNavItems: {
     id: DashboardTab;
@@ -121,10 +127,10 @@ export function DashboardSidebar({
     {
       id: 'flagged',
       path: '/dashboard/flagged',
-      label: 'Flagged for Review',
-      icon: Bookmark,
-      count: flaggedCount,
-      description: 'Questions flagged during quiz & simulation runs',
+      label: 'Flagged Reports',
+      icon: Flag,
+      count: isUsersLoading ? undefined : flaggedCount,
+      description: 'Questions & reasons flagged by registered users',
     },
     {
       id: 'written-bank',

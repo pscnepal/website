@@ -36,11 +36,12 @@ import {
   type OmrPreset,
   type WrittenHallPreset,
 } from '../../data/simulationPresets';
-import {
-  WRITTEN_QUESTIONS,
-  type WrittenQuestion,
-} from '../../data/writtenQuestionsData';
+import type { WrittenQuestion } from '../../data/writtenQuestionsData';
 import { storageService } from '../../services/storageService';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../../services/questionStorageService';
 import { recordSimulationRun } from '../../features/psc/pscSlice';
 import {
   recordQuizAttempt,
@@ -169,7 +170,7 @@ function OmrHallDialogInner({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isDashboardAdmin } = useAuth();
   const shouldReduceMotion = Boolean(useReducedMotion());
 
   const [questions, setQuestions] = useState<QuizQuestion[]>(() =>
@@ -451,7 +452,7 @@ function OmrHallDialogInner({
 
   const handleToggleFlag = useCallback(
     (questionId: string) => {
-      if (phase !== 'sitting') return;
+      if (isDashboardAdmin || phase !== 'sitting') return;
       if (flagged[questionId]) {
         storageService.removeFlaggedQuestion(questionId);
         setFlagged((prev) => ({ ...prev, [questionId]: false }));
@@ -464,7 +465,7 @@ function OmrHallDialogInner({
         setFlagModalQuestion(target);
       }
     },
-    [phase, flagged, questions, activeQuestion]
+    [isDashboardAdmin, phase, flagged, questions, activeQuestion]
   );
 
   const requestClose = useCallback(() => {
@@ -1464,23 +1465,25 @@ function OmrHallDialogInner({
                               size="xs"
                             />
 
-                            <button
-                              type="button"
-                              onClick={() => handleToggleFlag(activeQuestion.id)}
-                              aria-pressed={Boolean(flagged[activeQuestion.id])}
-                              className={`min-h-8 inline-flex items-center gap-1.5 px-2.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
-                                flagged[activeQuestion.id]
-                                  ? 'text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40'
-                                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                              }`}
-                            >
-                              <Flag className="w-3.5 h-3.5" />
-                              <span>
-                                {flagged[activeQuestion.id]
-                                  ? 'Flagged'
-                                  : 'Flag review'}
-                              </span>
-                            </button>
+                            {!isDashboardAdmin && (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleFlag(activeQuestion.id)}
+                                aria-pressed={Boolean(flagged[activeQuestion.id])}
+                                className={`min-h-8 inline-flex items-center gap-1.5 px-2.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+                                  flagged[activeQuestion.id]
+                                    ? 'text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40'
+                                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                }`}
+                              >
+                                <Flag className="w-3.5 h-3.5" />
+                                <span>
+                                  {flagged[activeQuestion.id]
+                                    ? 'Flagged'
+                                    : 'Flag review'}
+                                </span>
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -1872,11 +1875,27 @@ function WrittenHallDialogInner({
   const shouldReduceMotion = Boolean(useReducedMotion());
   const writtenRecords = useAppSelector((state) => state.written.records);
 
+  const [liveWrittenQuestions, setLiveWrittenQuestions] = useState<
+    WrittenQuestion[]
+  >(() => questionStorageService.loadWrittenQuestions());
+
+  useEffect(() => {
+    const syncWritten = () => {
+      setLiveWrittenQuestions(questionStorageService.loadWrittenQuestions());
+    };
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+    window.addEventListener('storage', syncWritten);
+    return () => {
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+      window.removeEventListener('storage', syncWritten);
+    };
+  }, []);
+
   const sittingQuestions = useMemo<WrittenQuestion[]>(() => {
     return preset.questionIds
-      .map((id) => WRITTEN_QUESTIONS.find((q) => q.id === id))
+      .map((id) => liveWrittenQuestions.find((q) => q.id === id))
       .filter((q): q is WrittenQuestion => Boolean(q));
-  }, [preset]);
+  }, [preset, liveWrittenQuestions]);
 
   const [lang, setLang] = useState<WrittenLanguageMode>(initialLang);
   const [phase, setPhase] = useState<'sitting' | 'grading'>('sitting');
@@ -2753,12 +2772,29 @@ export function ExamSimulationDialog({
                 onClose={onClose}
               />
             )
-          ) : (
+          ) : user ? (
             <WrittenHallDialogInner
               key={`written-${writtenPreset.id}`}
               preset={writtenPreset}
               rollNumber={rollNumber}
               initialLang={initialWrittenLang}
+              onClose={onClose}
+            />
+          ) : (
+            <QuizAuthGate
+              title={writtenPreset.title}
+              subtitle={`${writtenPreset.paperCode} · ${writtenPreset.nepaliTitle}`}
+              metaItems={[
+                `${writtenPreset.questionIds.length} Subjective Prompts`,
+                `${Math.round(writtenPreset.allocatedSeconds / 60)} Min Hall Sitting`,
+                'Rubric & Analytical Grading',
+              ]}
+              description="All written study guides and model answer outlines are free to browse publicly. Sign in with Google to enter the timed Written Exam Hall sitting."
+              benefits={[
+                'Official 1.8 min/mark exam hall countdown begins only after sign-in',
+                'Protects your drafted answers and rubric self-evaluation records',
+              ]}
+              actionLabel="Continue with Google to Start Written Exam"
               onClose={onClose}
             />
           )}

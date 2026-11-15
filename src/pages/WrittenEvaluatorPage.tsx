@@ -11,6 +11,7 @@ import {
   Download,
   ExternalLink,
   FileText,
+  Lock,
   Maximize2,
   Minimize2,
   PenLine,
@@ -22,13 +23,21 @@ import {
   Trash2,
   Trophy,
 } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { QuizAuthGate } from '../components/auth/QuizAuthGate';
 import { ActionButton } from '../components/common/ActionButton';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
-import { WRITTEN_QUESTIONS } from '../data/writtenQuestionsData';
+import { useAuth } from '../context/AuthContext';
+import type { WrittenQuestion } from '../data/writtenQuestionsData';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../services/questionStorageService';
 import { toast } from '../services/toastService';
 import { copyWithToast } from '../utils/clipboardHelpers';
 import { formatUserFriendlyError } from '../utils/errorHelpers';
@@ -54,9 +63,26 @@ interface EvaluationRecord {
 const STORAGE_KEY_EVALUATIONS = 'psc_written_evaluations_v2';
 
 export function WrittenEvaluatorPage() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const initialQId = searchParams.get('q') || WRITTEN_QUESTIONS[0].id;
+  const [writtenQuestions, setWrittenQuestions] = useState<WrittenQuestion[]>(
+    () => questionStorageService.loadWrittenQuestions()
+  );
+  const initialQId =
+    searchParams.get('q') || writtenQuestions[0]?.id || '';
   const customNotesId = useId();
+
+  useEffect(() => {
+    const syncWritten = () => {
+      setWrittenQuestions(questionStorageService.loadWrittenQuestions());
+    };
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+    window.addEventListener('storage', syncWritten);
+    return () => {
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+      window.removeEventListener('storage', syncWritten);
+    };
+  }, []);
 
   // State
   const [selectedQuestionId, setSelectedQuestionId] = useState<string>(initialQId);
@@ -65,11 +91,24 @@ export function WrittenEvaluatorPage() {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [copiedDraft, setCopiedDraft] = useState<boolean>(false);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+  const [showAuthGate, setShowAuthGate] = useState<boolean>(false);
+  const [isClearDraftConfirmOpen, setIsClearDraftConfirmOpen] = useState<boolean>(false);
+  const [isClearHistoryConfirmOpen, setIsClearHistoryConfirmOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const queryQ = searchParams.get('q');
+    if (queryQ && writtenQuestions.some((q) => q.id === queryQ)) {
+      setSelectedQuestionId(queryQ);
+    }
+  }, [searchParams, writtenQuestions]);
 
   // Timer state
   const selectedQuestion = useMemo(() => {
-    return WRITTEN_QUESTIONS.find((q) => q.id === selectedQuestionId) || WRITTEN_QUESTIONS[0];
-  }, [selectedQuestionId]);
+    return (
+      writtenQuestions.find((q) => q.id === selectedQuestionId) ||
+      writtenQuestions[0]
+    );
+  }, [writtenQuestions, selectedQuestionId]);
 
   const totalRecommendedSeconds = (selectedQuestion?.marks || 10) * 108; // 1.8 mins/mark = 108 seconds per mark
   const [remainingSeconds, setRemainingSeconds] = useState<number>(totalRecommendedSeconds);
@@ -109,6 +148,15 @@ export function WrittenEvaluatorPage() {
     setStage('write');
   }, [selectedQuestionId, selectedQuestion?.marks]);
 
+  // Close auth modal automatically once signed in; stop timer on sign-out
+  useEffect(() => {
+    if (user) {
+      setShowAuthGate(false);
+    } else {
+      setIsTimerRunning(false);
+    }
+  }, [user]);
+
   // Timer interval
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -123,6 +171,10 @@ export function WrittenEvaluatorPage() {
   }, [isTimerRunning, remainingSeconds]);
 
   const handleStartTimer = () => {
+    if (!user) {
+      setShowAuthGate(true);
+      return;
+    }
     setIsTimerRunning(true);
     setHasStartedWriting(true);
   };
@@ -178,6 +230,10 @@ export function WrittenEvaluatorPage() {
   };
 
   const handleSaveEvaluation = () => {
+    if (!user) {
+      setShowAuthGate(true);
+      return;
+    }
     const record: EvaluationRecord = {
       id: `eval-${Date.now()}`,
       questionId: selectedQuestion.id,
@@ -200,7 +256,15 @@ export function WrittenEvaluatorPage() {
     setEvalHistory(next);
     try {
       localStorage.setItem(STORAGE_KEY_EVALUATIONS, JSON.stringify(next));
-    } catch {}
+      toast.success('Evaluation scorecard saved to your history.');
+    } catch (err) {
+      toast.warning(
+        formatUserFriendlyError(
+          err,
+          'Scorecard generated, but optional local fallback could not persist history.'
+        )
+      );
+    }
     setStage('report');
   };
 
@@ -211,6 +275,10 @@ export function WrittenEvaluatorPage() {
   };
 
   const handleLoadModelAnswer = () => {
+    if (!user) {
+      setShowAuthGate(true);
+      return;
+    }
     const q = selectedQuestion;
     const sectionsText = q.ne.sections
       .map((s) => `२. ${s.heading}:\n${s.points.map((p) => `• ${p}`).join('\n')}`)
@@ -218,6 +286,7 @@ export function WrittenEvaluatorPage() {
     const fullText = `१. परिचय तथा पृष्ठभूमि:\n${q.ne.introduction}\n\n${sectionsText}\n\n३. निष्कर्ष तथा भावी मार्गचित्र:\n${q.ne.conclusion}`;
     setUserDraft(fullText);
     setHasStartedWriting(true);
+    toast.info('Loaded official model answer draft into editor.');
   };
 
   const handleCopyDraft = async () => {
@@ -233,10 +302,15 @@ export function WrittenEvaluatorPage() {
   };
 
   const handleClearDraft = () => {
-    if (window.confirm('के तपाईं हाल लेखिएको मस्यौदा खाली गर्न चाहनुहुन्छ? (Clear draft?)')) {
-      setUserDraft('');
-      setHasStartedWriting(false);
-    }
+    if (!userDraft) return;
+    setIsClearDraftConfirmOpen(true);
+  };
+
+  const confirmClearDraft = () => {
+    setUserDraft('');
+    setHasStartedWriting(false);
+    setIsClearDraftConfirmOpen(false);
+    toast.info('Draft cleared.');
   };
 
   const handleSetPresetScores = (ratio: number) => {
@@ -304,16 +378,20 @@ export function WrittenEvaluatorPage() {
   };
 
   const handleClearAllHistory = () => {
-    if (window.confirm('के तपाईं सबै मूल्याङ्कन अभिलेखहरू मेटाउन चाहनुहुन्छ? (Delete all history?)')) {
-      setEvalHistory([]);
-      try {
-        localStorage.removeItem(STORAGE_KEY_EVALUATIONS);
-        toast.info('Cleared all evaluation records.');
-      } catch (err) {
-        toast.error(
-          formatUserFriendlyError(err, 'Failed to clear saved history.')
-        );
-      }
+    if (evalHistory.length === 0) return;
+    setIsClearHistoryConfirmOpen(true);
+  };
+
+  const confirmClearAllHistory = () => {
+    setEvalHistory([]);
+    setIsClearHistoryConfirmOpen(false);
+    try {
+      localStorage.removeItem(STORAGE_KEY_EVALUATIONS);
+      toast.info('Cleared all evaluation records.');
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to clear saved history.')
+      );
     }
   };
 
@@ -427,8 +505,14 @@ export function WrittenEvaluatorPage() {
 
             <button
               type="button"
-              onClick={() => setStage('evaluate')}
-              className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+              onClick={() => {
+                if (!user) {
+                  setShowAuthGate(true);
+                  return;
+                }
+                setStage('evaluate');
+              }}
+              className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 stage === 'evaluate'
                   ? 'bg-blue-700 text-white border-blue-700 dark:bg-blue-600 shadow-sm'
                   : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
@@ -440,8 +524,14 @@ export function WrittenEvaluatorPage() {
 
             <button
               type="button"
-              onClick={() => setStage('report')}
-              className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${
+              onClick={() => {
+                if (!user) {
+                  setShowAuthGate(true);
+                  return;
+                }
+                setStage('report');
+              }}
+              className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 stage === 'report'
                   ? 'bg-blue-700 text-white border-blue-700 dark:bg-blue-600 shadow-sm'
                   : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
@@ -460,14 +550,16 @@ export function WrittenEvaluatorPage() {
                   Select Question to Practice &amp; Evaluate:
                 </label>
                 <div className="text-sm font-serif font-bold text-zinc-950 dark:text-zinc-50">
-                  {selectedQuestion.ne.title} ({selectedQuestion.marks} Marks · {selectedQuestion.paper})
+                  {selectedQuestion
+                    ? `${selectedQuestion.ne.title} (${selectedQuestion.marks} Marks · ${selectedQuestion.paper})`
+                    : 'No written questions available'}
                 </div>
               </div>
 
               <SharedSearchSelect
-                value={selectedQuestionId}
+                value={selectedQuestion?.id ?? ''}
                 onChange={setSelectedQuestionId}
-                options={WRITTEN_QUESTIONS.map((q) => ({
+                options={writtenQuestions.map((q) => ({
                   value: q.id,
                   label: `[${q.id}] ${q.marks}M: ${q.ne.title}`,
                   description: `${q.paper} · ${q.en.title}`,
@@ -480,19 +572,24 @@ export function WrittenEvaluatorPage() {
               />
             </div>
 
-            {/* Question Details Banner */}
-            <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 text-xs space-y-1.5">
-              <div className="font-semibold text-blue-900 dark:text-blue-300">
-                प्रश्न: {selectedQuestion.ne.question}
+            {selectedQuestion ? (
+              <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-100 dark:border-zinc-800 text-xs space-y-1.5">
+                <div className="font-semibold text-blue-900 dark:text-blue-300">
+                  प्रश्न: {selectedQuestion.ne.question}
+                </div>
+                <div className="text-zinc-500 italic">
+                  Question: {selectedQuestion.en.question}
+                </div>
               </div>
-              <div className="text-zinc-500 italic">
-                Question: {selectedQuestion.en.question}
+            ) : (
+              <div className="p-6 rounded-lg bg-zinc-50 dark:bg-zinc-950/60 border border-dashed border-zinc-200 dark:border-zinc-800 text-center text-xs text-zinc-500">
+                No written questions are currently available in the question bank.
               </div>
-            </div>
+            )}
           </div>
 
           {/* STAGE 1: Answer Writing Desk */}
-          {stage === 'write' && (
+          {selectedQuestion && stage === 'write' && (
             <div className="space-y-6">
               {/* Timer Bar & Controls */}
               <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 sm:p-5 border border-zinc-200 dark:border-zinc-800 shadow-xs flex flex-wrap items-center justify-between gap-4">
@@ -654,21 +751,59 @@ export function WrittenEvaluatorPage() {
                   </div>
                 )}
 
+                {!user && (
+                  <div className="p-3.5 rounded-xl bg-amber-50/90 dark:bg-amber-950/35 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-start gap-2.5 text-amber-900 dark:text-amber-200">
+                      <Lock className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                      <p className="leading-relaxed">
+                        Sign in with Google before starting the timed countdown or drafting your subjective answer for rubric evaluation.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAuthGate(true)}
+                      className="inline-flex items-center justify-center gap-1.5 h-8 px-3.5 rounded-lg bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    >
+                      <Lock className="w-3 h-3" />
+                      <span>Sign In to Write</span>
+                    </button>
+                  </div>
+                )}
+
                 <textarea
                   rows={isFullscreen ? 24 : 14}
+                  readOnly={!user}
                   value={userDraft}
+                  onFocus={() => {
+                    if (!user) {
+                      setShowAuthGate(true);
+                    }
+                  }}
+                  onClick={() => {
+                    if (!user) {
+                      setShowAuthGate(true);
+                    }
+                  }}
                   onChange={(e) => {
+                    if (!user) {
+                      setShowAuthGate(true);
+                      return;
+                    }
                     setUserDraft(e.target.value);
                     if (!hasStartedWriting) setHasStartedWriting(true);
                   }}
-                  placeholder="यहाँ आफ्नो उत्तर टाइप गर्नुहोस् (Type your answer here in Nepali or English)...&#10;&#10;१. परिचय / अवधारणा (Introduction)&#10;२. मुख्य विषयवस्तु र बुँदागत विश्लेषण (Core Analytical Arguments)&#10;३. कानुनी तथा नीतिगत व्यवस्थाहरू (Statutory Provisions)&#10;४. निष्कर्ष तथा भावी कार्यदिशा (Balanced Conclusion)"
+                  placeholder={
+                    user
+                      ? 'यहाँ आफ्नो उत्तर टाइप गर्नुहोस् (Type your answer here in Nepali or English)...\n\n१. परिचय / अवधारणा (Introduction)\n२. मुख्य विषयवस्तु र बुँदागत विश्लेषण (Core Analytical Arguments)\n३. कानुनी तथा नीतिगत व्यवस्थाहरू (Statutory Provisions)\n४. निष्कर्ष तथा भावी कार्यदिशा (Balanced Conclusion)'
+                      : 'Sign in with Google above (or tap here) to unlock timed answer writing & rubric evaluation...'
+                  }
                   className="w-full p-4 sm:p-5 text-sm sm:text-base font-sans rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600 leading-relaxed resize-y shadow-inner"
                 />
 
                 {/* Submit to Evaluation Action */}
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-xs text-zinc-400">
-                    Drafted answers stay strictly in your browser (local-first storage).
+                    Drafted answers auto-save locally in your session as an optional offline fallback.
                   </span>
 
                   <ActionButton
@@ -679,8 +814,12 @@ export function WrittenEvaluatorPage() {
                     color="blue"
                     variant="solid"
                     size="md"
-                    disabled={!userDraft.trim()}
+                    disabled={!user || !userDraft.trim()}
                     onClick={() => {
+                      if (!user) {
+                        setShowAuthGate(true);
+                        return;
+                      }
                       setIsTimerRunning(false);
                       setStage('evaluate');
                     }}
@@ -691,7 +830,7 @@ export function WrittenEvaluatorPage() {
           )}
 
           {/* STAGE 2: 4-Dimension Rubric Scoring Engine */}
-          {stage === 'evaluate' && (
+          {selectedQuestion && stage === 'evaluate' && (
             <div className="space-y-6">
               {/* Draft Preview Accordion */}
               <div className="bg-white dark:bg-zinc-900 rounded-xl p-5 border border-zinc-200 dark:border-zinc-800 space-y-2">
@@ -923,7 +1062,7 @@ export function WrittenEvaluatorPage() {
           )}
 
           {/* STAGE 3: Scorecard & Side-by-Side Model Comparison */}
-          {stage === 'report' && (
+          {selectedQuestion && stage === 'report' && (
             <div className="space-y-8">
               {/* Report Header Card */}
               <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 shadow-lg space-y-6">
@@ -1129,7 +1268,7 @@ export function WrittenEvaluatorPage() {
                   <span>विगतका मूल्याङ्कन अभिलेखहरू (Saved Evaluated Attempts)</span>
                 </h3>
                 <p className="text-xs text-zinc-500">
-                  Total {evalHistory.length} attempts recorded in your browser local storage.
+                  Total {evalHistory.length} evaluated attempts saved in your attempt log.
                 </p>
               </div>
 
@@ -1218,6 +1357,54 @@ export function WrittenEvaluatorPage() {
         </main>
 
         <Footer />
+
+        <ConfirmDialog
+          isOpen={isClearDraftConfirmOpen}
+          title="Clear Current Answer Draft?"
+          description="के तपाईं हाल लेखिएको मस्यौदा खाली गर्न चाहनुहुन्छ? Any unsaved text in the current editor will be cleared."
+          confirmLabel="Clear Draft"
+          confirmColor="crimson"
+          onConfirm={confirmClearDraft}
+          onClose={() => setIsClearDraftConfirmOpen(false)}
+        />
+
+        <ConfirmDialog
+          isOpen={isClearHistoryConfirmOpen}
+          title="Delete All Evaluation History?"
+          description="के तपाईं सबै मूल्याङ्कन अभिलेखहरू मेटाउन चाहनुहुन्छ? This will permanently remove all saved rubric scorecards from this device."
+          confirmLabel="Delete History"
+          confirmColor="crimson"
+          onConfirm={confirmClearAllHistory}
+          onClose={() => setIsClearHistoryConfirmOpen(false)}
+        />
+
+        <AnimatePresence>
+          {showAuthGate && selectedQuestion && (
+            <div
+              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 lg:p-6"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="quiz-dialog-title"
+            >
+              <QuizAuthGate
+                title={selectedQuestion.en.title}
+                subtitle={`${selectedQuestion.paper} · ${selectedQuestion.subject}`}
+                metaItems={[
+                  selectedQuestion.id,
+                  `${selectedQuestion.marks} Marks`,
+                  `${selectedQuestion.recommendedMinutes} Min Limit`,
+                ]}
+                description="All written prompts, marking criteria, and past model guides are free to browse. Sign in with Google to write timed answers and score your attempts on the official rubric."
+                benefits={[
+                  'Unlocks timed answer drafting with the 1.8 min/mark exam clock',
+                  'Enables 4-dimensional Lok Sewa rubric self-evaluation & scorecards',
+                ]}
+                actionLabel="Continue with Google to Write"
+                onClose={() => setShowAuthGate(false)}
+              />
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </PageTransition>
   );

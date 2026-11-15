@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRight,
   ArrowUpRight,
@@ -19,12 +19,20 @@ import { PageTransition } from '../components/layout/PageTransition';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { formatReverseClock } from '../components/quiz/QuizSessionDialog';
 import { ALL_SYLLABUS_UNITS, PSC_CADRE_SYLLABI } from '../data/pscSyllabusData';
-import { ALL_QUIZ_QUESTIONS, QUIZ_DECKS } from '../data/quizData';
-import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
+import type { QuizQuestion } from '../data/quizData';
+import type { ReadingMaterialCategory } from '../data/readingMaterials';
 import {
   WRITTEN_PAPERS,
-  WRITTEN_QUESTIONS,
+  type WrittenQuestion,
 } from '../data/writtenQuestionsData';
+import {
+  MATERIAL_EVENTS,
+  materialStorageService,
+} from '../services/materialStorageService';
+import {
+  QUESTION_EVENTS,
+  questionStorageService,
+} from '../services/questionStorageService';
 import { clearAllReadingData } from '../features/library/librarySlice';
 import {
   clearPscSyllabusProgress,
@@ -84,25 +92,63 @@ export function ProgressPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [confirmReset, setConfirmReset] = useState(false);
 
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(() =>
+    questionStorageService.loadQuizQuestions()
+  );
+  const [writtenQuestions, setWrittenQuestions] = useState<WrittenQuestion[]>(
+    () => questionStorageService.loadWrittenQuestions()
+  );
+  const [materialCategories, setMaterialCategories] = useState<
+    ReadingMaterialCategory[]
+  >(() => materialStorageService.loadMaterialCategories());
+
+  useEffect(() => {
+    const syncQuiz = () =>
+      setQuizQuestions(questionStorageService.loadQuizQuestions());
+    const syncWritten = () =>
+      setWrittenQuestions(questionStorageService.loadWrittenQuestions());
+    const syncMaterials = () =>
+      setMaterialCategories(materialStorageService.loadMaterialCategories());
+    window.addEventListener(QUESTION_EVENTS.QUIZ_CHANGED, syncQuiz);
+    window.addEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+    window.addEventListener(MATERIAL_EVENTS.CHANGED, syncMaterials);
+    window.addEventListener('storage', syncQuiz);
+    window.addEventListener('storage', syncWritten);
+    window.addEventListener('storage', syncMaterials);
+    return () => {
+      window.removeEventListener(QUESTION_EVENTS.QUIZ_CHANGED, syncQuiz);
+      window.removeEventListener(QUESTION_EVENTS.WRITTEN_CHANGED, syncWritten);
+      window.removeEventListener(MATERIAL_EVENTS.CHANGED, syncMaterials);
+      window.removeEventListener('storage', syncQuiz);
+      window.removeEventListener('storage', syncWritten);
+      window.removeEventListener('storage', syncMaterials);
+    };
+  }, []);
+
+  const hydratedDecks = useMemo(
+    () => questionStorageService.hydrateQuizDecks(quizQuestions),
+    [quizQuestions]
+  );
+
   const quizCountBySourcePath = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const q of ALL_QUIZ_QUESTIONS) {
+    for (const q of quizQuestions) {
       if (q.sourcePath) {
         map[q.sourcePath] = (map[q.sourcePath] ?? 0) + 1;
       }
     }
     return map;
-  }, []);
+  }, [quizQuestions]);
 
   const writtenCountBySourcePath = useMemo(() => {
     const map: Record<string, number> = {};
-    for (const q of WRITTEN_QUESTIONS) {
+    for (const q of writtenQuestions) {
       if (q.sourcePath) {
         map[q.sourcePath] = (map[q.sourcePath] ?? 0) + 1;
       }
     }
     return map;
-  }, []);
+  }, [writtenQuestions]);
 
   const writtenEvaluations = useMemo(() => {
     try {
@@ -136,7 +182,7 @@ export function ProgressPage() {
 
   const catalogMaterials = useMemo<EnrichedCatalogMaterial[]>(() => {
     const list: EnrichedCatalogMaterial[] = [];
-    for (const category of READING_MATERIAL_CATEGORIES) {
+    for (const category of materialCategories) {
       for (const item of category.items) {
         const fullUrl = resolveSampleUrl(item.path);
         const bookId = createBookIdFromUrl(fullUrl);
@@ -185,6 +231,7 @@ export function ProgressPage() {
     }
     return list;
   }, [
+    materialCategories,
     readingProgress,
     readingStats,
     quizCountBySourcePath,
@@ -234,7 +281,7 @@ export function ProgressPage() {
   }, [readingStats, catalogMaterials]);
 
   const quizMastery = useMemo(() => {
-    const totalBankCount = ALL_QUIZ_QUESTIONS.length;
+    const totalBankCount = quizQuestions.length;
     const latestOutcomeByQuestion: Record<string, 'correct' | 'wrong'> = {};
     const everCorrectSet = new Set<string>();
 
@@ -290,7 +337,7 @@ export function ProgressPage() {
       }
     >();
 
-    for (const q of ALL_QUIZ_QUESTIONS) {
+    for (const q of quizQuestions) {
       const entry = subjectMap.get(q.subject) ?? {
         subject: q.subject,
         totalInBank: 0,
@@ -337,16 +384,16 @@ export function ProgressPage() {
       totalAnswered,
       subjectRows,
     };
-  }, [attempts]);
+  }, [attempts, quizQuestions]);
 
   const writtenMastery = useMemo(() => {
-    const totalCount = WRITTEN_QUESTIONS.length;
+    const totalCount = writtenQuestions.length;
     let masteredCount = 0;
     let practicingCount = 0;
     let draftsCount = 0;
     let totalPracticeSeconds = 0;
 
-    for (const q of WRITTEN_QUESTIONS) {
+    for (const q of writtenQuestions) {
       const rec = writtenRecords[q.id];
       if (!rec) continue;
       if (rec.status === 'mastered') masteredCount += 1;
@@ -355,8 +402,15 @@ export function ProgressPage() {
       totalPracticeSeconds += rec.timeSpentSeconds;
     }
 
-    const paperRows = WRITTEN_PAPERS.map((paper) => {
-      const pool = WRITTEN_QUESTIONS.filter((q) => q.paper === paper);
+    const allPapers = Array.from(
+      new Set([
+        ...WRITTEN_PAPERS,
+        ...writtenQuestions.map((q) => q.paper).filter(Boolean),
+      ])
+    );
+
+    const paperRows = allPapers.map((paper) => {
+      const pool = writtenQuestions.filter((q) => q.paper === paper);
       const mastered = pool.filter(
         (q) => writtenRecords[q.id]?.status === 'mastered'
       ).length;
@@ -386,10 +440,10 @@ export function ProgressPage() {
         totalCount > 0 ? Math.round((masteredCount / totalCount) * 100) : 0,
       paperRows,
     };
-  }, [writtenRecords]);
+  }, [writtenRecords, writtenQuestions]);
 
   const deckProgressRows = useMemo(() => {
-    return QUIZ_DECKS.map((deck) => {
+    return hydratedDecks.map((deck) => {
       const matching = attempts.filter((a) => a.deckId === deck.id);
       let bestAcc: number | null = null;
       let bestNet: number | null = null;
@@ -409,7 +463,7 @@ export function ProgressPage() {
         lastAttemptAt: matching[0]?.completedAt ?? null,
       };
     });
-  }, [attempts]);
+  }, [attempts, hydratedDecks]);
 
   const recommendedReading = useMemo(() => {
     const inProgress = catalogMaterials
@@ -469,14 +523,14 @@ export function ProgressPage() {
       meta: `${lowestSubject?.masteryPct ?? 0}% mastered · Strengthen subject score`,
       title: lowestSubject
         ? `${lowestSubject.subject} Practice Set`
-        : QUIZ_DECKS[0].title,
+        : hydratedDecks[0]?.title ?? 'Mock Quiz',
       description:
         'Focus your next timed drill on the subject with the most remaining unmastered questions.',
       href: lowestSubject
         ? `/quiz/custom?subject=${encodeURIComponent(lowestSubject.subject)}`
-        : `/quiz/${QUIZ_DECKS[0].id}`,
+        : `/quiz/${hydratedDecks[0]?.id ?? 'comprehensive-mock'}`,
     };
-  }, [quizMastery, deckProgressRows]);
+  }, [quizMastery, deckProgressRows, hydratedDecks]);
 
   const filteredCurriculum = useMemo(() => {
     return catalogMaterials.filter((item) => {
@@ -531,7 +585,7 @@ export function ProgressPage() {
     }
 
     for (const att of attempts) {
-      const isCurated = QUIZ_DECKS.some((d) => d.id === att.deckId);
+      const isCurated = hydratedDecks.some((d) => d.id === att.deckId);
       items.push({
         id: `quiz-${att.id}`,
         kind: 'quiz',
@@ -549,7 +603,7 @@ export function ProgressPage() {
       });
     }
 
-    for (const q of WRITTEN_QUESTIONS) {
+    for (const q of writtenQuestions) {
       const rec = writtenRecords[q.id];
       if (!rec || rec.status === 'unseen') continue;
       items.push({
@@ -697,9 +751,8 @@ export function ProgressPage() {
               className="rounded-xl border border-amber-200 dark:border-amber-800/70 bg-amber-50/80 dark:bg-amber-950/30 p-4 flex flex-wrap items-center justify-between gap-4 text-xs"
             >
               <p className="text-amber-950 dark:text-amber-200 font-medium">
-                Reset all locally stored syllabus checklists, simulation
-                sittings, reading progress, and timed quiz history? This action
-                cannot be undone.
+                Reset all syllabus checklists, simulation sittings, reading
+                progress, and timed quiz history? This action cannot be undone.
               </p>
               <div className="flex items-center gap-2 shrink-0">
                 <button
@@ -956,7 +1009,7 @@ export function ProgressPage() {
                     to="/quiz"
                     className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors whitespace-nowrap shrink-0"
                   >
-                    <span>All {QUIZ_DECKS.length} Quiz Sets</span>
+                    <span>All {hydratedDecks.length} Quiz Sets</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -1262,8 +1315,8 @@ export function ProgressPage() {
                   value={categoryFilter}
                   onChange={setCategoryFilter}
                   options={[
-                    { label: 'All Collections (16)', value: 'all' },
-                    ...READING_MATERIAL_CATEGORIES.map((cat) => ({
+                    { label: `All Collections (${catalogMaterials.length})`, value: 'all' },
+                    ...materialCategories.map((cat) => ({
                       label: `${cat.name} (${cat.items.length})`,
                       value: cat.id,
                     })),

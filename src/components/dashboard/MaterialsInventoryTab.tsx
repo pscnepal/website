@@ -1,19 +1,28 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BookOpen,
   Check,
   Copy,
   Download,
+  Edit3,
   ExternalLink,
-  FileText,
+  Plus,
+  RotateCcw,
+  Trash2,
 } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { useAppDispatch } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
-import {
-  READING_MATERIAL_CATEGORIES,
-  type ReadingMaterialItem,
+import type {
+  ReadingMaterialCategory,
+  ReadingMaterialItem,
 } from '../../data/readingMaterials';
+import {
+  MATERIAL_EVENTS,
+  materialStorageService,
+} from '../../services/materialStorageService';
 import { resolveSampleUrl } from '../../utils/urlHelpers';
+import { ActionButton } from '../common/ActionButton';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 import {
   SharedActionMenu,
   type ActionMenuItem,
@@ -24,8 +33,14 @@ import {
   type ColumnDef,
   type TableFilterDef,
 } from '../common/SharedDataTable';
+import {
+  MaterialFormModal,
+  type MaterialFormSavePayload,
+} from './MaterialFormModal';
 import { useDashboardSearch } from './DashboardLayout';
+import { toast } from '../../services/toastService';
 import { copyWithToast } from '../../utils/clipboardHelpers';
+import { formatUserFriendlyError } from '../../utils/errorHelpers';
 
 type MaterialTableRow = ReadingMaterialItem & {
   categoryName: string;
@@ -34,34 +49,46 @@ type MaterialTableRow = ReadingMaterialItem & {
 
 export function MaterialsInventoryTab() {
   const dispatch = useAppDispatch();
-  const userReactions = useAppSelector((state) => state.reactions.userReactions);
   const { searchQuery, setSearchQuery } = useDashboardSearch();
+  const [categories, setCategories] = useState<ReadingMaterialCategory[]>(() =>
+    materialStorageService.loadMaterialCategories()
+  );
   const [selectedCat, setSelectedCat] = useState('all');
-  const [reactionFilter, setReactionFilter] = useState<'all' | 'liked' | 'disliked' | 'unrated'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // CRUD State
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [materialToEdit, setMaterialToEdit] =
+    useState<MaterialTableRow | null>(null);
+  const [materialToDelete, setMaterialToDelete] =
+    useState<MaterialTableRow | null>(null);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
+  useEffect(() => {
+    const syncMaterials = () => {
+      setCategories(materialStorageService.loadMaterialCategories());
+    };
+    window.addEventListener(MATERIAL_EVENTS.CHANGED, syncMaterials);
+    window.addEventListener('storage', syncMaterials);
+    return () => {
+      window.removeEventListener(MATERIAL_EVENTS.CHANGED, syncMaterials);
+      window.removeEventListener('storage', syncMaterials);
+    };
+  }, []);
 
   const allItems = useMemo(() => {
     const list: MaterialTableRow[] = [];
-    READING_MATERIAL_CATEGORIES.forEach((cat) => {
+    categories.forEach((cat) => {
       cat.items.forEach((it) => {
         list.push({ ...it, categoryName: cat.name, categoryId: cat.id });
       });
     });
     return list;
-  }, []);
+  }, [categories]);
 
   const filteredItems = useMemo(() => {
     return allItems.filter((item) => {
       if (selectedCat !== 'all' && item.categoryId !== selectedCat) {
-        return false;
-      }
-      if (reactionFilter === 'liked' && userReactions[item.id] !== 'like') {
-        return false;
-      }
-      if (reactionFilter === 'disliked' && userReactions[item.id] !== 'dislike') {
-        return false;
-      }
-      if (reactionFilter === 'unrated' && userReactions[item.id]) {
         return false;
       }
       if (searchQuery.trim()) {
@@ -70,11 +97,18 @@ export function MaterialsInventoryTab() {
         const matchesDesc = item.description.toLowerCase().includes(query);
         const matchesCode = item.codeOrEdition.toLowerCase().includes(query);
         const matchesAuth = item.authority.toLowerCase().includes(query);
-        return matchesTitle || matchesDesc || matchesCode || matchesAuth;
+        const matchesCat = item.categoryName.toLowerCase().includes(query);
+        return (
+          matchesTitle ||
+          matchesDesc ||
+          matchesCode ||
+          matchesAuth ||
+          matchesCat
+        );
       }
       return true;
     });
-  }, [allItems, selectedCat, reactionFilter, userReactions, searchQuery]);
+  }, [allItems, selectedCat, searchQuery]);
 
   const handleCopy = (fullUrl: string, id: string) => {
     void copyWithToast(fullUrl, 'Material link copied to clipboard.').then(
@@ -87,6 +121,73 @@ export function MaterialsInventoryTab() {
     );
   };
 
+  const handleSaveMaterial = (payload: MaterialFormSavePayload) => {
+    try {
+      if (materialToEdit) {
+        materialStorageService.updateMaterial(payload);
+        toast.success(`Updated material "${payload.item.title}".`);
+      } else {
+        materialStorageService.createMaterial(payload);
+        toast.success(`Added "${payload.item.title}" to reading catalog.`);
+      }
+      setCategories(materialStorageService.loadMaterialCategories());
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to save reading material.')
+      );
+    }
+  };
+
+  const handleDeleteMaterial = () => {
+    if (!materialToDelete) return;
+    try {
+      const targetTitle = materialToDelete.title;
+      materialStorageService.deleteMaterial(materialToDelete.id);
+      setCategories(materialStorageService.loadMaterialCategories());
+      setMaterialToDelete(null);
+      toast.success(`Deleted "${targetTitle}" from reading catalog.`);
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to delete reading material.')
+      );
+    }
+  };
+
+  const handleResetToDefault = () => {
+    try {
+      materialStorageService.resetMaterialsToDefault();
+      setCategories(materialStorageService.loadMaterialCategories());
+      setSelectedCat('all');
+      setIsResetConfirmOpen(false);
+      toast.info('Reading materials catalog restored to defaults.');
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to reset reading materials catalog.')
+      );
+    }
+  };
+
+  const handleExportJson = () => {
+    try {
+      const dataStr =
+        'data:text/json;charset=utf-8,' +
+        encodeURIComponent(JSON.stringify(categories, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', 'psc-nepal-reading-materials.json');
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      toast.success(
+        `Exported ${allItems.length} reading materials across ${categories.length} collections.`
+      );
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to export reading materials JSON.')
+      );
+    }
+  };
+
   const columns: ColumnDef<MaterialTableRow>[] = useMemo(
     () => [
       {
@@ -95,7 +196,8 @@ export function MaterialsInventoryTab() {
         width: 'w-28',
         sortable: true,
         sortKey: (item) => item.codeOrEdition,
-        className: 'font-mono font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap',
+        className:
+          'font-mono font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap',
         render: (item) => item.codeOrEdition,
       },
       {
@@ -143,13 +245,14 @@ export function MaterialsInventoryTab() {
       },
       {
         id: 'ratings',
-        header: 'Views & Ratings',
+        header: 'Views & Counts',
         width: 'w-44',
         render: (item) => (
           <ReactionButtons
             itemId={item.id}
             itemType="material"
             size="xs"
+            readOnly
           />
         ),
       },
@@ -170,7 +273,28 @@ export function MaterialsInventoryTab() {
               icon: BookOpen,
               color: 'blue',
               to: `/read?url=${encodeURIComponent(fullUrl)}`,
-              onClick: () => dispatch(recordView({ itemId: item.id, itemType: 'material' })),
+              onClick: () =>
+                dispatch(recordView({ itemId: item.id, itemType: 'material' })),
+            },
+            {
+              id: 'edit-material',
+              label: 'Edit Material',
+              description: 'Modify title, collection, pages, or PDF link',
+              icon: Edit3,
+              color: 'amber',
+              onClick: () => {
+                setMaterialToEdit(item);
+                setIsFormModalOpen(true);
+              },
+            },
+            {
+              id: 'delete-material',
+              label: 'Delete Material',
+              description: 'Remove from public catalog & inventory',
+              icon: Trash2,
+              color: 'crimson',
+              danger: true,
+              onClick: () => setMaterialToDelete(item),
             },
             {
               id: 'pdf-download',
@@ -180,6 +304,7 @@ export function MaterialsInventoryTab() {
               color: 'emerald',
               href: fullUrl,
               download: true,
+              divider: true,
             },
             ...(item.externalSourceUrl
               ? [
@@ -201,14 +326,6 @@ export function MaterialsInventoryTab() {
               icon: isCopied ? Check : Copy,
               color: isCopied ? 'emerald' : 'zinc',
               onClick: () => handleCopy(fullUrl, item.id),
-              divider: true,
-            },
-            {
-              id: 'doc-meta',
-              label: `${item.codeOrEdition} Archive`,
-              description: `${item.pages} pages · ${item.authority}`,
-              icon: FileText,
-              color: 'zinc',
             },
           ];
 
@@ -241,55 +358,83 @@ export function MaterialsInventoryTab() {
         onChange: setSelectedCat,
         options: [
           { label: `All Collections (${allItems.length})`, value: 'all' },
-          ...READING_MATERIAL_CATEGORIES.map((cat) => ({
+          ...categories.map((cat) => ({
             label: `${cat.name} (${cat.items.length})`,
             value: cat.id,
           })),
         ],
       },
-      {
-        id: 'rating',
-        label: 'Rating',
-        value: reactionFilter,
-        onChange: (val) => setReactionFilter(val as any),
-        options: [
-          { label: 'All Document Ratings', value: 'all' },
-          { label: 'Liked (★ Saved)', value: 'liked' },
-          { label: 'Disliked', value: 'disliked' },
-          { label: 'Unrated Only', value: 'unrated' },
-        ],
-      },
     ],
-    [selectedCat, reactionFilter, allItems.length]
+    [selectedCat, allItems.length, categories]
   );
 
   const isFiltered =
-    selectedCat !== 'all' ||
-    reactionFilter !== 'all' ||
-    Boolean(searchQuery.trim());
+    selectedCat !== 'all' || Boolean(searchQuery.trim());
 
   const handleResetFilters = () => {
     setSearchQuery('');
     setSelectedCat('all');
-    setReactionFilter('all');
   };
 
   return (
     <div className="space-y-6">
-      {/* Integrated Shared Data Table with Search, Filters, CSV Export, and Pagination */}
+      {/* Integrated Shared Data Table with CRUD Tools, Search, Filters, CSV Export, and Pagination */}
       <SharedDataTable<MaterialTableRow>
         title="Official Study Materials & Parichaya Archives"
-        subtitle="Complete inventory of 13 official editions of Nepal Parichaya (२०६९—२०८२), Constitution, and Statutory Acts"
+        subtitle="Manage study PDF collections, Nepal Parichaya editions, Constitution, and Statutory Acts"
         totalCount={allItems.length}
         data={filteredItems}
         columns={columns}
         keyExtractor={(item) => item.id}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search document title, edition (13th, 12th, २०८२), publisher, or keyword..."
+        searchPlaceholder="Search document title, edition (13th, २०८२), authority, or keyword..."
         filters={tableFilters}
         isFiltered={isFiltered}
         onResetFilters={handleResetFilters}
+        actions={
+          <div className="flex items-center gap-2">
+            <ActionButton
+              label="Add Material"
+              title="Add a new PDF or study document to the catalog"
+              icon={Plus}
+              color="emerald"
+              variant="solid"
+              size="sm"
+              onClick={() => {
+                setMaterialToEdit(null);
+                setIsFormModalOpen(true);
+              }}
+            />
+            <SharedActionMenu
+              items={[
+                {
+                  id: 'export-json',
+                  label: 'Export Catalog (JSON)',
+                  description: 'Download JSON backup of all study materials',
+                  icon: Download,
+                  color: 'emerald',
+                  onClick: handleExportJson,
+                },
+                {
+                  id: 'reset-default',
+                  label: 'Restore Default Materials',
+                  description:
+                    'Reset all additions, edits & deletions to official seed catalog',
+                  icon: RotateCcw,
+                  color: 'crimson',
+                  danger: true,
+                  onClick: () => setIsResetConfirmOpen(true),
+                },
+              ]}
+              label="Catalog Tools"
+              title="Reading Materials Catalog Administration"
+              color="zinc"
+              variant="outline"
+              size="sm"
+            />
+          </div>
+        }
         enableCsvExport={true}
         csvFilename="psc-materials-inventory.csv"
         pagination={true}
@@ -298,7 +443,51 @@ export function MaterialsInventoryTab() {
         emptyMessage="No documents match your query"
         emptyDescription="Try clearing your search query or switching to All Collections."
       />
+
+      {/* Create / Edit Material Modal */}
+      <MaterialFormModal
+        isOpen={isFormModalOpen}
+        materialToEdit={materialToEdit}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setMaterialToEdit(null);
+        }}
+        onSave={handleSaveMaterial}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(materialToDelete)}
+        title="Delete Reading Material?"
+        description={
+          <div>
+            <p>
+              Are you sure you want to remove this document from the public
+              reading catalog and inventory?
+            </p>
+            {materialToDelete && (
+              <p className="mt-2 p-2 rounded bg-zinc-100 dark:bg-zinc-800 font-mono text-[11px] line-clamp-2">
+                {materialToDelete.title} ({materialToDelete.codeOrEdition})
+              </p>
+            )}
+          </div>
+        }
+        confirmLabel="Delete Material"
+        confirmColor="crimson"
+        onConfirm={handleDeleteMaterial}
+        onClose={() => setMaterialToDelete(null)}
+      />
+
+      {/* Reset Defaults Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isResetConfirmOpen}
+        title="Restore Official Reading Catalog?"
+        description="This will restore the original Nepal Parichaya, Constitution, and PSC syllabus PDFs and remove any custom materials or edits."
+        confirmLabel="Restore Defaults"
+        confirmColor="crimson"
+        onConfirm={handleResetToDefault}
+        onClose={() => setIsResetConfirmOpen(false)}
+      />
     </div>
   );
 }
-

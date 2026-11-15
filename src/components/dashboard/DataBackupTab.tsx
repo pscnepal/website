@@ -77,7 +77,7 @@ export function DataBackupTab() {
             Workspace Storage &amp; Cloud Sync Overview
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Written answer scripts and rubric progress stay in local browser storage, while quiz attempts, flagged questions, and ratings sync with your verified Google account in Cloud Firestore.
+            Study progress, quiz attempts, flagged questions, and ratings sync cloud-first with your verified Google account in Cloud Firestore, with optional local browser storage for offline caching and drafts.
           </p>
         </div>
 
@@ -151,7 +151,7 @@ export function DataBackupTab() {
               <span>Reset Study Drafts &amp; Reactions</span>
             </h4>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Permanently clear saved written drafts, rubric criteria checkmarks, and personal reaction logs from this browser and your signed-in Firestore account.
+              Permanently clear saved written drafts, rubric criteria checkmarks, and personal reaction logs from your signed-in Cloud Firestore account and optional local cache.
             </p>
           </div>
 
@@ -178,7 +178,7 @@ export function DataBackupTab() {
             <ActionButton
               onClick={() => setConfirmReset(true)}
               label="Clear Workspace Data"
-              title="Reset and clear local study data"
+              title="Reset and clear workspace study data"
               color="red"
               variant="outline"
               size="sm"

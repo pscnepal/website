@@ -290,7 +290,7 @@ function QuizDialogInner({
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isDashboardAdmin } = useAuth();
   const shouldReduceMotion = Boolean(useReducedMotion());
 
   const totalQuestions = deck.questions.length;
@@ -375,7 +375,7 @@ function QuizDialogInner({
   );
 
   const toggleFlagCurrent = useCallback(() => {
-    if (isSubmitted || !currentQuestion) return;
+    if (isDashboardAdmin || isSubmitted || !currentQuestion) return;
     if (flaggedIds[currentQuestion.id]) {
       storageService.removeFlaggedQuestion(currentQuestion.id);
       setFlaggedIds((prev) => ({
@@ -386,7 +386,7 @@ function QuizDialogInner({
       return;
     }
     setFlagModalQuestion(currentQuestion);
-  }, [isSubmitted, currentQuestion, flaggedIds]);
+  }, [isDashboardAdmin, isSubmitted, currentQuestion, flaggedIds]);
 
   const handleClearCurrentSelection = useCallback(() => {
     if (isSubmitted || !currentQuestion) return;
@@ -1606,21 +1606,23 @@ function QuizDialogInner({
                               size="xs"
                             />
 
-                            <button
-                              type="button"
-                              onClick={toggleFlagCurrent}
-                              aria-pressed={isCurrentFlagged}
-                              className={`inline-flex items-center gap-1.5 py-1 px-2 -mr-2 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                                isCurrentFlagged
-                                  ? 'text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/40'
-                                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/70'
-                              }`}
-                            >
-                              <Flag className="w-3.5 h-3.5" />
-                              <span>
-                                {isCurrentFlagged ? 'Flagged' : 'Flag for review'}
-                              </span>
-                            </button>
+                            {!isDashboardAdmin && (
+                              <button
+                                type="button"
+                                onClick={toggleFlagCurrent}
+                                aria-pressed={isCurrentFlagged}
+                                className={`inline-flex items-center gap-1.5 py-1 px-2 -mr-2 rounded-md text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                                  isCurrentFlagged
+                                    ? 'text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/40'
+                                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/70'
+                                }`}
+                              >
+                                <Flag className="w-3.5 h-3.5" />
+                                <span>
+                                  {isCurrentFlagged ? 'Flagged' : 'Flag for review'}
+                                </span>
+                              </button>
+                            )}
                           </div>
                         </div>
 

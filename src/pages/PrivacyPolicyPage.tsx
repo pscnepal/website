@@ -49,21 +49,21 @@ export function PrivacyPolicyPage() {
   const handleClearReading = () => {
     dispatch(clearAllReadingData());
     setStatusMessage(
-      'Cleared saved reading shelf, last-read page positions, and reading pace statistics from this browser.'
+      'Cleared saved reading shelf, last-read page positions, and reading pace statistics.'
     );
   };
 
   const handleClearQuizzes = () => {
     dispatch(clearQuizHistory());
     setStatusMessage(
-      'Cleared timed quiz attempt history and question mastery records from this browser.'
+      'Cleared timed quiz attempt history and question mastery records.'
     );
   };
 
   const handleClearWritten = () => {
     dispatch(clearWrittenProgress());
     setStatusMessage(
-      'Cleared saved written answer drafts, rubric checkmarks, and mastery records from this browser.'
+      'Cleared saved written answer drafts, rubric checkmarks, and mastery records.'
     );
   };
 
@@ -71,7 +71,7 @@ export function PrivacyPolicyPage() {
     storageService.clearContactInquiries();
     setInquiriesCount(0);
     setStatusMessage(
-      'Cleared saved contact inquiry drafts and tickets from this browser.'
+      'Cleared saved contact inquiry drafts and tickets.'
     );
   };
 
@@ -79,7 +79,7 @@ export function PrivacyPolicyPage() {
     dispatch(clearPscSyllabusProgress());
     dispatch(clearSimulationHistory());
     setStatusMessage(
-      'Cleared saved PSC syllabus checklists, topic bookmarks, and OMR/written hall simulation history from this browser.'
+      'Cleared saved PSC syllabus checklists, topic bookmarks, and OMR/written hall simulation history.'
     );
   };
 
@@ -180,16 +180,17 @@ export function PrivacyPolicyPage() {
               <span>Effective Date: November 2026</span>
               <span aria-hidden="true">·</span>
               <span className="font-sans">
-                Client-Side Local-First Architecture
+                Cloud-First Sync &amp; Optional Local Cache Architecture
               </span>
             </div>
 
             <p className="pt-2 text-fluid-lead text-zinc-600 dark:text-zinc-400">
-              PSC Nepal is built as a privacy-respecting, client-side Lok Sewa
-              preparation workspace and PDF study reader. Your personal PDF
-              files, syllabus checklists, reading positions, and mock exam
-              scores remain on your device and are never uploaded to an external
-              application database.
+              PSC Nepal uses a cloud-first preparation architecture backed by
+              Google Sign-In and Cloud Firestore, with optional local browser
+              storage for offline resilience and device preferences. Signed-in
+              aspirants sync quiz attempts, flagged questions, and ratings
+              securely across sessions, while personal PDF files opened from
+              your device stay private in your browser.
             </p>
           </header>
 
@@ -216,13 +217,14 @@ export function PrivacyPolicyPage() {
 
             <section className="space-y-4">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                2. Browser LocalStorage Inventory
+                2. Cloud Sync &amp; Optional Local Cache Inventory
               </h2>
               <p>
-                To preserve your syllabus progress, reading positions,
-                dark/light theme preferences, and timed PSC quiz mastery across
-                sessions without requiring an account login, PSC Nepal stores
-                structured JSON records in your browser&rsquo;s{' '}
+                Signed-in users sync profile details, quiz attempts, flagged
+                questions, and ratings cloud-first in Cloud Firestore. To keep
+                your workspace responsive offline and support optional local
+                persistence alongside or prior to signing in, PSC Nepal stores
+                optional fallback records in{' '}
                 <code className="font-mono text-xs">window.localStorage</code>:
               </p>
 
@@ -284,16 +286,17 @@ export function PrivacyPolicyPage() {
               </p>
             </section>
 
-            {/* Interactive Local Data Controls */}
+            {/* Interactive Workspace Data Controls */}
             <section className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 space-y-5">
               <div className="space-y-1">
                 <h2 className="font-serif text-xl font-semibold text-zinc-950 dark:text-zinc-50">
-                  5. Manage or Erase Your Local Browser Data
+                  5. Manage or Erase Your Synced &amp; Local Data
                 </h2>
                 <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-                  You have direct, immediate control over every record stored by
-                  PSC Nepal in this browser, and you can inspect your full study
-                  breakdown anytime on the{' '}
+                  You have direct, immediate control over your stored records
+                  across Cloud Firestore (when signed in) and optional local
+                  browser cache, and you can inspect your full study breakdown
+                  anytime on the{' '}
                   <Link
                     to="/progress"
                     className="text-blue-700 dark:text-blue-400 hover:underline underline-offset-4"
@@ -370,7 +373,7 @@ export function PrivacyPolicyPage() {
                     onClick={() => setConfirmClearAll(true)}
                     className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-white dark:bg-zinc-900 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
-                    <span>Erase All Local Data</span>
+                    <span>Erase All Workspace Data</span>
                   </button>
                 ) : (
                   <div className="inline-flex items-center gap-2">

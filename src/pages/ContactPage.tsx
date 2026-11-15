@@ -265,12 +265,12 @@ export function ContactPage() {
 
                 <div className="py-4 space-y-1">
                   <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                    Local-First Privacy Notice
+                    Cloud-First &amp; Privacy Notice
                   </h2>
                   <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    PSC Nepal runs entirely in your browser. Submitting the form
-                    saves a structured ticket copy locally and prepares a direct
-                    email dispatch when you choose to send via your mail client.
+                    PSC Nepal syncs verified study progress with Cloud Firestore
+                    and optionally caches a structured ticket copy locally so you
+                    can dispatch it directly via your mail client.
                   </p>
                 </div>
 
@@ -317,8 +317,8 @@ export function ContactPage() {
                   </div>
 
                   <p className="text-xs sm:text-sm text-emerald-900/90 dark:text-emerald-200/90 leading-relaxed">
-                    Your note has been recorded in your browser&rsquo;s inquiry
-                    log. You can also dispatch it directly to{' '}
+                    Your inquiry reference has been logged. You can also dispatch
+                    it directly to{' '}
                     <span className="font-mono">{SUPPORT_EMAIL}</span> with all
                     fields pre-filled:
                   </p>

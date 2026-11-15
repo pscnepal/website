@@ -61,7 +61,7 @@ export function LibraryPage() {
                 Personal Reading Library
               </h1>
               <p className="mt-2.5 text-fluid-lead text-zinc-600 dark:text-zinc-400">
-                Resume any recently opened book from your saved page and inspect per-document reading time and pace stored locally in your browser.
+                Resume any recently opened book from your saved page and inspect per-document reading time and pace across your workspace.
               </p>
             </div>
 

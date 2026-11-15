@@ -71,6 +71,39 @@ function getFirebaseCode(error: unknown): string {
   return '';
 }
 
+export function isFirestoreOfflineError(error: unknown): boolean {
+  if (!error) return false;
+
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'name' in error &&
+    (error as { name?: unknown }).name === 'FirestoreOfflineError'
+  ) {
+    return true;
+  }
+
+  const code = getFirebaseCode(error);
+  if (code === 'unavailable' || code === 'auth/network-request-failed') {
+    return true;
+  }
+
+  const rawMessage = extractRawErrorMessage(error);
+  const firestorePayload = rawMessage
+    ? parseFirestoreErrorPayload(rawMessage)
+    : null;
+  const effectiveMessage = (firestorePayload?.error || rawMessage || '').trim();
+  const lower = effectiveMessage.toLowerCase();
+
+  return (
+    lower.includes('the client is offline') ||
+    lower.includes('client is offline') ||
+    lower.includes('failed to get document because the client is offline') ||
+    lower.includes('network-request-failed') ||
+    lower.includes('failed to fetch')
+  );
+}
+
 /**
  * Converts Firebase Auth errors, structured Firestore JSON errors, network failures,
  * and unexpected runtime exceptions into concise, user-facing messages.
@@ -111,13 +144,7 @@ export function formatUserFriendlyError(
   }
 
   // 3. Offline & connectivity errors
-  if (
-    lower.includes('the client is offline') ||
-    lower.includes('network-request-failed') ||
-    lower.includes('failed to fetch') ||
-    code === 'unavailable' ||
-    code === 'auth/network-request-failed'
-  ) {
+  if (isFirestoreOfflineError(error)) {
     return 'Network unavailable or offline. Check your internet connection and retry.';
   }
 

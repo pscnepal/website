@@ -14,7 +14,25 @@ import {
   upsertFlaggedQuestionInFirestore,
 } from './cloudSyncService';
 import { toast } from './toastService';
-import { formatUserFriendlyError } from '../utils/errorHelpers';
+import {
+  formatUserFriendlyError,
+  isFirestoreOfflineError,
+} from '../utils/errorHelpers';
+
+function handleFlagSyncError(label: string, err: unknown, fallback: string) {
+  if (isFirestoreOfflineError(err)) {
+    console.warn(`${label} (offline):`, err instanceof Error ? err.message : err);
+    toast.warning(
+      'Cloud database is offline. Saved locally and will sync when reconnected.',
+      { id: 'firebase-offline', title: 'Offline Mode' }
+    );
+    return;
+  }
+  console.error(`${label}:`, err);
+  toast.error(formatUserFriendlyError(err, fallback), {
+    id: 'cloud-flag-sync-err',
+  });
+}
 
 const KEYS = {
   SETTINGS: 'psc_nepal_settings_v2',
@@ -378,13 +396,10 @@ export const storageService = {
       this.saveFlaggedQuestions(current);
       if (uid) {
         void deleteFlaggedQuestionInFirestore(uid, questionId).catch((err) => {
-          console.error('Failed to remove flagged question from Firestore:', err);
-          toast.error(
-            formatUserFriendlyError(
-              err,
-              'Flag removed locally, but cloud sync failed.'
-            ),
-            { id: 'cloud-flag-sync-err' }
+          handleFlagSyncError(
+            'Failed to remove flagged question from Firestore',
+            err,
+            'Flag removed locally, but cloud sync failed.'
           );
         });
       }
@@ -403,13 +418,10 @@ export const storageService = {
       this.saveFlaggedQuestions(current);
       if (uid) {
         void upsertFlaggedQuestionInFirestore(uid, record).catch((err) => {
-          console.error('Failed to sync flagged question to Firestore:', err);
-          toast.error(
-            formatUserFriendlyError(
-              err,
-              'Question flagged locally, but cloud sync failed.'
-            ),
-            { id: 'cloud-flag-sync-err' }
+          handleFlagSyncError(
+            'Failed to sync flagged question to Firestore',
+            err,
+            'Question flagged locally, but cloud sync failed.'
           );
         });
       }
@@ -438,13 +450,10 @@ export const storageService = {
     this.saveFlaggedQuestions(current);
     if (uid) {
       void upsertFlaggedQuestionInFirestore(uid, record).catch((err) => {
-        console.error('Failed to sync flagged question to Firestore:', err);
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            'Question flagged locally, but cloud sync failed.'
-          ),
-          { id: 'cloud-flag-sync-err' }
+        handleFlagSyncError(
+          'Failed to sync flagged question to Firestore',
+          err,
+          'Question flagged locally, but cloud sync failed.'
         );
       });
     }
@@ -459,13 +468,10 @@ export const storageService = {
       const uid = getVerifiedUid();
       if (uid) {
         void deleteFlaggedQuestionInFirestore(uid, questionId).catch((err) => {
-          console.error('Failed to delete flagged question in Firestore:', err);
-          toast.error(
-            formatUserFriendlyError(
-              err,
-              'Could not remove flagged question from cloud.'
-            ),
-            { id: 'cloud-flag-sync-err' }
+          handleFlagSyncError(
+            'Failed to delete flagged question in Firestore',
+            err,
+            'Could not remove flagged question from cloud.'
           );
         });
       }
@@ -481,13 +487,10 @@ export const storageService = {
       if (uid) {
         void upsertFlaggedQuestionInFirestore(uid, current[questionId]).catch(
           (err) => {
-            console.error('Failed to update flagged question note in Firestore:', err);
-            toast.error(
-              formatUserFriendlyError(
-                err,
-                'Note saved locally, but cloud sync failed.'
-              ),
-              { id: 'cloud-flag-sync-err' }
+            handleFlagSyncError(
+              'Failed to update flagged question note in Firestore',
+              err,
+              'Note saved locally, but cloud sync failed.'
             );
           }
         );
@@ -512,16 +515,10 @@ export const storageService = {
       if (uid) {
         void upsertFlaggedQuestionInFirestore(uid, current[questionId]).catch(
           (err) => {
-            console.error(
-              'Failed to update flagged question details in Firestore:',
-              err
-            );
-            toast.error(
-              formatUserFriendlyError(
-                err,
-                'Changes saved locally, but cloud sync failed.'
-              ),
-              { id: 'cloud-flag-sync-err' }
+            handleFlagSyncError(
+              'Failed to update flagged question details in Firestore',
+              err,
+              'Changes saved locally, but cloud sync failed.'
             );
           }
         );
@@ -538,13 +535,10 @@ export const storageService = {
     const uid = getVerifiedUid();
     if (uid) {
       void clearAllFlaggedQuestionsInFirestore(uid).catch((err) => {
-        console.error('Failed to clear flagged questions in Firestore:', err);
-        toast.error(
-          formatUserFriendlyError(
-            err,
-            'Could not clear cloud flagged questions.'
-          ),
-          { id: 'cloud-flag-sync-err' }
+        handleFlagSyncError(
+          'Failed to clear flagged questions in Firestore',
+          err,
+          'Could not clear cloud flagged questions.'
         );
       });
     }

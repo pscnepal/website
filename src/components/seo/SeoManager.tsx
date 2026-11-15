@@ -5,13 +5,9 @@ import {
   getCadreSyllabusById,
   PSC_CADRE_SYLLABI,
 } from '../../data/pscSyllabusData';
-import { ALL_QUIZ_QUESTIONS, QUIZ_DECKS } from '../../data/quizData';
-import { READING_MATERIAL_CATEGORIES } from '../../data/readingMaterials';
 import { CURRENT_AFFAIRS_ITEMS } from '../../data/currentAffairsData';
-import {
-  getWrittenQuestionById,
-  WRITTEN_QUESTIONS,
-} from '../../data/writtenQuestionsData';
+import { materialStorageService } from '../../services/materialStorageService';
+import { questionStorageService } from '../../services/questionStorageService';
 
 export const BASE_SITE_URL = 'https://pscnepal.pages.dev';
 const BRAND_NAME = 'PSC Nepal';
@@ -110,6 +106,10 @@ function resolveRouteSeo(
       ? pathname.slice(0, -1)
       : pathname;
   const searchParams = new URLSearchParams(search);
+  const liveQuizQuestions = questionStorageService.loadQuizQuestions();
+  const liveWrittenQuestions = questionStorageService.loadWrittenQuestions();
+  const liveQuizDecks =
+    questionStorageService.hydrateQuizDecks(liveQuizQuestions);
 
   // 1. Home Hub (/)
   if (normalizedPath === '/') {
@@ -156,7 +156,7 @@ function resolveRouteSeo(
                 name: 'Are written exam model answers available in both English and Nepali?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: `Yes. PSC Nepal provides ${WRITTEN_QUESTIONS.length} structured 5-mark and 10-mark written Papers II–IV questions with side-by-side English and नेपाली introductions, analytical bullet points, statutory citations, and conclusions.`,
+                  text: `Yes. PSC Nepal provides ${liveWrittenQuestions.length} structured 5-mark and 10-mark written Papers II–IV questions with side-by-side English and नेपाली introductions, analytical bullet points, statutory citations, and conclusions.`,
                 },
               },
             ],
@@ -188,7 +188,7 @@ function resolveRouteSeo(
       case 'quiz-bank':
         title = `Lok Sewa MCQ Question Bank | ${BRAND_NAME}`;
         description = clampText(
-          `Browse, filter, and search ${ALL_QUIZ_QUESTIONS.length}+ verified Nepal Lok Sewa Paper I MCQs across General Knowledge, IQ, and Public Administration with answers.`,
+          `Browse, filter, and search ${liveQuizQuestions.length}+ verified Nepal Lok Sewa Paper I MCQs across General Knowledge, IQ, and Public Administration with answers.`,
           158
         );
         breadcrumbName = 'MCQ Question Bank';
@@ -196,7 +196,7 @@ function resolveRouteSeo(
       case 'written-bank':
         title = `Lok Sewa Written Question Bank | ${BRAND_NAME}`;
         description = clampText(
-          `Explore ${WRITTEN_QUESTIONS.length}+ subjective written exam questions for Nepal Lok Sewa Papers II–IV with bilingual model answers, rubrics, and marking schemes.`,
+          `Explore ${liveWrittenQuestions.length}+ subjective written exam questions for Nepal Lok Sewa Papers II–IV with bilingual model answers, rubrics, and marking schemes.`,
           158
         );
         breadcrumbName = 'Written Question Bank';
@@ -417,7 +417,7 @@ function resolveRouteSeo(
       ? decodeURIComponent(normalizedPath.slice('/materials/'.length))
       : null;
     const category = catSlug
-      ? READING_MATERIAL_CATEGORIES.find((c) => c.id === catSlug) ?? null
+      ? materialStorageService.loadMaterialCategories().find((c) => c.id === catSlug) ?? null
       : null;
 
     if (category) {
@@ -500,7 +500,7 @@ function resolveRouteSeo(
       : null;
     const matchedDeck =
       deckSlug && deckSlug !== 'custom'
-        ? QUIZ_DECKS.find((d) => d.id === deckSlug) ?? null
+        ? liveQuizDecks.find((d) => d.id === deckSlug) ?? null
         : null;
 
     if (matchedDeck) {
@@ -563,7 +563,7 @@ function resolveRouteSeo(
             url: `${origin}/quiz`,
             inLanguage: ['en', 'ne'],
             isAccessibleForFree: true,
-            numberOfQuestions: ALL_QUIZ_QUESTIONS.length,
+            numberOfQuestions: liveQuizQuestions.length,
           },
         ],
       },
@@ -575,7 +575,9 @@ function resolveRouteSeo(
     const qSlug = normalizedPath.startsWith('/written/')
       ? decodeURIComponent(normalizedPath.slice('/written/'.length))
       : null;
-    const matchedQuestion = qSlug ? getWrittenQuestionById(qSlug) : undefined;
+    const matchedQuestion = qSlug
+      ? liveWrittenQuestions.find((q) => q.id === qSlug)
+      : undefined;
 
     if (matchedQuestion) {
       const title = clampText(
@@ -972,9 +974,7 @@ function resolveRouteSeo(
   if (normalizedPath === '/read') {
     const rawUrl = searchParams.get('url');
     const matchedDoc = rawUrl
-      ? READING_MATERIAL_CATEGORIES.flatMap((c) => c.items).find((item) =>
-          rawUrl.endsWith(item.path)
-        )
+      ? materialStorageService.findMaterialByPathOrUrl(rawUrl)
       : undefined;
 
     const title = matchedDoc
@@ -1042,9 +1042,9 @@ function resolveRouteSeo(
 
   // 12. Privacy Policy (/privacy)
   if (normalizedPath === '/privacy') {
-    const title = `Privacy Policy & Local Data Controls | ${BRAND_NAME}`;
+    const title = `Privacy Policy & Cloud Sync Controls | ${BRAND_NAME}`;
     const description =
-      'Review PSC Nepal’s local-first privacy architecture. All PDFs, reading progress, and exam scores stay in your browser with zero server uploads.';
+      'Review PSC Nepal’s cloud-first sync and privacy architecture. Verified accounts sync study progress in Cloud Firestore with optional local browser caching and private in-browser PDF rendering.';
     return {
       title,
       description,

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ActionButton } from '../components/common/ActionButton';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
@@ -21,6 +22,8 @@ import {
   type FlashcardDeckId,
   type FlashcardItem,
 } from '../data/flashcardsData';
+import { toast } from '../services/toastService';
+import { formatUserFriendlyError } from '../utils/errorHelpers';
 
 // Leitner Box level: 1 = Learning (New / Needs practice), 2 = Review, 3 = Mastered
 export type LeitnerBoxLevel = 1 | 2 | 3;
@@ -42,6 +45,7 @@ export function FlashcardsPage() {
   const [viewMode, setViewMode] = useState<'study' | 'browse'>('study');
   const [filterBoxLevel, setFilterBoxLevel] = useState<'all' | LeitnerBoxLevel>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   // Study session state
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -76,7 +80,15 @@ export function FlashcardsPage() {
       const next = { ...prev, [cardId]: updated };
       try {
         localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(next));
-      } catch {}
+      } catch (err) {
+        toast.warning(
+          formatUserFriendlyError(
+            err,
+            'Could not save optional local flashcard progress cache.'
+          ),
+          { id: 'flashcard-storage-err' }
+        );
+      }
       return next;
     });
   };
@@ -166,20 +178,28 @@ export function FlashcardsPage() {
   };
 
   const handleResetProgress = () => {
-    if (window.confirm('के तपाईं यस डेकको स्मरण प्रगति रिसेट गर्न चाहनुहुन्छ? (Reset Leitner progress for this deck?)')) {
-      setProgressMap((prev) => {
-        const next = { ...prev };
-        activeDeckCards.forEach((c) => {
-          delete next[c.id];
-        });
-        try {
-          localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(next));
-        } catch {}
-        return next;
+    setIsResetConfirmOpen(true);
+  };
+
+  const confirmResetProgress = () => {
+    setProgressMap((prev) => {
+      const next = { ...prev };
+      activeDeckCards.forEach((c) => {
+        delete next[c.id];
       });
-      setCurrentCardIndex(0);
-      setIsFlipped(false);
-    }
+      try {
+        localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(next));
+        toast.info('Reset Leitner progress for this deck.');
+      } catch (err) {
+        toast.error(
+          formatUserFriendlyError(err, 'Failed to reset saved flashcard progress.')
+        );
+      }
+      return next;
+    });
+    setCurrentCardIndex(0);
+    setIsFlipped(false);
+    setIsResetConfirmOpen(false);
   };
 
   // Stats calculation
@@ -639,6 +659,16 @@ export function FlashcardsPage() {
         </main>
 
         <Footer />
+
+        <ConfirmDialog
+          isOpen={isResetConfirmOpen}
+          title="Reset Deck Leitner Progress?"
+          description="के तपाईं यस डेकको स्मरण प्रगति रिसेट गर्न चाहनुहुन्छ? All box mastery progress for the currently filtered cards will return to Box 1."
+          confirmLabel="Reset Progress"
+          confirmColor="crimson"
+          onConfirm={confirmResetProgress}
+          onClose={() => setIsResetConfirmOpen(false)}
+        />
       </div>
     </PageTransition>
   );

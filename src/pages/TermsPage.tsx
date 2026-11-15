@@ -118,22 +118,22 @@ export function TermsPage() {
 
             <section className="space-y-3">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                4. Local Browser Persistence
+                4. Cloud-First Sync &amp; Optional Local Persistence
               </h2>
               <p>
-                Reading positions, reading-pace statistics, and quiz attempt
-                logs are stored locally in your browser&rsquo;s{' '}
-                <code className="font-mono text-xs">localStorage</code> and
-                summarized on the{' '}
+                Study progress, quiz attempts, flagged questions, and ratings
+                are synced cloud-first to Cloud Firestore when you sign in with
+                your Google account, and summarized on the{' '}
                 <Link
                   to="/progress"
                   className="text-blue-700 dark:text-blue-400 hover:underline underline-offset-4"
                 >
                   Progress
                 </Link>{' '}
-                page. Clearing your browser cache, using private/incognito
-                browsing windows, or switching devices will not carry over local
-                study records.
+                page. Optional local browser storage (<code className="font-mono text-xs">localStorage</code>{' '}
+                and offline cache) is used as a fallback when offline or before
+                signing in; clearing browser data without signing in may erase
+                unsynced local cache records.
               </p>
             </section>
 
@@ -168,7 +168,7 @@ export function TermsPage() {
                 >
                   Privacy Policy
                 </Link>{' '}
-                for details on local browser data storage.
+                for details on cloud sync and optional local data storage.
               </span>
               <Link
                 to="/contact"
