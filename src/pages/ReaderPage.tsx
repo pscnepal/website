@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, ArrowUpRight } from 'lucide-react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLazyFetchBinaryAssetQuery } from '../app/api/pscApi';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { store } from '../app/store';
 import { PdfUpload } from '../components/home/PdfUpload';
@@ -63,6 +64,7 @@ export function ReaderPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [fetchBinaryAsset] = useLazyFetchBinaryAssetQuery();
 
   const routeOrigin = location.state as
     | { from?: string; fromLabel?: string }
@@ -381,10 +383,8 @@ export function ReaderPage() {
         return;
       }
 
-      // Attempt CORS blob download first so browser honors filename
-      const response = await fetch(resolvedSource.url);
-      if (!response.ok) throw new Error('Download fetch failed');
-      const blob = await response.blob();
+      // Attempt CORS blob download via RTK fetchBaseQuery first so browser honors filename
+      const blob = await fetchBinaryAsset(resolvedSource.url).unwrap();
       const tempUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = tempUrl;
@@ -403,7 +403,7 @@ export function ReaderPage() {
       fallbackLink.click();
       fallbackLink.remove();
     }
-  }, [resolvedSource.url, resolvedSource.book]);
+  }, [resolvedSource.url, resolvedSource.book, fetchBinaryAsset]);
 
   // 1. Empty state when /read is visited without a document URL or local upload
   if (resolvedSource.status === 'empty') {

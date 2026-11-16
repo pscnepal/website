@@ -9,12 +9,14 @@ import {
 } from 'react';
 import { DASHBOARD_ADMIN_EMAIL, useAuth } from './AuthContext';
 import {
-  deleteAdminUserFromFirestore,
-  fetchAdminUsersDirectory,
+  useDeleteAdminUserMutation,
+  useLazyGetAdminUsersDirectoryQuery,
+  useUpdateAdminUserDetailsMutation,
+  useUpdateAdminUserStatusMutation,
+} from '../app/api/pscApi';
+import {
   sendUserPasswordReset,
   subscribeToAdminUsersDirectory,
-  updateAdminUserDetails,
-  updateAdminUserStatus,
   updateCurrentAdminPassword,
   type CloudUserDirectoryEntry,
   type CloudUserStatus,
@@ -52,6 +54,11 @@ export function DashboardUsersProvider({ children }: { children: ReactNode }) {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+
+  const [triggerGetAdminUsers] = useLazyGetAdminUsersDirectoryQuery();
+  const [triggerUpdateAdminUserStatus] = useUpdateAdminUserStatusMutation();
+  const [triggerUpdateAdminUserDetails] = useUpdateAdminUserDetailsMutation();
+  const [triggerDeleteAdminUser] = useDeleteAdminUserMutation();
 
   useEffect(() => {
     if (!isAuthReady || !isDashboardAdmin || !user) {
@@ -94,7 +101,10 @@ export function DashboardUsersProvider({ children }: { children: ReactNode }) {
     setIsRefreshing(true);
     setError(null);
     try {
-      const entries = await fetchAdminUsersDirectory(DASHBOARD_ADMIN_EMAIL);
+      const entries = await triggerGetAdminUsers(
+        DASHBOARD_ADMIN_EMAIL,
+        false
+      ).unwrap();
       setUsers(entries);
       setLastSyncedAt(new Date().toISOString());
       toast.success('User directory synced with Firestore.', {
@@ -111,27 +121,30 @@ export function DashboardUsersProvider({ children }: { children: ReactNode }) {
       setIsRefreshing(false);
       setIsLoading(false);
     }
-  }, [isAuthReady, isDashboardAdmin, user]);
+  }, [isAuthReady, isDashboardAdmin, user, triggerGetAdminUsers]);
 
   const handleUpdateUserStatus = useCallback(
     async (params: { uid: string; status: CloudUserStatus; reason?: string }) => {
-      await updateAdminUserStatus(params);
+      await triggerUpdateAdminUserStatus(params).unwrap();
     },
-    []
+    [triggerUpdateAdminUserStatus]
   );
 
   const handleUpdateUserDetails = useCallback(
     async (params: UpdateAdminUserDetailsInput) => {
-      await updateAdminUserDetails(params);
+      await triggerUpdateAdminUserDetails(params).unwrap();
     },
-    []
+    [triggerUpdateAdminUserDetails]
   );
 
-  const handleDeleteUser = useCallback(async (uid: string) => {
-    await deleteAdminUserFromFirestore(uid);
-    setUsers((prev) => prev.filter((item) => item.uid !== uid));
-    setLastSyncedAt(new Date().toISOString());
-  }, []);
+  const handleDeleteUser = useCallback(
+    async (uid: string) => {
+      await triggerDeleteAdminUser(uid).unwrap();
+      setUsers((prev) => prev.filter((item) => item.uid !== uid));
+      setLastSyncedAt(new Date().toISOString());
+    },
+    [triggerDeleteAdminUser]
+  );
 
   const handleSendPasswordReset = useCallback(async (email: string) => {
     await sendUserPasswordReset(email);

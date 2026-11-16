@@ -51,19 +51,13 @@ import {
   OperationType,
   reportFirestoreSnapshotError,
 } from '../lib/firebase';
+import { pscApi } from '../app/api/pscApi';
 import {
   clearEnsuredProfileCache,
-  fetchAllCloudItemStats,
-  fetchAllCloudMaterialOverrides,
-  fetchAllCloudQuizOverrides,
-  fetchAllCloudWrittenOverrides,
-  fetchUserCloudReactions,
-  fetchUserFlaggedQuestions,
   subscribeToCloudItemStats,
   subscribeToCloudMaterialOverrides,
   subscribeToCloudQuizOverrides,
   subscribeToCloudWrittenOverrides,
-  syncReactionAndStatsToFirestore,
   upsertFlaggedQuestionInFirestore,
 } from '../services/cloudSyncService';
 import { materialStorageService } from '../services/materialStorageService';
@@ -398,10 +392,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (isCancelled?: () => boolean) => {
       const [statsRes, quizRes, writtenRes, materialsRes] =
         await Promise.allSettled([
-          fetchAllCloudItemStats(),
-          fetchAllCloudQuizOverrides(),
-          fetchAllCloudWrittenOverrides(),
-          fetchAllCloudMaterialOverrides(),
+          store
+            .dispatch(
+              pscApi.endpoints.getCloudItemStats.initiate(undefined, {
+                forceRefetch: true,
+              })
+            )
+            .unwrap(),
+          store
+            .dispatch(
+              pscApi.endpoints.getCloudQuizBank.initiate(undefined, {
+                forceRefetch: true,
+              })
+            )
+            .unwrap(),
+          store
+            .dispatch(
+              pscApi.endpoints.getCloudWrittenBank.initiate(undefined, {
+                forceRefetch: true,
+              })
+            )
+            .unwrap(),
+          store
+            .dispatch(
+              pscApi.endpoints.getCloudMaterials.initiate(undefined, {
+                forceRefetch: true,
+              })
+            )
+            .unwrap(),
         ]);
       if (isCancelled?.()) return;
 
@@ -681,7 +699,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 2. Sync Flagged Questions & Revision Notes (two-way merge)
-        const cloudFlags = await fetchUserFlaggedQuestions(firebaseUser.uid);
+        const cloudFlags = await store
+          .dispatch(
+            pscApi.endpoints.getUserFlaggedQuestions.initiate(
+              firebaseUser.uid,
+              { forceRefetch: true }
+            )
+          )
+          .unwrap();
         const { toPushToCloud } =
           storageService.mergeCloudFlaggedQuestions(cloudFlags);
         for (const flagRecord of toPushToCloud) {
@@ -690,7 +715,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 3. Sync User Reactions & Views (two-way merge + community stats sync)
-        const cloudReactions = await fetchUserCloudReactions(firebaseUser.uid);
+        const cloudReactions = await store
+          .dispatch(
+            pscApi.endpoints.getUserCloudReactions.initiate(firebaseUser.uid, {
+              forceRefetch: true,
+            })
+          )
+          .unwrap();
         if (auth.currentUser?.uid !== firebaseUser.uid) return;
         dispatch(hydrateUserCloudReactions(cloudReactions));
 
@@ -717,13 +748,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               itemId,
               localReactionsState.itemTypes[itemId]
             );
-            const ack = await syncReactionAndStatsToFirestore({
-              userId: firebaseUser.uid,
-              itemId,
-              itemType,
-              targetReaction: localReaction,
-              targetUserViews: finalViews,
-            });
+            const ack = await store
+              .dispatch(
+                pscApi.endpoints.syncReactionAndStats.initiate({
+                  userId: firebaseUser.uid,
+                  itemId,
+                  itemType,
+                  targetReaction: localReaction,
+                  targetUserViews: finalViews,
+                })
+              )
+              .unwrap();
             if (auth.currentUser?.uid === firebaseUser.uid) {
               dispatch(applyItemSyncAck(ack));
             }
@@ -732,7 +767,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (pushedAny && auth.currentUser?.uid === firebaseUser.uid) {
-          const refreshedStats = await fetchAllCloudItemStats();
+          const refreshedStats = await store
+            .dispatch(
+              pscApi.endpoints.getCloudItemStats.initiate(undefined, {
+                forceRefetch: true,
+              })
+            )
+            .unwrap();
           if (auth.currentUser?.uid === firebaseUser.uid) {
             dispatch(setCloudItemStats(refreshedStats));
           }
@@ -801,6 +842,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         syncedUidRef.current = null;
         syncingUidRef.current = null;
         clearEnsuredProfileCache();
+        dispatch(
+          pscApi.util.invalidateTags([
+            'UserFlags',
+            'UserReactions',
+            'AdminUsers',
+          ])
+        );
         if (previousCloudUid) {
           storageService.clearLastCloudUid();
           storageService.clearLocalFlaggedQuestionsOnly();

@@ -4,6 +4,8 @@ import {
   isAction,
   type Middleware,
 } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { pscApi } from './api/pscApi';
 import libraryReducer from '../features/library/librarySlice';
 import pscReducer from '../features/psc/pscSlice';
 import quizReducer from '../features/quiz/quizSlice';
@@ -49,6 +51,7 @@ function handleMiddlewareSyncError(
 }
 
 const rootReducer = combineReducers({
+  [pscApi.reducerPath]: pscApi.reducer,
   reader: readerReducer,
   library: libraryReducer,
   settings: settingsReducer,
@@ -235,9 +238,19 @@ export const store = configureStore({
   reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: true,
-    }).concat(cloudSyncMiddleware),
+      serializableCheck: {
+        ignoredPaths: [pscApi.reducerPath],
+        ignoredActions: [
+          `${pscApi.reducerPath}/executeQuery/fulfilled`,
+          `${pscApi.reducerPath}/executeQuery/rejected`,
+          `${pscApi.reducerPath}/executeMutation/fulfilled`,
+          `${pscApi.reducerPath}/executeMutation/rejected`,
+        ],
+      },
+    }).concat(cloudSyncMiddleware, pscApi.middleware),
 });
+
+setupListeners(store.dispatch);
 
 let prevSettings = store.getState().settings;
 let prevRecentBooks = store.getState().library.recentBooks;
