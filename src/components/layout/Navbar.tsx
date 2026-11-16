@@ -4,33 +4,11 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { GoogleLogoIcon } from '../auth/QuizAuthGate';
-
-const DESKTOP_NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard', end: false },
-  { to: '/syllabus', label: 'Syllabus', end: false },
-  { to: '/calendar', label: 'Calendar', end: false },
-  { to: '/current-affairs', label: 'Affairs', end: false },
-  { to: '/materials', label: 'Materials', end: false },
-  { to: '/quiz', label: 'Quiz', end: false },
-  { to: '/written', label: 'Written', end: false },
-];
-
-const MOBILE_NAV_ITEMS = [
-  { to: '/dashboard', label: 'Dashboard & Banks', end: false },
-  { to: '/calendar', label: 'PSC Calendar & Notices (कार्यतालिका)', end: false },
-  { to: '/current-affairs', label: 'Current Affairs (समसामयिक)', end: false },
-  { to: '/syllabus', label: 'PSC Syllabus', end: false },
-  { to: '/materials', label: 'Study Materials', end: false },
-  { to: '/quiz', label: 'Objective Quiz', end: false },
-  { to: '/written', label: 'Written Q&A (EN/ने)', end: false },
-  { to: '/evaluator', label: 'Answer Evaluator (रुब्रिक मूल्याङ्कन)', end: false },
-  { to: '/pyq', label: 'Past Questions & PYQ (विगतका प्रश्न)', end: false },
-  { to: '/flashcards', label: 'Flashcards & Memory (स्मरण कार्ड)', end: false },
-  { to: '/progress', label: 'Study Progress', end: false },
-  { to: '/library', label: 'Personal Library', end: false },
-  { to: '/read', label: 'PDF Flipbook Reader', end: false },
-  { to: '/about', label: 'About PSC Nepal', end: false },
-];
+import {
+  DESKTOP_NAV_ITEMS,
+  MOBILE_NAV_ITEMS,
+  SITE_CONFIG,
+} from '../../data/siteConfig';
 
 export function Navbar() {
   const location = useLocation();
@@ -140,10 +118,10 @@ export function Navbar() {
           <Link
             to="/"
             onClick={closeMobileMenu}
-            aria-label="PSC Nepal — Home"
+            aria-label={`${SITE_CONFIG.brandName} — Home`}
             className="font-serif text-xl font-semibold tracking-tight text-blue-800 dark:text-zinc-50 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded"
           >
-            PSC Nepal
+            {SITE_CONFIG.brandName}
           </Link>
 
           {/* Zone 2: Concise single-line React Router navigation links (desktop/tablet >= 768px) */}

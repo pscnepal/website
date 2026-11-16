@@ -18,12 +18,13 @@ import {
   type CloudQuizQuestionOverride,
   type CloudWrittenQuestionOverride,
 } from './cloudSyncService';
+import { SITE_CONFIG } from '../data/siteConfig';
 import { toast } from './toastService';
 import { formatUserFriendlyError } from '../utils/errorHelpers';
 
 const QUIZ_STORAGE_KEY = 'psc_nepal_quiz_questions_custom_v1';
 const WRITTEN_STORAGE_KEY = 'psc_nepal_written_questions_custom_v1';
-const ADMIN_EMAIL = 'info.pscnepal@gmail.com';
+const ADMIN_EMAIL = SITE_CONFIG.supportEmail;
 
 const SEED_QUIZ_BY_ID = new Map<string, QuizQuestion>(
   ALL_QUIZ_QUESTIONS.map((q) => [q.id, q])

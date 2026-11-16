@@ -9,11 +9,12 @@ import {
   upsertReadingMaterialInFirestore,
   type CloudMaterialOverride,
 } from './cloudSyncService';
+import { SITE_CONFIG } from '../data/siteConfig';
 import { toast } from './toastService';
 import { formatUserFriendlyError } from '../utils/errorHelpers';
 
 const MATERIALS_STORAGE_KEY = 'psc_nepal_reading_materials_custom_v1';
-const ADMIN_EMAIL = 'info.pscnepal@gmail.com';
+const ADMIN_EMAIL = SITE_CONFIG.supportEmail;
 
 export const MATERIAL_EVENTS = {
   CHANGED: 'psc_reading_materials_changed',

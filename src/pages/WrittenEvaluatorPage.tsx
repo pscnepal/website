@@ -33,6 +33,15 @@ import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
 import { useAuth } from '../context/AuthContext';
+import {
+  EVALUATOR_AUTH_GATE_CONTENT,
+  EVALUATOR_DRAFT_PLACEHOLDERS,
+  EVALUATOR_HERO_CONTENT,
+  EVALUATOR_PRESET_RATIOS,
+  WRITTEN_RUBRIC_DIMENSIONS,
+  getWrittenMeritLevel,
+  type RubricDimensionKey,
+} from '../data/evaluatorContentData';
 import type { WrittenQuestion } from '../data/writtenQuestionsData';
 import {
   QUESTION_EVENTS,
@@ -199,34 +208,24 @@ export function WrittenEvaluatorPage() {
   const totalScore = Number((scoreIntro + scoreCore + scoreStatutes + scoreConclusion).toFixed(2));
   const maxMarks = selectedQuestion?.marks || 10;
   const scorePercentage = Math.round((totalScore / maxMarks) * 100);
+  const currentMerit = getWrittenMeritLevel(scorePercentage);
 
-  const getMeritLevel = (pct: number) => {
-    if (pct >= 75) {
-      return {
-        labelNe: 'टपर / उत्कृष्ट मेरिट स्तर (Merit Ranker Level)',
-        labelEn: 'Topper / Outstanding Competitive Grade',
-        color: 'emerald',
-      };
-    }
-    if (pct >= 60) {
-      return {
-        labelNe: 'प्रतिस्पर्धात्मक उत्तीर्ण (Competitive Pass)',
-        labelEn: 'Competitive Passing Tier',
-        color: 'blue',
-      };
-    }
-    if (pct >= 45) {
-      return {
-        labelNe: 'सामान्य उत्तीर्ण स्तर (Average Qualifying)',
-        labelEn: 'Average Qualifying Tier',
-        color: 'amber',
-      };
-    }
-    return {
-      labelNe: 'सुधार आवश्यक (Needs Remediation)',
-      labelEn: 'Below Qualifying Threshold',
-      color: 'crimson',
-    };
+  const dimensionValues: Record<
+    RubricDimensionKey,
+    { score: number; max: number; setter: (val: number) => void }
+  > = {
+    intro: { score: scoreIntro, max: maxIntro, setter: setScoreIntro },
+    core: { score: scoreCore, max: maxCore, setter: setScoreCore },
+    statutes: {
+      score: scoreStatutes,
+      max: maxStatutes,
+      setter: setScoreStatutes,
+    },
+    conclusion: {
+      score: scoreConclusion,
+      max: maxConclusion,
+      setter: setScoreConclusion,
+    },
   };
 
   const handleSaveEvaluation = () => {
@@ -261,7 +260,7 @@ export function WrittenEvaluatorPage() {
       toast.warning(
         formatUserFriendlyError(
           err,
-          'Scorecard generated, but optional local fallback could not persist history.'
+          'Scorecard generated, though evaluation history could not be saved.'
         )
       );
     }
@@ -332,15 +331,15 @@ export function WrittenEvaluatorPage() {
         '',
         `## मूल्याङ्कन नतिजा (Evaluation Summary)`,
         `- कुल प्राप्ताङ्क: ${totalScore} / ${maxMarks} (${scorePercentage}%)`,
-        `- मेरिट स्तर: ${getMeritLevel(scorePercentage).labelNe} (${getMeritLevel(scorePercentage).labelEn})`,
+        `- मेरिट स्तर: ${currentMerit.labelNe} (${currentMerit.labelEn})`,
         `- शब्द संख्या: ${wordCount} words (Est. ${estimatedPages} pages)`,
         `- समय: ${formatTimer(totalRecommendedSeconds - remainingSeconds)} खर्च`,
         '',
         `### ४-आयामी रुब्रिक प्राप्ताङ्क (Rubric Breakdown)`,
-        `1. परिचय तथा अवधारणागत स्पष्टता (१५%): ${scoreIntro} / ${maxIntro}`,
-        `2. मुख्य विषयवस्तुको बुँदागत विश्लेषण (५५%): ${scoreCore} / ${maxCore}`,
-        `3. संवैधानिक तथा कानुनी आधार (१५%): ${scoreStatutes} / ${maxStatutes}`,
-        `4. सन्तुलित निष्कर्ष तथा भावी मार्गचित्र (१५%): ${scoreConclusion} / ${maxConclusion}`,
+        ...WRITTEN_RUBRIC_DIMENSIONS.map((dim, idx) => {
+          const entry = dimensionValues[dim.id];
+          return `${idx + 1}. ${dim.titleNe} (${dim.weightPercentNe}): ${entry.score} / ${entry.max}`;
+        }),
         '',
         evaluatorNotes ? `### परीक्षकको सुझाव (Evaluator Feedback)\n${evaluatorNotes}\n` : '',
         `## परीक्षार्थीको उत्तर (Candidate's Drafted Answer)`,
@@ -417,7 +416,7 @@ export function WrittenEvaluatorPage() {
               </li>
               <li>/</li>
               <li className="text-zinc-800 dark:text-zinc-200 font-medium">
-                Answer Evaluator &amp; Rubric Scorer (उत्तर लेखन स्व-मूल्याङ्कन)
+                {EVALUATOR_HERO_CONTENT.breadcrumbLabel}
               </li>
             </ol>
           </nav>
@@ -431,14 +430,13 @@ export function WrittenEvaluatorPage() {
               <div className="max-w-2xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-crimson-500/20 text-crimson-300 border border-crimson-400/30 text-xs font-medium mb-3">
                   <Scale className="w-3.5 h-3.5 text-crimson-400" />
-                  <span>Official 1.8 Min/Mark Rubric Engine</span>
+                  <span>{EVALUATOR_HERO_CONTENT.badge}</span>
                 </div>
                 <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
-                  उत्तर लेखन स्व-मूल्याङ्कन तथा रुब्रिक स्कोरर
+                  {EVALUATOR_HERO_CONTENT.headlineNe}
                 </h1>
                 <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
-                  Draft subjective answers under authentic exam hall countdowns (9 mins for 5M, 18 mins for 10M),
-                  grade against official Lok Sewa 4-dimensional rubrics, and benchmark against top rankers.
+                  {EVALUATOR_HERO_CONTENT.description}
                 </p>
               </div>
 
@@ -469,18 +467,25 @@ export function WrittenEvaluatorPage() {
 
             {/* Quick Metrics Bar */}
             <div className="mt-6 pt-5 border-t border-zinc-800/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800">
-                <div className="text-zinc-400 font-medium">Standard Time Pacing</div>
-                <div className="text-base sm:text-lg font-bold text-amber-400 mt-0.5">१.८ मिनेट / अङ्क</div>
-              </div>
-              <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800">
-                <div className="text-zinc-400 font-medium">Evaluation Dimensions</div>
-                <div className="text-base sm:text-lg font-bold text-white mt-0.5">४ अनिवार्य खण्डहरू</div>
-              </div>
-              <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800">
-                <div className="text-zinc-400 font-medium">Target Word Density</div>
-                <div className="text-base sm:text-lg font-bold text-blue-400 mt-0.5">१४०–१५० शब्द / पृष्ठ</div>
-              </div>
+              {EVALUATOR_HERO_CONTENT.quickMetrics.map((metric) => {
+                const valueColor =
+                  metric.tone === 'amber'
+                    ? 'text-amber-400'
+                    : metric.tone === 'blue'
+                      ? 'text-blue-400'
+                      : 'text-white';
+                return (
+                  <div
+                    key={metric.label}
+                    className="bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800"
+                  >
+                    <div className="text-zinc-400 font-medium">{metric.label}</div>
+                    <div className={`text-base sm:text-lg font-bold ${valueColor} mt-0.5`}>
+                      {metric.value}
+                    </div>
+                  </div>
+                );
+              })}
               <div className="bg-zinc-900/60 p-2.5 rounded-lg border border-zinc-800">
                 <div className="text-zinc-400 font-medium">Evaluations Completed</div>
                 <div className="text-base sm:text-lg font-bold text-emerald-400 mt-0.5">{evalHistory.length} Answers Graded</div>
@@ -731,22 +736,17 @@ export function WrittenEvaluatorPage() {
                       <span>लोक सेवा आयोग उत्तरपुस्तिका मूल्याङ्कन मानक (Official Marking Rubric Guidelines)</span>
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-zinc-700 dark:text-zinc-300">
-                      <div className="bg-white/80 dark:bg-zinc-900/80 p-2.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
-                        <strong className="text-zinc-900 dark:text-zinc-100 block mb-0.5">१. परिचय (१५%):</strong>
-                        विषयवस्तुको शाब्दिक अर्थ, अवधारणा, नेपालको सन्दर्भमा सान्दर्भिकता र स्पष्ट सुरुवात (३-४ वाक्य)।
-                      </div>
-                      <div className="bg-white/80 dark:bg-zinc-900/80 p-2.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
-                        <strong className="text-zinc-900 dark:text-zinc-100 block mb-0.5">२. मुख्य विश्लेषण (५५%):</strong>
-                        प्रश्नको माग अनुसार उपशीर्षक, सकारात्मक/नकारात्मक पक्ष, समस्याका कारण, बुँदागत स्पष्टता वा तुलनात्मक तालिका।
-                      </div>
-                      <div className="bg-white/80 dark:bg-zinc-900/80 p-2.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
-                        <strong className="text-zinc-900 dark:text-zinc-100 block mb-0.5">३. कानुनी तथा नीतिगत आधार (१५%):</strong>
-                        नेपालको संविधानका सम्बन्धित धाराहरू, आवधिक योजना, सम्बन्धित ऐन तथा नियमावलीको सटिक उद्धरण।
-                      </div>
-                      <div className="bg-white/80 dark:bg-zinc-900/80 p-2.5 rounded-lg border border-blue-100 dark:border-blue-900/40">
-                        <strong className="text-zinc-900 dark:text-zinc-100 block mb-0.5">४. निष्कर्ष तथा मार्गचित्र (१५%):</strong>
-                        समस्या समाधानका व्यावहारिक उपाय, सकारात्मक सन्देश र दूरदर्शी प्रशासनिक दृष्टिकोण सहितको टुंग्याउनी।
-                      </div>
+                      {WRITTEN_RUBRIC_DIMENSIONS.map((dim) => (
+                        <div
+                          key={dim.id}
+                          className="bg-white/80 dark:bg-zinc-900/80 p-2.5 rounded-lg border border-blue-100 dark:border-blue-900/40"
+                        >
+                          <strong className="text-zinc-900 dark:text-zinc-100 block mb-0.5">
+                            {dim.shortTitleNe}:
+                          </strong>
+                          {dim.guideSummaryNe}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -794,8 +794,8 @@ export function WrittenEvaluatorPage() {
                   }}
                   placeholder={
                     user
-                      ? 'यहाँ आफ्नो उत्तर टाइप गर्नुहोस् (Type your answer here in Nepali or English)...\n\n१. परिचय / अवधारणा (Introduction)\n२. मुख्य विषयवस्तु र बुँदागत विश्लेषण (Core Analytical Arguments)\n३. कानुनी तथा नीतिगत व्यवस्थाहरू (Statutory Provisions)\n४. निष्कर्ष तथा भावी कार्यदिशा (Balanced Conclusion)'
-                      : 'Sign in with Google above (or tap here) to unlock timed answer writing & rubric evaluation...'
+                      ? EVALUATOR_DRAFT_PLACEHOLDERS.authenticated
+                      : EVALUATOR_DRAFT_PLACEHOLDERS.guest
                   }
                   className="w-full p-4 sm:p-5 text-sm sm:text-base font-sans rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-600 leading-relaxed resize-y shadow-inner"
                 />
@@ -803,7 +803,7 @@ export function WrittenEvaluatorPage() {
                 {/* Submit to Evaluation Action */}
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-xs text-zinc-400">
-                    Drafted answers auto-save locally in your session as an optional offline fallback.
+                    Drafted answers auto-save during your session.
                   </span>
 
                   <ActionButton
@@ -859,169 +859,68 @@ export function WrittenEvaluatorPage() {
                   {/* Quick Preset Buttons */}
                   <div className="flex items-center gap-1.5 flex-wrap text-xs">
                     <span className="text-zinc-400 text-[11px] font-medium mr-1">Presets:</span>
-                    <button
-                      type="button"
-                      onClick={() => handleSetPresetScores(0.8)}
-                      className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-medium hover:bg-emerald-200 transition-colors cursor-pointer"
+                    {EVALUATOR_PRESET_RATIOS.map((preset) => {
+                      const toneClasses =
+                        preset.tone === 'emerald'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-200'
+                          : preset.tone === 'blue'
+                            ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 hover:bg-blue-200'
+                            : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 hover:bg-amber-200';
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => handleSetPresetScores(preset.ratio)}
+                          className={`px-2 py-0.5 rounded font-medium transition-colors cursor-pointer ${toneClasses}`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {WRITTEN_RUBRIC_DIMENSIONS.map((dim) => {
+                  const entry = dimensionValues[dim.id];
+                  return (
+                    <div
+                      key={dim.id}
+                      className="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-3"
                     >
-                      Topper (80%)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSetPresetScores(0.65)}
-                      className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 font-medium hover:bg-blue-200 transition-colors cursor-pointer"
-                    >
-                      Pass (65%)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSetPresetScores(0.5)}
-                      className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-medium hover:bg-amber-200 transition-colors cursor-pointer"
-                    >
-                      Average (50%)
-                    </button>
-                  </div>
-                </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-serif font-bold text-base text-zinc-900 dark:text-zinc-100">
+                            {dim.orderNe}. {dim.titleNe} ({dim.titleEn})
+                          </h4>
+                          <p className="text-xs text-zinc-500">
+                            {dim.descriptionNe}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="font-mono text-base font-bold text-blue-700 dark:text-blue-400">
+                            {entry.score} / {entry.max}
+                          </span>
+                        </div>
+                      </div>
 
-                {/* Dimension 1: Intro */}
-                <div className="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-serif font-bold text-base text-zinc-900 dark:text-zinc-100">
-                        १. परिचय तथा अवधारणागत स्पष्टता (Introduction &amp; Framing)
-                      </h4>
-                      <p className="text-xs text-zinc-500">
-                        विषयवस्तुको छोटो परिभाषा, पृष्ठभूमि, र स्पष्ट थालनी (भार: १५%)
-                      </p>
+                      <input
+                        type="range"
+                        min="0"
+                        max={entry.max}
+                        step={is10M ? '0.25' : '0.1'}
+                        value={entry.score}
+                        onChange={(e) => entry.setter(Number(e.target.value))}
+                        className="w-full accent-blue-600 cursor-pointer"
+                      />
+
+                      <div className="text-[11px] text-zinc-500 grid grid-cols-3 text-center">
+                        {dim.tierLabels.map((tierLabel) => (
+                          <span key={tierLabel}>{tierLabel}</span>
+                        ))}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="font-mono text-base font-bold text-blue-700 dark:text-blue-400">
-                        {scoreIntro} / {maxIntro}
-                      </span>
-                    </div>
-                  </div>
-
-                  <input
-                    type="range"
-                    min="0"
-                    max={maxIntro}
-                    step={is10M ? '0.25' : '0.1'}
-                    value={scoreIntro}
-                    onChange={(e) => setScoreIntro(Number(e.target.value))}
-                    className="w-full accent-blue-600 cursor-pointer"
-                  />
-
-                  <div className="text-[11px] text-zinc-500 grid grid-cols-3 text-center">
-                    <span>कमजोर (अस्पष्ट परिभाषा)</span>
-                    <span>मध्यम (साधारण परिचय)</span>
-                    <span>उत्कृष्ट (स्पष्ट, सटिक र प्रभावकारी)</span>
-                  </div>
-                </div>
-
-                {/* Dimension 2: Core Body */}
-                <div className="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-serif font-bold text-base text-zinc-900 dark:text-zinc-100">
-                        २. मुख्य विषयवस्तुको बुँदागत विश्लेषण (Core Arguments &amp; Depth)
-                      </h4>
-                      <p className="text-xs text-zinc-500">
-                        बोल्ड शीर्षक, स्पष्ट तर्क, सकारात्मक/नकारात्मक पक्ष र प्रस्तुति (भार: ५५%)
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-mono text-base font-bold text-blue-700 dark:text-blue-400">
-                        {scoreCore} / {maxCore}
-                      </span>
-                    </div>
-                  </div>
-
-                  <input
-                    type="range"
-                    min="0"
-                    max={maxCore}
-                    step={is10M ? '0.25' : '0.1'}
-                    value={scoreCore}
-                    onChange={(e) => setScoreCore(Number(e.target.value))}
-                    className="w-full accent-blue-600 cursor-pointer"
-                  />
-
-                  <div className="text-[11px] text-zinc-500 grid grid-cols-3 text-center">
-                    <span>सतही बुँदाहरू</span>
-                    <span>सन्तोषजनक तर्क र बुँदाहरू</span>
-                    <span>गहन विश्लेषण, तालिका वा संरचना</span>
-                  </div>
-                </div>
-
-                {/* Dimension 3: Legal Citations */}
-                <div className="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-serif font-bold text-base text-zinc-900 dark:text-zinc-100">
-                        ३. संवैधानिक तथा कानुनी आधार (Statutory &amp; Legal Citations)
-                      </h4>
-                      <p className="text-xs text-zinc-500">
-                        संविधानका धारा, सम्बन्धित ऐन, नियम, तथा नीतिगत व्यवस्थाहरूको उल्लेख (भार: १५%)
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-mono text-base font-bold text-blue-700 dark:text-blue-400">
-                        {scoreStatutes} / {maxStatutes}
-                      </span>
-                    </div>
-                  </div>
-
-                  <input
-                    type="range"
-                    min="0"
-                    max={maxStatutes}
-                    step={is10M ? '0.25' : '0.1'}
-                    value={scoreStatutes}
-                    onChange={(e) => setScoreStatutes(Number(e.target.value))}
-                    className="w-full accent-blue-600 cursor-pointer"
-                  />
-
-                  <div className="text-[11px] text-zinc-500 grid grid-cols-3 text-center">
-                    <span>कानुनी उल्लेख नभएको</span>
-                    <span>सामान्य ऐनको नाम मात्र</span>
-                    <span>सटिक धारा, दफा र नीतिको उद्धरण</span>
-                  </div>
-                </div>
-
-                {/* Dimension 4: Conclusion */}
-                <div className="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-serif font-bold text-base text-zinc-900 dark:text-zinc-100">
-                        ४. सन्तुलित निष्कर्ष तथा भावी मार्गचित्र (Forward-Looking Conclusion)
-                      </h4>
-                      <p className="text-xs text-zinc-500">
-                        समस्याको व्यावहारिक समाधान र सकारात्मक भावी कार्यदिशा (भार: १५%)
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-mono text-base font-bold text-blue-700 dark:text-blue-400">
-                        {scoreConclusion} / {maxConclusion}
-                      </span>
-                    </div>
-                  </div>
-
-                  <input
-                    type="range"
-                    min="0"
-                    max={maxConclusion}
-                    step={is10M ? '0.25' : '0.1'}
-                    value={scoreConclusion}
-                    onChange={(e) => setScoreConclusion(Number(e.target.value))}
-                    className="w-full accent-blue-600 cursor-pointer"
-                  />
-
-                  <div className="text-[11px] text-zinc-500 grid grid-cols-3 text-center">
-                    <span>निष्कर्ष नभएको वा दोहोरो</span>
-                    <span>सामान्य निष्कर्ष</span>
-                    <span>सकारात्मक, दूरदर्शी र व्यावहारिक मार्गचित्र</span>
-                  </div>
-                </div>
+                  );
+                })}
 
                 {/* Evaluator Notes */}
                 <div className="bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 space-y-2">
@@ -1098,7 +997,7 @@ export function WrittenEvaluatorPage() {
                     <div>
                       <div className="text-xs text-zinc-500">Merit Benchmark Grade:</div>
                       <div className="text-base font-serif font-bold text-blue-950 dark:text-blue-200">
-                        {getMeritLevel(scorePercentage).labelNe}
+                        {currentMerit.labelNe}
                       </div>
                     </div>
                   </div>
@@ -1127,22 +1026,20 @@ export function WrittenEvaluatorPage() {
 
                 {/* Score Breakdown Table */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                    <div className="text-zinc-500">१. परिचय (१५%)</div>
-                    <div className="text-lg font-bold font-mono text-zinc-900 dark:text-zinc-100 mt-0.5">{scoreIntro} / {maxIntro}</div>
-                  </div>
-                  <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                    <div className="text-zinc-500">२. मुख्य विश्लेषण (५५%)</div>
-                    <div className="text-lg font-bold font-mono text-zinc-900 dark:text-zinc-100 mt-0.5">{scoreCore} / {maxCore}</div>
-                  </div>
-                  <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                    <div className="text-zinc-500">३. कानुनी आधार (१५%)</div>
-                    <div className="text-lg font-bold font-mono text-zinc-900 dark:text-zinc-100 mt-0.5">{scoreStatutes} / {maxStatutes}</div>
-                  </div>
-                  <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                    <div className="text-zinc-500">४. निष्कर्ष (१५%)</div>
-                    <div className="text-lg font-bold font-mono text-zinc-900 dark:text-zinc-100 mt-0.5">{scoreConclusion} / {maxConclusion}</div>
-                  </div>
+                  {WRITTEN_RUBRIC_DIMENSIONS.map((dim) => {
+                    const entry = dimensionValues[dim.id];
+                    return (
+                      <div
+                        key={dim.id}
+                        className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800"
+                      >
+                        <div className="text-zinc-500">{dim.shortTitleNe}</div>
+                        <div className="text-lg font-bold font-mono text-zinc-900 dark:text-zinc-100 mt-0.5">
+                          {entry.score} / {entry.max}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {evaluatorNotes && (
@@ -1293,7 +1190,7 @@ export function WrittenEvaluatorPage() {
               <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {evalHistory.map((rec) => {
                   const pct = Math.round((rec.totalScore / rec.marks) * 100);
-                  const merit = getMeritLevel(pct);
+                  const merit = getWrittenMeritLevel(pct);
                   return (
                     <div key={rec.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                       <div className="space-y-1 min-w-0">
@@ -1394,12 +1291,9 @@ export function WrittenEvaluatorPage() {
                   `${selectedQuestion.marks} Marks`,
                   `${selectedQuestion.recommendedMinutes} Min Limit`,
                 ]}
-                description="All written prompts, marking criteria, and past model guides are free to browse. Sign in with Google to write timed answers and score your attempts on the official rubric."
-                benefits={[
-                  'Unlocks timed answer drafting with the 1.8 min/mark exam clock',
-                  'Enables 4-dimensional Lok Sewa rubric self-evaluation & scorecards',
-                ]}
-                actionLabel="Continue with Google to Write"
+                description={EVALUATOR_AUTH_GATE_CONTENT.description}
+                benefits={[...EVALUATOR_AUTH_GATE_CONTENT.benefits]}
+                actionLabel={EVALUATOR_AUTH_GATE_CONTENT.actionLabel}
                 onClose={() => setShowAuthGate(false)}
               />
             </div>

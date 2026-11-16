@@ -6,6 +6,7 @@ import {
   Languages,
   X,
 } from 'lucide-react';
+import { QUIZ_DIFFICULTY_OPTIONS as DIFFICULTY_OPTIONS } from '../../data/catalogOptionsData';
 import {
   isLanguageOnlySubject,
   QUIZ_OPTION_KEYS,
@@ -28,12 +29,6 @@ export interface QuizQuestionFormModalProps {
   onClose: () => void;
   onSave: (question: QuizQuestion) => void;
 }
-
-const DIFFICULTY_OPTIONS: SearchSelectOption[] = [
-  { value: 'Easy', label: 'Easy (Recall & Direct Statutes)' },
-  { value: 'Medium', label: 'Medium (Standard Examination Level)' },
-  { value: 'Hard', label: 'Hard (Deep Analytical / Tricky)' },
-];
 
 const CUSTOM_SOURCE_SENTINEL = '__CUSTOM_SOURCE_PATH__';
 

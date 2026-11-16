@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { ArrowUpRight } from 'lucide-react';
+import { INTERNAL_ROUTE_PREFIXES } from '../../data/siteConfig';
 import { SharedTable } from '../common/SharedTable';
 
 interface ChatMarkdownProps {
@@ -8,24 +9,9 @@ interface ChatMarkdownProps {
   onNavigateInternal: (path: string) => void;
 }
 
-const KNOWN_INTERNAL_PREFIXES = [
-  '/syllabus',
-  '/materials',
-  '/quiz',
-  '/written',
-  '/simulate',
-  '/progress',
-  '/library',
-  '/read',
-  '/features',
-  '/contact',
-  '/privacy',
-  '/terms',
-];
-
 function isInternalAppRoute(href: string): boolean {
   if (href === '/') return true;
-  return KNOWN_INTERNAL_PREFIXES.some(
+  return INTERNAL_ROUTE_PREFIXES.some(
     (prefix) =>
       href === prefix ||
       href.startsWith(`${prefix}/`) ||

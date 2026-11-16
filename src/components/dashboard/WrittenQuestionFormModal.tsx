@@ -7,6 +7,10 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import {
+  WRITTEN_MARKS_OPTIONS as MARKS_OPTIONS,
+  WRITTEN_QUESTION_TYPE_OPTIONS as QUESTION_TYPE_OPTIONS,
+} from '../../data/catalogOptionsData';
 import type {
   BilingualRubricPoint,
   BilingualSection,
@@ -36,17 +40,6 @@ const PAPER_OPTIONS: SearchSelectOption[] = WRITTEN_PAPERS.map((p) => ({
   value: p,
   label: p,
 }));
-
-const QUESTION_TYPE_OPTIONS: SearchSelectOption[] = [
-  { value: 'Short Analytical', label: 'Short Analytical (5 Marks)' },
-  { value: 'Long Analytical', label: 'Long Analytical (10 Marks)' },
-  { value: 'Case Study', label: 'Case Study Analysis (10 Marks)' },
-];
-
-const MARKS_OPTIONS: SearchSelectOption[] = [
-  { value: '5', label: '5 Marks (Short Note / Analytical Concept)' },
-  { value: '10', label: '10 Marks (Comprehensive Broad Case / Problem)' },
-];
 
 const CUSTOM_SOURCE_SENTINEL = '__CUSTOM_WRITTEN_SOURCE__';
 

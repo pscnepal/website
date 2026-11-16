@@ -1,20 +1,25 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { HOME_FAQS } from '../../data/homeContentData';
 import {
   ALL_SYLLABUS_UNITS,
   getCadreSyllabusById,
   PSC_CADRE_SYLLABI,
 } from '../../data/pscSyllabusData';
 import { CURRENT_AFFAIRS_ITEMS } from '../../data/currentAffairsData';
+import {
+  DASHBOARD_TAB_META,
+  SITE_CONFIG,
+  type SiteDashboardTab,
+} from '../../data/siteConfig';
 import { materialStorageService } from '../../services/materialStorageService';
 import { questionStorageService } from '../../services/questionStorageService';
 
-export const BASE_SITE_URL = 'https://pscnepal.pages.dev';
-const BRAND_NAME = 'PSC Nepal';
-const DEFAULT_TITLE = 'PSC Nepal | Lok Sewa Syllabus, Mock Exams & Study Hub';
-const DEFAULT_DESCRIPTION =
-  'Prepare for Nepal Lok Sewa Aayog exams on PSC Nepal with official syllabi, OMR & written simulations, timed MCQs, bilingual answers, and PDF flipbooks.';
-const OG_IMAGE_PATH = '/og-psc-nepal.svg';
+export const BASE_SITE_URL = SITE_CONFIG.siteUrl;
+const BRAND_NAME = SITE_CONFIG.brandName;
+const DEFAULT_TITLE = SITE_CONFIG.defaultSeoTitle;
+const DEFAULT_DESCRIPTION = SITE_CONFIG.defaultSeoDescription;
+const OG_IMAGE_PATH = SITE_CONFIG.ogImagePath;
 const ROUTE_JSONLD_SCRIPT_ID = 'psc-nepal-route-jsonld';
 
 interface ResolvedSeoPayload {
@@ -134,32 +139,17 @@ function resolveRouteSeo(
           {
             '@type': 'FAQPage',
             '@id': `${origin}/#faq`,
-            mainEntity: [
-              {
-                '@type': 'Question',
-                name: 'Which Nepal Lok Sewa Aayog syllabi are covered on PSC Nepal?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: `PSC Nepal covers the official Public Service Commission (Lok Sewa Aayog) non-technical curricula for Gazetted Class III Section Officer, Non-Gazetted Class I Nayab Subba, and Non-Gazetted Class II Kharidar across ${ALL_SYLLABUS_UNITS.length} structured syllabus units with attached original PSC PDFs.`,
-                },
+            mainEntity: HOME_FAQS.map((faq) => ({
+              '@type': 'Question',
+              name: faq.question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: faq.getPlainAnswer({
+                  totalSyllabusUnits: ALL_SYLLABUS_UNITS.length,
+                  totalWrittenQuestions: liveWrittenQuestions.length,
+                }),
               },
-              {
-                '@type': 'Question',
-                name: 'How are Lok Sewa Paper I objective mock exams scored on PSC Nepal?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: 'Objective OMR simulations enforce official Nepal PSC rules: a strict reverse countdown timer, -20% negative marking deducted per wrong response, and a 45% qualifying pass threshold in Stage I screening.',
-                },
-              },
-              {
-                '@type': 'Question',
-                name: 'Are written exam model answers available in both English and Nepali?',
-                acceptedAnswer: {
-                  '@type': 'Answer',
-                  text: `Yes. PSC Nepal provides ${liveWrittenQuestions.length} structured 5-mark and 10-mark written Papers II–IV questions with side-by-side English and नेपाली introductions, analytical bullet points, statutory citations, and conclusions.`,
-                },
-              },
-            ],
+            })),
           },
         ],
       },
@@ -169,72 +159,14 @@ function resolveRouteSeo(
   // 2. Command Dashboard (/dashboard & /dashboard?tab=...)
   if (normalizedPath === '/dashboard') {
     const rawTab = searchParams.get('tab');
-    const validTabs = [
-      'overview',
-      'quiz-bank',
-      'written-bank',
-      'users',
-      'materials',
-      'data',
-    ];
-    const activeTab =
-      rawTab && validTabs.includes(rawTab) ? rawTab : 'overview';
-
-    let title: string;
-    let description: string;
-    let breadcrumbName: string;
-
-    switch (activeTab) {
-      case 'quiz-bank':
-        title = `Lok Sewa MCQ Question Bank | ${BRAND_NAME}`;
-        description = clampText(
-          `Browse, filter, and search ${liveQuizQuestions.length}+ verified Nepal Lok Sewa Paper I MCQs across General Knowledge, IQ, and Public Administration with answers.`,
-          158
-        );
-        breadcrumbName = 'MCQ Question Bank';
-        break;
-      case 'written-bank':
-        title = `Lok Sewa Written Question Bank | ${BRAND_NAME}`;
-        description = clampText(
-          `Explore ${liveWrittenQuestions.length}+ subjective written exam questions for Nepal Lok Sewa Papers II–IV with bilingual model answers, rubrics, and marking schemes.`,
-          158
-        );
-        breadcrumbName = 'Written Question Bank';
-        break;
-      case 'users':
-        title = `Aspirants Community & Study Cohort | ${BRAND_NAME}`;
-        description = clampText(
-          'Connect with fellow Nepal Lok Sewa aspirants across all 7 provinces preparing for Section Officer, Nayab Subba, and Kharidar public examinations.',
-          158
-        );
-        breadcrumbName = 'Aspirants Cohort';
-        break;
-      case 'materials':
-        title = `Lok Sewa Materials & Syllabus Inventory | ${BRAND_NAME}`;
-        description = clampText(
-          'Audit and manage Lok Sewa curriculum units, official PSC gazette PDFs, Nepal Parichaya documents, and bilingual preparation flipbooks.',
-          158
-        );
-        breadcrumbName = 'Materials Inventory';
-        break;
-      case 'data':
-        title = `Study Data Backup & Sync Hub | ${BRAND_NAME}`;
-        description = clampText(
-          'Export, import, and backup your Lok Sewa mock exam scores, written answer submissions, and syllabus checklist progress safely in JSON format.',
-          158
-        );
-        breadcrumbName = 'Data Backup & Sync';
-        break;
-      case 'overview':
-      default:
-        title = 'PSC Nepal Command Dashboard | Lok Sewa Prep Central';
-        description = clampText(
-          'Access your comprehensive PSC Nepal command dashboard: track syllabus coverage, question banks, aspirant cohort activity, and study backups.',
-          158
-        );
-        breadcrumbName = 'Command Dashboard';
-        break;
-    }
+    const activeTab: SiteDashboardTab =
+      rawTab && rawTab in DASHBOARD_TAB_META
+        ? (rawTab as SiteDashboardTab)
+        : 'overview';
+    const tabMeta = DASHBOARD_TAB_META[activeTab];
+    const title = tabMeta.seoTitle;
+    const description = clampText(tabMeta.seoDescription, 158);
+    const breadcrumbName = tabMeta.seoBreadcrumb;
 
     const canonicalPath =
       activeTab === 'overview' ? '/dashboard' : `/dashboard?tab=${activeTab}`;
@@ -1042,9 +974,9 @@ function resolveRouteSeo(
 
   // 12. Privacy Policy (/privacy)
   if (normalizedPath === '/privacy') {
-    const title = `Privacy Policy & Cloud Sync Controls | ${BRAND_NAME}`;
+    const title = `Privacy Policy & Data Controls | ${BRAND_NAME}`;
     const description =
-      'Review PSC Nepal’s cloud-first sync and privacy architecture. Verified accounts sync study progress in Cloud Firestore with optional local browser caching and private in-browser PDF rendering.';
+      'Review PSC Nepal’s privacy policy and data controls for study progress, quiz records, account settings, and PDF document viewing.';
     return {
       title,
       description,
@@ -1125,7 +1057,7 @@ function resolveRouteSeo(
               '@type': 'EducationalOrganization',
               name: BRAND_NAME,
               url: origin,
-              email: 'info.pscnepal@gmail.com',
+              email: SITE_CONFIG.supportEmail,
               areaServed: 'Nepal',
             },
           },

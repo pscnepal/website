@@ -1,3 +1,4 @@
+import { ABOUT_HERO_CONTENT, ABOUT_PLATFORM_PILLARS } from '../data/aboutContentData';
 import {
   PSC_CADRE_SYLLABI,
   type PscCadreSyllabus,
@@ -5,6 +6,7 @@ import {
   type PscSyllabusTopic,
 } from '../data/pscSyllabusData';
 import type { QuizQuestion } from '../data/quizData';
+import { SITE_CONFIG } from '../data/siteConfig';
 import type { WrittenQuestion } from '../data/writtenQuestionsData';
 import { questionStorageService } from './questionStorageService';
 
@@ -143,7 +145,7 @@ Browse all reading materials in the [Study Materials Catalog](/materials).
 - \`Esc\`: Close dialogs / exit full-screen
 
 #### Editorial Support Desk & Errata
-- **Contact Email**: \`info.pscnepal@gmail.com\`
+- **Contact Email**: \`${SITE_CONFIG.supportEmail}\`
 - **Contact Desk Page**: Visit the [Contact Page](/contact) to generate a tracked inquiry ticket (\`PSC-YYYY-XXXX\`) for:
   1. *Quiz / Written Q&A Errata* (with Question ID citation)
   2. *Reading Material / Syllabus Request*
@@ -184,7 +186,7 @@ function handleCandidateProgress(clientContext?: ClientStudyContext): string {
 - **Examination Simulations**: **${simulationRunsCount} exam hall runs** completed in the [Simulation Hall](/simulate).
 - **Personal Library**: **${recentBooksCount} documents** opened in the [Reader & Library](/library).
 
-Keep up the disciplined preparation! Your cloud-synced progress and optional local cache stay ready for your next session.`;
+Keep up the disciplined preparation! Your study progress is saved for your next session.`;
 }
 
 // -------------------------------------------------------------
@@ -305,18 +307,17 @@ export function generatePscChatResponse(
 
   // 1. Starter Prompts & High-Priority Direct Patterns
   if (/about( psc nepal)?|who are you|mission|हाम्रो बारेमा/i.test(query)) {
-    return `### About PSC Nepal (हाम्रो बारेमा)
+    const pillarBullets = ABOUT_PLATFORM_PILLARS.map(
+      (pillar) => `- **${pillar.title}**: ${pillar.description}`
+    ).join('\n');
+    return `### ${ABOUT_HERO_CONTENT.badge}
 
-**PSC Nepal** is an independent digital study workspace engineered to empower Nepal's civil service aspirants across all 7 Provinces and 77 districts with open, structured, and rigorous preparation.
+${ABOUT_HERO_CONTENT.lead}
 
 #### Core Pillars:
-- **Official Syllabi**: Comprehensive phase, paper, and topic checklists for Section Officer, Nayab Subba, and Kharidar.
-- **Realistic Exam Hall Simulator**: Phase I OMR screening with -20% negative marking and Phase II Timed Written Hall (1.8 mins/mark) with rubric self-evaluation.
-- **Bilingual Model Answers**: Structured 5M and 10M subjective answers formatted in English and नेपाली.
-- **3D Flipbook Reader**: Two-page spread viewing of the Constitution 2072, Civil Service Act 2049, Local Government Operation Act 2074, and Nepal Parichaya.
-- **Cloud-First Sync & Privacy**: Sync your quiz history, flags, and study progress with your Google account in Cloud Firestore, backed by an optional local browser cache for offline access.
+${pillarBullets}
 
-Read more about our mission on the [About PSC Nepal Page](/about) or reach our editorial desk at \`info.pscnepal@gmail.com\`.`;
+Read more about our mission on the [About ${SITE_CONFIG.brandName} Page](/about) or reach our editorial desk at \`${SITE_CONFIG.supportEmail}\`.`;
   }
 
   if (

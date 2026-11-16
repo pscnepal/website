@@ -13,7 +13,11 @@ import {
 import { clearQuizHistory } from '../features/quiz/quizSlice';
 import { clearAllReactions } from '../features/reactions/reactionsSlice';
 import { clearWrittenProgress } from '../features/written/writtenSlice';
-import { STORAGE_KEYS, storageService } from '../services/storageService';
+import {
+  PRIVACY_POLICY_CONTENT,
+  PRIVACY_STORAGE_KEY_DESCRIPTIONS,
+} from '../data/legalContentData';
+import { storageService } from '../services/storageService';
 
 export function PrivacyPolicyPage() {
   const dispatch = useAppDispatch();
@@ -99,56 +103,22 @@ export function PrivacyPolicyPage() {
     );
   };
 
-  const storageRows = [
-    {
-      keyName: STORAGE_KEYS.SETTINGS,
-      purpose:
-        'Stores your preferred Light/Dark appearance, Flipbook vs Standard PDF default, and page-turn audio setting.',
-      countLabel: 'Active preferences',
-    },
-    {
-      keyName: STORAGE_KEYS.RECENT_BOOKS,
-      purpose:
-        'Stores metadata for up to 12 recently opened documents (local blob URLs are stripped prior to saving).',
-      countLabel: `${recentBooksCount} saved`,
-    },
-    {
-      keyName: STORAGE_KEYS.READING_PROGRESS,
-      purpose:
-        'Remembers your last-read page and total page count per document ID so you can resume seamlessly.',
-      countLabel: `${progressRecordsCount} records`,
-    },
-    {
-      keyName: STORAGE_KEYS.READING_STATS,
-      purpose:
-        'Logs active reading seconds, pages turned, unique pages visited, and pages-per-minute pace.',
-      countLabel: `${statsRecordsCount} records`,
-    },
-    {
-      keyName: STORAGE_KEYS.QUIZ_STATE,
-      purpose:
-        'Stores your preferred quiz mode and up to 30 timed PSC quiz attempts with per-question outcomes.',
-      countLabel: `${quizAttemptsCount} attempts`,
-    },
-    {
-      keyName: STORAGE_KEYS.WRITTEN_STATE,
-      purpose:
-        'Stores preferred bilingual language view (EN/नेपाली), local answer drafts, rubric checkmarks, and written question mastery.',
-      countLabel: `${writtenRecordsCount} records`,
-    },
-    {
-      keyName: STORAGE_KEYS.PSC_PREP_STATE,
-      purpose:
-        'Stores your active target PSC cadre, checked syllabus units and topics, bookmarked units, and OMR/written simulation runs.',
-      countLabel: `${pscSyllabusAndSimCount} items`,
-    },
-    {
-      keyName: STORAGE_KEYS.CONTACT_INQUIRIES,
-      purpose:
-        'Stores optional inquiry or question errata notes submitted on the Contact page.',
-      countLabel: `${inquiriesCount} logged`,
-    },
-  ];
+  const storageCountLabels = {
+    settings: 'Active preferences',
+    recentBooks: `${recentBooksCount} saved`,
+    readingProgress: `${progressRecordsCount} records`,
+    readingStats: `${statsRecordsCount} records`,
+    quizAttempts: `${quizAttemptsCount} attempts`,
+    writtenRecords: `${writtenRecordsCount} records`,
+    pscPrep: `${pscSyllabusAndSimCount} items`,
+    inquiries: `${inquiriesCount} logged`,
+  };
+
+  const storageRows = PRIVACY_STORAGE_KEY_DESCRIPTIONS.map((item) => ({
+    keyName: item.keyName,
+    purpose: item.purpose,
+    countLabel: storageCountLabels[item.countType],
+  }));
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
@@ -168,29 +138,24 @@ export function PrivacyPolicyPage() {
               </Link>
               <span aria-hidden="true">/</span>
               <span className="text-zinc-900 dark:text-zinc-200 font-medium">
-                Privacy Policy
+                {PRIVACY_POLICY_CONTENT.breadcrumbLabel}
               </span>
             </div>
 
             <h1 className="font-serif text-fluid-h1 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-              Privacy Policy
+              {PRIVACY_POLICY_CONTENT.title}
             </h1>
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-              <span>Effective Date: November 2026</span>
+              <span>{PRIVACY_POLICY_CONTENT.effectiveDateLabel}</span>
               <span aria-hidden="true">·</span>
               <span className="font-sans">
-                Cloud-First Sync &amp; Optional Local Cache Architecture
+                {PRIVACY_POLICY_CONTENT.subtitle}
               </span>
             </div>
 
             <p className="pt-2 text-fluid-lead text-zinc-600 dark:text-zinc-400">
-              PSC Nepal uses a cloud-first preparation architecture backed by
-              Google Sign-In and Cloud Firestore, with optional local browser
-              storage for offline resilience and device preferences. Signed-in
-              aspirants sync quiz attempts, flagged questions, and ratings
-              securely across sessions, while personal PDF files opened from
-              your device stay private in your browser.
+              {PRIVACY_POLICY_CONTENT.intro}
             </p>
           </header>
 
@@ -198,34 +163,30 @@ export function PrivacyPolicyPage() {
           <div className="space-y-10 text-fluid-body text-zinc-700 dark:text-zinc-300">
             <section className="space-y-3">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                1. Local PDF Processing &amp; Zero File Uploads
+                {PRIVACY_POLICY_CONTENT.sections.localPdfProcessing.heading}
               </h2>
               <p>
-                When you open a PDF from your computer or mobile device using
-                the file picker or drag-and-drop intake, PSC Nepal renders every
-                page locally inside your browser&rsquo;s memory using Web
-                Workers (<code className="font-mono text-xs">pdfjs-dist</code>).
+                {PRIVACY_POLICY_CONTENT.sections.localPdfProcessing.paragraph1Lead}
+                <code className="font-mono text-xs">
+                  {PRIVACY_POLICY_CONTENT.sections.localPdfProcessing.paragraph1Code}
+                </code>
+                {PRIVACY_POLICY_CONTENT.sections.localPdfProcessing.paragraph1Trail}
               </p>
               <p>
-                Temporary <code className="font-mono text-xs">blob:</code>{' '}
-                object URLs exist strictly for your active browser tab session
-                and are automatically revoked when you close or reload the tab.
-                Your private books, notes, and documents are never transmitted
-                to external servers.
+                {PRIVACY_POLICY_CONTENT.sections.localPdfProcessing.paragraph2Lead}
+                <code className="font-mono text-xs">
+                  {PRIVACY_POLICY_CONTENT.sections.localPdfProcessing.paragraph2Code}
+                </code>
+                {PRIVACY_POLICY_CONTENT.sections.localPdfProcessing.paragraph2Trail}
               </p>
             </section>
 
             <section className="space-y-4">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                2. Cloud Sync &amp; Optional Local Cache Inventory
+                {PRIVACY_POLICY_CONTENT.sections.savedRecords.heading}
               </h2>
               <p>
-                Signed-in users sync profile details, quiz attempts, flagged
-                questions, and ratings cloud-first in Cloud Firestore. To keep
-                your workspace responsive offline and support optional local
-                persistence alongside or prior to signing in, PSC Nepal stores
-                optional fallback records in{' '}
-                <code className="font-mono text-xs">window.localStorage</code>:
+                {PRIVACY_POLICY_CONTENT.sections.savedRecords.description}
               </p>
 
               <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800">
@@ -252,37 +213,29 @@ export function PrivacyPolicyPage() {
 
             <section className="space-y-3">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                3. Remote PDF Links &amp; Third-Party Requests
+                {PRIVACY_POLICY_CONTENT.sections.remotePdfLinks.heading}
               </h2>
               <p>
-                When you paste a remote HTTPS PDF link into the URL reader, your
-                browser requests that PDF directly from the origin domain you
-                specified. That external host may log standard HTTP request
-                headers (such as IP address and User-Agent) under its own
-                privacy policy. Curated study documents in{' '}
+                {PRIVACY_POLICY_CONTENT.sections.remotePdfLinks.paragraph1Lead}
                 <Link
                   to="/materials"
                   className="text-blue-700 dark:text-blue-400 hover:underline underline-offset-4"
                 >
-                  Study Materials
-                </Link>{' '}
-                are served directly from the same origin as PSC Nepal.
+                  {PRIVACY_POLICY_CONTENT.sections.remotePdfLinks.paragraph1LinkLabel}
+                </Link>
+                {PRIVACY_POLICY_CONTENT.sections.remotePdfLinks.paragraph1Trail}
               </p>
               <p>
-                PSC Nepal loads web typography (Fraunces, Plus Jakarta Sans,
-                Noto Sans Devanagari, and JetBrains Mono) from Google Fonts to
-                ensure legible Devanagari, serif, and tabular numeric rendering.
+                {PRIVACY_POLICY_CONTENT.sections.remotePdfLinks.paragraph2}
               </p>
             </section>
 
             <section className="space-y-3">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                4. Cookies, Analytics &amp; Advertising
+                {PRIVACY_POLICY_CONTENT.sections.cookiesAnalytics.heading}
               </h2>
               <p>
-                PSC Nepal does not set advertising cookies, cross-site tracking
-                pixels, or behavioral profiling scripts. Page-turn sound effects
-                are synthesized locally via the browser&rsquo;s Web Audio API.
+                {PRIVACY_POLICY_CONTENT.sections.cookiesAnalytics.body}
               </p>
             </section>
 
@@ -290,20 +243,17 @@ export function PrivacyPolicyPage() {
             <section className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 space-y-5">
               <div className="space-y-1">
                 <h2 className="font-serif text-xl font-semibold text-zinc-950 dark:text-zinc-50">
-                  5. Manage or Erase Your Synced &amp; Local Data
+                  {PRIVACY_POLICY_CONTENT.sections.manageData.heading}
                 </h2>
                 <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400">
-                  You have direct, immediate control over your stored records
-                  across Cloud Firestore (when signed in) and optional local
-                  browser cache, and you can inspect your full study breakdown
-                  anytime on the{' '}
+                  {PRIVACY_POLICY_CONTENT.sections.manageData.lead}
                   <Link
                     to="/progress"
                     className="text-blue-700 dark:text-blue-400 hover:underline underline-offset-4"
                   >
-                    Progress
-                  </Link>{' '}
-                  page.
+                    {PRIVACY_POLICY_CONTENT.sections.manageData.progressLinkLabel}
+                  </Link>
+                  {PRIVACY_POLICY_CONTENT.sections.manageData.trail}
                 </p>
               </div>
 

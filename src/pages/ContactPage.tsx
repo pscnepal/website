@@ -20,42 +20,19 @@ import {
 import { formatRelativeDate } from '../utils/pdfHelpers';
 import { copyWithToast } from '../utils/clipboardHelpers';
 import { toast } from '../services/toastService';
+import {
+  CONTACT_CATEGORY_OPTIONS,
+  CONTACT_DIRECT_DESK,
+  CONTACT_FORM_COPY,
+  CONTACT_PAGE_HEADER,
+  CONTACT_QUICK_LINKS,
+  CONTACT_SUPPORT_TOPICS,
+  getInquiryCategoryLabel,
+} from '../data/contactContentData';
 
-const SUPPORT_EMAIL = 'info.pscnepal@gmail.com';
-
-const CATEGORY_OPTIONS: Array<{
-  value: InquiryCategory;
-  label: string;
-  placeholder: string;
-}> = [
-  {
-    value: 'quiz-errata',
-    label: 'Quiz / Written Q&A Errata',
-    placeholder: 'e.g. PSC-LANG-100, PSC-WR-201, or Article reference...',
-  },
-  {
-    value: 'material-request',
-    label: 'Reading Material / Syllabus Request',
-    placeholder: 'e.g. Local Government Operation Act 2074 PDF...',
-  },
-  {
-    value: 'reader-support',
-    label: 'PDF Reader / Flipbook Support',
-    placeholder: 'e.g. External PDF CORS link or zoom behavior...',
-  },
-  {
-    value: 'general',
-    label: 'General Inquiry & Feedback',
-    placeholder: 'Optional document URL or quiz set name...',
-  },
-];
-
-function getCategoryLabel(category: InquiryCategory): string {
-  return (
-    CATEGORY_OPTIONS.find((opt) => opt.value === category)?.label ??
-    'General Inquiry'
-  );
-}
+const SUPPORT_EMAIL = CONTACT_DIRECT_DESK.email;
+const CATEGORY_OPTIONS = CONTACT_CATEGORY_OPTIONS;
+const getCategoryLabel = getInquiryCategoryLabel;
 
 export function ContactPage() {
   const [name, setName] = useState('');
@@ -78,7 +55,7 @@ export function ContactPage() {
   const handleCopyEmail = async () => {
     const ok = await copyWithToast(
       SUPPORT_EMAIL,
-      'Support email copied to clipboard.'
+      CONTACT_DIRECT_DESK.copyToastMessage
     );
     if (ok) {
       setCopiedEmail(true);
@@ -184,17 +161,15 @@ export function ContactPage() {
               </Link>
               <span aria-hidden="true">/</span>
               <span className="text-zinc-900 dark:text-zinc-200 font-medium">
-                Contact
+                {CONTACT_PAGE_HEADER.breadcrumbLabel}
               </span>
             </div>
 
             <h1 className="font-serif text-fluid-h1 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 [text-wrap:balance]">
-              Contact &amp; Editorial Feedback
+              {CONTACT_PAGE_HEADER.title}
             </h1>
             <p className="mt-2.5 text-fluid-lead text-zinc-600 dark:text-zinc-400">
-              Report PSC question errata, request additional statutory PDFs or
-              syllabus volumes, or share feedback on the PSC Nepal study,
-              simulation, and flipbook workspace.
+              {CONTACT_PAGE_HEADER.description}
             </p>
           </div>
 
@@ -204,7 +179,7 @@ export function ContactPage() {
             <div className="lg:col-span-5 space-y-8">
               <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 space-y-4">
                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                  Direct Editorial &amp; Support Desk
+                  {CONTACT_DIRECT_DESK.label}
                 </p>
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -241,58 +216,38 @@ export function ContactPage() {
                   For objective or written question corrections, include the
                   question code displayed in the header (for example,{' '}
                   <span className="font-mono text-zinc-700 dark:text-zinc-300">
-                    PSC-LANG-100
+                    {CONTACT_DIRECT_DESK.sampleCodes[0]}
                   </span>{' '}
                   or{' '}
                   <span className="font-mono text-zinc-700 dark:text-zinc-300">
-                    PSC-WR-201
+                    {CONTACT_DIRECT_DESK.sampleCodes[1]}
                   </span>
                   ) along with the relevant statutory article or edition.
                 </p>
               </div>
 
               <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800 text-sm">
-                <div className="py-4 space-y-1">
-                  <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                    Question Bank &amp; Statutory Updates
-                  </h2>
-                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    When Acts, Periodic Plan benchmarks, or PSC curricula are
-                    amended, submit the updated citation so we can revise both
-                    the reference PDF and linked quiz explanations.
-                  </p>
-                </div>
-
-                <div className="py-4 space-y-1">
-                  <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                    Cloud-First &amp; Privacy Notice
-                  </h2>
-                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                    PSC Nepal syncs verified study progress with Cloud Firestore
-                    and optionally caches a structured ticket copy locally so you
-                    can dispatch it directly via your mail client.
-                  </p>
-                </div>
+                {CONTACT_SUPPORT_TOPICS.map((topic) => (
+                  <div key={topic.title} className="py-4 space-y-1">
+                    <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">
+                      {topic.title}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                      {topic.description}
+                    </p>
+                  </div>
+                ))}
 
                 <div className="py-4 flex flex-wrap items-center gap-4 text-xs font-medium">
-                  <Link
-                    to="/privacy"
-                    className="text-zinc-700 dark:text-zinc-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
-                  >
-                    Privacy Policy →
-                  </Link>
-                  <Link
-                    to="/terms"
-                    className="text-zinc-700 dark:text-zinc-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
-                  >
-                    Terms of Service →
-                  </Link>
-                  <Link
-                    to="/features"
-                    className="text-zinc-700 dark:text-zinc-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
-                  >
-                    Reader Guide →
-                  </Link>
+                  {CONTACT_QUICK_LINKS.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className="text-zinc-700 dark:text-zinc-300 hover:text-blue-700 dark:hover:text-blue-400 transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
                 </div>
               </div>
             </div>
@@ -348,7 +303,7 @@ export function ContactPage() {
                 className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 sm:p-7 space-y-5"
               >
                 <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                  Submit an Inquiry or Errata Note
+                  {CONTACT_FORM_COPY.heading}
                 </h2>
 
                 {formError && (
@@ -451,15 +406,14 @@ export function ContactPage() {
                     required
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Describe the question correction, requested study document, or reader feedback..."
+                    placeholder={CONTACT_FORM_COPY.detailsPlaceholder}
                     className="w-full p-3 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-fluid-body text-zinc-900 dark:text-zinc-100 placeholder:text-xs sm:placeholder:text-sm placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-600 resize-y"
                   />
                 </div>
 
                 <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Generates a local reference ticket &amp; ready-to-send email
-                    draft.
+                    {CONTACT_FORM_COPY.footerNote}
                   </span>
 
                   <button
@@ -467,7 +421,7 @@ export function ContactPage() {
                     className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <Send className="w-3.5 h-3.5" />
-                    <span>Save &amp; Prepare Inquiry</span>
+                    <span>{CONTACT_FORM_COPY.submitLabel}</span>
                   </button>
                 </div>
               </form>

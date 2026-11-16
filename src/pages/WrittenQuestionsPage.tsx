@@ -50,6 +50,7 @@ import {
   QUESTION_EVENTS,
   questionStorageService,
 } from '../services/questionStorageService';
+import { WRITTEN_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS } from '../data/catalogOptionsData';
 import {
   addWrittenPracticeSeconds,
   clearWrittenProgress,
@@ -66,15 +67,6 @@ import { toast } from '../services/toastService';
 
 type MarksFilter = 'all' | '5' | '10';
 type StatusFilter = 'all' | WrittenMasteryStatus;
-
-const LANGUAGE_OPTIONS: ReadonlyArray<{
-  id: WrittenLanguageMode;
-  label: string;
-}> = [
-  { id: 'bilingual', label: 'EN + नेपाली' },
-  { id: 'en', label: 'English' },
-  { id: 'ne', label: 'नेपाली' },
-];
 
 function countWords(text: string): number {
   const trimmed = text.trim();

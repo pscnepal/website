@@ -1,28 +1,21 @@
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import {
+  READER_SHORTCUT_ITEMS,
+  READER_SHORTCUTS_INTRO,
+} from '../../data/featuresContentData';
 
 interface KeyboardShortcutsDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
-const SHORTCUTS = [
-  { key: '←', description: 'Previous page or spread' },
-  { key: '→', description: 'Next page or spread' },
-  { key: '+ or =', description: 'Zoom in' },
-  { key: '-', description: 'Zoom out' },
-  { key: '0', description: 'Fit page to screen' },
-  { key: 'M', description: 'Switch between Flipbook and Standard PDF' },
-  { key: 'F', description: 'Toggle fullscreen reading' },
-  { key: 'S', description: 'Toggle page-turning sound' },
-  { key: 'I', description: 'Open or close Reading Stats' },
-  { key: 'Esc', description: 'Exit fullscreen or close active panel' },
-];
-
 export function KeyboardShortcutsDialog({
   open,
   onClose,
 }: KeyboardShortcutsDialogProps) {
+  const shortcuts = READER_SHORTCUT_ITEMS.filter((item) => item.showInDialog);
+
   return (
     <AnimatePresence>
       {open && (
@@ -54,10 +47,10 @@ export function KeyboardShortcutsDialog({
                   id="shortcuts-dialog-title"
                   className="font-serif text-lg font-semibold text-zinc-900 dark:text-zinc-100"
                 >
-                  Keyboard Shortcuts
+                  {READER_SHORTCUTS_INTRO.dialogTitle}
                 </h2>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  Active whenever the reader workspace is focused.
+                  {READER_SHORTCUTS_INTRO.dialogSubtitle}
                 </p>
               </div>
               <button
@@ -71,16 +64,16 @@ export function KeyboardShortcutsDialog({
             </div>
 
             <div className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800/80">
-              {SHORTCUTS.map((item) => (
+              {shortcuts.map((item) => (
                 <div
-                  key={item.key}
+                  key={item.id}
                   className="py-2.5 flex items-center justify-between gap-4 text-sm"
                 >
                   <span className="text-zinc-600 dark:text-zinc-300">
-                    {item.description}
+                    {item.dialogDescription}
                   </span>
                   <kbd className="font-mono tabular-nums text-xs font-medium px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 whitespace-nowrap shrink-0">
-                    {item.key}
+                    {item.dialogKey}
                   </kbd>
                 </div>
               ))}

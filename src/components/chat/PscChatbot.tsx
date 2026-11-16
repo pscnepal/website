@@ -24,6 +24,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/hooks';
 import { ChatMarkdown } from './ChatMarkdown';
 import { PSC_OPEN_CHAT_EVENT, type OpenChatDetail } from './chatEvents';
+import {
+  CHATBOT_STARTER_PROMPTS,
+  CHATBOT_WELCOME_CONTENT,
+} from '../../data/chatbotContentData';
 import { generatePscChatResponse } from '../../services/pscChatEngine';
 
 interface ChatMessage {
@@ -38,37 +42,10 @@ const CHAT_STORAGE_KEY = 'psc_nepal_study_assistant_v1';
 const WELCOME_MESSAGE: ChatMessage = {
   id: 'welcome-psc-assistant',
   role: 'assistant',
-  content:
-    'Namaste! I am the **PSC Nepal Study Assistant** (लोक सेवा तयारी सहायक). Ask me anything in **English** or **नेपाली** about:\n\n- **Official Syllabi**: Section Officer, Nayab Subba & Kharidar phases, papers, chapters, topics, marks & `-20%` negative marking\n- **Questions & Answers**: Objective MCQs, verified answers, explanations & bilingual (`EN` / `नेपाली`) 5M/10M written model answers\n- **Mock Exams & Simulator**: Phase I OMR Screening Hall, Phase II Timed Written Hall & Merit Strategy Lab\n- **Materials & Contact**: Authentic `psc.gov.np` PDFs, 3D Flipbook Reader shortcuts & editorial support (`info.pscnepal@gmail.com`)',
+  content: CHATBOT_WELCOME_CONTENT,
 };
 
-const STARTER_PROMPTS: Array<{ label: string; prompt: string }> = [
-  {
-    label: 'Syllabus & -20% Rules',
-    prompt:
-      'Compare the Section Officer, Nayab Subba, and Kharidar exam schemes, pass marks, and -20% negative marking rules.',
-  },
-  {
-    label: 'Practice 3 PSC MCQs',
-    prompt:
-      'Give me 3 PSC Constitution & Public Law MCQs from the question bank along with their verified answers and explanations.',
-  },
-  {
-    label: 'Bilingual 10M Answer',
-    prompt:
-      'Show the structured bilingual (English and नेपाली) 10-mark written model answer and rubric for PSC-WR-201.',
-  },
-  {
-    label: 'Mock Exams & Simulator',
-    prompt:
-      'Which OMR Screening Hall and Written Paper Hall mock simulations can I launch right now, and how are they scored?',
-  },
-  {
-    label: 'PDFs & Contact Info',
-    prompt:
-      'List the official PSC syllabus PDFs available in the flipbook reader and explain how to contact PSC Nepal support.',
-  },
-];
+const STARTER_PROMPTS = CHATBOT_STARTER_PROMPTS;
 
 function loadSavedMessages(): ChatMessage[] {
   if (typeof window === 'undefined') return [WELCOME_MESSAGE];

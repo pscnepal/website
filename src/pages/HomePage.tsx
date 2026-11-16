@@ -55,65 +55,18 @@ import {
 import { soundService } from '../services/soundService';
 import { formatCompactDuration } from '../utils/pdfHelpers';
 import { HimalayanLandscapeVector } from '../components/vectors/HimalayanLandscapeVector';
-
-const PAIRED_STUDY_TRACKS = [
-  {
-    id: 'track-nepal',
-    code: 'Track 01',
-    title: 'Nepal Parichaya: Geography, History & Federalism',
-    summary:
-      'Study physical belts, river basins, dynasties, heritage, and federal inter-relations, then practice objective quizzes and bilingual written answers.',
-    syllabusHref: '/syllabus/section-officer',
-    readHref: '/materials/nepal-parichaya',
-    readLabel: 'Read 4 Volumes',
-    quizHref: '/quiz/nepal-parichaya',
-    quizLabel: '20-Min Quiz',
-    writtenHref: '/written/PSC-WR-202',
-    writtenLabel: 'Written Q&A (EN/ने)',
-  },
-  {
-    id: 'track-constitution',
-    code: 'Track 02',
-    title: 'Constitution (2072), Civil Service & Governance Acts',
-    summary:
-      'Review Fundamental Rights, Civil Service Act 2049, Right to Information, and Good Governance provisions alongside MCQs and 10-mark answers.',
-    syllabusHref: '/syllabus/section-officer',
-    readHref: '/materials/laws-and-acts',
-    readLabel: 'Read 4 Statutes',
-    quizHref: '/quiz/laws-and-constitution',
-    quizLabel: '20-Min Quiz',
-    writtenHref: '/written/PSC-WR-201',
-    writtenLabel: 'Written Q&A (EN/ने)',
-  },
-  {
-    id: 'track-psc-mock',
-    code: 'Track 03',
-    title: 'Official PSC Syllabi, Case Study & Hall Simulation',
-    summary:
-      'Inspect original Lok Sewa Aayog syllabus PDFs for Section Officer, Nayab Subba & Kharidar, sit a 30-question OMR screening hall exam, and solve Paper IV case studies.',
-    syllabusHref: '/syllabus/section-officer',
-    readHref: '/materials/official-psc-syllabi',
-    readLabel: '6 Official PSC PDFs',
-    quizHref: '/simulate?preset=so-phase1-omr&launch=1',
-    quizLabel: 'OMR Hall Sim',
-    writtenHref: '/written/PSC-WR-403',
-    writtenLabel: 'Case Study (EN/ने)',
-  },
-  {
-    id: 'track-plan-iq',
-    code: 'Track 04',
-    title: '16th Periodic Plan, Governance Statutes & Aptitude',
-    summary:
-      'Master FY 2081/82–2085/86 targets, Local Government Operation Act 2074, Anti-Corruption & Public Procurement laws, and quantitative IQ.',
-    syllabusHref: '/syllabus/nayab-subba',
-    readHref: '/materials/planning-and-governance-statutes',
-    readLabel: 'Read Plan & Acts',
-    quizHref: '/quiz/psc-and-planning',
-    quizLabel: '20-Min Plan & IQ',
-    writtenHref: '/written/PSC-WR-301',
-    writtenLabel: '16th Plan Q&A',
-  },
-] as const;
+import {
+  HOME_FAQ_HEADER,
+  HOME_FAQS,
+  HOME_HERO_CONTENT,
+  HOME_HERITAGE_BANNER,
+  HOME_PILLAR_ITEMS,
+  HOME_PILLARS_HEADER,
+  HOME_READER_SECTION_CONTENT,
+  HOME_TRACKS_HEADER,
+  PAIRED_STUDY_TRACKS,
+} from '../data/homeContentData';
+import { SITE_CONFIG } from '../data/siteConfig';
 
 export function HomePage() {
   const dispatch = useAppDispatch();
@@ -294,22 +247,17 @@ export function HomePage() {
               <div className="space-y-4">
                 <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
                   <span className="font-semibold text-crimson-700 dark:text-crimson-400">
-                    PSC Nepal
+                    {SITE_CONFIG.brandName}
                   </span>{' '}
-                  · लोक सेवा आयोग (Lok Sewa Aayog) · Unified Study &amp; Exam
-                  Workspace
+                  · {SITE_CONFIG.brandNepaliName} · {SITE_CONFIG.workspaceLabel}
                 </p>
 
                 <h1 className="font-serif text-fluid-display font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 [text-wrap:balance]">
-                  Your central command hub for Lok Sewa PSC preparation.
+                  {HOME_HERO_CONTENT.headline}
                 </h1>
 
                 <p className="text-fluid-lead text-zinc-600 dark:text-zinc-400 max-w-2xl">
-                  Track official Section Officer, Nayab Subba, and Kharidar
-                  syllabi unit by unit, read statutes in two-page flipbooks,
-                  drill Paper I MCQs, write bilingual Papers II–IV answers
-                  (English &amp; नेपाली), and sit timed OMR hall simulations
-                  with -20% negative marking.
+                  {HOME_HERO_CONTENT.lead}
                 </p>
               </div>
 
@@ -340,7 +288,7 @@ export function HomePage() {
                   className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-amber-300 dark:border-amber-800/80 bg-amber-50/70 dark:bg-amber-950/40 text-sm font-medium text-amber-900 dark:text-amber-200 hover:bg-amber-100/70 dark:hover:bg-amber-900/50 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                 >
                   <Flame className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span>समसामयिक (Affairs)</span>
+                  <span>{HOME_HERO_CONTENT.affairsButtonLabel}</span>
                 </Link>
 
                 {isDashboardAdmin && (
@@ -349,7 +297,7 @@ export function HomePage() {
                     className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                   >
                     <LayoutDashboard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                    <span>Dashboard &amp; Banks</span>
+                    <span>{HOME_HERO_CONTENT.dashboardButtonLabel}</span>
                   </Link>
                 )}
               </div>
@@ -451,11 +399,12 @@ export function HomePage() {
           <div className="relative rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-950 text-white shadow-sm">
             <div className="relative h-48 sm:h-64 lg:h-72 w-full overflow-hidden">
               <img
-                src={singhaDurbarImg || '/images/nepal_singha_durbar_1793889770945.jpg'}
+                src={singhaDurbarImg || HOME_HERITAGE_BANNER.fallbackImagePath}
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/images/nepal_singha_durbar_1793889770945.jpg';
+                  (e.currentTarget as HTMLImageElement).src =
+                    HOME_HERITAGE_BANNER.fallbackImagePath;
                 }}
-                alt="Singha Durbar and snow-capped Himalayan mountain peaks, Kathmandu, Nepal"
+                alt={HOME_HERITAGE_BANNER.imageAlt}
                 className="w-full h-full object-cover object-center filter brightness-[0.88] hover:scale-105 transition-transform duration-700 ease-out"
                 loading="lazy"
               />
@@ -464,15 +413,15 @@ export function HomePage() {
               <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div className="space-y-1.5 max-w-xl">
                   <div className="flex items-center gap-2 text-xs font-mono text-amber-300">
-                    <span>सिंहदरबार · काठमाडौँ</span>
+                    <span>{HOME_HERITAGE_BANNER.nepaliLocation}</span>
                     <span aria-hidden="true">·</span>
-                    <span>Elevation 1,400m</span>
+                    <span>{HOME_HERITAGE_BANNER.elevationLabel}</span>
                   </div>
                   <h3 className="font-serif text-lg sm:text-2xl font-bold text-white tracking-tight">
-                    From Preliminary Screening to Singha Durbar.
+                    {HOME_HERITAGE_BANNER.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                    The constitutional seat of the Federal Civil Service of Nepal. Master your syllabus with official past questions, legal gazettes, and timed mock simulations.
+                    {HOME_HERITAGE_BANNER.description}
                   </p>
                 </div>
 
@@ -484,7 +433,7 @@ export function HomePage() {
                     className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-white text-zinc-950 hover:bg-zinc-100 text-xs font-semibold transition-colors shadow-sm"
                   >
                     <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>Enter Exam Hall</span>
+                    <span>{HOME_HERITAGE_BANNER.ctaLabel}</span>
                   </Link>
                 </div>
               </div>
@@ -559,195 +508,99 @@ export function HomePage() {
           )}
         </section>
 
-        {/* 6-Pillar Central PSC Workspace Architecture */}
+        {/* 7-Pillar Central PSC Workspace Architecture */}
         <section className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800/80 space-y-6">
           <div className="max-w-2xl">
             <h2 className="font-serif text-fluid-h2 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-              Seven Integrated Preparation Pillars
+              {HOME_PILLARS_HEADER.title}
             </h2>
             <p className="mt-1 text-fluid-body text-zinc-600 dark:text-zinc-400">
-              Every syllabus unit links directly to its reference statute PDF,
-              objective question bank, bilingual written model answer, and timed
-              simulation hall.
+              {HOME_PILLARS_HEADER.subtitle}
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <Link
-              to="/syllabus"
-              className="group rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-blue-700/45 dark:hover:border-blue-400/45 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
-              <div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-                  <span className="font-semibold text-crimson-700 dark:text-crimson-400">
-                    01
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>3 cadres · {totalSyllabusUnits} units</span>
-                </div>
-                <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between gap-2">
-                  <span>Official PSC Syllabus</span>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                </h3>
-                <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400">
-                  Inspect exact Stage I–III weightages and attached original
-                  Lok Sewa Aayog PDFs for Section Officer, Nayab Subba, and
-                  Kharidar.
-                </p>
-              </div>
-            </Link>
+            {HOME_PILLAR_ITEMS.map((pillar) => {
+              const badgeById: Record<string, string> = {
+                syllabus: `3 cadres · ${totalSyllabusUnits} units`,
+                materials: `${totalCatalogCount} curated PDFs`,
+                quiz: `${hydratedDecks.length} decks · ${totalQuizQuestions} MCQs`,
+                written: `${totalWrittenQuestions} long Q&As · EN/नेपाली`,
+                simulate: 'OMR Sheet · Written Hall · Merit Lab',
+                progress: 'Mastery & study analytics',
+                'current-affairs': '16th Plan, Budget 2081/82, Fast Track, COP29',
+              };
 
-            <Link
-              to="/materials"
-              className="group rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-blue-700/45 dark:hover:border-blue-400/45 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
-              <div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-                  <span className="font-semibold text-crimson-700 dark:text-crimson-400">
-                    02
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>{totalCatalogCount} curated PDFs</span>
-                </div>
-                <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between gap-2">
-                  <span>Study Books &amp; Statutes</span>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                </h3>
-                <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400">
-                  Read Official PSC Syllabi, Nepal Parichaya, Constitution
-                  (2072), Civil Service, LGOA, Anti-Corruption, Procurement &amp;
-                  16th Plan PDFs in two-page spreads.
-                </p>
-              </div>
-            </Link>
+              if (pillar.spanWide) {
+                return (
+                  <Link
+                    key={pillar.id}
+                    to={pillar.to}
+                    className="group rounded-xl border border-amber-300 dark:border-amber-900/60 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-amber-500 dark:hover:border-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 sm:col-span-2 lg:col-span-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
+                          <span className="font-semibold text-amber-600 dark:text-amber-400">
+                            {pillar.order}
+                          </span>
+                          <span aria-hidden="true">·</span>
+                          {pillar.metaTag && (
+                            <>
+                              <span className="text-amber-700 dark:text-amber-300 font-medium">
+                                {pillar.metaTag}
+                              </span>
+                              <span aria-hidden="true">·</span>
+                            </>
+                          )}
+                          <span>{badgeById[pillar.id]}</span>
+                        </div>
+                        <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center gap-2">
+                          <span>{pillar.title}</span>
+                          <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
+                        </h3>
+                        <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400 max-w-3xl">
+                          {pillar.description}
+                        </p>
+                      </div>
+                      {pillar.ctaLabel && (
+                        <div className="shrink-0 flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <span>{pillar.ctaLabel}</span>
+                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              }
 
-            <Link
-              to="/quiz"
-              className="group rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-blue-700/45 dark:hover:border-blue-400/45 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
-              <div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-                  <span className="font-semibold text-crimson-700 dark:text-crimson-400">
-                    03
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>
-                    {hydratedDecks.length} decks · {totalQuizQuestions} MCQs
-                  </span>
-                </div>
-                <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between gap-2">
-                  <span>Paper I Objective Quizzes</span>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                </h3>
-                <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400">
-                  Filter questions by subject, topic, subtopic, and difficulty
-                  with instant study explanations or 1-min/question timers.
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              to="/written"
-              className="group rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-blue-700/45 dark:hover:border-blue-400/45 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
-              <div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-                  <span className="font-semibold text-crimson-700 dark:text-crimson-400">
-                    04
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>{totalWrittenQuestions} long Q&amp;As · EN/नेपाली</span>
-                </div>
-                <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between gap-2">
-                  <span>Written Papers II–IV</span>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                </h3>
-                <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400">
-                  Master 5 &amp; 10-mark analytical questions and administrative
-                  case studies in side-by-side English and नेपाली.
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              to="/simulate"
-              className="group rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-blue-700/45 dark:hover:border-blue-400/45 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
-              <div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-                  <span className="font-semibold text-crimson-700 dark:text-crimson-400">
-                    05
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>OMR Sheet · Written Hall · Merit Lab</span>
-                </div>
-                <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between gap-2">
-                  <span>Exam Hall Simulator</span>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                </h3>
-                <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400">
-                  Practice shading digital OMR bubbles under -20% negative
-                  marking, sit timed subjective papers, and simulate merit math.
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              to="/progress"
-              className="group rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-blue-700/45 dark:hover:border-blue-400/45 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
-              <div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-                  <span className="font-semibold text-crimson-700 dark:text-crimson-400">
-                    06
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>Mastery &amp; study analytics</span>
-                </div>
-                <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between gap-2">
-                  <span>Readiness &amp; Progress</span>
-                  <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
-                </h3>
-                <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400">
-                  Audit syllabus unit completion, weak MCQ recovery sets,
-                  written rubric progress, and cumulative study hours.
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              to="/current-affairs"
-              className="group rounded-xl border border-amber-300 dark:border-amber-900/60 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-amber-500 dark:hover:border-amber-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 sm:col-span-2 lg:col-span-3"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-                    <span className="font-semibold text-amber-600 dark:text-amber-400">
-                      07
-                    </span>
-                    <span aria-hidden="true">·</span>
-                    <span className="text-amber-700 dark:text-amber-300 font-medium">
-                      समसामयिक (Current Affairs)
-                    </span>
-                    <span aria-hidden="true">·</span>
-                    <span>16th Plan, Budget 2081/82, Fast Track, COP29</span>
+              return (
+                <Link
+                  key={pillar.id}
+                  to={pillar.to}
+                  className="group rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 flex flex-col justify-between gap-4 hover:border-blue-700/45 dark:hover:border-blue-400/45 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                >
+                  <div>
+                    <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
+                      <span className="font-semibold text-crimson-700 dark:text-crimson-400">
+                        {pillar.order}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span>{badgeById[pillar.id]}</span>
+                    </div>
+                    <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors flex items-center justify-between gap-2">
+                      <span>{pillar.title}</span>
+                      <ArrowRight className="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    </h3>
+                    <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400">
+                      {pillar.description}
+                    </p>
                   </div>
-                  <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center gap-2">
-                    <span>समसामयिक विषयवस्तु तथा घटनाक्रम (2081/82 Feed)</span>
-                    <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
-                  </h3>
-                  <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400 max-w-3xl">
-                    High-yield national and international affairs, periodic plan targets, budget outlays, and demographic indicators curated for Paper I GK and Papers II–IV written analytical bullets. Includes monthly printable digests.
-                  </p>
-                </div>
-                <div className="shrink-0 flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                    <span>Explore Feed</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </span>
-                </div>
-              </div>
-            </Link>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
@@ -957,18 +810,17 @@ export function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div>
               <h2 className="font-serif text-fluid-h2 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-                Integrated Read, Quiz &amp; Written Study Tracks
+                {HOME_TRACKS_HEADER.title}
               </h2>
               <p className="mt-1 text-fluid-body text-zinc-600 dark:text-zinc-400">
-                Move directly from primary reference PDFs into timed objective
-                mocks and bilingual long-answer practice.
+                {HOME_TRACKS_HEADER.subtitle}
               </p>
             </div>
             <Link
-              to="/progress"
+              to={HOME_TRACKS_HEADER.ctaHref}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-700 hover:text-blue-700 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors whitespace-nowrap shrink-0"
             >
-              <span>View Curriculum Checklist</span>
+              <span>{HOME_TRACKS_HEADER.ctaLabel}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -1026,11 +878,10 @@ export function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div>
               <h2 className="font-serif text-fluid-h2 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-                Open Any Custom PDF Handout or Gazette
+                {HOME_READER_SECTION_CONTENT.title}
               </h2>
               <p className="mt-1 text-fluid-body text-zinc-600 dark:text-zinc-400">
-                Load any external PDF URL or drop your own local Lok Sewa notes
-                directly into the two-page flipbook reader.
+                {HOME_READER_SECTION_CONTENT.subtitle}
               </p>
             </div>
             <div className="flex items-center gap-3 text-xs font-semibold shrink-0">
@@ -1164,83 +1015,30 @@ export function HomePage() {
               id="psc-nepal-faq-heading"
               className="font-serif text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50"
             >
-              PSC Nepal &amp; Lok Sewa Exam Rules Reference
+              {HOME_FAQ_HEADER.title}
             </h2>
             <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              Essential rules and platform coverage for Nepal Public Service
-              Commission (लोक सेवा आयोग) candidates.
+              {HOME_FAQ_HEADER.subtitle}
             </p>
           </div>
 
           <div className="divide-y divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800 text-sm">
-            <details className="group py-4">
-              <summary className="flex items-center justify-between gap-4 font-semibold text-zinc-900 dark:text-zinc-100 list-none">
-                <span>
-                  Which Nepal Lok Sewa Aayog syllabi are covered on PSC Nepal?
-                </span>
-                <span className="font-mono text-xs text-zinc-400 group-open:rotate-45 transition-transform shrink-0">
-                  +
-                </span>
-              </summary>
-              <p className="mt-2.5 text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-4xl">
-                PSC Nepal covers the official Public Service Commission (Lok
-                Sewa Aayog) non-technical curricula for Gazetted Class III{' '}
-                <strong className="font-medium text-zinc-900 dark:text-zinc-200">
-                  Section Officer
-                </strong>
-                , Non-Gazetted Class I{' '}
-                <strong className="font-medium text-zinc-900 dark:text-zinc-200">
-                  Nayab Subba
-                </strong>
-                , and Non-Gazetted Class II{' '}
-                <strong className="font-medium text-zinc-900 dark:text-zinc-200">
-                  Kharidar
-                </strong>{' '}
-                across {totalSyllabusUnits} structured syllabus units with
-                chapter-level topic briefs and attached original PSC PDFs.
-              </p>
-            </details>
-
-            <details className="group py-4">
-              <summary className="flex items-center justify-between gap-4 font-semibold text-zinc-900 dark:text-zinc-100 list-none">
-                <span>
-                  How are Lok Sewa Paper I objective mock exams scored on PSC
-                  Nepal?
-                </span>
-                <span className="font-mono text-xs text-zinc-400 group-open:rotate-45 transition-transform shrink-0">
-                  +
-                </span>
-              </summary>
-              <p className="mt-2.5 text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-4xl">
-                Objective OMR simulations enforce official Nepal PSC examination
-                rules: a strict reverse countdown timer,{' '}
-                <span className="font-mono tabular-nums">-20%</span> negative
-                marking deducted per wrong response, and a{' '}
-                <span className="font-mono tabular-nums">45%</span> qualifying
-                pass threshold in Stage I screening (with Stage I marks treated
-                as screening-only where prescribed by the unified scheme).
-              </p>
-            </details>
-
-            <details className="group py-4">
-              <summary className="flex items-center justify-between gap-4 font-semibold text-zinc-900 dark:text-zinc-100 list-none">
-                <span>
-                  Are written exam model answers available in both English and
-                  Nepali?
-                </span>
-                <span className="font-mono text-xs text-zinc-400 group-open:rotate-45 transition-transform shrink-0">
-                  +
-                </span>
-              </summary>
-              <p className="mt-2.5 text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-4xl">
-                Yes. PSC Nepal provides {totalWrittenQuestions} structured{' '}
-                <span className="font-mono tabular-nums">5-mark</span> and{' '}
-                <span className="font-mono tabular-nums">10-mark</span> written
-                Papers II–IV questions with side-by-side English and नेपाली
-                introductions, analytical bullet points, statutory citations,
-                and way-forward conclusions.
-              </p>
-            </details>
+            {HOME_FAQS.map((faq) => (
+              <details key={faq.id} className="group py-4">
+                <summary className="flex items-center justify-between gap-4 font-semibold text-zinc-900 dark:text-zinc-100 list-none">
+                  <span>{faq.question}</span>
+                  <span className="font-mono text-xs text-zinc-400 group-open:rotate-45 transition-transform shrink-0">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-2.5 text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-4xl">
+                  {faq.getPlainAnswer({
+                    totalSyllabusUnits,
+                    totalWrittenQuestions,
+                  })}
+                </p>
+              </details>
+            ))}
           </div>
         </section>
         </main>

@@ -84,7 +84,7 @@ export function FlashcardsPage() {
         toast.warning(
           formatUserFriendlyError(
             err,
-            'Could not save optional local flashcard progress cache.'
+            'Could not save flashcard progress right now.'
           ),
           { id: 'flashcard-storage-err' }
         );

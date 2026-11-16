@@ -25,6 +25,13 @@ import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
 import {
+  CALENDAR_HERO_CONTENT,
+  EXAM_DAY_CHECKLIST_ITEMS,
+  EXAM_HALL_MANDATORY_ITEMS,
+  EXAM_HALL_PROHIBITED_ITEMS,
+  OMR_SCORING_RULE_CARDS,
+} from '../data/calendarGuidelinesData';
+import {
   PSC_ANNUAL_CALENDAR_EVENTS,
   PSC_OFFICIAL_NOTICES,
   type NoticeCategory,
@@ -139,7 +146,7 @@ export function NoticeCalendarPage() {
               </li>
               <li>/</li>
               <li className="text-zinc-800 dark:text-zinc-200 font-medium">
-                PSC Calendar &amp; Official Notices (वार्षिक कार्यतालिका तथा सूचना)
+                {CALENDAR_HERO_CONTENT.breadcrumbLabel}
               </li>
             </ol>
           </nav>
@@ -153,14 +160,13 @@ export function NoticeCalendarPage() {
               <div className="max-w-2xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-medium mb-3">
                   <Calendar className="w-3.5 h-3.5 text-blue-400" />
-                  <span>आधिकारिक पदपूर्ति कार्यतालिका २०८१/८२</span>
+                  <span>{CALENDAR_HERO_CONTENT.badge}</span>
                 </div>
                 <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
-                  लोक सेवा आयोग परीक्षा तथा विज्ञापन कार्यतालिका
+                  {CALENDAR_HERO_CONTENT.headlineNe}
                 </h1>
                 <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
-                  Official Nepal PSC annual recruitment timeline, application deadlines, examination routines,
-                  hall venue notices, and OMR guidelines for Section Officer, Nayab Subba, and Kharidar.
+                  {CALENDAR_HERO_CONTENT.description}
                 </p>
               </div>
 
@@ -605,30 +611,14 @@ export function NoticeCalendarPage() {
                   </div>
 
                   <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-2 shrink-0" />
-                      <span>
-                        <strong>सक्कल प्रवेशपत्र (Original Admit Card):</strong> अनलाइन दरखास्त प्रणालीबाट डाउनलोड गरी स्पष्ट फोटो तथा विवरण प्रिन्ट गरिएको।
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-2 shrink-0" />
-                      <span>
-                        <strong>नागरिकता प्रमाणपत्र (Citizenship Card):</strong> वा नेपाल सरकारबाट जारी भएको सक्कल फोटोसहितको परिचयपत्र (पासपोर्ट/सवारी चालक अनुमतिपत्र/मतदाता परिचयपत्र)।
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-2 shrink-0" />
-                      <span>
-                        <strong>कालो मसी भएको बलपेन (Black Ballpoint Pen):</strong> OMR सिटमा सिसाकलम (Pencil) वा नीलो/रातो मसी प्रयोग गर्न पाइँदैन।
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-2 shrink-0" />
-                      <span>
-                        <strong>समय पालना:</strong> परीक्षा सुरु हुनुभन्दा कम्तीमा १ घण्टा अगावै परीक्षा केन्द्रमा अनिवार्य उपस्थित हुनुपर्नेछ। परीक्षा सुरु भएको १५ मिनेटपछि प्रवेश निषेध छ।
-                      </span>
-                    </li>
+                    {EXAM_HALL_MANDATORY_ITEMS.map((item) => (
+                      <li key={item.id} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-2 shrink-0" />
+                        <span>
+                          <strong>{item.titleNe}</strong> {item.detailNe}
+                        </span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
@@ -640,30 +630,14 @@ export function NoticeCalendarPage() {
                   </div>
 
                   <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-crimson-600 mt-2 shrink-0" />
-                      <span>
-                        <strong>मोबाइल फोन तथा इलेक्ट्रोनिक डिभाइस:</strong> परीक्षा हलभित्र मोबाइल, स्मार्टवाच, ब्लुटुथ, वा कुनै पनि विद्युतीय उपकरण लैजान पूर्ण निषेध छ।
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-crimson-600 mt-2 shrink-0" />
-                      <span>
-                        <strong>क्यालकुलेटर (Calculators):</strong> सामान्य ज्ञान, बौद्धिक परीक्षण (IQ) तथा प्रथम चरणका कुनै पनि वस्तुगत परीक्षामा क्यालकुलेटर निषेध गरिएको छ।
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-crimson-600 mt-2 shrink-0" />
-                      <span>
-                        <strong>किताब, कापी तथा चिट:</strong> कुनै पनि प्रकारको कागज, फाराम वा अध्ययन सामग्री हलभित्र लैजान पाइँदैन।
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-crimson-600 mt-2 shrink-0" />
-                      <span>
-                        <strong>उत्तरपुस्तिका केरमेट:</strong> OMR सिटमा दुईवटा घेरा लगाउने, टिपेक्स (Fluid) प्रयोग गर्ने वा ब्लेडले कोर्ने कार्य गरेमा प्रश्न रद्द हुनेछ।
-                      </span>
-                    </li>
+                    {EXAM_HALL_PROHIBITED_ITEMS.map((item) => (
+                      <li key={item.id} className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-crimson-600 mt-2 shrink-0" />
+                        <span>
+                          <strong>{item.titleNe}</strong> {item.detailNe}
+                        </span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </div>
@@ -676,23 +650,28 @@ export function NoticeCalendarPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs sm:text-sm">
-                  <div className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <div className="font-semibold text-emerald-700 dark:text-emerald-400">सहि उत्तर बापत (Correct)</div>
-                    <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">+२ वा +१ अङ्क</div>
-                    <p className="text-zinc-500 mt-1">अधिकृत प्रथम पत्रमा प्रति प्रश्न २ अङ्क, खरिदारमा प्रति प्रश्न २ अङ्क।</p>
-                  </div>
-
-                  <div className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <div className="font-semibold text-crimson-700 dark:text-crimson-400">गलत उत्तर बापत (-२०% कट्टा)</div>
-                    <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">-०.४ वा -०.२ अङ्क</div>
-                    <p className="text-zinc-500 mt-1">प्राप्त कुल प्राप्ताङ्कबाट २० प्रतिशत अङ्क स्वतः कट्टी गरिनेछ।</p>
-                  </div>
-
-                  <div className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <div className="font-semibold text-zinc-700 dark:text-zinc-300">खाली छोडेमा (Unattempted)</div>
-                    <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">० अङ्क (शून्य)</div>
-                    <p className="text-zinc-500 mt-1">शंकास्पद प्रश्न खाली छोड्नु नेगेटिभ मार्किङबाट बच्ने उत्तम रणनीति हो।</p>
-                  </div>
+                  {OMR_SCORING_RULE_CARDS.map((card) => {
+                    const titleColor =
+                      card.tone === 'emerald'
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : card.tone === 'crimson'
+                          ? 'text-crimson-700 dark:text-crimson-400'
+                          : 'text-zinc-700 dark:text-zinc-300';
+                    return (
+                      <div
+                        key={card.id}
+                        className="bg-white dark:bg-zinc-900 p-4 rounded-lg border border-blue-200 dark:border-blue-800"
+                      >
+                        <div className={`font-semibold ${titleColor}`}>
+                          {card.titleNe}
+                        </div>
+                        <div className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">
+                          {card.headlineNe}
+                        </div>
+                        <p className="text-zinc-500 mt-1">{card.descriptionNe}</p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -704,7 +683,7 @@ export function NoticeCalendarPage() {
                     <h3>परीक्षार्थी व्यक्तिगत चेकलिस्ट (Exam Day Readiness Checklist)</h3>
                   </div>
                   <span className="text-xs text-zinc-500 font-mono">
-                    {Object.values(checkedChecklistItems).filter(Boolean).length}/6 Prepared
+                    {Object.values(checkedChecklistItems).filter(Boolean).length}/{EXAM_DAY_CHECKLIST_ITEMS.length} Prepared
                   </span>
                 </div>
 
@@ -713,14 +692,7 @@ export function NoticeCalendarPage() {
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
-                  {[
-                    { id: 'admit-card', label: 'Admit Card Printed (सक्कल प्रवेशपत्र स्पष्ट छापिएको)' },
-                    { id: 'citizenship', label: 'Original Citizenship Card (सक्कल नागरिकता प्रमाणपत्र)' },
-                    { id: 'black-pens', label: 'Two Good Black Ballpoint Pens (२ वटा भरपर्दो कालो मसी बलपेन)' },
-                    { id: 'venue-checked', label: 'Exam Center Location Verified (परीक्षा भवनको सही स्थान यकिन गरिएको)' },
-                    { id: 'analog-watch', label: 'Standard Simple Analog Watch (सादा घडी, नो स्मार्टवाच)' },
-                    { id: 'water-bottle', label: 'Clear Transparent Water Bottle (पारदर्शी पानीको बोतल)' },
-                  ].map((item) => (
+                  {EXAM_DAY_CHECKLIST_ITEMS.map((item) => (
                     <label
                       key={item.id}
                       className="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-950 cursor-pointer select-none transition-colors"

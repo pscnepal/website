@@ -2,12 +2,21 @@ import { Moon, Sun } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useAuth } from '../../context/AuthContext';
+import {
+  FOOTER_LEGAL_LINKS,
+  FOOTER_STUDY_LINKS,
+  SITE_CONFIG,
+} from '../../data/siteConfig';
 import { toggleTheme } from '../../features/settings/settingsSlice';
 
 export function Footer() {
   const dispatch = useAppDispatch();
   const { isDashboardAdmin } = useAuth();
   const theme = useAppSelector((state) => state.settings.theme);
+
+  const visibleStudyLinks = FOOTER_STUDY_LINKS.filter(
+    (link) => link.to !== '/dashboard' || isDashboardAdmin
+  );
 
   return (
     <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 mt-16">
@@ -19,13 +28,10 @@ export function Footer() {
               to="/"
               className="inline-block font-serif text-lg font-semibold text-blue-800 dark:text-zinc-100 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors"
             >
-              PSC Nepal
+              {SITE_CONFIG.brandName}
             </Link>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-sm">
-              Central Nepal PSC (Lok Sewa) preparation workspace combining
-              official curricula, two-page PDF study volumes, timed MCQ drills,
-              bilingual written Q&amp;A (EN/नेपाली), and OMR exam hall
-              simulations.
+              {SITE_CONFIG.footerDescription}
             </p>
             <div className="pt-1">
               <button
@@ -60,92 +66,15 @@ export function Footer() {
               aria-label="Footer study navigation"
               className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs"
             >
-              {isDashboardAdmin && (
+              {visibleStudyLinks.map((link) => (
                 <Link
-                  to="/dashboard"
+                  key={link.to}
+                  to={link.to}
                   className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
                 >
-                  Dashboard &amp; Banks
+                  {link.label}
                 </Link>
-              )}
-              <Link
-                to="/syllabus"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                PSC Syllabus
-              </Link>
-              <Link
-                to="/simulate"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Exam Simulator
-              </Link>
-              <Link
-                to="/materials"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Study Materials
-              </Link>
-              <Link
-                to="/quiz"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Objective Quizzes
-              </Link>
-              <Link
-                to="/written"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Written Q&amp;A (EN/ने)
-              </Link>
-              <Link
-                to="/current-affairs"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                समसामयिक (Affairs)
-              </Link>
-              <Link
-                to="/calendar"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                कार्यतालिका (Calendar)
-              </Link>
-              <Link
-                to="/pyq"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                विगतका प्रश्न (PYQ)
-              </Link>
-              <Link
-                to="/flashcards"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                स्मरण कार्ड (Flashcards)
-              </Link>
-              <Link
-                to="/evaluator"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                उत्तर मूल्याङ्कन (Evaluator)
-              </Link>
-              <Link
-                to="/progress"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Progress Tracker
-              </Link>
-              <Link
-                to="/library"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Personal Library
-              </Link>
-              <Link
-                to="/read"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                PDF Reader
-              </Link>
+              ))}
             </nav>
           </div>
 
@@ -158,42 +87,25 @@ export function Footer() {
               aria-label="Footer legal and support navigation"
               className="flex flex-col gap-2 text-xs"
             >
-              <Link
-                to="/about"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                About PSC Nepal
-              </Link>
-              <Link
-                to="/contact"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Contact &amp; Errata
-              </Link>
-              <Link
-                to="/privacy"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Privacy Policy
-              </Link>
-              <Link
-                to="/terms"
-                className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
-              >
-                Terms of Service
-              </Link>
+              {FOOTER_LEGAL_LINKS.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 transition-colors whitespace-nowrap"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </nav>
           </div>
         </div>
 
         <div className="pt-6 border-t border-zinc-200/80 dark:border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
           <span>
-            &copy; {new Date().getFullYear()} PSC Nepal. Independent Lok Sewa
-            study &amp; exam preparation platform.
+            &copy; {new Date().getFullYear()} {SITE_CONFIG.brandName}.{' '}
+            {SITE_CONFIG.copyrightSubtitle}
           </span>
-          <span>
-            Cloud-first sync with Google · Optional offline local cache.
-          </span>
+          <span>{SITE_CONFIG.tagline}</span>
         </div>
       </div>
     </footer>

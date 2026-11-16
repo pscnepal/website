@@ -16,6 +16,11 @@ import {
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardUsers } from '../../context/DashboardUsersContext';
+import {
+  DASHBOARD_NAV_MODULES,
+  SITE_CONFIG,
+  type SiteDashboardTab,
+} from '../../data/siteConfig';
 import type { DashboardTab } from '../../pages/DashboardPage';
 import {
   MATERIAL_EVENTS,
@@ -25,6 +30,19 @@ import {
   QUESTION_EVENTS,
   questionStorageService,
 } from '../../services/questionStorageService';
+
+const MODULE_ICONS: Record<
+  SiteDashboardTab,
+  React.ComponentType<{ className?: string }>
+> = {
+  overview: LayoutDashboard,
+  'quiz-bank': HelpCircle,
+  flagged: Flag,
+  'written-bank': PenLine,
+  materials: BookOpen,
+  users: Users,
+  data: Database,
+};
 
 interface DashboardSidebarProps {
   activeTab?: DashboardTab;
@@ -101,69 +119,19 @@ export function DashboardSidebar({
     };
   }, []);
 
-  const coreNavItems: {
-    id: DashboardTab;
-    path: string;
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    count?: number;
-    description: string;
-  }[] = [
-    {
-      id: 'overview',
-      path: '/dashboard',
-      label: 'Executive Overview',
-      icon: LayoutDashboard,
-      description: 'KPI summary, progress tracker & analytics',
-    },
-    {
-      id: 'quiz-bank',
-      path: '/dashboard/quiz-bank',
-      label: 'MCQ Question Bank',
-      icon: HelpCircle,
-      count: quizCount,
-      description: 'Stage I Objective questions database',
-    },
-    {
-      id: 'flagged',
-      path: '/dashboard/flagged',
-      label: 'Flagged Reports',
-      icon: Flag,
-      count: isUsersLoading ? undefined : flaggedCount,
-      description: 'Questions & reasons flagged by registered users',
-    },
-    {
-      id: 'written-bank',
-      path: '/dashboard/written-bank',
-      label: 'Written Question Bank',
-      icon: PenLine,
-      count: writtenCount,
-      description: 'Stage II Subjective cases & model solutions',
-    },
-    {
-      id: 'materials',
-      path: '/dashboard/materials',
-      label: 'Materials Inventory',
-      icon: BookOpen,
-      count: totalMaterialsCount,
-      description: 'Parichaya editions, Constitution & statutes',
-    },
-    {
-      id: 'users',
-      path: '/dashboard/users',
-      label: 'Aspirants Cohort',
-      icon: Users,
-      count: isUsersLoading ? undefined : dbUsers.length,
-      description: 'Live Firestore user directory & quiz telemetry',
-    },
-    {
-      id: 'data',
-      path: '/dashboard/data',
-      label: 'Data & Backup',
-      icon: Database,
-      description: 'Export, import & reset browser progress',
-    },
-  ];
+  const countByTab: Partial<Record<SiteDashboardTab, number | undefined>> = {
+    'quiz-bank': quizCount,
+    flagged: isUsersLoading ? undefined : flaggedCount,
+    'written-bank': writtenCount,
+    materials: totalMaterialsCount,
+    users: isUsersLoading ? undefined : dbUsers.length,
+  };
+
+  const coreNavItems = DASHBOARD_NAV_MODULES.map((mod) => ({
+    ...mod,
+    icon: MODULE_ICONS[mod.id],
+    count: countByTab[mod.id],
+  }));
 
   const isItemActive = (item: (typeof coreNavItems)[number]) => {
     if (propActiveTab) {
@@ -194,10 +162,10 @@ export function DashboardSidebar({
           {(!isCollapsed || isMobileOpen) && (
             <div className="min-w-0">
               <span className="font-serif font-bold text-sm tracking-tight text-zinc-950 dark:text-zinc-50 block truncate">
-                PSC Nepal
+                {SITE_CONFIG.brandName}
               </span>
               <span className="text-[10px] font-medium tracking-wider uppercase text-zinc-500 dark:text-zinc-400 block truncate">
-                Command Dashboard
+                {SITE_CONFIG.commandConsoleLabel}
               </span>
             </div>
           )}

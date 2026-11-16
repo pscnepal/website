@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Lock, Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
+import { AUTH_GATE_DEFAULTS } from '../../data/siteConfig';
 
 export function GoogleLogoIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -40,21 +41,13 @@ interface QuizAuthGateProps {
   onClose: () => void;
 }
 
-const DEFAULT_DESCRIPTION =
-  'All study materials, syllabus guides, and quiz decks are free to browse publicly. Sign in with Google to start taking this timed quiz.';
-
-const DEFAULT_BENEFITS = [
-  'Reverse countdown begins only after you sign in',
-  'Tracks PSC net scores & attempt history to your account',
-];
-
 export function QuizAuthGate({
   title,
   subtitle,
   metaItems = [],
-  description = DEFAULT_DESCRIPTION,
-  benefits = DEFAULT_BENEFITS,
-  actionLabel = 'Continue with Google to Start',
+  description = AUTH_GATE_DEFAULTS.description,
+  benefits = [...AUTH_GATE_DEFAULTS.benefits],
+  actionLabel = AUTH_GATE_DEFAULTS.actionLabel,
   onClose,
 }: QuizAuthGateProps) {
   const shouldReduceMotion = Boolean(useReducedMotion());

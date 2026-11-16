@@ -1,14 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AlertCircle, Flag, X } from 'lucide-react';
+import { QUICK_FLAG_REASONS } from '../../data/siteConfig';
 import { ActionButton } from './ActionButton';
 
-export const QUICK_FLAG_REASONS = [
-  'Needs revision / difficult concept',
-  'Suspected wrong answer key',
-  'Unclear wording or translation error',
-  'Outdated statutory or GK data',
-  'Duplicate or formatting issue',
-] as const;
+export { QUICK_FLAG_REASONS };
 
 export interface FlagReasonTargetQuestion {
   id: string;

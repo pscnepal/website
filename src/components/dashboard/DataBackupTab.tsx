@@ -74,10 +74,10 @@ export function DataBackupTab() {
       <div className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 sm:p-6 space-y-4">
         <div>
           <h3 className="font-serif text-lg font-bold text-zinc-950 dark:text-zinc-50">
-            Workspace Storage &amp; Cloud Sync Overview
+            Workspace Data &amp; Backup Overview
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Study progress, quiz attempts, flagged questions, and ratings sync cloud-first with your verified Google account in Cloud Firestore, with optional local browser storage for offline caching and drafts.
+            Review your saved answer scripts, quiz attempts, exam hall runs, and ratings, or export a portable JSON backup.
           </p>
         </div>
 
@@ -151,7 +151,7 @@ export function DataBackupTab() {
               <span>Reset Study Drafts &amp; Reactions</span>
             </h4>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Permanently clear saved written drafts, rubric criteria checkmarks, and personal reaction logs from your signed-in Cloud Firestore account and optional local cache.
+              Permanently clear your saved written drafts, rubric criteria checkmarks, and personal reaction logs from your workspace.
             </p>
           </div>
 

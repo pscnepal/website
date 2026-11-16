@@ -64,12 +64,13 @@ import { materialStorageService } from '../services/materialStorageService';
 import { questionStorageService } from '../services/questionStorageService';
 import { storageService } from '../services/storageService';
 import { toast } from '../services/toastService';
+import { SITE_CONFIG } from '../data/siteConfig';
 import {
   formatUserFriendlyError,
   isFirestoreOfflineError,
 } from '../utils/errorHelpers';
 
-export const DASHBOARD_ADMIN_EMAIL = 'info.pscnepal@gmail.com';
+export const DASHBOARD_ADMIN_EMAIL = SITE_CONFIG.supportEmail;
 
 export function isDashboardAdminUser(
   user: User | null | undefined

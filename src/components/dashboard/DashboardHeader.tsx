@@ -20,6 +20,12 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import {
+  DASHBOARD_NAV_MODULES,
+  DASHBOARD_TAB_META,
+  SITE_CONFIG,
+  type SiteDashboardTab,
+} from '../../data/siteConfig';
 import { toggleTheme } from '../../features/settings/settingsSlice';
 import { useFullscreen } from '../../hooks/useFullscreen';
 import type { DashboardTab } from '../../pages/DashboardPage';
@@ -34,45 +40,17 @@ interface DashboardHeaderProps {
   onSearchChange?: (query: string) => void;
 }
 
-const TAB_TITLES: Record<
-  DashboardTab,
-  { title: string; subtitle: string; category: string }
+const QUICK_ACTION_ICONS: Record<
+  SiteDashboardTab,
+  typeof Sparkles
 > = {
-  overview: {
-    title: 'Executive Overview',
-    subtitle: 'System metrics, preparation KPIs & daily progress',
-    category: 'Console',
-  },
-  'quiz-bank': {
-    title: 'Objective Question Bank',
-    subtitle: 'Official PSC preliminary MCQs, explanations & references',
-    category: 'Question Banks',
-  },
-  flagged: {
-    title: 'User Flag Reports',
-    subtitle: 'Question flags, total counts & reasons submitted by aspirants',
-    category: 'Question Banks',
-  },
-  'written-bank': {
-    title: 'Subjective Written Bank',
-    subtitle: 'Phase II analytical questions, rubrics & model answers',
-    category: 'Question Banks',
-  },
-  materials: {
-    title: 'Study Materials & Parichaya Archives',
-    subtitle: '13 editions of Nepal Parichaya, Constitution & core statutes',
-    category: 'Official Archives',
-  },
-  users: {
-    title: 'Aspirants Directory',
-    subtitle: 'Candidate cohorts, target cadres & preparation profiles',
-    category: 'Directory',
-  },
-  data: {
-    title: 'Data, Backup & Export',
-    subtitle: 'Manage cloud-synced workspace data, exports & optional local cache',
-    category: 'System',
-  },
+  overview: Sparkles,
+  'quiz-bank': CheckCircle2,
+  flagged: Bookmark,
+  'written-bank': PenLine,
+  materials: BookOpen,
+  users: UserCheck,
+  data: Database,
 };
 
 export function DashboardHeader({
@@ -100,7 +78,7 @@ export function DashboardHeader({
   const { isFullscreen, toggleFullscreen, isSupported: isFullscreenSupported } =
     useFullscreen(containerRef as RefObject<HTMLElement | null>);
 
-  const tabInfo = TAB_TITLES[activeTab] ?? TAB_TITLES.overview;
+  const tabInfo = DASHBOARD_TAB_META[activeTab] ?? DASHBOARD_TAB_META.overview;
 
   return (
     <header className="sticky top-0 z-20 h-16 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 flex items-center justify-between gap-3 sm:gap-6">
@@ -193,63 +171,23 @@ export function DashboardHeader({
           size="sm"
           width="w-64"
           header="Console Quick Navigation"
-          items={[
-            {
-              id: 'quiz',
-              label: 'MCQ Question Bank',
-              description: 'Inspect verified preliminary items',
-              icon: CheckCircle2,
-              color: 'emerald',
-              to: '/dashboard/quiz-bank',
-            },
-            {
-              id: 'flagged',
-              label: 'User Flag Reports',
-              description: 'User-submitted flags & reasons',
-              icon: Bookmark,
-              color: 'amber',
-              to: '/dashboard/flagged',
-            },
-            {
-              id: 'written',
-              label: 'Written Question Bank',
-              description: 'Subjective papers & model rubrics',
-              icon: PenLine,
-              color: 'crimson',
-              to: '/dashboard/written-bank',
-            },
-            {
-              id: 'reader',
-              label: 'Materials Inventory',
-              description: 'Official reference documents & PDFs',
-              icon: BookOpen,
-              color: 'blue',
-              to: '/dashboard/materials',
-            },
-            {
-              id: 'directory',
-              label: 'Aspirants Cohort',
-              description: 'Directory & candidate dossiers',
-              icon: UserCheck,
-              color: 'purple',
-              to: '/dashboard/users',
-              divider: true,
-            },
-            {
-              id: 'data-backup',
-              label: 'Data Backup & Export',
-              description: 'Export study state & statistics',
-              icon: Database,
-              color: 'zinc',
-              to: '/dashboard/data',
-            },
-          ]}
+          items={DASHBOARD_NAV_MODULES.filter((mod) => mod.id !== 'overview').map(
+            (mod) => ({
+              id: mod.id,
+              label: mod.quickActionLabel,
+              description: mod.quickDescription,
+              icon: QUICK_ACTION_ICONS[mod.id],
+              color: mod.color,
+              to: mod.path,
+              divider: mod.dividerBefore,
+            })
+          )}
         />
 
         {/* BS Academic Session Badge */}
         <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800/80 text-[11px] font-mono text-zinc-600 dark:text-zinc-400">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-          <span>२०८१/८२ Session</span>
+          <span>{SITE_CONFIG.academicSession}</span>
         </div>
 
         {/* Fullscreen toggle (if supported) */}

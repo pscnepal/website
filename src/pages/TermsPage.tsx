@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
+import { TERMS_OF_SERVICE_CONTENT } from '../data/legalContentData';
 
 export function TermsPage() {
+  const { sections } = TERMS_OF_SERVICE_CONTENT;
+
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <Navbar />
@@ -22,28 +25,24 @@ export function TermsPage() {
               </Link>
               <span aria-hidden="true">/</span>
               <span className="text-zinc-900 dark:text-zinc-200 font-medium">
-                Terms of Service
+                {TERMS_OF_SERVICE_CONTENT.breadcrumbLabel}
               </span>
             </div>
 
             <h1 className="font-serif text-fluid-h1 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-              Terms of Service
+              {TERMS_OF_SERVICE_CONTENT.title}
             </h1>
 
             <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
-              <span>Last Updated: November 2026</span>
+              <span>{TERMS_OF_SERVICE_CONTENT.lastUpdatedLabel}</span>
               <span aria-hidden="true">·</span>
               <span className="font-sans">
-                Educational Study &amp; Reader Workspace Terms
+                {TERMS_OF_SERVICE_CONTENT.subtitle}
               </span>
             </div>
 
             <p className="pt-2 text-fluid-lead text-zinc-600 dark:text-zinc-400">
-              By accessing or using PSC Nepal—including its official syllabus
-              tracker, OMR and written exam simulator, PDF flipbook and
-              continuous reader, curated statutory digests, timed mock quizzes,
-              and study progress dashboard—you agree to the following terms of
-              use.
+              {TERMS_OF_SERVICE_CONTENT.intro}
             </p>
           </header>
 
@@ -51,30 +50,27 @@ export function TermsPage() {
           <div className="space-y-10 text-fluid-body text-zinc-700 dark:text-zinc-300">
             <section className="space-y-3">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                1. Purpose &amp; Independent Educational Disclaimer
+                {sections.purpose.heading}
               </h2>
               <p>
-                PSC Nepal is an independent competitive examination self-study
-                and digital document reading platform. It is{' '}
+                {sections.purpose.paragraph1Lead}
                 <strong className="font-semibold text-zinc-900 dark:text-zinc-100">
-                  not affiliated with, endorsed by, or operated by
-                </strong>{' '}
-                the Public Service Commission of Nepal (<em>Lok Sewa Aayog</em>),
-                the Nepal Law Commission, the National Planning Commission, or
-                any federal, provincial, or local government body.
+                  {sections.purpose.paragraph1Strong}
+                </strong>
+                {sections.purpose.paragraph1Mid}
+                <em>{sections.purpose.paragraph1Em}</em>
+                {sections.purpose.paragraph1Trail}
               </p>
               <p>
-                Curated summaries, statutory digests, and practice questions are
-                prepared strictly for educational revision. Examination
-                candidates should always verify statutory amendments, official
-                notices, and syllabi against authentic publications in the{' '}
-                <em>Nepal Gazette</em> and official commission portals.
+                {sections.purpose.paragraph2Lead}
+                <em>{sections.purpose.paragraph2Em}</em>
+                {sections.purpose.paragraph2Trail}
               </p>
             </section>
 
             <section className="space-y-3">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                2. Timed Quizzes &amp; Scoring Rules
+                {sections.scoring.heading}
               </h2>
               <p>
                 Practice quizzes and OMR simulations on PSC Nepal model
@@ -86,76 +82,54 @@ export function TermsPage() {
                 marking calculation on incorrect responses.
               </p>
               <p>
-                Mock scores, accuracy percentages, and subject mastery metrics
-                displayed on the{' '}
+                {sections.scoring.paragraph2Lead}
                 <Link
                   to="/progress"
                   className="text-blue-700 dark:text-blue-400 hover:underline underline-offset-4"
                 >
-                  Progress
-                </Link>{' '}
-                page are self-assessment indicators only and do not represent
-                official examination standing.
+                  {sections.scoring.paragraph2LinkLabel}
+                </Link>
+                {sections.scoring.paragraph2Trail}
               </p>
             </section>
 
             <section className="space-y-3">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                3. User-Supplied PDFs &amp; Acceptable Use
+                {sections.acceptableUse.heading}
               </h2>
-              <p>
-                PSC Nepal allows you to open local PDF files from your device or
-                load publicly accessible HTTPS PDF links. You are solely
-                responsible for ensuring you have the lawful right or license to
-                view any third-party documents you open in the workspace.
-              </p>
-              <p>
-                You agree not to misuse the application, attempt to disrupt
-                client-side rendering, or redistribute proprietary content
-                without authorization from its respective copyright holder.
-              </p>
+              <p>{sections.acceptableUse.paragraph1}</p>
+              <p>{sections.acceptableUse.paragraph2}</p>
             </section>
 
             <section className="space-y-3">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                4. Cloud-First Sync &amp; Optional Local Persistence
+                {sections.persistence.heading}
               </h2>
               <p>
-                Study progress, quiz attempts, flagged questions, and ratings
-                are synced cloud-first to Cloud Firestore when you sign in with
-                your Google account, and summarized on the{' '}
+                {sections.persistence.lead}
                 <Link
                   to="/progress"
                   className="text-blue-700 dark:text-blue-400 hover:underline underline-offset-4"
                 >
-                  Progress
-                </Link>{' '}
-                page. Optional local browser storage (<code className="font-mono text-xs">localStorage</code>{' '}
-                and offline cache) is used as a fallback when offline or before
-                signing in; clearing browser data without signing in may erase
-                unsynced local cache records.
+                  {sections.persistence.linkLabel}
+                </Link>
+                {sections.persistence.trail}
               </p>
             </section>
 
             <section className="space-y-3">
               <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
-                5. Warranty Disclaimer &amp; Limitation of Liability
+                {sections.disclaimer.heading}
               </h2>
               <p>
-                PSC Nepal and all accompanying study materials and question
-                banks are provided on an &ldquo;as is&rdquo; and &ldquo;as
-                available&rdquo; basis without warranties of any kind, express
-                or implied. While every effort is made to maintain factual and
-                statutory accuracy, typographical or legislative changes may
-                occur. If you spot an error in any question or reference PDF,
-                please report it via our{' '}
+                {sections.disclaimer.lead}
                 <Link
                   to="/contact"
                   className="text-blue-700 dark:text-blue-400 hover:underline underline-offset-4"
                 >
-                  Contact &amp; Errata form
+                  {sections.disclaimer.linkLabel}
                 </Link>
-                .
+                {sections.disclaimer.trail}
               </p>
             </section>
 
@@ -168,7 +142,7 @@ export function TermsPage() {
                 >
                   Privacy Policy
                 </Link>{' '}
-                for details on cloud sync and optional local data storage.
+                for details on privacy and data controls.
               </span>
               <Link
                 to="/contact"

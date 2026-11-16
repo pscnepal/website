@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, CheckCircle2, FileText, X } from 'lucide-react';
+import { DEFAULT_MATERIAL_AUTHORITIES as DEFAULT_AUTHORITIES } from '../../data/catalogOptionsData';
 import type {
   ReadingMaterialCategory,
   ReadingMaterialItem,
@@ -23,14 +24,6 @@ export interface MaterialFormModalProps {
   onClose: () => void;
   onSave: (payload: MaterialFormSavePayload) => void;
 }
-
-const DEFAULT_AUTHORITIES = [
-  'Public Service Commission, Nepal (लोक सेवा आयोग)',
-  'Department of Information and Broadcasting (सूचना तथा प्रसारण विभाग)',
-  'Nepal Law Commission (नेपाल कानुन आयोग)',
-  'National Planning Commission (राष्ट्रिय योजना आयोग)',
-  'Ministry of Federal Affairs & General Administration (MoFAGA)',
-];
 
 function slugifyId(raw: string, fallback: string): string {
   const cleaned = raw
