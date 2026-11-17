@@ -370,6 +370,13 @@ export async function saveQuizAttemptToFirestore(
 async function fetchUserQuizAttempts(
   userId: string
 ): Promise<QuizAttemptRecord[]> {
+  if (
+    !auth.currentUser ||
+    !auth.currentUser.emailVerified ||
+    auth.currentUser.uid !== userId
+  ) {
+    return [];
+  }
   const collectionPath = `users/${userId}/quizAttempts`;
   try {
     const q = query(
@@ -458,6 +465,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authError, setAuthError] = useState<string | null>(null);
   const syncedUidRef = useRef<string | null>(null);
   const syncingUidRef = useRef<string | null>(null);
+  const hadAuthenticatedSessionRef = useRef(false);
   const needsPublicCloudReloadRef = useRef(false);
 
   const loadPublicCloudData = useCallback(
@@ -468,6 +476,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .dispatch(
               pscApi.endpoints.getCloudItemStats.initiate(undefined, {
                 forceRefetch: true,
+                subscribe: false,
               })
             )
             .unwrap(),
@@ -475,6 +484,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .dispatch(
               pscApi.endpoints.getCloudQuizBank.initiate(undefined, {
                 forceRefetch: true,
+                subscribe: false,
               })
             )
             .unwrap(),
@@ -482,6 +492,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .dispatch(
               pscApi.endpoints.getCloudWrittenBank.initiate(undefined, {
                 forceRefetch: true,
+                subscribe: false,
               })
             )
             .unwrap(),
@@ -489,6 +500,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .dispatch(
               pscApi.endpoints.getCloudMaterials.initiate(undefined, {
                 forceRefetch: true,
+                subscribe: false,
               })
             )
             .unwrap(),
@@ -794,7 +806,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .dispatch(
             pscApi.endpoints.getUserFlaggedQuestions.initiate(
               firebaseUser.uid,
-              { forceRefetch: true }
+              { forceRefetch: true, subscribe: false }
             )
           )
           .unwrap();
@@ -811,6 +823,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .dispatch(
             pscApi.endpoints.getUserCloudReactions.initiate(firebaseUser.uid, {
               forceRefetch: true,
+              subscribe: false,
             })
           )
           .unwrap();
@@ -863,6 +876,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .dispatch(
               pscApi.endpoints.getCloudItemStats.initiate(undefined, {
                 forceRefetch: true,
+                subscribe: false,
               })
             )
             .unwrap();
@@ -1210,6 +1224,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         syncedUidRef.current = null;
 
+        // If user signed out mid-sync, abort silently without surfacing stale auth errors
+        if (
+          !auth.currentUser ||
+          auth.currentUser.uid !== firebaseUser.uid ||
+          !auth.currentUser.emailVerified
+        ) {
+          return;
+        }
+
         if (isFirestoreOfflineError(err)) {
           console.warn(
             'Authenticated user cloud sync deferred while offline:',
@@ -1246,19 +1269,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!firebaseUser) {
         const previousCloudUid = storageService.getLastCloudUid();
+        const wasAuthenticatedSession = hadAuthenticatedSessionRef.current;
+        hadAuthenticatedSessionRef.current = false;
         syncedUidRef.current = null;
         syncingUidRef.current = null;
-        dispatch(
-          pscApi.util.invalidateTags([
-            'UserFlags',
-            'UserReactions',
-            'ContactInquiries',
-            'AdminInquiries',
-            'WrittenEvaluations',
-            'SimulationRuns',
-            'AdminUsers',
-          ])
-        );
+
+        if (wasAuthenticatedSession || previousCloudUid) {
+          // Reset RTK Query state cleanly instead of invalidateTags so user/admin queries
+          // are never refetched with auth.currentUser === null after sign-out.
+          dispatch(pscApi.util.resetApiState());
+          void loadPublicCloudData();
+        }
+
         if (previousCloudUid) {
           resetAllLocalAccountData();
         } else {
@@ -1268,11 +1290,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      hadAuthenticatedSessionRef.current = true;
       void syncAuthenticatedUser(firebaseUser);
     });
 
     return () => unsubscribe();
-  }, [dispatch, resetAllLocalAccountData, syncAuthenticatedUser]);
+  }, [dispatch, loadPublicCloudData, resetAllLocalAccountData, syncAuthenticatedUser]);
 
   // Automatically retry deferred cloud sync once browser connectivity returns
   useEffect(() => {

@@ -42,6 +42,7 @@ import {
   formatCompactDuration,
   formatRelativeDate,
 } from '../utils/pdfHelpers';
+import { resolveSampleUrl } from '../utils/urlHelpers';
 import { storageService } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
 import type {
@@ -204,12 +205,23 @@ export function QuizPage() {
       const qFilter = searchParams.get('filter');
 
       if (qSource) {
+        const resolvedTarget = resolveSampleUrl(qSource);
         const questions = allQuestions.filter(
-          (q) => q.sourcePath === qSource
+          (q) =>
+            q.sourcePath === qSource ||
+            Boolean(
+              resolvedTarget &&
+                q.sourcePath &&
+                resolveSampleUrl(q.sourcePath) === resolvedTarget
+            )
         );
         if (questions.length === 0) return null;
 
-        const materialMatch = materialStorageService.findMaterialByPathOrUrl(qSource);
+        const materialMatch =
+          materialStorageService.findMaterialByPathOrUrl(qSource) ??
+          (resolvedTarget
+            ? materialStorageService.findMaterialByPathOrUrl(resolvedTarget)
+            : undefined);
 
         const title = materialMatch
           ? `Quiz: ${materialMatch.title}`

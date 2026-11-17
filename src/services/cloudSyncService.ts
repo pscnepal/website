@@ -183,6 +183,13 @@ export function clearEnsuredProfileCache(userId?: string): void {
   }
 }
 
+function isVerifiedCurrentUser(expectedUserId?: string): boolean {
+  const current = auth.currentUser;
+  if (!current || !current.emailVerified) return false;
+  if (expectedUserId && current.uid !== expectedUserId) return false;
+  return true;
+}
+
 // ============================================================================
 // COMMUNITY ITEM STATS (Public Read / Atomic Transaction Write)
 // ============================================================================
@@ -252,6 +259,9 @@ export async function fetchUserCloudReactions(userId: string): Promise<{
   userReactions: Record<string, 'like' | 'dislike'>;
   itemViews: Record<string, number>;
 }> {
+  if (!isVerifiedCurrentUser(userId)) {
+    return { userReactions: {}, itemViews: {} };
+  }
   const path = `users/${userId}/itemReactions`;
   try {
     const q = query(
@@ -497,6 +507,9 @@ export async function clearUserReactionsInFirestore(userId: string): Promise<voi
 export async function fetchUserFlaggedQuestions(
   userId: string
 ): Promise<Record<string, FlaggedQuestionRecord>> {
+  if (!isVerifiedCurrentUser(userId)) {
+    return {};
+  }
   const path = `users/${userId}/flaggedQuestions`;
   try {
     const q = query(
@@ -699,7 +712,10 @@ function toIsoStringOrNull(raw: unknown): string | null {
   return null;
 }
 
-async function fetchUserDirectoryTelemetry(uid: string): Promise<{
+async function fetchUserDirectoryTelemetry(
+  uid: string,
+  isStale?: () => boolean
+): Promise<{
   quizAttemptsCount: number;
   questionsAnswered: number;
   averageAccuracy: number | null;
@@ -710,6 +726,22 @@ async function fetchUserDirectoryTelemetry(uid: string): Promise<{
   recentAttempts: CloudUserQuizAttemptSummary[];
   flaggedQuestions: CloudUserFlaggedQuestionSummary[];
 }> {
+  const emptyTelemetry = {
+    quizAttemptsCount: 0,
+    questionsAnswered: 0,
+    averageAccuracy: null,
+    bestAccuracy: null,
+    flaggedCount: 0,
+    reactionsCount: 0,
+    viewsCount: 0,
+    recentAttempts: [] as CloudUserQuizAttemptSummary[],
+    flaggedQuestions: [] as CloudUserFlaggedQuestionSummary[],
+  };
+
+  if (!isVerifiedCurrentUser() || isStale?.()) {
+    return emptyTelemetry;
+  }
+
   const attemptsPath = `users/${uid}/quizAttempts`;
   const flagsPath = `users/${uid}/flaggedQuestions`;
   const reactionsPath = `users/${uid}/itemReactions`;
@@ -724,7 +756,12 @@ async function fetchUserDirectoryTelemetry(uid: string): Promise<{
       )
     );
   } catch (error) {
+    if (!isVerifiedCurrentUser() || isStale?.()) return emptyTelemetry;
     handleFirestoreError(error, OperationType.LIST, attemptsPath);
+  }
+
+  if (!isVerifiedCurrentUser() || isStale?.()) {
+    return emptyTelemetry;
   }
 
   let flagsSnap;
@@ -737,7 +774,12 @@ async function fetchUserDirectoryTelemetry(uid: string): Promise<{
       )
     );
   } catch (error) {
+    if (!isVerifiedCurrentUser() || isStale?.()) return emptyTelemetry;
     handleFirestoreError(error, OperationType.LIST, flagsPath);
+  }
+
+  if (!isVerifiedCurrentUser() || isStale?.()) {
+    return emptyTelemetry;
   }
 
   let reactionsSnap;
@@ -750,6 +792,7 @@ async function fetchUserDirectoryTelemetry(uid: string): Promise<{
       )
     );
   } catch (error) {
+    if (!isVerifiedCurrentUser() || isStale?.()) return emptyTelemetry;
     handleFirestoreError(error, OperationType.LIST, reactionsPath);
   }
 
@@ -836,8 +879,12 @@ async function fetchUserDirectoryTelemetry(uid: string): Promise<{
 
 async function buildDirectoryEntriesFromDocs(
   docs: Array<{ id: string; data: () => Record<string, unknown> }>,
-  adminEmail: string
+  adminEmail: string,
+  isStale?: () => boolean
 ): Promise<CloudUserDirectoryEntry[]> {
+  if (!isVerifiedCurrentUser() || isStale?.()) {
+    return [];
+  }
   const normalizedAdmin = adminEmail.trim().toLowerCase();
 
   const entries = await Promise.all(
@@ -852,7 +899,7 @@ async function buildDirectoryEntriesFromDocs(
       const photoURL =
         typeof data.photoURL === 'string' ? data.photoURL.trim() : '';
 
-      const telemetry = await fetchUserDirectoryTelemetry(uid);
+      const telemetry = await fetchUserDirectoryTelemetry(uid, isStale);
       const rawRole = data.role;
       const role: 'admin' | 'aspirant' =
         rawRole === 'admin' || email.toLowerCase() === normalizedAdmin
@@ -898,6 +945,9 @@ async function buildDirectoryEntriesFromDocs(
 export async function fetchAdminUsersDirectory(
   adminEmail: string
 ): Promise<CloudUserDirectoryEntry[]> {
+  if (!isVerifiedCurrentUser()) {
+    return [];
+  }
   const path = 'users';
   let snapshot;
   try {
@@ -930,19 +980,24 @@ export function subscribeToAdminUsersDirectory(
   const unsubscribe = onSnapshot(
     q,
     (snapshot) => {
-      void buildDirectoryEntriesFromDocs(snapshot.docs, adminEmail)
+      void buildDirectoryEntriesFromDocs(
+        snapshot.docs,
+        adminEmail,
+        () => !active || !isVerifiedCurrentUser()
+      )
         .then((entries) => {
-          if (active) {
+          if (active && isVerifiedCurrentUser()) {
             onData(entries);
           }
         })
         .catch((err) => {
-          if (active && onError) {
+          if (active && isVerifiedCurrentUser() && onError) {
             onError(err);
           }
         });
     },
     (error) => {
+      if (!active || !isVerifiedCurrentUser()) return;
       reportFirestoreSnapshotError(error, OperationType.LIST, path);
       if (onError) {
         onError(error);
@@ -2152,6 +2207,15 @@ function sanitizeStringArray(raw: unknown, maxLen: number): string[] {
 export async function fetchUserWorkspaceBundle(
   userId: string
 ): Promise<CloudUserWorkspaceBundle> {
+  if (!isVerifiedCurrentUser(userId)) {
+    return {
+      preferences: null,
+      syllabus: null,
+      bookmarks: null,
+      flashcards: null,
+      library: null,
+    };
+  }
   const readWorkspaceDoc = async (docName: (typeof WORKSPACE_DOC_IDS)[number]) => {
     const path = `users/${userId}/workspace/${docName}`;
     try {
@@ -2583,6 +2647,9 @@ export async function upsertWorkspaceLibraryInFirestore(
 export async function fetchUserWrittenProgress(
   userId: string
 ): Promise<Record<string, WrittenQuestionProgress>> {
+  if (!isVerifiedCurrentUser(userId)) {
+    return {};
+  }
   const path = `users/${userId}/writtenProgress`;
   try {
     const q = query(
@@ -2693,6 +2760,9 @@ export async function clearUserWrittenProgressInFirestore(
 export async function fetchUserWrittenEvaluations(
   userId: string
 ): Promise<WrittenEvaluationRecord[]> {
+  if (!isVerifiedCurrentUser(userId)) {
+    return [];
+  }
   const path = `users/${userId}/writtenEvaluations`;
   try {
     const q = query(
@@ -2815,6 +2885,9 @@ export async function clearUserWrittenEvaluationsInFirestore(
 export async function fetchUserSimulationRuns(
   userId: string
 ): Promise<SimulationRunRecord[]> {
+  if (!isVerifiedCurrentUser(userId)) {
+    return [];
+  }
   const path = `users/${userId}/simulationRuns`;
   try {
     const q = query(
@@ -2987,6 +3060,9 @@ function parseContactInquiryDoc(
 export async function fetchUserContactInquiries(
   userId: string
 ): Promise<ContactInquiryRecord[]> {
+  if (!isVerifiedCurrentUser(userId)) {
+    return [];
+  }
   const path = 'contactInquiries';
   try {
     const q = query(
@@ -3008,6 +3084,9 @@ export async function fetchUserContactInquiries(
 export async function fetchAllContactInquiriesForAdmin(): Promise<
   ContactInquiryRecord[]
 > {
+  if (!isVerifiedCurrentUser()) {
+    return [];
+  }
   const path = 'contactInquiries';
   try {
     const q = query(

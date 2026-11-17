@@ -401,16 +401,31 @@ export function WrittenQuestionsPage() {
     };
   }, [records, allWrittenQuestions]);
 
+  const resolvedSourceParam = useMemo(
+    () => (sourceParam ? resolveSampleUrl(sourceParam) : ''),
+    [sourceParam]
+  );
+
   const sourceMaterialTitle = useMemo(() => {
     if (!sourceParam) return null;
-    const match = materialStorageService.findMaterialByPathOrUrl(sourceParam);
+    const match =
+      materialStorageService.findMaterialByPathOrUrl(sourceParam) ??
+      (resolvedSourceParam
+        ? materialStorageService.findMaterialByPathOrUrl(resolvedSourceParam)
+        : undefined);
     return match?.title ?? sourceParam;
-  }, [sourceParam]);
+  }, [sourceParam, resolvedSourceParam]);
 
   const filteredQuestions = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return allWrittenQuestions.filter((q) => {
-      if (sourceParam && q.sourcePath !== sourceParam) return false;
+      if (
+        sourceParam &&
+        q.sourcePath !== sourceParam &&
+        (!resolvedSourceParam || resolveSampleUrl(q.sourcePath) !== resolvedSourceParam)
+      ) {
+        return false;
+      }
       if (paperFilter !== 'all' && q.paper !== paperFilter) return false;
       if (marksFilter !== 'all' && String(q.marks) !== marksFilter) return false;
 

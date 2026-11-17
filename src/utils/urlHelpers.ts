@@ -4,23 +4,23 @@ import type { SampleEdition } from '../types/pdf';
 export const SAMPLE_EDITIONS: SampleEdition[] = [
   {
     id: 'sample-nepal-parichaya',
-    title: 'Nepal Parichaya: Physical Geography & Ecological Belts',
-    author: 'Dept. of Information Compendium',
+    title: 'नेपाल परिचय (१४ औं संस्करण), २०८३',
+    author: 'Department of Information and Broadcasting (DoIB)',
     category: 'Nepal Parichaya',
-    pages: 5,
-    path: 'https://doib.gov.np/media/app/public/nepal-parichaya-physical-geography.pdf',
+    pages: 440,
+    path: 'https://giwmscdnone.gov.np/media/pdf_upload/Nepal%20Parichaya%2014th%20edition_2083_With%20Cover_fjr5vfa.pdf',
     description:
-      'Coordinates, Himal/Pahad/Terai physiography, Koshi-Gandaki-Karnali basins, climate zones, and national parks.',
+      'Latest 14th edition (2083 BS) official DoIB compendium covering Nepal geography, history, culture, 2078 census demographics, and 16th Plan indicators.',
   },
   {
     id: 'sample-constitution',
-    title: 'Constitution of Nepal (2072) — Core Articles & Rights',
-    author: 'Nepal Law Commission Digest',
-    category: 'Laws & Legislation',
-    pages: 5,
-    path: 'https://lawcommission.gov.np/np/wp-content/uploads/2021/01/Nepal-ko-Sambhidhan-2072.pdf',
+    title: 'Constitution of Nepal (2nd Amendment) — Official English Text',
+    author: 'Nepal Law Commission (नेपाल कानून आयोग)',
+    category: 'Constitution & Admin Laws',
+    pages: 226,
+    path: 'https://giwmscdnone.gov.np/media/files/Constitution%20of%20Nepal%20(2nd%20amd.%20English)_xf33zb3.pdf',
     description:
-      'Constitutional supremacy, Fundamental Rights & Duties, Federal structure, and Constitutional Commissions.',
+      'Official Nepal Law Commission English text covering Constitutional supremacy, Fundamental Rights, Federal structure, and Constitutional Commissions.',
   },
   {
     id: 'sample-official-so-syllabus',
@@ -28,7 +28,7 @@ export const SAMPLE_EDITIONS: SampleEdition[] = [
     author: 'Public Service Commission, Nepal',
     category: 'Official PSC Syllabi',
     pages: 24,
-    path: 'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
+    path: 'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
     description:
       'Verbatim Lok Sewa Aayog joint examination scheme and Paper I Administrative Aptitude Test (AAT) syllabus.',
   },
@@ -41,8 +41,6 @@ export const LEGACY_MATERIAL_PATH_MAP: Record<string, string> = {
     'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf',
   '/materials/psc-kharidar-syllabus.pdf':
     'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
-  '/materials/psc-gk-aptitude-outline.pdf':
-    'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
   '/materials/official-psc/psc-official-section-officer-phase1.pdf':
     'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf',
   '/materials/official-psc/psc-official-section-officer-phase2.pdf':
@@ -55,30 +53,22 @@ export const LEGACY_MATERIAL_PATH_MAP: Record<string, string> = {
     'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf',
   '/materials/official-psc/psc-official-kharidar-phase2.pdf':
     'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca1.pdf',
-  '/materials/nepal-parichaya-geography.pdf':
-    'https://doib.gov.np/media/app/public/nepal-parichaya-physical-geography.pdf',
-  '/materials/nepal-parichaya-history.pdf':
-    'https://doib.gov.np/media/app/public/nepal-parichaya-history-unification.pdf',
-  '/materials/nepal-parichaya-culture-heritage.pdf':
-    'https://doib.gov.np/media/app/public/nepal-parichaya-culture-heritage.pdf',
-  '/materials/nepal-parichaya-federal-structure.pdf':
-    'https://doib.gov.np/media/app/public/nepal-parichaya-federal-structure.pdf',
   '/materials/constitution-of-nepal-2072.pdf':
-    'https://lawcommission.gov.np/np/wp-content/uploads/2021/01/Nepal-ko-Sambhidhan-2072.pdf',
+    'https://giwmscdnone.gov.np/media/pdf_upload/%E0%A4%A8%E0%A5%87%E0%A4%AA%E0%A4%BE%E0%A4%B2%E0%A4%95%E0%A5%8B%20%E0%A4%B8_%E0%A4%82%E0%A4%B5%E0%A4%BF%E0%A4%A7%E0%A4%BE%E0%A4%A8%20unicode%20%E0%A4%AD%E0%A4%BE%E0%A4%A6%E0%A5%8D%E0%A4%B0%20%E0%A5%A8%E0%A5%A6%E0%A5%AE%E0%A5%A7_mtbuyjt.pdf',
   '/materials/civil-service-act-2049.pdf':
-    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Nijamati-Sewa-Ain-2049.pdf',
+    'https://giwmscdnone.gov.np/media/app/public/275/posts/1719471204_53.pdf',
   '/materials/right-to-information-act-2064.pdf':
-    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Suchana-ko-Hak-Sambandhi-Ain-2064.pdf',
+    'https://giwmscdnone.gov.np/media/pdf_upload/16.%E0%A4%B8%E0%A4%9A%E0%A4%A8%E0%A4%95_%E0%A4%B9%E0%A4%95_%E0%A4%B8%E0%A4%AE%E0%A4%AC%E0%A4%A8%E0%A4%A7_%E0%A4%90%E0%A4%A8_%E0%A5%A8%E0%A5%A6%E0%A5%AC%E0%A5%AA.pdf',
   '/materials/good-governance-act-2064.pdf':
-    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sushashan-Ain-2064.pdf',
+    'https://giwmscdnone.gov.np/media/pdf_upload/10.%E0%A4%B8%E0%A5%81%E0%A4%B6%E0%A4%BE%E0%A4%B8%E0%A4%A8%20(%E0%A4%B5%E0%A5%8D%E0%A4%AF%E0%A4%B5%E0%A4%B8%E0%A5%8D%E0%A4%A5%E0%A4%BE%E0%A4%AA%E0%A4%A8%20%E0%A4%A4%E0%A4%A5%E0%A4%BE%20%E0%A4%B8%E0%A4%9E%E0%A5%8D%E0%A4%9A%E0%A4%BE%E0%A4%B2%E0%A4%A8)%20%E0%A4%90%E0%A4%A8%2C%20%E0%A5%A8%E0%A5%A6%E0%A5%AC%E0%A5%AA_rbx6erv.pdf',
   '/materials/sixteenth-plan-summary.pdf':
-    'https://npc.gov.np/images/category/16th_Plan_Draft_Approved_2081.pdf',
+    'https://giwmscdnone.gov.np/media/pdf_upload/%E0%A4%B8%E0%A5%8B%E0%A4%B9%E0%A5%8D%E0%A4%B0%E0%A5%8C%E0%A4%82%20%E0%A4%AF%E0%A5%8B%E0%A4%9C%E0%A4%A8%E0%A4%BE_rfucaur.pdf',
   '/materials/local-government-operation-act-2074.pdf':
-    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sthaniya-Sarkar-Sanchalan-Ain-2074.pdf',
+    'https://giwmscdnone.gov.np/media/pdf_upload/5.%E0%A4%B8%E0%A5%8D%E0%A4%A5%E0%A4%BE%E0%A4%A8%E0%A5%80%E0%A4%AF%20%E0%A4%B8%E0%A4%B0%E0%A4%95%E0%A4%BE%E0%A4%B0%20%E0%A4%B8%E0%A4%9E%E0%A5%8D_%E0%A4%9A%E0%A4%BE%E0%A4%B2%E0%A4%A8%20%E0%A4%90%E0%A4%A8%2C%20%E0%A5%A8%E0%A5%A6%E0%A5%AD%E0%A5%AA_uhq3r7x.pdf',
   '/materials/corruption-prevention-act-2059.pdf':
-    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Bhrastachar-Niwaran-Ain-2059.pdf',
+    'https://giwmscdnone.gov.np/media/pdf_upload/4.%E0%A4%AD%E0%A5%8D%E0%A4%B0%E0%A4%B7%E0%A5%8D%E0%A4%9F%E0%A4%BE%E0%A4%9A%E0%A4%BE%E0%A4%B0%20%E0%A4%A8%E0%A4%BF%E0%A4%B5%E0%A4%BE%E0%A4%B0%E0%A4%A3%20%E0%A4%90%E0%A4%A8%2C%20%E0%A5%A8%E0%A5%A6%E0%A5%AB%E0%A5%AF_clwpfdz.pdf',
   '/materials/public-procurement-fiscal-act.pdf':
-    'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sarbajanik-Kharid-Ain-2063.pdf',
+    'https://giwmscdnone.gov.np/media/pdf_upload/8.%E0%A4%B8%E0%A4%BE%E0%A4%B0%E0%A5%8D%E0%A4%B5%E0%A4%9C%E0%A4%A8%E0%A4%BF%E0%A4%95%20%E0%A4%96%E0%A4%B0%E0%A4%BF%E0%A4%A6%20%E0%A4%90%E0%A4%A8%2C%20%E0%A5%A8%E0%A5%A6%E0%A5%AC%E0%A5%A9_dsrretl.pdf',
 };
 
 import type { UrlValidationResult } from '../types/common';

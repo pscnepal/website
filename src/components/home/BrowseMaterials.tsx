@@ -243,7 +243,7 @@ export function BrowseMaterials() {
           <p className="mt-2.5 text-fluid-lead text-zinc-600 dark:text-zinc-400">
             {selectedCategory
               ? selectedCategory.description
-              : 'Explore curated Nepal PSC PDF collections—including Official Lok Sewa Aayog Original Syllabi, Structured Syllabus Digests, Nepal Parichaya, Core Laws & Acts, and the 16th Plan & Governance Statutes. Open any document in Flipbook or Standard PDF mode, or download the original PDF.'}
+              : 'Explore authentic Government of Nepal PSC collections—including 22 Official Lok Sewa Aayog Syllabi, Syllabus Digests, Nepal Parichaya (1st–14th Editions & English), Constitution & Admin Laws, 16th Plan & Integrity, Public Finance/Revenue/Audit, Economy/Budget/Census, and Justice/Foreign Policy/Environment.'}
           </p>
         </div>
 
@@ -358,7 +358,7 @@ export function BrowseMaterials() {
                       {/* Quiet unboxed metadata with typographic separators */}
                       <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
                         <span className="font-semibold text-crimson-700 dark:text-crimson-400">
-                          0{index + 1}
+                          {String(index + 1).padStart(2, '0')}
                         </span>
                         <span aria-hidden="true">·</span>
                         <span>{category.items.length} documents</span>
@@ -505,19 +505,19 @@ export function BrowseMaterials() {
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700/60">
-                          Complete 13-Edition Compendium
+                          Complete 14-Edition Compendium
                         </span>
-                        <span className="text-xs text-zinc-500 font-mono">२०६९ — २०८२</span>
+                        <span className="text-xs text-zinc-500 font-mono">२०६९ — २०८३ · + English</span>
                       </div>
                       <h3 className="font-serif text-base sm:text-lg font-bold text-zinc-950 dark:text-zinc-50">
                         नेपाल परिचय (Nepal Parichaya) Official Library
                       </h3>
                       <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                        Published by the Department of Information and Broadcasting (सूचना तथा प्रसारण विभाग), Government of Nepal. Every edition from the 1st revised (२०६९) to the latest 13th edition (२०८२) indexed for comprehensive civil service revision.
+                        Published by the Department of Information and Broadcasting (सूचना तथा प्रसारण विभाग), Government of Nepal. Includes every edition from the 1st revised (२०६९) through the latest 14th edition (२०८३) plus the Official English Edition for comprehensive civil service revision.
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-[11px] text-zinc-500 dark:text-zinc-400 font-mono tabular-nums pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                      <span>13 Official Editions</span>
+                      <span>15 Official Editions (1st–14th + EN)</span>
                       <span aria-hidden="true">·</span>
                       <span>4 Curated Study Digests</span>
                       <span aria-hidden="true">·</span>
@@ -592,11 +592,32 @@ export function BrowseMaterials() {
                             title={item.title}
                             codeOrEdition={item.codeOrEdition}
                             themeColor={
-                              item.id.includes('13th') || item.id.includes('constitution')
+                              item.id.includes('14th') ||
+                              item.id.includes('13th') ||
+                              item.id.includes('constitution') ||
+                              item.id.includes('budget') ||
+                              item.id.includes('corruption') ||
+                              item.id.includes('foreign')
                                 ? 'crimson'
-                                : item.id.includes('12th') || item.id.includes('geography')
+                                : item.id.includes('12th') ||
+                                    item.id.includes('geography') ||
+                                    item.id.includes('audit') ||
+                                    item.id.includes('oag') ||
+                                    item.id.includes('customs') ||
+                                    item.id.includes('nrb') ||
+                                    item.id.includes('muluki') ||
+                                    item.id.includes('procurement')
                                   ? 'navy'
-                                  : item.id.includes('11th') || item.id.includes('local-government')
+                                  : item.id.includes('11th') ||
+                                      item.id.includes('lgoa') ||
+                                      item.id.includes('local-government') ||
+                                      item.id.includes('environment') ||
+                                      item.id.includes('forest') ||
+                                      item.id.includes('drrm') ||
+                                      item.id.includes('sixteenth') ||
+                                      item.id.includes('sdg') ||
+                                      item.id.includes('mtef') ||
+                                      item.id.includes('nhrc')
                                     ? 'emerald'
                                     : 'amber'
                             }
@@ -680,13 +701,19 @@ export function BrowseMaterials() {
                                     className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-500 hover:text-blue-700 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded px-1"
                                   >
                                     <span>
-                                      {item.externalSourceUrl.includes('doib.gov.np')
-                                        ? 'doib.gov.np'
-                                        : item.externalSourceUrl.includes('giwmscdnone.gov.np')
-                                          ? 'giwms.gov.np'
-                                          : item.externalSourceUrl.includes('psc.gov.np')
-                                            ? 'psc.gov.np'
-                                            : 'Official Source'}
+                                      {(() => {
+                                        try {
+                                          const host = new URL(
+                                            item.externalSourceUrl
+                                          ).hostname.replace(/^www\./, '');
+                                          if (host === 'giwmscdnone.gov.np') {
+                                            return 'giwms.gov.np';
+                                          }
+                                          return host;
+                                        } catch {
+                                          return 'Official Source';
+                                        }
+                                      })()}
                                     </span>
                                     <ExternalLink className="w-3 h-3" />
                                   </a>

@@ -591,8 +591,9 @@ export const NAYAB_SUBBA_PAPER_3_ACCOUNTS_AUDIT: PscSyllabusPaper = {
       ],
       keyReferences:
         'Audit Act, 2075 · Fiscal Accountability Act, 2076 · Income Tax Act, 2058 · VAT Act, 2052',
-      materialPath: '/materials/public-procurement-fiscal-act.pdf',
-      materialTitle: 'Procurement & Fiscal Act Digest',
+      materialPath:
+        'https://giwmscdnone.gov.np/media/app/public/275/posts/1720419986_57.pdf',
+      materialTitle: 'Audit Act, 2075 (Official PDF)',
       writtenHref: '/written/PSC-WR-405',
       writtenLabel: 'Audit Act & Beruju 10M Q&A',
       simulatePresetId: 'written-office-nasu',
@@ -667,8 +668,9 @@ export const NAYAB_SUBBA_PAPER_3_REVENUE: PscSyllabusPaper = {
       ],
       keyReferences:
         'Economic Survey (MoF) · NRB Monetary Policy · 16th Periodic Plan',
-      materialPath: '/materials/sixteenth-plan-summary.pdf',
-      materialTitle: 'Sixteenth Plan Summary',
+      materialPath:
+        'https://giwmscdnone.gov.np/media/pdf_upload/Economic%20Survey%202082%2083%20(1)_cimkjjb.pdf',
+      materialTitle: 'Economic Survey FY 2082/83 (MoF)',
       writtenHref: '/written/PSC-WR-309',
       writtenLabel: 'Three-Pillar Economy 5M Q&A',
       simulatePresetId: 'written-office-nasu',
@@ -725,8 +727,9 @@ export const NAYAB_SUBBA_PAPER_3_REVENUE: PscSyllabusPaper = {
       ],
       keyReferences:
         'Income Tax Act, 2058 · VAT Act, 2052 · Customs Act, 2064 · Excise Act, 2058',
-      materialPath: '/materials/public-procurement-fiscal-act.pdf',
-      materialTitle: 'Procurement & Fiscal Act Digest',
+      materialPath:
+        'https://giwmscdnone.gov.np/media/pdf_upload/3.%20%E0%A4%86%E0%A4%AF%E0%A4%95%E0%A4%B0%20%E0%A4%90%E0%A4%A8%2C%20%E0%A5%A8%E0%A5%A6%E0%A5%AB%E0%A5%AE_aevruby.pdf',
+      materialTitle: 'Income Tax Act, 2058 (Law Commission)',
       writtenHref: '/written/PSC-WR-408',
       writtenLabel: 'VAT, Income Tax & TDS 10M Q&A',
       simulatePresetId: 'written-office-nasu',
@@ -925,8 +928,8 @@ export const NAYAB_SUBBA_PAPER_3_JUSTICE: PscSyllabusPaper = {
       keyReferences:
         'Judicial Administration Act, 2073 · Muluki Civil Code & Civil Procedure Code, 2074',
       materialPath:
-        '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
-      materialTitle: 'Official Nayab Subba Phase II PDF',
+        'https://giwmscdnone.gov.np/media/pdf_upload/%E0%A4%AE%E0%A5%81%E0%A4%B2%E0%A5%81%E0%A4%95%E0%A5%80-%E0%A4%A6%E0%A5%87%E0%A4%B5%E0%A4%BE%E0%A4%A8%E0%A5%80-%E0%A4%B8%E0%A4%82%E0%A4%B9%E0%A4%BF%E0%A4%A4%E0%A4%BE-%E0%A4%90%E0%A4%A8-%E0%A5%A8%E0%A5%A6%E0%A5%AD%E0%A5%AA_zpq6wk7.pdf',
+      materialTitle: 'Muluki Civil Code, 2074 (Law Commission)',
       writtenHref: '/written/PSC-WR-412',
       writtenLabel: 'Myad Tameli & Writs 10M Q&A',
       simulatePresetId: 'written-office-nasu',
@@ -987,8 +990,8 @@ export const NAYAB_SUBBA_PAPER_3_JUSTICE: PscSyllabusPaper = {
       keyReferences:
         'Muluki Criminal Code & Procedure Code, 2074 · Evidence Act, 2031 · Constitution Art. 158',
       materialPath:
-        '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
-      materialTitle: 'Official Nayab Subba Phase II PDF',
+        'https://giwmscdnone.gov.np/media/pdf_upload/%E0%A4%AE%E0%A5%81%E0%A4%B2%E0%A5%81%E0%A4%95%E0%A5%80%20%E0%A4%85%E0%A4%AA%E0%A4%B0%E0%A4%BE%E0%A4%A7%20%E0%A4%B8%E0%A4%82%E0%A4%B9%E0%A4%BF%E0%A4%A4%E0%A4%BE%2C%20%E0%A5%A8%E0%A5%A6%E0%A5%AD%E0%A5%AA_it7vg66.pdf',
+      materialTitle: 'Muluki Criminal Code, 2074 (Law Commission)',
       writtenHref: '/written/PSC-WR-417',
       writtenLabel: 'Criminal Procedure & Art. 158 Q&A',
       simulatePresetId: 'written-office-nasu',
@@ -1188,8 +1191,8 @@ export const NAYAB_SUBBA_PAPER_3_FOREIGN: PscSyllabusPaper = {
       keyReferences:
         'Passport Act, 2076 · Foreign Policy, 2077 · Vienna Conventions 1961/1963',
       materialPath:
-        '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
-      materialTitle: 'Official Nayab Subba Phase II PDF',
+        'https://giwmscdnone.gov.np/media/pages/files/%E0%A4%AA%E0%A4%B0%E0%A4%B0%E0%A4%BE%E0%A4%B7%E0%A5%8D%E0%A4%9F%E0%A5%8D%E0%A4%B0-%E0%A4%A8%E0%A5%80%E0%A4%A4%E0%A4%BF-%E0%A5%A8%E0%A5%A6%E0%A5%AD%E0%A5%AD_2pavhb3.pdf',
+      materialTitle: 'Nepal Foreign Policy, 2077 (MoFA)',
       writtenHref: '/written/PSC-WR-413',
       writtenLabel: 'Note Verbale & Consular 5M Q&A',
       simulatePresetId: 'written-office-nasu',

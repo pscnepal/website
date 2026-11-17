@@ -765,8 +765,9 @@ export const SECTION_OFFICER_PAPER_4_AUDIT: PscSyllabusPaper = {
       ],
       keyReferences:
         'Audit Act, 2075 · Fiscal Accountability Act, 2076 · NPSAS · OAG Audit Guidelines',
-      materialPath: '/materials/public-procurement-fiscal-act.pdf',
-      materialTitle: 'Procurement & Fiscal Accountability Act',
+      materialPath:
+        'https://giwmscdnone.gov.np/media/app/public/275/posts/1720419986_57.pdf',
+      materialTitle: 'Audit Act, 2075 (Official PDF)',
       writtenHref: '/written/PSC-WR-405',
       writtenLabel: 'Audit Act & Beruju 10M Q&A',
       simulatePresetId: 'written-paper-4',
@@ -1001,8 +1002,8 @@ export const SECTION_OFFICER_PAPER_4_AUDIT: PscSyllabusPaper = {
       keyReferences:
         'INTOSAI IFPP / ISSAI Framework · NGAS · OAG Nepal Annual Reports',
       materialPath:
-        '/materials/official-psc/psc-official-section-officer-phase2.pdf',
-      materialTitle: 'Official SO Phase II Syllabus PDF',
+        'https://oag.gov.np/site_uploads/mahalkhaparakashhakaka-ou-varashhaka-paratavathana-1435411017.pdf',
+      materialTitle: '63rd OAG Annual Report, 2083',
       writtenHref: '/written/PSC-WR-405',
       writtenLabel: 'OAG & Audit Standards 10M Q&A',
       simulatePresetId: 'written-paper-4',
@@ -1454,8 +1455,8 @@ export const SECTION_OFFICER_FOREIGN_EXTRA_2: PscSyllabusPaper = {
       keyReferences:
         'Constitution Art. 51(m) · Nepal’s Foreign Policy, 2077 · MoFA Annual Reports',
       materialPath:
-        '/materials/official-psc/psc-official-section-officer-phase2.pdf',
-      materialTitle: 'Official SO Phase II Syllabus PDF',
+        'https://giwmscdnone.gov.np/media/pages/files/%E0%A4%AA%E0%A4%B0%E0%A4%B0%E0%A4%BE%E0%A4%B7%E0%A5%8D%E0%A4%9F%E0%A5%8D%E0%A4%B0-%E0%A4%A8%E0%A5%80%E0%A4%A4%E0%A4%BF-%E0%A5%A8%E0%A5%A6%E0%A5%AD%E0%A5%AD_2pavhb3.pdf',
+      materialTitle: 'Nepal Foreign Policy, 2077 (MoFA)',
       writtenHref: '/written/PSC-WR-304',
       writtenLabel: 'Economic Diplomacy 5M Q&A',
       simulatePresetId: 'written-paper-4',
@@ -1635,8 +1636,8 @@ export const SECTION_OFFICER_FOREIGN_EXTRA_2: PscSyllabusPaper = {
       keyReferences:
         'Vienna Conventions (1961 & 1963) · MoFA Country-Specific Economic Diplomacy Guidelines',
       materialPath:
-        '/materials/official-psc/psc-official-section-officer-phase2.pdf',
-      materialTitle: 'Official SO Phase II Syllabus PDF',
+        'https://giwmscdnone.gov.np/media/pdf_upload/Annual%20Report%202023-2024_16ovpix.pdf',
+      materialTitle: "Report on Nepal's Foreign Affairs (MoFA)",
       writtenHref: '/written/PSC-WR-413',
       writtenLabel: 'Vienna Conventions & Consular Q&A',
       simulatePresetId: 'written-paper-4',
