@@ -4,73 +4,21 @@
  * Curated for Section Officer, Nayab Subba, Kharidar, and Technical Services.
  */
 
-export type PscCadreType =
-  | 'section-officer'
-  | 'nayab-subba'
-  | 'kharidar'
-  | 'joint-secretary'
-  | 'under-secretary'
-  | 'technical-health'
-  | 'technical-engineering';
+import type {
+  CalendarEvent,
+  EventStatus,
+  NoticeCategory,
+  PscCadreType,
+  PscNotice,
+} from '../types/content';
 
-export type EventStatus =
-  | 'application-open'
-  | 'exam-scheduled'
-  | 'ad-published'
-  | 'upcoming'
-  | 'completed';
-
-export interface CalendarEvent {
-  id: string;
-  cadreId: PscCadreType;
-  cadreTitleEn: string;
-  cadreTitleNe: string;
-  levelRankEn: string;
-  levelRankNe: string;
-  serviceGroup: string; // e.g. 'General Administration / Foreign / Judicial'
-  competitionType: 'open-inclusive' | 'internal' | 'both';
-  competitionTypeLabel: string;
-  adPublishDateBS: string;
-  adPublishDateAD: string;
-  applicationDeadlineBS: string;
-  stage1ExamDateBS: string;
-  stage1ExamDateAD: string;
-  stage2ExamDateBS: string;
-  stage2ExamDateAD: string;
-  status: EventStatus;
-  statusLabelNe: string;
-  estimatedSeats: number;
-  syllabusUrl: string;
-  simulationPreset: string;
-  eligibilitySnippet: string;
-  examCenterNoticeSnippet?: string;
-  isHighPriority?: boolean;
-}
-
-export type NoticeCategory =
-  | 'vacancy-ad'
-  | 'exam-center'
-  | 'written-result'
-  | 'syllabus-revision'
-  | 'general-notice';
-
-export interface PscNotice {
-  id: string;
-  noticeNumber: string;
-  titleNe: string;
-  titleEn: string;
-  category: NoticeCategory;
-  categoryLabelNe: string;
-  categoryLabelEn: string;
-  publishedDateBS: string;
-  publishedDateAD: string;
-  targetCadres: PscCadreType[];
-  summaryNe: string;
-  summaryEn: string;
-  isImportant?: boolean;
-  officialSource: string;
-  actionUrl?: string;
-}
+export type {
+  CalendarEvent,
+  EventStatus,
+  NoticeCategory,
+  PscCadreType,
+  PscNotice,
+};
 
 export const PSC_ANNUAL_CALENDAR_EVENTS: CalendarEvent[] = [
   {

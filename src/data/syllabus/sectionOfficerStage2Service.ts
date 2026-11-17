@@ -266,8 +266,8 @@ export const SECTION_OFFICER_PAPER_4_ADMIN: PscSyllabusPaper = {
       quizHref:
         '/quiz/custom?source=%2Fmaterials%2Fpublic-procurement-fiscal-act.pdf',
       quizLabel: 'PFM & Procurement MCQs',
-      writtenHref: '/written/PSC-WR-302',
-      writtenLabel: 'Fiscal & Capital Budget Q&A',
+      writtenHref: '/written/PSC-WR-408',
+      writtenLabel: 'Tax, VAT & Leakage Control 10M Q&A',
       simulatePresetId: 'written-paper-4',
     },
     {
@@ -439,8 +439,8 @@ export const SECTION_OFFICER_PAPER_4_ADMIN: PscSyllabusPaper = {
         'Public Procurement Act, 2063 · Audit Act, 2075 · Fiscal Accountability Act, 2076',
       materialPath: '/materials/public-procurement-fiscal-act.pdf',
       materialTitle: 'Public Procurement & Fiscal Act Digest',
-      writtenHref: '/written/PSC-WR-403',
-      writtenLabel: 'Office Turnaround Case Q&A',
+      writtenHref: '/written/PSC-WR-404',
+      writtenLabel: 'Procurement & e-GP 10M Q&A',
       simulatePresetId: 'written-paper-4',
     },
     {
@@ -571,8 +571,8 @@ export const SECTION_OFFICER_PAPER_4_ADMIN: PscSyllabusPaper = {
         'Constitution Parts 8–9 & 20 · Federal Inter-Relations Act, 2077 · Parliament Secretariat Act, 2064',
       materialPath: '/materials/nepal-parichaya-federal-structure.pdf',
       materialTitle: 'Federal Structure & Local Governance',
-      writtenHref: '/written/PSC-WR-202',
-      writtenLabel: 'Cooperative Federalism Q&A',
+      writtenHref: '/written/PSC-WR-410',
+      writtenLabel: 'Law-Making & PAC Oversight Q&A',
       simulatePresetId: 'written-paper-4',
     },
   ],
@@ -767,6 +767,8 @@ export const SECTION_OFFICER_PAPER_4_AUDIT: PscSyllabusPaper = {
         'Audit Act, 2075 · Fiscal Accountability Act, 2076 · NPSAS · OAG Audit Guidelines',
       materialPath: '/materials/public-procurement-fiscal-act.pdf',
       materialTitle: 'Procurement & Fiscal Accountability Act',
+      writtenHref: '/written/PSC-WR-405',
+      writtenLabel: 'Audit Act & Beruju 10M Q&A',
       simulatePresetId: 'written-paper-4',
     },
     {
@@ -884,6 +886,8 @@ export const SECTION_OFFICER_PAPER_4_AUDIT: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-section-officer-phase2.pdf',
       materialTitle: 'Official SO Phase II Syllabus PDF',
+      writtenHref: '/written/PSC-WR-416',
+      writtenLabel: 'Business Accounting & NFRS 10M Q&A',
       simulatePresetId: 'written-paper-4',
     },
     {
@@ -999,6 +1003,8 @@ export const SECTION_OFFICER_PAPER_4_AUDIT: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-section-officer-phase2.pdf',
       materialTitle: 'Official SO Phase II Syllabus PDF',
+      writtenHref: '/written/PSC-WR-405',
+      writtenLabel: 'OAG & Audit Standards 10M Q&A',
       simulatePresetId: 'written-paper-4',
     },
     {
@@ -1161,6 +1167,8 @@ export const SECTION_OFFICER_PAPER_4_AUDIT: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-section-officer-phase2.pdf',
       materialTitle: 'Official SO Phase II Syllabus PDF',
+      writtenHref: '/written/PSC-WR-414',
+      writtenLabel: 'Procurement & Beruju Case Q&A',
       simulatePresetId: 'written-paper-4',
     },
   ],
@@ -1334,6 +1342,8 @@ export const SECTION_OFFICER_FOREIGN_EXTRA_1: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-section-officer-phase2.pdf',
       materialTitle: 'Official SO Phase II Syllabus PDF',
+      writtenHref: '/written/PSC-WR-413',
+      writtenLabel: 'Note Verbale & Consular 5M Q&A',
       simulatePresetId: 'written-paper-4',
     },
   ],
@@ -1554,6 +1564,8 @@ export const SECTION_OFFICER_FOREIGN_EXTRA_2: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-section-officer-phase2.pdf',
       materialTitle: 'Official SO Phase II Syllabus PDF',
+      writtenHref: '/written/PSC-WR-308',
+      writtenLabel: 'LDC Graduation 2026 10M Q&A',
       simulatePresetId: 'written-paper-4',
     },
     {
@@ -1625,6 +1637,8 @@ export const SECTION_OFFICER_FOREIGN_EXTRA_2: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-section-officer-phase2.pdf',
       materialTitle: 'Official SO Phase II Syllabus PDF',
+      writtenHref: '/written/PSC-WR-413',
+      writtenLabel: 'Vienna Conventions & Consular Q&A',
       simulatePresetId: 'written-paper-4',
     },
     {
@@ -1762,6 +1776,8 @@ export const SECTION_OFFICER_FOREIGN_EXTRA_2: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-section-officer-phase2.pdf',
       materialTitle: 'Official SO Phase II Syllabus PDF',
+      writtenHref: '/written/PSC-WR-418',
+      writtenLabel: 'Treaties & Regionalism 5M Q&A',
       simulatePresetId: 'written-paper-4',
     },
   ],

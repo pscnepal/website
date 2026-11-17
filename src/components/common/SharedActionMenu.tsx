@@ -6,77 +6,16 @@ import React, {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import type { LucideIcon } from 'lucide-react';
 import { ChevronDown, MoreHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { ActionButtonColor, ActionButtonSize, ActionButtonVariant } from './ActionButton';
+import type {
+  ActionButtonColor,
+  ActionMenuItem,
+  SharedActionMenuProps,
+} from '../../types/common';
 import { ActionButton } from './ActionButton';
 
-export interface ActionMenuItem {
-  /** Unique identifier for the item */
-  id: string;
-  /** Display label */
-  label: React.ReactNode;
-  /** Optional secondary subtitle or hint */
-  description?: string;
-  /** Icon displayed next to label */
-  icon: LucideIcon | React.ComponentType<{ className?: string }>;
-  /** Semantic color theme for icon and item focus/hover tint */
-  color?: ActionButtonColor;
-  /** Optional status or count badge */
-  badge?: React.ReactNode;
-  /** Click handler */
-  onClick?: (e: React.MouseEvent) => void;
-  /** Internal React Router navigation target */
-  to?: string;
-  /** External navigation link */
-  href?: string;
-  /** Download attribute if href is provided */
-  download?: boolean | string;
-  /** External target (e.g. '_blank') */
-  target?: string;
-  /** Open in new tab safe rel */
-  rel?: string;
-  /** Disabled state */
-  disabled?: boolean;
-  /** Highlight as danger / destructive action */
-  danger?: boolean;
-  /** Render a separator line before this item */
-  divider?: boolean;
-}
-
-export interface SharedActionMenuProps {
-  /** List of action items to render in menu */
-  items: ActionMenuItem[];
-  /** Optional label on the trigger button (omitted for icon-only button) */
-  label?: React.ReactNode;
-  /** Custom trigger icon (defaults to MoreHorizontal, or ChevronDown if label is set) */
-  icon?: LucideIcon | React.ComponentType<{ className?: string }>;
-  /** Position of icon relative to label */
-  iconPosition?: 'left' | 'right';
-  /** Accessible title & tooltip for trigger button */
-  title?: string;
-  /** Trigger button visual color */
-  color?: ActionButtonColor;
-  /** Trigger button visual variant */
-  variant?: ActionButtonVariant;
-  /** Trigger button size */
-  size?: ActionButtonSize;
-  /** Horizontal alignment of dropdown menu */
-  align?: 'left' | 'right';
-  /** Dropdown menu width class (e.g. 'w-48', 'w-56') */
-  width?: string;
-  /** Optional title / header displayed at top of the open menu */
-  header?: React.ReactNode;
-  /** Disabled state for the entire menu trigger */
-  disabled?: boolean;
-  /** Custom container class */
-  className?: string;
-  /** Custom trigger button class */
-  triggerClassName?: string;
-  /** Custom menu dropdown class */
-  menuClassName?: string;
-}
+export type { ActionMenuItem, SharedActionMenuProps };
 
 /** Color mapping for icons and active hover highlights inside menu items */
 const ITEM_COLOR_MAP: Record<

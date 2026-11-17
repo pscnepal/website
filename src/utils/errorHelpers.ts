@@ -1,8 +1,6 @@
-export interface ParsedFirestoreError {
-  error: string;
-  operationType?: string;
-  path?: string | null;
-}
+import type { ParsedFirestoreError } from '../types/common';
+
+export type { ParsedFirestoreError };
 
 /**
  * Attempts to parse structured FirestoreErrorInfo JSON strings thrown by handleFirestoreError.

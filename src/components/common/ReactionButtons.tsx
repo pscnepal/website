@@ -9,20 +9,14 @@ import {
   toggleLike,
 } from '../../features/reactions/reactionsSlice';
 import { formatCompactCount } from '../../features/reactions/reactionUtils';
+import type { ReactionButtonsProps } from '../../types/common';
 
-export interface ReactionButtonsProps {
-  itemId: string;
-  itemType?: 'question' | 'material';
-  size?: 'xs' | 'sm' | 'md';
-  showLabels?: boolean;
-  showViews?: boolean;
-  readOnly?: boolean;
-  className?: string;
-}
+export type { ReactionButtonsProps };
 
 export function ReactionButtons({
   itemId,
   itemType = 'question',
+  baseCounts,
   size = 'sm',
   showLabels = false,
   showViews = true,
@@ -33,9 +27,14 @@ export function ReactionButtons({
   const { isDashboardAdmin } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
-  const { likes, dislikes, views, userReaction } = useAppSelector((state) =>
+  const rawReactionData = useAppSelector((state) =>
     selectItemReactionData(state, itemId, itemType)
   );
+
+  const likes = rawReactionData.likes + (baseCounts?.likes ?? 0);
+  const dislikes = rawReactionData.dislikes + (baseCounts?.dislikes ?? 0);
+  const views = rawReactionData.views + (baseCounts?.views ?? 0);
+  const userReaction = rawReactionData.userReaction;
 
   const isCountOnly = Boolean(readOnly || isDashboardAdmin);
   const isLiked = !isCountOnly && userReaction === 'like';
@@ -70,10 +69,17 @@ export function ReactionButtons({
     ? { duration: 0 }
     : { type: 'spring' as const, stiffness: 450, damping: 25 };
 
+  const ariaEntityLabel =
+    itemType === 'material'
+      ? 'Study material'
+      : itemType === 'affair'
+        ? 'Current affair briefing'
+        : 'Question';
+
   return (
     <div
       role="group"
-      aria-label={`${itemType === 'material' ? 'Study material' : 'Question'} community views and ratings`}
+      aria-label={`${ariaEntityLabel} community views and ratings`}
       className={`inline-flex items-center gap-1 shrink-0 ${className}`}
       onClick={(e) => e.stopPropagation()}
     >

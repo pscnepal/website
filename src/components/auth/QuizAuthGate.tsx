@@ -3,6 +3,7 @@ import { Lock, Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { AUTH_GATE_DEFAULTS } from '../../data/siteConfig';
+import type { QuizAuthGateProps } from '../../types/assessment';
 
 export function GoogleLogoIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -29,16 +30,6 @@ export function GoogleLogoIcon({ className = 'w-4 h-4' }: { className?: string }
       />
     </svg>
   );
-}
-
-interface QuizAuthGateProps {
-  title: string;
-  subtitle?: string;
-  metaItems?: string[];
-  description?: string;
-  benefits?: string[];
-  actionLabel?: string;
-  onClose: () => void;
 }
 
 export function QuizAuthGate({

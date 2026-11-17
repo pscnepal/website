@@ -18,22 +18,23 @@ import {
   ExamSimulationDialog,
   OMR_PRESETS,
   WRITTEN_PRESETS,
-  type BookletKey,
 } from '../components/simulation/ExamSimulationDialog';
-import type { PscCadreId } from '../data/pscSyllabusData';
-import type { WrittenQuestion } from '../data/writtenQuestionsData';
 import {
   QUESTION_EVENTS,
   questionStorageService,
 } from '../services/questionStorageService';
 import { clearSimulationHistory } from '../features/psc/pscSlice';
-import type { WrittenLanguageMode } from '../features/written/writtenSlice';
+import type {
+  BookletKey,
+  PscCadreId,
+  SimulatorTab,
+  WrittenLanguageMode,
+  WrittenQuestion,
+} from '../types';
 import {
   formatCompactDuration,
   formatRelativeDate,
 } from '../utils/pdfHelpers';
-
-type SimulatorTab = 'omr-hall' | 'written-hall' | 'merit-lab';
 
 export function SimulationPage() {
   const [searchParams, setSearchParams] = useSearchParams();

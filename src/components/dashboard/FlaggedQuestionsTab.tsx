@@ -11,54 +11,32 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import {
-  isBilingualQuizQuestion,
-  type QuizOptionKey,
-  type QuizQuestion,
-} from '../../data/quizData';
+import { isBilingualQuizQuestion } from '../../data/quizData';
 import {
   QUESTION_EVENTS,
   questionStorageService,
 } from '../../services/questionStorageService';
-import type {
-  CloudUserDirectoryEntry,
-  CloudUserFlaggedQuestionSummary,
-} from '../../services/cloudSyncService';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import { ActionButton } from '../common/ActionButton';
-import {
-  SharedActionMenu,
-  type ActionMenuItem,
-} from '../common/SharedActionMenu';
+import { SharedActionMenu } from '../common/SharedActionMenu';
 import { ReactionButtons } from '../common/ReactionButtons';
-import {
-  SharedDataTable,
-  type ColumnDef,
-  type TableFilterDef,
-} from '../common/SharedDataTable';
+import { SharedDataTable } from '../common/SharedDataTable';
+import type {
+  ActionMenuItem,
+  ColumnDef,
+  FlagInspectContext as InspectContext,
+  QuizOptionKey,
+  QuizQuestion,
+  TableFilterDef,
+  UserSubmittedFlagReport,
+} from '../../types';
 import { useDashboardSearch } from './DashboardLayout';
 import { toast } from '../../services/toastService';
 import { copyWithToast } from '../../utils/clipboardHelpers';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
 
-export interface UserSubmittedFlagReport {
-  reportId: string;
-  user: CloudUserDirectoryEntry;
-  flagMeta: CloudUserFlaggedQuestionSummary;
-  question: QuizQuestion | null;
-}
-
-interface InspectContext {
-  question: QuizQuestion;
-  reason?: string;
-  note?: string;
-  flaggedAt?: string;
-  source?: string;
-  reporterName?: string;
-  reporterEmail?: string;
-  totalFlagsForQuestion: number;
-}
+export type { UserSubmittedFlagReport };
 
 export function FlaggedQuestionsTab() {
   const { isDashboardAdmin } = useAuth();

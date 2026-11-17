@@ -12,21 +12,39 @@ import quizReducer from '../features/quiz/quizSlice';
 import reactionsReducer, {
   applyItemSyncAck,
   setCloudItemStats,
-  type ReactionItemType,
 } from '../features/reactions/reactionsSlice';
 import { resolveReactionItemType } from '../features/reactions/reactionUtils';
 import readerReducer from '../features/reader/readerSlice';
 import settingsReducer from '../features/settings/settingsSlice';
+import workspaceReducer from '../features/workspace/workspaceSlice';
 import writtenReducer from '../features/written/writtenSlice';
 import { auth } from '../lib/firebase';
 import {
   clearUserQuizAttemptsInFirestore,
   clearUserReactionsInFirestore,
+  clearUserSimulationRunsInFirestore,
+  clearUserWrittenEvaluationsInFirestore,
+  clearUserWrittenProgressInFirestore,
+  createSimulationRunInFirestore,
+  createWrittenEvaluationInFirestore,
+  deleteWrittenEvaluationInFirestore,
   fetchAllCloudItemStats,
   syncReactionAndStatsToFirestore,
+  updateUserTargetCadreInFirestore,
+  upsertWorkspaceBookmarksInFirestore,
+  upsertWorkspaceFlashcardsInFirestore,
+  upsertWorkspaceLibraryInFirestore,
+  upsertWorkspacePreferencesInFirestore,
+  upsertWorkspaceSyllabusInFirestore,
+  upsertWrittenProgressInFirestore,
 } from '../services/cloudSyncService';
 import { storageService } from '../services/storageService';
 import { toast } from '../services/toastService';
+import type {
+  ReactionItemType,
+  SimulationRunRecord,
+  WrittenEvaluationRecord,
+} from '../types';
 import {
   formatUserFriendlyError,
   isFirestoreOfflineError,
@@ -59,6 +77,7 @@ const rootReducer = combineReducers({
   written: writtenReducer,
   psc: pscReducer,
   reactions: reactionsReducer,
+  workspace: workspaceReducer,
 });
 
 export type RootState = ReturnType<typeof rootReducer>;
@@ -73,11 +92,38 @@ function clearTimersForUser(uid?: string): void {
   }
   const prefix = `${uid}:`;
   for (const [key, timer] of viewSyncTimers.entries()) {
-    if (key.startsWith(prefix)) {
+    if (key.startsWith(prefix) || key.includes(`:${uid}:`)) {
       clearTimeout(timer);
       viewSyncTimers.delete(key);
     }
   }
+}
+
+function scheduleDebouncedTask(
+  timerKey: string,
+  delayMs: number,
+  uid: string,
+  fn: () => void
+): void {
+  const existing = viewSyncTimers.get(timerKey);
+  if (existing) {
+    clearTimeout(existing);
+  }
+  const timer = setTimeout(() => {
+    viewSyncTimers.delete(timerKey);
+    const active = auth.currentUser;
+    if (!active || active.uid !== uid || !active.emailVerified) {
+      return;
+    }
+    fn();
+  }, delayMs);
+  viewSyncTimers.set(timerKey, timer);
+}
+
+function truthyBookmarkIds(map: Record<string, boolean>): string[] {
+  return Object.entries(map)
+    .filter(([, active]) => Boolean(active))
+    .map(([id]) => id);
 }
 
 const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
@@ -88,8 +134,20 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
       return result;
     }
 
-    if (action.type === 'reactions/resetLocalUserReactions') {
+    if (
+      action.type === 'reactions/resetLocalUserReactions' ||
+      action.type === 'workspace/resetLocalWorkspaceState'
+    ) {
       clearTimersForUser();
+      return result;
+    }
+
+    // Never push local account-reset/hydration actions back to Firestore
+    if (
+      action.type.includes('hydrate') ||
+      action.type.includes('resetLocal') ||
+      action.type.includes('mergeRemote')
+    ) {
       return result;
     }
 
@@ -100,6 +158,7 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
 
     const uid = currentUser.uid;
 
+    // 1. Quiz Attempt History Clear
     if (action.type === 'quiz/clearQuizHistory') {
       void clearUserQuizAttemptsInFirestore(uid).catch((err) => {
         handleMiddlewareSyncError(
@@ -112,6 +171,7 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
       return result;
     }
 
+    // 2. Clear All Reactions
     if (action.type === 'reactions/clearAllReactions') {
       clearTimersForUser(uid);
       void clearUserReactionsInFirestore(uid)
@@ -132,6 +192,7 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
       return result;
     }
 
+    // 3. Reactions & Item Views (Questions, Reading Materials, Current Affairs)
     const isReactionMutation =
       action.type === 'reactions/toggleLike' ||
       action.type === 'reactions/toggleDislike' ||
@@ -185,18 +246,7 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
             );
           });
       } else if (isViewMutation) {
-        const existingTimer = viewSyncTimers.get(timerKey);
-        if (existingTimer) {
-          clearTimeout(existingTimer);
-        }
-
-        const timer = setTimeout(() => {
-          viewSyncTimers.delete(timerKey);
-          const activeUser = auth.currentUser;
-          if (!activeUser || activeUser.uid !== uid || !activeUser.emailVerified) {
-            return;
-          }
-
+        scheduleDebouncedTask(timerKey, 1200, uid, () => {
           const state = storeApi.getState();
           const targetReaction = state.reactions.userReactions[itemId] ?? 'none';
           const targetUserViews = state.reactions.itemViews[itemId] ?? 0;
@@ -225,10 +275,297 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
                 'Could not sync view count to cloud.'
               );
             });
-        }, 1200);
-
-        viewSyncTimers.set(timerKey, timer);
+        });
       }
+      return result;
+    }
+
+    // 4. Preferences (Theme, Reader Defaults, Quiz Mode, Written Lang, Target Cadre)
+    if (
+      action.type === 'settings/setTheme' ||
+      action.type === 'settings/toggleTheme' ||
+      action.type === 'settings/setDefaultReadingMode' ||
+      action.type === 'settings/setDefaultSoundEnabled' ||
+      action.type === 'quiz/setPreferredQuizMode' ||
+      action.type === 'written/setPreferredWrittenLanguage' ||
+      action.type === 'psc/setTargetCadre'
+    ) {
+      scheduleDebouncedTask(`ws-prefs:${uid}`, 450, uid, () => {
+        const state = storeApi.getState();
+        void upsertWorkspacePreferencesInFirestore(uid, {
+          theme: state.settings.theme,
+          defaultReadingMode: state.settings.defaultReadingMode,
+          defaultSoundEnabled: state.settings.defaultSoundEnabled,
+          preferredQuizMode: state.quiz.preferredMode,
+          preferredWrittenLanguage: state.written.preferredLanguage,
+          targetCadreId: state.psc.targetCadreId,
+        }).catch((err) => {
+          handleMiddlewareSyncError(
+            'Cloud preferences sync failed',
+            err,
+            'cloud-prefs-sync-err',
+            'Preferences saved locally, but cloud sync failed.'
+          );
+        });
+      });
+
+      if (action.type === 'psc/setTargetCadre') {
+        scheduleDebouncedTask(`profile-cadre:${uid}`, 450, uid, () => {
+          const targetCadre = storeApi.getState().psc.targetCadreId;
+          void updateUserTargetCadreInFirestore(uid, targetCadre).catch((err) => {
+            handleMiddlewareSyncError(
+              'Cloud profile cadre sync failed',
+              err,
+              'cloud-cadre-sync-err',
+              'Target cadre updated locally, but cloud sync failed.'
+            );
+          });
+        });
+      }
+      return result;
+    }
+
+    // 5. Syllabus Mastery & Exam Hall Checklist
+    if (
+      action.type === 'psc/toggleSyllabusUnitCompleted' ||
+      action.type === 'psc/setPaperUnitsCompleted' ||
+      action.type === 'psc/toggleSyllabusTopicCompleted' ||
+      action.type === 'psc/setSyllabusTopicsCompleted' ||
+      action.type === 'psc/toggleSyllabusUnitBookmarked' ||
+      action.type === 'psc/clearPscSyllabusProgress' ||
+      action.type === 'workspace/toggleExamChecklistItem' ||
+      action.type === 'workspace/clearExamChecklist'
+    ) {
+      scheduleDebouncedTask(`ws-syl:${uid}`, 500, uid, () => {
+        const state = storeApi.getState();
+        void upsertWorkspaceSyllabusInFirestore(uid, {
+          completedUnitIds: state.psc.completedUnitIds,
+          completedTopicIds: state.psc.completedTopicIds,
+          bookmarkedUnitIds: state.psc.bookmarkedUnitIds,
+          examChecklist: state.workspace.examChecklist,
+        }).catch((err) => {
+          handleMiddlewareSyncError(
+            'Cloud syllabus sync failed',
+            err,
+            'cloud-syllabus-sync-err',
+            'Syllabus progress saved locally, but cloud sync failed.'
+          );
+        });
+      });
+      return result;
+    }
+
+    // 6. PYQ & Current Affairs Bookmarks
+    if (
+      action.type === 'workspace/togglePyqBookmark' ||
+      action.type === 'workspace/clearPyqBookmarks' ||
+      action.type === 'workspace/toggleAffairBookmark' ||
+      action.type === 'workspace/clearAffairBookmarks'
+    ) {
+      scheduleDebouncedTask(`ws-bm:${uid}`, 400, uid, () => {
+        const state = storeApi.getState();
+        void upsertWorkspaceBookmarksInFirestore(uid, {
+          pyqIds: truthyBookmarkIds(state.workspace.pyqBookmarks),
+          affairIds: truthyBookmarkIds(state.workspace.affairBookmarks),
+        }).catch((err) => {
+          handleMiddlewareSyncError(
+            'Cloud bookmarks sync failed',
+            err,
+            'cloud-bookmarks-sync-err',
+            'Bookmarks saved locally, but cloud sync failed.'
+          );
+        });
+      });
+      return result;
+    }
+
+    // 7. Leitner Flashcard Progress
+    if (
+      action.type === 'workspace/scoreFlashcard' ||
+      action.type === 'workspace/resetFlashcardDeck' ||
+      action.type === 'workspace/clearAllFlashcards'
+    ) {
+      scheduleDebouncedTask(`ws-fc:${uid}`, 500, uid, () => {
+        const state = storeApi.getState();
+        void upsertWorkspaceFlashcardsInFirestore(
+          uid,
+          state.workspace.flashcardProgress
+        ).catch((err) => {
+          handleMiddlewareSyncError(
+            'Cloud flashcards sync failed',
+            err,
+            'cloud-flashcards-sync-err',
+            'Flashcard mastery saved locally, but cloud sync failed.'
+          );
+        });
+      });
+      return result;
+    }
+
+    // 8. Reader Library History, Reading Progress & Reading Stats
+    if (
+      action.type === 'library/recordBookOpened' ||
+      action.type === 'library/updateReadingProgress' ||
+      action.type === 'library/recordReadingTick' ||
+      action.type === 'library/recordPageTurnStats' ||
+      action.type === 'library/resetBookReadingStats' ||
+      action.type === 'library/removeRecentBook' ||
+      action.type === 'library/clearRecentBooks' ||
+      action.type === 'library/clearAllReadingData'
+    ) {
+      const delayMs = action.type === 'library/recordReadingTick' ? 4000 : 800;
+      scheduleDebouncedTask(`ws-lib:${uid}`, delayMs, uid, () => {
+        const state = storeApi.getState();
+        void upsertWorkspaceLibraryInFirestore(uid, {
+          recentBooks: state.library.recentBooks,
+          readingProgress: state.library.readingProgress,
+          readingStats: state.library.readingStats,
+        }).catch((err) => {
+          handleMiddlewareSyncError(
+            'Cloud reading library sync failed',
+            err,
+            'cloud-library-sync-err',
+            'Reading progress saved locally, but cloud sync failed.'
+          );
+        });
+      });
+      return result;
+    }
+
+    // 9. Per-Question Written Study Drafts & Rubric Progress
+    if (
+      action.type === 'written/saveWrittenDraft' ||
+      action.type === 'written/toggleWrittenRubricPoint' ||
+      action.type === 'written/setWrittenQuestionStatus' ||
+      action.type === 'written/addWrittenPracticeSeconds'
+    ) {
+      if ('payload' in action && action.payload && typeof action.payload === 'object') {
+        const qId = (action.payload as { questionId?: string }).questionId;
+        if (qId) {
+          const delayMs =
+            action.type === 'written/saveWrittenDraft' ||
+            action.type === 'written/addWrittenPracticeSeconds'
+              ? 1200
+              : 400;
+          scheduleDebouncedTask(`wr-prog:${uid}:${qId}`, delayMs, uid, () => {
+            const record = storeApi.getState().written.records[qId];
+            if (!record) return;
+            void upsertWrittenProgressInFirestore(uid, record).catch((err) => {
+              handleMiddlewareSyncError(
+                'Cloud written draft sync failed',
+                err,
+                'cloud-written-prog-err',
+                'Written draft saved locally, but cloud sync failed.'
+              );
+            });
+          });
+        }
+      }
+      return result;
+    }
+
+    if (action.type === 'written/clearWrittenProgress') {
+      const prefix = `wr-prog:${uid}:`;
+      for (const [key, timer] of viewSyncTimers.entries()) {
+        if (key.startsWith(prefix)) {
+          clearTimeout(timer);
+          viewSyncTimers.delete(key);
+        }
+      }
+      void clearUserWrittenProgressInFirestore(uid).catch((err) => {
+        handleMiddlewareSyncError(
+          'Failed to clear cloud written progress',
+          err,
+          'cloud-clear-written-err',
+          'Cleared locally, but failed to clear cloud written progress.'
+        );
+      });
+      return result;
+    }
+
+    // 10. Written Evaluator Scorecards
+    if (action.type === 'workspace/addWrittenEvaluation' && 'payload' in action) {
+      const record = action.payload as WrittenEvaluationRecord;
+      void createWrittenEvaluationInFirestore(uid, record)
+        .then(() => {
+          storeApi.dispatch(pscApi.util.invalidateTags(['WrittenEvaluations']));
+        })
+        .catch((err) => {
+          handleMiddlewareSyncError(
+            'Cloud written evaluation sync failed',
+            err,
+            'cloud-written-eval-err',
+            'Evaluation scorecard saved locally, but cloud sync failed.'
+          );
+        });
+      return result;
+    }
+
+    if (action.type === 'workspace/deleteWrittenEvaluation' && 'payload' in action) {
+      const evalId = action.payload as string;
+      void deleteWrittenEvaluationInFirestore(uid, evalId)
+        .then(() => {
+          storeApi.dispatch(pscApi.util.invalidateTags(['WrittenEvaluations']));
+        })
+        .catch((err) => {
+          handleMiddlewareSyncError(
+            'Cloud written evaluation delete failed',
+            err,
+            'cloud-written-eval-del-err',
+            'Deleted locally, but failed to remove cloud scorecard.'
+          );
+        });
+      return result;
+    }
+
+    if (action.type === 'workspace/clearWrittenEvaluations') {
+      void clearUserWrittenEvaluationsInFirestore(uid)
+        .then(() => {
+          storeApi.dispatch(pscApi.util.invalidateTags(['WrittenEvaluations']));
+        })
+        .catch((err) => {
+          handleMiddlewareSyncError(
+            'Failed to clear cloud written evaluations',
+            err,
+            'cloud-written-eval-clear-err',
+            'Cleared locally, but failed to clear cloud scorecards.'
+          );
+        });
+      return result;
+    }
+
+    // 11. Exam Hall Simulation Runs
+    if (action.type === 'psc/recordSimulationRun' && 'payload' in action) {
+      const run = action.payload as SimulationRunRecord;
+      void createSimulationRunInFirestore(uid, run)
+        .then(() => {
+          storeApi.dispatch(pscApi.util.invalidateTags(['SimulationRuns']));
+        })
+        .catch((err) => {
+          handleMiddlewareSyncError(
+            'Cloud simulation run sync failed',
+            err,
+            'cloud-sim-run-err',
+            'Simulation result saved locally, but cloud sync failed.'
+          );
+        });
+      return result;
+    }
+
+    if (action.type === 'psc/clearSimulationHistory') {
+      void clearUserSimulationRunsInFirestore(uid)
+        .then(() => {
+          storeApi.dispatch(pscApi.util.invalidateTags(['SimulationRuns']));
+        })
+        .catch((err) => {
+          handleMiddlewareSyncError(
+            'Failed to clear cloud simulation history',
+            err,
+            'cloud-sim-clear-err',
+            'Cleared locally, but failed to clear cloud simulation history.'
+          );
+        });
+      return result;
     }
 
     return result;
@@ -260,6 +597,7 @@ let prevQuiz = store.getState().quiz;
 let prevWritten = store.getState().written;
 let prevPsc = store.getState().psc;
 let prevReactions = store.getState().reactions;
+let prevWorkspace = store.getState().workspace;
 
 store.subscribe(() => {
   const state = store.getState();
@@ -310,6 +648,26 @@ store.subscribe(() => {
         itemViews: state.reactions.itemViews,
       });
     }
+  }
+
+  if (state.workspace !== prevWorkspace) {
+    const ws = state.workspace;
+    if (ws.flashcardProgress !== prevWorkspace.flashcardProgress) {
+      storageService.saveFlashcardProgress(ws.flashcardProgress);
+    }
+    if (ws.pyqBookmarks !== prevWorkspace.pyqBookmarks) {
+      storageService.savePyqBookmarks(ws.pyqBookmarks);
+    }
+    if (ws.affairBookmarks !== prevWorkspace.affairBookmarks) {
+      storageService.saveAffairBookmarks(ws.affairBookmarks);
+    }
+    if (ws.examChecklist !== prevWorkspace.examChecklist) {
+      storageService.saveExamChecklist(ws.examChecklist);
+    }
+    if (ws.writtenEvaluations !== prevWorkspace.writtenEvaluations) {
+      storageService.saveWrittenEvaluations(ws.writtenEvaluations);
+    }
+    prevWorkspace = ws;
   }
 });
 

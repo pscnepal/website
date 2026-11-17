@@ -4,38 +4,13 @@
  * Geographic statistics, Economic milestones, and Historical dates.
  */
 
-export type FlashcardDeckId =
-  | 'constitution-rights'
-  | 'constitutional-organs'
-  | 'geography-belts'
-  | 'history-treaties'
-  | 'economy-16th-plan'
-  | 'international-affairs';
+import type {
+  FlashcardDeck,
+  FlashcardDeckId,
+  FlashcardItem,
+} from '../types/assessment';
 
-export interface FlashcardItem {
-  id: string;
-  deckId: FlashcardDeckId;
-  deckNameNe: string;
-  deckNameEn: string;
-  frontNe: string;
-  frontEn: string;
-  backNe: string;
-  backEn: string;
-  mnemonicTipNe?: string;
-  examContext: string;
-  cadreRelevance: Array<'section-officer' | 'nayab-subba' | 'kharidar'>;
-  defaultDifficulty: 'easy' | 'medium' | 'hard';
-}
-
-export interface FlashcardDeck {
-  id: FlashcardDeckId;
-  nameNe: string;
-  nameEn: string;
-  descriptionNe: string;
-  descriptionEn: string;
-  totalCards: number;
-  badgeColor: 'blue' | 'emerald' | 'amber' | 'purple' | 'crimson';
-}
+export type { FlashcardDeck, FlashcardDeckId, FlashcardItem };
 
 export const FLASHCARD_DECKS: FlashcardDeck[] = [
   {

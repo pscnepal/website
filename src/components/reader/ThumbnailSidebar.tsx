@@ -1,29 +1,14 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { PanelLeftClose, X } from 'lucide-react';
-import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
+import type { RenderTask } from 'pdfjs-dist';
 import {
   isRenderingCancelledError,
   renderPageToCanvas,
 } from '../../services/pdfService';
-import type { PdfPageDimensions } from '../../types/pdf';
-
-interface ThumbnailSidebarProps {
-  pdfDoc: PDFDocumentProxy;
-  totalPages: number;
-  currentPage: number;
-  pageDimensions: PdfPageDimensions;
-  isOpen: boolean;
-  onSelectPage: (page: number) => void;
-  onClose: () => void;
-}
-
-interface ThumbnailItemProps {
-  pdfDoc: PDFDocumentProxy;
-  pageNumber: number;
-  isActive: boolean;
-  aspectRatio: number;
-  onSelect: (page: number) => void;
-}
+import type {
+  ThumbnailItemProps,
+  ThumbnailSidebarProps,
+} from '../../types/pdf';
 
 const ThumbnailItem = memo(function ThumbnailItem({
   pdfDoc,

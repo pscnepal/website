@@ -1,17 +1,21 @@
-import {
-  READING_MATERIAL_CATEGORIES,
-  type ReadingMaterialCategory,
-  type ReadingMaterialItem,
-} from '../data/readingMaterials';
+import { READING_MATERIAL_CATEGORIES } from '../data/readingMaterials';
 import { auth } from '../lib/firebase';
+import type {
+  CloudMaterialOverride,
+  FlatReadingMaterial,
+  MaterialMutationInput,
+  ReadingMaterialCategory,
+  ReadingMaterialItem,
+} from '../types';
 import {
   resetAllMaterialOverridesInFirestore,
   upsertReadingMaterialInFirestore,
-  type CloudMaterialOverride,
 } from './cloudSyncService';
 import { SITE_CONFIG } from '../data/siteConfig';
 import { toast } from './toastService';
 import { formatUserFriendlyError } from '../utils/errorHelpers';
+
+export type { FlatReadingMaterial, MaterialMutationInput };
 
 const MATERIALS_STORAGE_KEY = 'psc_nepal_reading_materials_custom_v1';
 const ADMIN_EMAIL = SITE_CONFIG.supportEmail;
@@ -19,19 +23,6 @@ const ADMIN_EMAIL = SITE_CONFIG.supportEmail;
 export const MATERIAL_EVENTS = {
   CHANGED: 'psc_reading_materials_changed',
 } as const;
-
-export interface MaterialMutationInput {
-  categoryId: string;
-  categoryName?: string;
-  categorySubtitle?: string;
-  categoryDescription?: string;
-  item: ReadingMaterialItem;
-}
-
-export interface FlatReadingMaterial extends ReadingMaterialItem {
-  categoryId: string;
-  categoryName: string;
-}
 
 const SEED_CATEGORY_BY_ID = new Map<string, ReadingMaterialCategory>(
   READING_MATERIAL_CATEGORIES.map((c) => [c.id, c])

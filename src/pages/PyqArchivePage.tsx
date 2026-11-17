@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useAppDispatch } from '../app/hooks';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { ActionButton } from '../components/common/ActionButton';
 import { ReactionButtons } from '../components/common/ReactionButtons';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
@@ -28,14 +28,13 @@ import { PageTransition } from '../components/layout/PageTransition';
 import {
   PYQ_QUESTION_ENTRIES,
   PYQ_RECURRING_TOPIC_STATS,
-  type PyqQuestion,
 } from '../data/pyqData';
 import { recordView } from '../features/reactions/reactionsSlice';
+import { togglePyqBookmark } from '../features/workspace/workspaceSlice';
+import type { PyqPageTab, PyqQuestion } from '../types';
 import { copyWithToast } from '../utils/clipboardHelpers';
 
-export type PyqPageTab = 'archive' | 'heatmap' | 'challenge';
-
-const STORAGE_KEY_PYQ_BOOKMARKS = 'psc_pyq_bookmarks_v1';
+export type { PyqPageTab };
 
 export function PyqArchivePage() {
   const dispatch = useAppDispatch();
@@ -61,24 +60,11 @@ export function PyqArchivePage() {
   const [expandedQuestionId, setExpandedQuestionId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Bookmarking state
-  const [bookmarkedIds, setBookmarkedIds] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_PYQ_BOOKMARKS);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  // Bookmarking state synced via workspaceSlice
+  const bookmarkedIds = useAppSelector((state) => state.workspace.pyqBookmarks);
 
   const handleToggleBookmark = (id: string) => {
-    setBookmarkedIds((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      try {
-        localStorage.setItem(STORAGE_KEY_PYQ_BOOKMARKS, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
+    dispatch(togglePyqBookmark(id));
   };
 
   const handleCopyQuestion = (q: PyqQuestion) => {

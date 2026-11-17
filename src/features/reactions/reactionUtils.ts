@@ -1,15 +1,24 @@
+import { CURRENT_AFFAIRS_ITEMS } from '../../data/currentAffairsData';
 import { materialStorageService } from '../../services/materialStorageService';
+import type { ReactionItemType } from './reactionsSlice';
 
 /**
- * Resolve item type dynamically against live quiz questions and reading materials.
+ * Resolve item type dynamically against live quiz questions, reading materials, and current affairs.
  */
 
 export function resolveReactionItemType(
   itemId: string,
-  knownType?: 'question' | 'material'
-): 'question' | 'material' {
-  if (knownType === 'material' || knownType === 'question') {
+  knownType?: ReactionItemType
+): ReactionItemType {
+  if (
+    knownType === 'material' ||
+    knownType === 'question' ||
+    knownType === 'affair'
+  ) {
     return knownType;
+  }
+  if (CURRENT_AFFAIRS_ITEMS.some((a) => a.id === itemId)) {
+    return 'affair';
   }
   return materialStorageService.findMaterialById(itemId) ? 'material' : 'question';
 }

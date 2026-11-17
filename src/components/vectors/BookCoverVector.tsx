@@ -1,12 +1,5 @@
 import type { FC } from 'react';
-
-interface BookCoverVectorProps {
-  title: string;
-  codeOrEdition: string;
-  themeColor?: 'crimson' | 'navy' | 'emerald' | 'amber';
-  className?: string;
-  aspectRatio?: 'standard' | 'compact';
-}
+import type { BookCoverVectorProps } from '../../types/common';
 
 export const BookCoverVector: FC<BookCoverVectorProps> = ({
   title,

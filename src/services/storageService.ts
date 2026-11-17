@@ -1,13 +1,30 @@
-import type { PscPrepState } from '../features/psc/pscSlice';
-import type { QuizState } from '../features/quiz/quizSlice';
-import type { WrittenState } from '../features/written/writtenSlice';
+import { auth } from '../lib/firebase';
 import type {
   BookReadingStats,
+  ContactInquiryRecord,
+  FlaggedQuestionRecord,
+  FlashcardProgress,
+  InquiryCategory,
+  InquiryStatus,
+  LeitnerBoxLevel,
+  PscPrepState,
+  QuizState,
   ReadingProgressEntry,
   RecentBookEntry,
-} from '../types/pdf';
-import type { SettingsState } from '../types/reader';
-import { auth } from '../lib/firebase';
+  SettingsState,
+  WrittenEvaluationRecord,
+  WrittenState,
+} from '../types';
+
+export type {
+  ContactInquiryRecord,
+  FlaggedQuestionRecord,
+  FlashcardProgress,
+  InquiryCategory,
+  InquiryStatus,
+  LeitnerBoxLevel,
+  WrittenEvaluationRecord,
+};
 import {
   clearAllFlaggedQuestionsInFirestore,
   deleteFlaggedQuestionInFirestore,
@@ -45,6 +62,11 @@ const KEYS = {
   CONTACT_INQUIRIES: 'psc_nepal_contact_inquiries_v1',
   REACTIONS: 'psc_nepal_reactions_v1',
   FLAGGED_QUESTIONS: 'psc_nepal_flagged_questions_v1',
+  FLASHCARD_PROGRESS: 'psc_nepal_flashcard_progress_v2',
+  PYQ_BOOKMARKS: 'psc_nepal_pyq_bookmarks_v1',
+  AFFAIR_BOOKMARKS: 'psc_nepal_affair_bookmarks_v1',
+  EXAM_CHECKLIST: 'psc_nepal_exam_checklist_v1',
+  WRITTEN_EVALUATIONS: 'psc_nepal_written_evaluations_v2',
   LAST_CLOUD_UID: 'psc_nepal_cloud_owner_uid_v1',
 } as const;
 
@@ -58,34 +80,12 @@ const LEGACY_KEY_FALLBACKS: Record<string, string> = {
   [KEYS.PSC_PREP_STATE]: 'page' + 'flow_psc_prep_v1',
   [KEYS.CONTACT_INQUIRIES]: 'page' + 'flow_contact_inquiries_v1',
   [KEYS.REACTIONS]: 'psc_nepal_reactions_v1',
+  [KEYS.FLASHCARD_PROGRESS]: 'psc_flashcards_progress_v2',
+  [KEYS.PYQ_BOOKMARKS]: 'psc_pyq_bookmarks_v1',
+  [KEYS.AFFAIR_BOOKMARKS]: 'psc_affairs_bookmarks_v1',
+  [KEYS.EXAM_CHECKLIST]: 'psc_exam_hall_checklist_v1',
+  [KEYS.WRITTEN_EVALUATIONS]: 'psc_written_evaluations_v2',
 };
-
-export type InquiryCategory =
-  | 'general'
-  | 'quiz-errata'
-  | 'material-request'
-  | 'reader-support';
-
-export interface ContactInquiryRecord {
-  id: string;
-  ticketCode: string;
-  name: string;
-  email: string;
-  category: InquiryCategory;
-  reference: string;
-  message: string;
-  createdAt: string;
-}
-
-export interface FlaggedQuestionRecord {
-  questionId: string;
-  flaggedAt: string;
-  source?: 'quiz' | 'simulation' | 'dashboard';
-  deckTitle?: string;
-  cadreId?: string;
-  reason?: string;
-  note?: string;
-}
 
 function getVerifiedUid(): string | null {
   const currentUser = auth.currentUser;
@@ -314,12 +314,43 @@ export const storageService = {
   },
 
   loadContactInquiries(): ContactInquiryRecord[] {
-    const items = safeReadJson<ContactInquiryRecord[]>(
+    const items = safeReadJson<Array<Partial<ContactInquiryRecord>>>(
       KEYS.CONTACT_INQUIRIES,
       []
     );
     if (!Array.isArray(items)) return [];
-    return items.slice(0, 25);
+    return items.slice(0, 25).map((item) => ({
+      id: String(item.id ?? `inq-${Date.now()}`),
+      ...(typeof item.userId === 'string' && item.userId ? { userId: item.userId } : {}),
+      ticketCode: String(item.ticketCode ?? 'PSC-INQ'),
+      name: String(item.name ?? ''),
+      email: String(item.email ?? ''),
+      category:
+        item.category === 'quiz-errata' ||
+        item.category === 'material-request' ||
+        item.category === 'reader-support'
+          ? item.category
+          : 'general',
+      reference: String(item.reference ?? ''),
+      message: String(item.message ?? ''),
+      status:
+        item.status === 'in-review' || item.status === 'resolved'
+          ? item.status
+          : 'open',
+      ...(typeof item.adminReply === 'string' && item.adminReply
+        ? { adminReply: item.adminReply }
+        : {}),
+      ...(typeof item.respondedBy === 'string' && item.respondedBy
+        ? { respondedBy: item.respondedBy }
+        : {}),
+      ...(typeof item.respondedAt === 'string' && item.respondedAt
+        ? { respondedAt: item.respondedAt }
+        : {}),
+      createdAt: String(item.createdAt ?? new Date().toISOString()),
+      ...(typeof item.updatedAt === 'string' && item.updatedAt
+        ? { updatedAt: item.updatedAt }
+        : {}),
+    }));
   },
 
   saveContactInquiries(items: ContactInquiryRecord[]): void {
@@ -339,6 +370,110 @@ export const storageService = {
     }
   },
 
+  loadFlashcardProgress(): Record<string, FlashcardProgress> {
+    const raw = safeReadJson<Record<string, FlashcardProgress>>(
+      KEYS.FLASHCARD_PROGRESS,
+      {}
+    );
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+    const sanitized: Record<string, FlashcardProgress> = {};
+    for (const [id, entry] of Object.entries(raw)) {
+      if (!entry || typeof entry !== 'object') continue;
+      const boxLevel: LeitnerBoxLevel =
+        entry.boxLevel === 2 ? 2 : entry.boxLevel === 3 ? 3 : 1;
+      sanitized[id] = {
+        boxLevel,
+        lastReviewedAt: Number(entry.lastReviewedAt) || 0,
+        timesReviewed: Math.max(0, Number(entry.timesReviewed) || 0),
+        timesCorrect: Math.max(0, Number(entry.timesCorrect) || 0),
+      };
+    }
+    return sanitized;
+  },
+
+  saveFlashcardProgress(progress: Record<string, FlashcardProgress>): void {
+    safeWriteJson(KEYS.FLASHCARD_PROGRESS, progress);
+  },
+
+  loadPyqBookmarks(): Record<string, boolean> {
+    const raw = safeReadJson<Record<string, boolean> | string[]>(
+      KEYS.PYQ_BOOKMARKS,
+      {}
+    );
+    if (Array.isArray(raw)) {
+      return Object.fromEntries(raw.filter((x) => typeof x === 'string').map((id) => [id, true]));
+    }
+    if (!raw || typeof raw !== 'object') return {};
+    const out: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries(raw)) {
+      if (v) out[k] = true;
+    }
+    return out;
+  },
+
+  savePyqBookmarks(bookmarks: Record<string, boolean>): void {
+    const compact: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries(bookmarks)) {
+      if (v) compact[k] = true;
+    }
+    safeWriteJson(KEYS.PYQ_BOOKMARKS, compact);
+  },
+
+  loadAffairBookmarks(): Record<string, boolean> {
+    const raw = safeReadJson<Record<string, boolean> | string[]>(
+      KEYS.AFFAIR_BOOKMARKS,
+      {}
+    );
+    if (Array.isArray(raw)) {
+      return Object.fromEntries(raw.filter((x) => typeof x === 'string').map((id) => [id, true]));
+    }
+    if (!raw || typeof raw !== 'object') return {};
+    const out: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries(raw)) {
+      if (v) out[k] = true;
+    }
+    return out;
+  },
+
+  saveAffairBookmarks(bookmarks: Record<string, boolean>): void {
+    const compact: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries(bookmarks)) {
+      if (v) compact[k] = true;
+    }
+    safeWriteJson(KEYS.AFFAIR_BOOKMARKS, compact);
+  },
+
+  loadExamChecklist(): Record<string, boolean> {
+    const raw = safeReadJson<Record<string, boolean>>(KEYS.EXAM_CHECKLIST, {});
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+    const out: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries(raw)) {
+      if (v) out[k] = true;
+    }
+    return out;
+  },
+
+  saveExamChecklist(checklist: Record<string, boolean>): void {
+    const compact: Record<string, boolean> = {};
+    for (const [k, v] of Object.entries(checklist)) {
+      if (v) compact[k] = true;
+    }
+    safeWriteJson(KEYS.EXAM_CHECKLIST, compact);
+  },
+
+  loadWrittenEvaluations(): WrittenEvaluationRecord[] {
+    const items = safeReadJson<WrittenEvaluationRecord[]>(
+      KEYS.WRITTEN_EVALUATIONS,
+      []
+    );
+    if (!Array.isArray(items)) return [];
+    return items.slice(0, 30);
+  },
+
+  saveWrittenEvaluations(records: WrittenEvaluationRecord[]): void {
+    safeWriteJson(KEYS.WRITTEN_EVALUATIONS, records.slice(0, 30));
+  },
+
   loadReactions(): {
     userReactions: Record<string, 'like' | 'dislike'>;
     itemViews: Record<string, number>;
@@ -347,15 +482,56 @@ export const storageService = {
       userReactions?: Record<string, 'like' | 'dislike'>;
       itemViews?: Record<string, number>;
     }>(KEYS.REACTIONS, { userReactions: {}, itemViews: {} });
+    const userReactions: Record<string, 'like' | 'dislike'> =
+      saved && typeof saved.userReactions === 'object' && saved.userReactions !== null
+        ? { ...saved.userReactions }
+        : {};
+    const itemViews: Record<string, number> =
+      saved && typeof saved.itemViews === 'object' && saved.itemViews !== null
+        ? { ...saved.itemViews }
+        : {};
+
+    // One-time migration of legacy Current Affairs localStorage likes/dislikes
+    if (typeof window !== 'undefined') {
+      try {
+        let migrated = false;
+        const legacyLikesRaw = window.localStorage.getItem('psc_affairs_likes_v1');
+        if (legacyLikesRaw) {
+          const legacyLikes = JSON.parse(legacyLikesRaw) as Record<string, boolean>;
+          if (legacyLikes && typeof legacyLikes === 'object') {
+            for (const [id, active] of Object.entries(legacyLikes)) {
+              if (active && !userReactions[id]) {
+                userReactions[id] = 'like';
+              }
+            }
+          }
+          window.localStorage.removeItem('psc_affairs_likes_v1');
+          migrated = true;
+        }
+        const legacyDislikesRaw = window.localStorage.getItem('psc_affairs_dislikes_v1');
+        if (legacyDislikesRaw) {
+          const legacyDislikes = JSON.parse(legacyDislikesRaw) as Record<string, boolean>;
+          if (legacyDislikes && typeof legacyDislikes === 'object') {
+            for (const [id, active] of Object.entries(legacyDislikes)) {
+              if (active && !userReactions[id]) {
+                userReactions[id] = 'dislike';
+              }
+            }
+          }
+          window.localStorage.removeItem('psc_affairs_dislikes_v1');
+          migrated = true;
+        }
+        if (migrated) {
+          safeWriteJson(KEYS.REACTIONS, { userReactions, itemViews });
+        }
+      } catch {
+        // Ignore malformed legacy reaction storage
+      }
+    }
+
     return {
-      userReactions:
-        saved && typeof saved.userReactions === 'object' && saved.userReactions !== null
-          ? saved.userReactions
-          : {},
-      itemViews:
-        saved && typeof saved.itemViews === 'object' && saved.itemViews !== null
-          ? saved.itemViews
-          : {},
+      userReactions,
+      itemViews,
     };
   },
 

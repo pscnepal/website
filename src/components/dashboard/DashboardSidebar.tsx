@@ -6,6 +6,7 @@ import {
   Flag,
   HelpCircle,
   LayoutDashboard,
+  MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
   PenLine,
@@ -14,14 +15,14 @@ import {
   X,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useGetAdminContactInquiriesQuery } from '../../app/api/pscApi';
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import {
   DASHBOARD_NAV_MODULES,
   SITE_CONFIG,
-  type SiteDashboardTab,
 } from '../../data/siteConfig';
-import type { DashboardTab } from '../../pages/DashboardPage';
+import type { DashboardSidebarProps, DashboardTab } from '../../types/dashboard';
 import {
   MATERIAL_EVENTS,
   materialStorageService,
@@ -32,7 +33,7 @@ import {
 } from '../../services/questionStorageService';
 
 const MODULE_ICONS: Record<
-  SiteDashboardTab,
+  DashboardTab,
   React.ComponentType<{ className?: string }>
 > = {
   overview: LayoutDashboard,
@@ -41,17 +42,9 @@ const MODULE_ICONS: Record<
   'written-bank': PenLine,
   materials: BookOpen,
   users: Users,
+  inquiries: MessageSquare,
   data: Database,
 };
-
-interface DashboardSidebarProps {
-  activeTab?: DashboardTab;
-  onSelectTab?: (tab: DashboardTab) => void;
-  isCollapsed: boolean;
-  onToggleCollapse: () => void;
-  isMobileOpen: boolean;
-  onCloseMobile: () => void;
-}
 
 export function DashboardSidebar({
   activeTab: propActiveTab,
@@ -62,8 +55,12 @@ export function DashboardSidebar({
   onCloseMobile,
 }: DashboardSidebarProps) {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isDashboardAdmin } = useAuth();
   const { users: dbUsers, isLoading: isUsersLoading } = useDashboardUsers();
+  const { data: adminInquiries = [], isLoading: isInquiriesLoading } =
+    useGetAdminContactInquiriesQuery(undefined, {
+      skip: !isDashboardAdmin,
+    });
   const adminName = user?.displayName || 'Portal Admin';
   const adminEmail = user?.email || '';
   const adminInitials = adminName
@@ -119,12 +116,13 @@ export function DashboardSidebar({
     };
   }, []);
 
-  const countByTab: Partial<Record<SiteDashboardTab, number | undefined>> = {
+  const countByTab: Partial<Record<DashboardTab, number | undefined>> = {
     'quiz-bank': quizCount,
     flagged: isUsersLoading ? undefined : flaggedCount,
     'written-bank': writtenCount,
     materials: totalMaterialsCount,
     users: isUsersLoading ? undefined : dbUsers.length,
+    inquiries: isInquiriesLoading ? undefined : adminInquiries.length,
   };
 
   const coreNavItems = DASHBOARD_NAV_MODULES.map((mod) => ({

@@ -11,30 +11,24 @@ import {
   WRITTEN_MARKS_OPTIONS as MARKS_OPTIONS,
   WRITTEN_QUESTION_TYPE_OPTIONS as QUESTION_TYPE_OPTIONS,
 } from '../../data/catalogOptionsData';
+import { WRITTEN_PAPERS } from '../../data/writtenQuestionsData';
 import type {
   BilingualRubricPoint,
   BilingualSection,
+  SearchSelectOption,
   WrittenPaperCode,
   WrittenQuestion,
+  WrittenQuestionFormModalProps,
   WrittenQuestionMarks,
   WrittenQuestionType,
-} from '../../data/writtenQuestionsData';
-import { WRITTEN_PAPERS } from '../../data/writtenQuestionsData';
+} from '../../types';
 import { materialStorageService } from '../../services/materialStorageService';
 import { questionStorageService } from '../../services/questionStorageService';
 import { ActionButton } from '../common/ActionButton';
-import {
-  SharedSearchSelect,
-  type SearchSelectOption,
-} from '../common/SharedSearchSelect';
+import { SharedSearchSelect } from '../common/SharedSearchSelect';
 import { SelectOrCustomField } from './SelectOrCustomField';
 
-export interface WrittenQuestionFormModalProps {
-  isOpen: boolean;
-  questionToEdit?: WrittenQuestion | null;
-  onClose: () => void;
-  onSave: (question: WrittenQuestion) => void;
-}
+export type { WrittenQuestionFormModalProps };
 
 const PAPER_OPTIONS: SearchSelectOption[] = WRITTEN_PAPERS.map((p) => ({
   value: p,

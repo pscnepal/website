@@ -9,33 +9,18 @@ import {
 } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { PageFlip } from 'page-flip';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
 import {
   isRenderingCancelledError,
   renderPageToObjectUrl,
 } from '../../services/pdfService';
 import { soundService } from '../../services/soundService';
-import type { PdfPageDimensions } from '../../types/pdf';
-import type { FitMode } from '../../types/reader';
+import type {
+  FlipbookViewerHandle,
+  FlipbookViewerProps,
+} from '../../types/reader';
 import { clampZoom } from '../../utils/pdfHelpers';
 
-export interface FlipbookViewerHandle {
-  flipNext: () => void;
-  flipPrev: () => void;
-  goToPage: (pageNumber: number) => void;
-}
-
-interface FlipbookViewerProps {
-  pdfDoc: PDFDocumentProxy;
-  totalPages: number;
-  currentPage: number;
-  zoom: number;
-  fitMode: FitMode;
-  soundEnabled: boolean;
-  pageDimensions: PdfPageDimensions;
-  onPageFlip: (page: number) => void;
-  onEffectiveZoomChange: (zoomPct: number) => void;
-}
+export type { FlipbookViewerHandle };
 
 export const FlipbookViewer = forwardRef<
   FlipbookViewerHandle,

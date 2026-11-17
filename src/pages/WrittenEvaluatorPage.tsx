@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   BookOpen,
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { QuizAuthGate } from '../components/auth/QuizAuthGate';
 import { ActionButton } from '../components/common/ActionButton';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
@@ -44,36 +45,24 @@ import {
 } from '../data/evaluatorContentData';
 import type { WrittenQuestion } from '../data/writtenQuestionsData';
 import {
+  addWrittenEvaluation,
+  clearWrittenEvaluations,
+  deleteWrittenEvaluation,
+} from '../features/workspace/workspaceSlice';
+import {
   QUESTION_EVENTS,
   questionStorageService,
 } from '../services/questionStorageService';
+import type { WrittenEvaluationRecord } from '../services/storageService';
 import { toast } from '../services/toastService';
 import { copyWithToast } from '../utils/clipboardHelpers';
 import { formatUserFriendlyError } from '../utils/errorHelpers';
 
-interface EvaluationRecord {
-  id: string;
-  questionId: string;
-  questionTitleNe: string;
-  questionTitleEn: string;
-  marks: 5 | 10;
-  date: string;
-  scoreIntro: number;
-  scoreCore: number;
-  scoreStatutes: number;
-  scoreConclusion: number;
-  totalScore: number;
-  timeSpentSeconds: number;
-  wordCount: number;
-  userDraft: string;
-  feedbackNotes: string;
-}
-
-const STORAGE_KEY_EVALUATIONS = 'psc_written_evaluations_v2';
-
 export function WrittenEvaluatorPage() {
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
+  const suppressNextQuestionResetRef = useRef(false);
   const [writtenQuestions, setWrittenQuestions] = useState<WrittenQuestion[]>(
     () => questionStorageService.loadWrittenQuestions()
   );
@@ -137,22 +126,21 @@ export function WrittenEvaluatorPage() {
   const [scoreConclusion, setScoreConclusion] = useState<number>(maxConclusion * 0.7);
   const [evaluatorNotes, setEvaluatorNotes] = useState<string>('');
 
-  // Evaluation history
-  const [evalHistory, setEvalHistory] = useState<EvaluationRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_EVALUATIONS);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // Evaluation history synced via Redux workspaceSlice & Firestore
+  const evalHistory = useAppSelector(
+    (state) => state.workspace.writtenEvaluations
+  );
 
-  // Reset timer on question change
+  // Reset timer & editor on question change (unless inspecting a saved scorecard)
   useEffect(() => {
     const sec = (selectedQuestion?.marks || 10) * 108;
     setRemainingSeconds(sec);
     setIsTimerRunning(false);
     setHasStartedWriting(false);
+    if (suppressNextQuestionResetRef.current) {
+      suppressNextQuestionResetRef.current = false;
+      return;
+    }
     setUserDraft('');
     setStage('write');
   }, [selectedQuestionId, selectedQuestion?.marks]);
@@ -233,13 +221,15 @@ export function WrittenEvaluatorPage() {
       setShowAuthGate(true);
       return;
     }
-    const record: EvaluationRecord = {
+    const nowIso = new Date().toISOString();
+    const record: WrittenEvaluationRecord = {
       id: `eval-${Date.now()}`,
       questionId: selectedQuestion.id,
       questionTitleNe: selectedQuestion.ne.title,
       questionTitleEn: selectedQuestion.en.title,
       marks: selectedQuestion.marks,
       date: new Date().toLocaleDateString('ne-NP'),
+      evaluatedAt: nowIso,
       scoreIntro,
       scoreCore,
       scoreStatutes,
@@ -251,19 +241,8 @@ export function WrittenEvaluatorPage() {
       feedbackNotes: evaluatorNotes,
     };
 
-    const next = [record, ...evalHistory.slice(0, 19)];
-    setEvalHistory(next);
-    try {
-      localStorage.setItem(STORAGE_KEY_EVALUATIONS, JSON.stringify(next));
-      toast.success('Evaluation scorecard saved to your history.');
-    } catch (err) {
-      toast.warning(
-        formatUserFriendlyError(
-          err,
-          'Scorecard generated, though evaluation history could not be saved.'
-        )
-      );
-    }
+    dispatch(addWrittenEvaluation(record));
+    toast.success('Evaluation scorecard saved & synced to your history.');
     setStage('report');
   };
 
@@ -364,16 +343,8 @@ export function WrittenEvaluatorPage() {
   };
 
   const handleDeleteHistoryRecord = (id: string) => {
-    const next = evalHistory.filter((item) => item.id !== id);
-    setEvalHistory(next);
-    try {
-      localStorage.setItem(STORAGE_KEY_EVALUATIONS, JSON.stringify(next));
-      toast.info('Removed evaluation record.');
-    } catch (err) {
-      toast.error(
-        formatUserFriendlyError(err, 'Failed to update saved history.')
-      );
-    }
+    dispatch(deleteWrittenEvaluation(id));
+    toast.info('Removed evaluation record.');
   };
 
   const handleClearAllHistory = () => {
@@ -382,16 +353,9 @@ export function WrittenEvaluatorPage() {
   };
 
   const confirmClearAllHistory = () => {
-    setEvalHistory([]);
+    dispatch(clearWrittenEvaluations());
     setIsClearHistoryConfirmOpen(false);
-    try {
-      localStorage.removeItem(STORAGE_KEY_EVALUATIONS);
-      toast.info('Cleared all evaluation records.');
-    } catch (err) {
-      toast.error(
-        formatUserFriendlyError(err, 'Failed to clear saved history.')
-      );
-    }
+    toast.info('Cleared all evaluation records.');
   };
 
   return (
@@ -1223,7 +1187,10 @@ export function WrittenEvaluatorPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedQuestionId(rec.questionId);
+                            if (rec.questionId !== selectedQuestionId) {
+                              suppressNextQuestionResetRef.current = true;
+                              setSelectedQuestionId(rec.questionId);
+                            }
                             setUserDraft(rec.userDraft);
                             setScoreIntro(rec.scoreIntro);
                             setScoreCore(rec.scoreCore);
@@ -1268,7 +1235,7 @@ export function WrittenEvaluatorPage() {
         <ConfirmDialog
           isOpen={isClearHistoryConfirmOpen}
           title="Delete All Evaluation History?"
-          description="के तपाईं सबै मूल्याङ्कन अभिलेखहरू मेटाउन चाहनुहुन्छ? This will permanently remove all saved rubric scorecards from this device."
+          description="के तपाईं सबै मूल्याङ्कन अभिलेखहरू मेटाउन चाहनुहुन्छ? This will permanently remove all saved rubric scorecards from your workspace and synced account."
           confirmLabel="Delete History"
           confirmColor="crimson"
           onConfirm={confirmClearAllHistory}

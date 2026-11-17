@@ -31,10 +31,24 @@ import {
 import { useAppDispatch } from '../app/hooks';
 import { store } from '../app/store';
 import {
+  hydrateLibraryState,
+  resetLocalLibraryState,
+} from '../features/library/librarySlice';
+import {
+  hydratePscPrepState,
+  mergeRemoteSimulationRuns,
+  resetLocalPscState,
+} from '../features/psc/pscSlice';
+import {
+  hydrateQuizPreferences,
   mergeRemoteQuizAttempts,
   resetLocalQuizHistory,
-  type QuizAttemptRecord,
 } from '../features/quiz/quizSlice';
+import type {
+  AuthContextValue,
+  QuestionOutcome,
+  QuizAttemptRecord,
+} from '../types';
 import {
   applyItemSyncAck,
   hydrateUserCloudReactions,
@@ -43,6 +57,18 @@ import {
   setCloudItemStats,
 } from '../features/reactions/reactionsSlice';
 import { resolveReactionItemType } from '../features/reactions/reactionUtils';
+import { hydrateSettings } from '../features/settings/settingsSlice';
+import {
+  hydrateBookmarks,
+  hydrateExamChecklist,
+  hydrateFlashcards,
+  hydrateWrittenEvaluations,
+  resetLocalWorkspaceState,
+} from '../features/workspace/workspaceSlice';
+import {
+  hydrateWrittenState,
+  resetLocalWrittenState,
+} from '../features/written/writtenSlice';
 import {
   auth,
   db,
@@ -54,11 +80,26 @@ import {
 import { pscApi } from '../app/api/pscApi';
 import {
   clearEnsuredProfileCache,
+  createContactInquiryInFirestore,
+  createSimulationRunInFirestore,
+  createWrittenEvaluationInFirestore,
+  fetchUserContactInquiries,
+  fetchUserSimulationRuns,
+  fetchUserWorkspaceBundle,
+  fetchUserWrittenEvaluations,
+  fetchUserWrittenProgress,
   subscribeToCloudItemStats,
   subscribeToCloudMaterialOverrides,
   subscribeToCloudQuizOverrides,
   subscribeToCloudWrittenOverrides,
+  updateUserTargetCadreInFirestore,
   upsertFlaggedQuestionInFirestore,
+  upsertWorkspaceBookmarksInFirestore,
+  upsertWorkspaceFlashcardsInFirestore,
+  upsertWorkspaceLibraryInFirestore,
+  upsertWorkspacePreferencesInFirestore,
+  upsertWorkspaceSyllabusInFirestore,
+  upsertWrittenProgressInFirestore,
 } from '../services/cloudSyncService';
 import { materialStorageService } from '../services/materialStorageService';
 import { questionStorageService } from '../services/questionStorageService';
@@ -79,17 +120,6 @@ export function isDashboardAdminUser(
     return false;
   }
   return user.email.trim().toLowerCase() === DASHBOARD_ADMIN_EMAIL;
-}
-
-interface AuthContextValue {
-  user: User | null;
-  isDashboardAdmin: boolean;
-  isAuthReady: boolean;
-  isSigningIn: boolean;
-  authError: string | null;
-  clearAuthError: () => void;
-  signInWithGoogle: () => Promise<User | null>;
-  signOutUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -288,8 +318,25 @@ export async function saveQuizAttemptToFirestore(
     Math.min(36000, Math.round(attempt.deadlineSeconds))
   );
 
+  let sanitizedOutcomes: Record<string, QuestionOutcome> | undefined;
+  if (attempt.questionOutcomes && typeof attempt.questionOutcomes === 'object') {
+    const entries = Object.entries(attempt.questionOutcomes).slice(0, 300);
+    const cleaned: Record<string, QuestionOutcome> = {};
+    for (const [qId, outcome] of entries) {
+      if (
+        qId.trim() &&
+        (outcome === 'correct' || outcome === 'wrong' || outcome === 'skipped')
+      ) {
+        cleaned[qId.trim().slice(0, 128)] = outcome;
+      }
+    }
+    if (Object.keys(cleaned).length > 0) {
+      sanitizedOutcomes = cleaned;
+    }
+  }
+
   try {
-    await setDoc(doc(db, 'users', user.uid, 'quizAttempts', attemptId), {
+    const attemptDoc: Record<string, unknown> = {
       id: attemptId,
       userId: user.uid,
       deckId: (attempt.deckId || 'quiz').slice(0, 160),
@@ -310,7 +357,11 @@ export async function saveQuizAttemptToFirestore(
         64
       ),
       createdAt: serverTimestamp(),
-    });
+    };
+    if (sanitizedOutcomes) {
+      attemptDoc.questionOutcomes = sanitizedOutcomes;
+    }
+    await setDoc(doc(db, 'users', user.uid, 'quizAttempts', attemptId), attemptDoc);
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, attemptPath);
   }
@@ -329,6 +380,25 @@ async function fetchUserQuizAttempts(
     const snapshot = await getDocs(q);
     return snapshot.docs.map((docSnap) => {
       const data = docSnap.data();
+      let questionOutcomes: Record<string, QuestionOutcome> | undefined;
+      if (
+        data.questionOutcomes &&
+        typeof data.questionOutcomes === 'object' &&
+        !Array.isArray(data.questionOutcomes)
+      ) {
+        const cleaned: Record<string, QuestionOutcome> = {};
+        for (const [k, v] of Object.entries(
+          data.questionOutcomes as Record<string, unknown>
+        )) {
+          if (v === 'correct' || v === 'wrong' || v === 'skipped') {
+            cleaned[k] = v;
+          }
+        }
+        if (Object.keys(cleaned).length > 0) {
+          questionOutcomes = cleaned;
+        }
+      }
+
       return {
         id: String(data.id ?? docSnap.id),
         deckId: String(data.deckId ?? ''),
@@ -345,6 +415,7 @@ async function fetchUserQuizAttempts(
         durationSeconds: Number(data.durationSeconds ?? 0),
         deadlineSeconds: Number(data.deadlineSeconds ?? 60),
         timedOut: Boolean(data.timedOut),
+        ...(questionOutcomes ? { questionOutcomes } : {}),
         completedAt: String(data.completedAt ?? new Date().toISOString()),
       };
     });
@@ -594,6 +665,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [isAuthReady, user, dispatch]);
 
+  const resetAllLocalAccountData = useCallback(
+    (uidToClear?: string) => {
+      syncedUidRef.current = null;
+      if (uidToClear) {
+        clearEnsuredProfileCache(uidToClear);
+      } else {
+        clearEnsuredProfileCache();
+      }
+      storageService.clearLastCloudUid();
+      storageService.clearLocalFlaggedQuestionsOnly();
+      storageService.clearContactInquiries();
+      dispatch(resetLocalUserReactions());
+      dispatch(resetLocalQuizHistory());
+      dispatch(resetLocalWrittenState());
+      dispatch(resetLocalPscState());
+      dispatch(resetLocalLibraryState());
+      dispatch(resetLocalWorkspaceState());
+    },
+    [dispatch]
+  );
+
   // Enforce active account status in real time if admin bans, disables, or deletes a signed-in user
   useEffect(() => {
     if (!isAuthReady || !user || !user.emailVerified) return;
@@ -613,12 +705,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               title: 'Account Removed',
               duration: 9000,
             });
-            syncedUidRef.current = null;
-            clearEnsuredProfileCache(user.uid);
-            storageService.clearLastCloudUid();
-            storageService.clearLocalFlaggedQuestionsOnly();
-            dispatch(resetLocalUserReactions());
-            dispatch(resetLocalQuizHistory());
+            resetAllLocalAccountData(user.uid);
             void signOut(auth);
           }
           return;
@@ -637,12 +724,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               data.status === 'banned' ? 'Account Banned' : 'Account Disabled',
             duration: 9000,
           });
-          syncedUidRef.current = null;
-          clearEnsuredProfileCache(user.uid);
-          storageService.clearLastCloudUid();
-          storageService.clearLocalFlaggedQuestionsOnly();
-          dispatch(resetLocalUserReactions());
-          dispatch(resetLocalQuizHistory());
+          resetAllLocalAccountData(user.uid);
           void signOut(auth);
         }
       },
@@ -665,7 +747,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
     return () => unsubscribe();
-  }, [isAuthReady, user, dispatch]);
+  }, [isAuthReady, user, resetAllLocalAccountData]);
 
   const syncAuthenticatedUser = useCallback(
     async (firebaseUser: User) => {
@@ -687,16 +769,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const previousCloudUid = storageService.getLastCloudUid();
         if (previousCloudUid && previousCloudUid !== firebaseUser.uid) {
-          storageService.clearLocalFlaggedQuestionsOnly();
-          dispatch(resetLocalUserReactions());
-          dispatch(resetLocalQuizHistory());
+          resetAllLocalAccountData(previousCloudUid);
         }
         storageService.setLastCloudUid(firebaseUser.uid);
 
         // 1. Sync Quiz & OMR Attempts
         const remoteAttempts = await fetchUserQuizAttempts(firebaseUser.uid);
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
+        const localAttemptsSnapshot = store.getState().quiz.attempts;
+        const remoteAttemptIds = new Set(remoteAttempts.map((a) => a.id));
+        const missingLocalAttempts = localAttemptsSnapshot.filter(
+          (a) => !remoteAttemptIds.has(a.id)
+        );
         if (remoteAttempts.length > 0) {
           dispatch(mergeRemoteQuizAttempts(remoteAttempts));
+        }
+        for (const localAttempt of missingLocalAttempts) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          await saveQuizAttemptToFirestore(firebaseUser, localAttempt);
         }
 
         // 2. Sync Flagged Questions & Revision Notes (two-way merge)
@@ -708,6 +798,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             )
           )
           .unwrap();
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
         const { toPushToCloud } =
           storageService.mergeCloudFlaggedQuestions(cloudFlags);
         for (const flagRecord of toPushToCloud) {
@@ -780,6 +871,326 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
 
+        // 4. Sync Study Workspaces (Preferences, Syllabus/Checklist, Bookmarks, Flashcards, Library)
+        const wsBundle = await fetchUserWorkspaceBundle(firebaseUser.uid);
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
+
+        const curState = store.getState();
+
+        // 4a. Preferences
+        if (wsBundle.preferences) {
+          dispatch(
+            hydrateSettings({
+              theme: wsBundle.preferences.theme,
+              defaultReadingMode: wsBundle.preferences.defaultReadingMode,
+              defaultSoundEnabled: wsBundle.preferences.defaultSoundEnabled,
+            })
+          );
+          dispatch(
+            hydrateQuizPreferences(wsBundle.preferences.preferredQuizMode)
+          );
+          dispatch(
+            hydrateWrittenState({
+              preferredLanguage: wsBundle.preferences.preferredWrittenLanguage,
+            })
+          );
+          dispatch(
+            hydratePscPrepState({
+              targetCadreId: wsBundle.preferences.targetCadreId,
+            })
+          );
+        } else {
+          await upsertWorkspacePreferencesInFirestore(firebaseUser.uid, {
+            theme: curState.settings.theme,
+            defaultReadingMode: curState.settings.defaultReadingMode,
+            defaultSoundEnabled: curState.settings.defaultSoundEnabled,
+            preferredQuizMode: curState.quiz.preferredMode,
+            preferredWrittenLanguage: curState.written.preferredLanguage,
+            targetCadreId: curState.psc.targetCadreId,
+          });
+          await updateUserTargetCadreInFirestore(
+            firebaseUser.uid,
+            curState.psc.targetCadreId
+          );
+        }
+
+        // 4b. Syllabus Mastery & Exam Hall Checklist
+        const cloudUnits = wsBundle.syllabus?.completedUnitIds ?? [];
+        const cloudTopics = wsBundle.syllabus?.completedTopicIds ?? [];
+        const cloudUnitBookmarks = wsBundle.syllabus?.bookmarkedUnitIds ?? [];
+        const cloudChecklist = wsBundle.syllabus?.examChecklist ?? {};
+
+        const mergedUnits = Array.from(
+          new Set([...cloudUnits, ...curState.psc.completedUnitIds])
+        );
+        const mergedTopics = Array.from(
+          new Set([...cloudTopics, ...curState.psc.completedTopicIds])
+        );
+        const mergedUnitBookmarks = Array.from(
+          new Set([...cloudUnitBookmarks, ...curState.psc.bookmarkedUnitIds])
+        );
+        const mergedChecklist: Record<string, boolean> = { ...cloudChecklist };
+        for (const [k, v] of Object.entries(curState.workspace.examChecklist)) {
+          if (v) mergedChecklist[k] = true;
+        }
+
+        dispatch(
+          hydratePscPrepState({
+            completedUnitIds: mergedUnits,
+            completedTopicIds: mergedTopics,
+            bookmarkedUnitIds: mergedUnitBookmarks,
+          })
+        );
+        dispatch(hydrateExamChecklist(mergedChecklist));
+
+        const syllabusNeedsPush =
+          !wsBundle.syllabus ||
+          mergedUnits.length > cloudUnits.length ||
+          mergedTopics.length > cloudTopics.length ||
+          mergedUnitBookmarks.length > cloudUnitBookmarks.length ||
+          Object.keys(mergedChecklist).length > Object.keys(cloudChecklist).length;
+
+        if (syllabusNeedsPush) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          await upsertWorkspaceSyllabusInFirestore(firebaseUser.uid, {
+            completedUnitIds: mergedUnits,
+            completedTopicIds: mergedTopics,
+            bookmarkedUnitIds: mergedUnitBookmarks,
+            examChecklist: mergedChecklist,
+          });
+        }
+
+        // 4c. PYQ & Current Affairs Bookmarks
+        const cloudPyqIds = wsBundle.bookmarks?.pyqIds ?? [];
+        const cloudAffairIds = wsBundle.bookmarks?.affairIds ?? [];
+        const localPyqIds = Object.entries(curState.workspace.pyqBookmarks)
+          .filter(([, v]) => Boolean(v))
+          .map(([k]) => k);
+        const localAffairIds = Object.entries(
+          curState.workspace.affairBookmarks
+        )
+          .filter(([, v]) => Boolean(v))
+          .map(([k]) => k);
+
+        const mergedPyqIds = Array.from(
+          new Set([...cloudPyqIds, ...localPyqIds])
+        );
+        const mergedAffairIds = Array.from(
+          new Set([...cloudAffairIds, ...localAffairIds])
+        );
+
+        dispatch(
+          hydrateBookmarks({
+            pyqBookmarks: Object.fromEntries(mergedPyqIds.map((id) => [id, true])),
+            affairBookmarks: Object.fromEntries(
+              mergedAffairIds.map((id) => [id, true])
+            ),
+          })
+        );
+
+        if (
+          !wsBundle.bookmarks ||
+          mergedPyqIds.length > cloudPyqIds.length ||
+          mergedAffairIds.length > cloudAffairIds.length
+        ) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          await upsertWorkspaceBookmarksInFirestore(firebaseUser.uid, {
+            pyqIds: mergedPyqIds,
+            affairIds: mergedAffairIds,
+          });
+        }
+
+        // 4d. Leitner Flashcard Progress
+        const cloudFlashcards = wsBundle.flashcards ?? {};
+        const localFlashcards = curState.workspace.flashcardProgress;
+        const mergedFlashcards = { ...cloudFlashcards };
+        let flashcardsNeedPush = !wsBundle.flashcards;
+
+        for (const [cardId, localFc] of Object.entries(localFlashcards)) {
+          const cloudFc = cloudFlashcards[cardId];
+          if (
+            !cloudFc ||
+            localFc.timesReviewed > cloudFc.timesReviewed ||
+            (localFc.timesReviewed === cloudFc.timesReviewed &&
+              localFc.lastReviewedAt > cloudFc.lastReviewedAt)
+          ) {
+            mergedFlashcards[cardId] = localFc;
+            flashcardsNeedPush = true;
+          }
+        }
+        dispatch(hydrateFlashcards(mergedFlashcards));
+        if (flashcardsNeedPush) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          await upsertWorkspaceFlashcardsInFirestore(
+            firebaseUser.uid,
+            mergedFlashcards
+          );
+        }
+
+        // 4e. Reader Library (Recent Books, Reading Progress, Reading Stats)
+        const cloudLib = wsBundle.library;
+        const mergedBooksMap = new Map(
+          (cloudLib?.recentBooks ?? []).map((b) => [b.id, b])
+        );
+        let libraryNeedsPush = !cloudLib;
+        for (const localBook of curState.library.recentBooks) {
+          const existing = mergedBooksMap.get(localBook.id);
+          if (
+            !existing ||
+            new Date(localBook.lastOpenedAt).getTime() >
+              new Date(existing.lastOpenedAt).getTime()
+          ) {
+            mergedBooksMap.set(localBook.id, localBook);
+            libraryNeedsPush = true;
+          }
+        }
+        const mergedRecentBooks = Array.from(mergedBooksMap.values())
+          .sort(
+            (a, b) =>
+              new Date(b.lastOpenedAt).getTime() -
+              new Date(a.lastOpenedAt).getTime()
+          )
+          .slice(0, 12);
+
+        const mergedReadingProgress = {
+          ...(cloudLib?.readingProgress ?? {}),
+        };
+        for (const [bookId, localProg] of Object.entries(
+          curState.library.readingProgress
+        )) {
+          const cloudProg = mergedReadingProgress[bookId];
+          if (
+            !cloudProg ||
+            new Date(localProg.updatedAt).getTime() >
+              new Date(cloudProg.updatedAt).getTime()
+          ) {
+            mergedReadingProgress[bookId] = localProg;
+            libraryNeedsPush = true;
+          }
+        }
+
+        const mergedReadingStats = {
+          ...(cloudLib?.readingStats ?? {}),
+        };
+        for (const [bookId, localStat] of Object.entries(
+          curState.library.readingStats
+        )) {
+          const cloudStat = mergedReadingStats[bookId];
+          if (
+            !cloudStat ||
+            localStat.totalReadingSeconds > cloudStat.totalReadingSeconds
+          ) {
+            mergedReadingStats[bookId] = localStat;
+            libraryNeedsPush = true;
+          }
+        }
+
+        dispatch(
+          hydrateLibraryState({
+            recentBooks: mergedRecentBooks,
+            readingProgress: mergedReadingProgress,
+            readingStats: mergedReadingStats,
+          })
+        );
+        if (libraryNeedsPush) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          await upsertWorkspaceLibraryInFirestore(firebaseUser.uid, {
+            recentBooks: mergedRecentBooks,
+            readingProgress: mergedReadingProgress,
+            readingStats: mergedReadingStats,
+          });
+        }
+
+        // 5. Sync Written Study Drafts & Rubric Progress
+        const cloudWrittenProg = await fetchUserWrittenProgress(firebaseUser.uid);
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
+        const mergedWrittenProg = { ...cloudWrittenProg };
+        const writtenProgToPush = [];
+
+        for (const [qId, localRec] of Object.entries(curState.written.records)) {
+          const cloudRec = cloudWrittenProg[qId];
+          if (
+            !cloudRec ||
+            new Date(localRec.updatedAt).getTime() >
+              new Date(cloudRec.updatedAt).getTime()
+          ) {
+            mergedWrittenProg[qId] = localRec;
+            writtenProgToPush.push(localRec);
+          }
+        }
+        dispatch(hydrateWrittenState({ records: mergedWrittenProg }));
+        for (const rec of writtenProgToPush) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          await upsertWrittenProgressInFirestore(firebaseUser.uid, rec);
+        }
+
+        // 6. Sync Written Answer Evaluator Scorecards
+        const cloudEvals = await fetchUserWrittenEvaluations(firebaseUser.uid);
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
+        const cloudEvalIds = new Set(cloudEvals.map((e) => e.id));
+        const localOnlyEvals = curState.workspace.writtenEvaluations.filter(
+          (e) => !cloudEvalIds.has(e.id)
+        );
+        const mergedEvals = [...localOnlyEvals, ...cloudEvals]
+          .sort((a, b) =>
+            (b.evaluatedAt || '').localeCompare(a.evaluatedAt || '')
+          )
+          .slice(0, 30);
+        dispatch(hydrateWrittenEvaluations(mergedEvals));
+        for (const ev of localOnlyEvals) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          await createWrittenEvaluationInFirestore(firebaseUser.uid, ev);
+        }
+        if (localOnlyEvals.length > 0) {
+          dispatch(pscApi.util.invalidateTags(['WrittenEvaluations']));
+        }
+
+        // 7. Sync Exam Hall Simulation Runs
+        const cloudSimRuns = await fetchUserSimulationRuns(firebaseUser.uid);
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
+        const cloudSimIds = new Set(cloudSimRuns.map((r) => r.id));
+        const localOnlyRuns = curState.psc.simulationHistory.filter(
+          (r) => !cloudSimIds.has(r.id)
+        );
+        if (cloudSimRuns.length > 0) {
+          dispatch(mergeRemoteSimulationRuns(cloudSimRuns));
+        }
+        for (const run of localOnlyRuns) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          await createSimulationRunInFirestore(firebaseUser.uid, run);
+        }
+        if (localOnlyRuns.length > 0) {
+          dispatch(pscApi.util.invalidateTags(['SimulationRuns']));
+        }
+
+        // 8. Sync Contact & Errata Inquiries
+        const cloudInquiries = await fetchUserContactInquiries(firebaseUser.uid);
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
+        const cloudInqIds = new Set(cloudInquiries.map((i) => i.id));
+        const localQueuedInquiries = storageService
+          .loadContactInquiries()
+          .filter(
+            (i) =>
+              !cloudInqIds.has(i.id) &&
+              (!i.userId || i.userId === firebaseUser.uid) &&
+              i.message.trim().length >= 10
+          );
+
+        const pushedInquiries = [];
+        for (const inq of localQueuedInquiries) {
+          if (auth.currentUser?.uid !== firebaseUser.uid) return;
+          const savedInq = await createContactInquiryInFirestore(
+            firebaseUser.uid,
+            inq
+          );
+          pushedInquiries.push(savedInq);
+        }
+        const mergedInquiries = [...pushedInquiries, ...cloudInquiries]
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+          .slice(0, 25);
+        storageService.saveContactInquiries(mergedInquiries);
+        dispatch(pscApi.util.invalidateTags(['ContactInquiries', 'AdminInquiries']));
+
         if (auth.currentUser?.uid === firebaseUser.uid) {
           syncedUidRef.current = firebaseUser.uid;
         }
@@ -792,12 +1203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               err.status === 'banned' ? 'Account Banned' : 'Account Disabled',
             duration: 9000,
           });
-          syncedUidRef.current = null;
-          clearEnsuredProfileCache(firebaseUser.uid);
-          storageService.clearLastCloudUid();
-          storageService.clearLocalFlaggedQuestionsOnly();
-          dispatch(resetLocalUserReactions());
-          dispatch(resetLocalQuizHistory());
+          resetAllLocalAccountData(firebaseUser.uid);
           void signOut(auth);
           return;
         }
@@ -830,7 +1236,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [dispatch]
+    [dispatch, resetAllLocalAccountData]
   );
 
   useEffect(() => {
@@ -842,20 +1248,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const previousCloudUid = storageService.getLastCloudUid();
         syncedUidRef.current = null;
         syncingUidRef.current = null;
-        clearEnsuredProfileCache();
         dispatch(
           pscApi.util.invalidateTags([
             'UserFlags',
             'UserReactions',
+            'ContactInquiries',
+            'AdminInquiries',
+            'WrittenEvaluations',
+            'SimulationRuns',
             'AdminUsers',
           ])
         );
         if (previousCloudUid) {
-          storageService.clearLastCloudUid();
-          storageService.clearLocalFlaggedQuestionsOnly();
-          dispatch(resetLocalUserReactions());
-          dispatch(resetLocalQuizHistory());
+          resetAllLocalAccountData();
         } else {
+          clearEnsuredProfileCache();
           dispatch(resetCloudReactionSyncState());
         }
         return;
@@ -865,7 +1272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [dispatch, syncAuthenticatedUser]);
+  }, [dispatch, resetAllLocalAccountData, syncAuthenticatedUser]);
 
   // Automatically retry deferred cloud sync once browser connectivity returns
   useEffect(() => {
@@ -918,14 +1325,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const activeUid = auth.currentUser?.uid;
     try {
       await signOut(auth);
-      if (activeUid) {
-        clearEnsuredProfileCache(activeUid);
-      }
-      syncedUidRef.current = null;
-      storageService.clearLastCloudUid();
-      storageService.clearLocalFlaggedQuestionsOnly();
-      dispatch(resetLocalUserReactions());
-      dispatch(resetLocalQuizHistory());
+      resetAllLocalAccountData(activeUid);
       toast.info('Signed out successfully.', { id: 'auth-status' });
     } catch (error) {
       const mapped = mapFirebaseAuthError(error);
@@ -935,7 +1335,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: 'Sign-Out Failed',
       });
     }
-  }, [dispatch]);
+  }, [resetAllLocalAccountData]);
 
   const isDashboardAdmin = useMemo(() => isDashboardAdminUser(user), [user]);
 

@@ -7,19 +7,9 @@ import {
   formatEstimatedRemaining,
   formatReadingDuration,
 } from '../../utils/pdfHelpers';
+import type { ReadingStatsViewProps } from '../../types/reader';
 import { Button } from '../ui/Button';
 import { SharedTable } from '../common/SharedTable';
-
-interface ReadingStatsViewProps {
-  open: boolean;
-  bookId: string | null;
-  bookTitle: string;
-  currentPage: number;
-  totalPages: number;
-  sessionSeconds: number;
-  onResetSessionTimer?: () => void;
-  onClose: () => void;
-}
 
 export function ReadingStatsView({
   open,

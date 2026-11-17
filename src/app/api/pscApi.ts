@@ -1,36 +1,49 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import type { QuizQuestion } from '../../data/quizData';
-import type { WrittenQuestion } from '../../data/writtenQuestionsData';
 import {
+  createContactInquiryInFirestore,
   deleteAdminUserFromFirestore,
+  deleteContactInquiryInFirestore,
   fetchAdminUsersDirectory,
   fetchAllCloudItemStats,
   fetchAllCloudMaterialOverrides,
   fetchAllCloudQuizOverrides,
   fetchAllCloudWrittenOverrides,
+  fetchAllContactInquiriesForAdmin,
   fetchUserCloudReactions,
+  fetchUserContactInquiries,
   fetchUserFlaggedQuestions,
+  fetchUserSimulationRuns,
+  fetchUserWrittenEvaluations,
   resetAllMaterialOverridesInFirestore,
   resetAllQuizOverridesInFirestore,
   resetAllWrittenOverridesInFirestore,
   syncReactionAndStatsToFirestore,
   updateAdminUserDetails,
   updateAdminUserStatus,
+  updateContactInquiryAdminInFirestore,
   upsertQuizQuestionInFirestore,
   upsertReadingMaterialInFirestore,
   upsertWrittenQuestionInFirestore,
-  type CloudItemStatsEntry,
-  type CloudItemType,
-  type CloudMaterialOverride,
-  type CloudQuizQuestionOverride,
-  type CloudReactionValue,
-  type CloudUserDirectoryEntry,
-  type CloudUserStatus,
-  type CloudWrittenQuestionOverride,
-  type UpdateAdminUserDetailsInput,
-  type UpsertMaterialPayload,
 } from '../../services/cloudSyncService';
-import type { FlaggedQuestionRecord } from '../../services/storageService';
+import type {
+  CloudItemStatsEntry,
+  CloudItemType,
+  CloudMaterialOverride,
+  CloudQuizQuestionOverride,
+  CloudReactionValue,
+  CloudUserDirectoryEntry,
+  CloudUserStatus,
+  CloudWrittenQuestionOverride,
+  ContactInquiryRecord,
+  FlaggedQuestionRecord,
+  InquiryStatus,
+  QuizQuestion,
+  SimulationRunRecord,
+  UpdateAdminUserDetailsInput,
+  UpsertMaterialPayload,
+  WrittenEvaluationRecord,
+  WrittenQuestion,
+} from '../../types';
 import { appBaseQuery } from './baseQuery';
 
 export const pscApi = createApi({
@@ -44,6 +57,10 @@ export const pscApi = createApi({
     'Materials',
     'UserFlags',
     'UserReactions',
+    'ContactInquiries',
+    'AdminInquiries',
+    'WrittenEvaluations',
+    'SimulationRuns',
     'AdminUsers',
     'RemoteAsset',
   ],
@@ -158,6 +175,87 @@ export const pscApi = createApi({
         run: () => syncReactionAndStatsToFirestore(params),
       }),
       invalidatesTags: ['UserReactions', 'ItemStats'],
+    }),
+
+    getUserWrittenEvaluations: builder.query<
+      WrittenEvaluationRecord[],
+      string
+    >({
+      query: (userId) => ({
+        kind: 'firestore',
+        operation: 'fetchUserWrittenEvaluations',
+        run: () => fetchUserWrittenEvaluations(userId),
+      }),
+      providesTags: ['WrittenEvaluations'],
+    }),
+
+    getUserSimulationRuns: builder.query<SimulationRunRecord[], string>({
+      query: (userId) => ({
+        kind: 'firestore',
+        operation: 'fetchUserSimulationRuns',
+        run: () => fetchUserSimulationRuns(userId),
+      }),
+      providesTags: ['SimulationRuns'],
+    }),
+
+    // -----------------------------------------------------------------------
+    // Contact & Errata Inquiries (User & Admin)
+    // -----------------------------------------------------------------------
+    getUserContactInquiries: builder.query<ContactInquiryRecord[], string>({
+      query: (userId) => ({
+        kind: 'firestore',
+        operation: 'fetchUserContactInquiries',
+        run: () => fetchUserContactInquiries(userId),
+      }),
+      providesTags: ['ContactInquiries'],
+    }),
+
+    createContactInquiry: builder.mutation<
+      ContactInquiryRecord,
+      { userId: string; inquiry: ContactInquiryRecord }
+    >({
+      query: ({ userId, inquiry }) => ({
+        kind: 'firestore',
+        operation: 'createContactInquiryInFirestore',
+        run: () => createContactInquiryInFirestore(userId, inquiry),
+      }),
+      invalidatesTags: ['ContactInquiries', 'AdminInquiries'],
+    }),
+
+    getAdminContactInquiries: builder.query<ContactInquiryRecord[], void>({
+      query: () => ({
+        kind: 'firestore',
+        operation: 'fetchAllContactInquiriesForAdmin',
+        run: () => fetchAllContactInquiriesForAdmin(),
+      }),
+      providesTags: ['AdminInquiries'],
+    }),
+
+    updateAdminInquiry: builder.mutation<
+      null,
+      { inquiryId: string; status: InquiryStatus; adminReply?: string }
+    >({
+      query: (params) => ({
+        kind: 'firestore',
+        operation: 'updateContactInquiryAdminInFirestore',
+        run: async () => {
+          await updateContactInquiryAdminInFirestore(params);
+          return null;
+        },
+      }),
+      invalidatesTags: ['AdminInquiries', 'ContactInquiries'],
+    }),
+
+    deleteContactInquiry: builder.mutation<null, string>({
+      query: (inquiryId) => ({
+        kind: 'firestore',
+        operation: 'deleteContactInquiryInFirestore',
+        run: async () => {
+          await deleteContactInquiryInFirestore(inquiryId);
+          return null;
+        },
+      }),
+      invalidatesTags: ['AdminInquiries', 'ContactInquiries'],
     }),
 
     // -----------------------------------------------------------------------
@@ -308,6 +406,13 @@ export const {
   useGetUserFlaggedQuestionsQuery,
   useGetUserCloudReactionsQuery,
   useSyncReactionAndStatsMutation,
+  useGetUserWrittenEvaluationsQuery,
+  useGetUserSimulationRunsQuery,
+  useGetUserContactInquiriesQuery,
+  useCreateContactInquiryMutation,
+  useGetAdminContactInquiriesQuery,
+  useUpdateAdminInquiryMutation,
+  useDeleteContactInquiryMutation,
   useGetAdminUsersDirectoryQuery,
   useLazyGetAdminUsersDirectoryQuery,
   useUpdateAdminUserStatusMutation,

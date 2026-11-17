@@ -1,40 +1,13 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { PscCadreId } from '../../data/pscSyllabusData';
 import { storageService } from '../../services/storageService';
+import type {
+  PscCadreId,
+  PscPrepState,
+  SimulationHallType,
+  SimulationRunRecord,
+} from '../../types';
 
-export type SimulationHallType = 'omr-hall' | 'written-hall';
-
-export interface SimulationRunRecord {
-  id: string;
-  presetId: string;
-  presetTitle: string;
-  cadreId: PscCadreId;
-  simulationType: SimulationHallType;
-  fullMarks: number;
-  passMarks: number;
-  grossMarks: number;
-  negativeDeduction: number;
-  netMarks: number;
-  percentage: number;
-  passed: boolean;
-  totalItems: number;
-  attemptedItems: number;
-  correctItems: number;
-  wrongItems: number;
-  durationSeconds: number;
-  allocatedSeconds: number;
-  rollNumber: string;
-  bookletKey: 'A' | 'B' | 'C' | 'D';
-  completedAt: string;
-}
-
-export interface PscPrepState {
-  targetCadreId: PscCadreId;
-  completedUnitIds: string[];
-  completedTopicIds: string[];
-  bookmarkedUnitIds: string[];
-  simulationHistory: SimulationRunRecord[];
-}
+export type { PscPrepState, SimulationHallType, SimulationRunRecord };
 
 const initialState: PscPrepState = storageService.loadPscPrepState();
 
@@ -127,6 +100,56 @@ const pscSlice = createSlice({
       state.completedTopicIds = [];
       state.bookmarkedUnitIds = [];
     },
+
+    hydratePscPrepState(state, action: PayloadAction<Partial<PscPrepState>>) {
+      if (
+        action.payload.targetCadreId === 'section-officer' ||
+        action.payload.targetCadreId === 'nayab-subba' ||
+        action.payload.targetCadreId === 'kharidar'
+      ) {
+        state.targetCadreId = action.payload.targetCadreId;
+      }
+      if (Array.isArray(action.payload.completedUnitIds)) {
+        state.completedUnitIds = action.payload.completedUnitIds;
+      }
+      if (Array.isArray(action.payload.completedTopicIds)) {
+        state.completedTopicIds = action.payload.completedTopicIds;
+      }
+      if (Array.isArray(action.payload.bookmarkedUnitIds)) {
+        state.bookmarkedUnitIds = action.payload.bookmarkedUnitIds;
+      }
+      if (Array.isArray(action.payload.simulationHistory)) {
+        state.simulationHistory = action.payload.simulationHistory.slice(0, 30);
+      }
+    },
+
+    mergeRemoteSimulationRuns(
+      state,
+      action: PayloadAction<SimulationRunRecord[]>
+    ) {
+      const byId = new Map<string, SimulationRunRecord>();
+      for (const run of state.simulationHistory) {
+        byId.set(run.id, run);
+      }
+      for (const run of action.payload) {
+        if (!byId.has(run.id)) {
+          byId.set(run.id, run);
+        }
+      }
+      state.simulationHistory = Array.from(byId.values())
+        .sort(
+          (a, b) =>
+            new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+        )
+        .slice(0, 30);
+    },
+
+    resetLocalPscState(state) {
+      state.completedUnitIds = [];
+      state.completedTopicIds = [];
+      state.bookmarkedUnitIds = [];
+      state.simulationHistory = [];
+    },
   },
 });
 
@@ -140,6 +163,9 @@ export const {
   recordSimulationRun,
   clearSimulationHistory,
   clearPscSyllabusProgress,
+  hydratePscPrepState,
+  mergeRemoteSimulationRuns,
+  resetLocalPscState,
 } = pscSlice.actions;
 
 export default pscSlice.reducer;

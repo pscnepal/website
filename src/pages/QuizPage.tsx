@@ -28,15 +28,11 @@ import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import {
   getDeckTotalMarks,
   getQuizDeadlineSeconds,
-  type QuizDeck,
-  type QuizDifficulty,
-  type QuizQuestion,
 } from '../data/quizData';
 import { materialStorageService } from '../services/materialStorageService';
 import {
   clearQuizHistory,
   setPreferredQuizMode,
-  type QuizPlayMode,
 } from '../features/quiz/quizSlice';
 import {
   QUESTION_EVENTS,
@@ -48,8 +44,12 @@ import {
 } from '../utils/pdfHelpers';
 import { storageService } from '../services/storageService';
 import { useAuth } from '../context/AuthContext';
-
-type DifficultyFilter = 'All' | QuizDifficulty;
+import type {
+  QuizDeck,
+  QuizDifficultyFilter as DifficultyFilter,
+  QuizPlayMode,
+  QuizQuestion,
+} from '../types';
 
 export function QuizPage() {
   const { deckId } = useParams<{ deckId?: string }>();

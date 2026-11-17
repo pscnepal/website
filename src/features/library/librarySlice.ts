@@ -3,16 +3,12 @@ import { storageService } from '../../services/storageService';
 import type {
   BookMetadata,
   BookReadingStats,
+  LibraryState,
   ReadingProgressEntry,
   RecentBookEntry,
-} from '../../types/pdf';
+} from '../../types';
 
-export interface LibraryState {
-  currentBook: BookMetadata | null;
-  recentBooks: RecentBookEntry[];
-  readingProgress: Record<string, ReadingProgressEntry>;
-  readingStats: Record<string, BookReadingStats>;
-}
+export type { LibraryState };
 
 function computePagesPerMinute(
   pagesReadCount: number,
@@ -209,6 +205,24 @@ const librarySlice = createSlice({
       state.readingProgress = {};
       state.readingStats = {};
     },
+    hydrateLibraryState(
+      state,
+      action: PayloadAction<{
+        recentBooks: RecentBookEntry[];
+        readingProgress: Record<string, ReadingProgressEntry>;
+        readingStats: Record<string, BookReadingStats>;
+      }>
+    ) {
+      state.recentBooks = action.payload.recentBooks.slice(0, 12);
+      state.readingProgress = action.payload.readingProgress;
+      state.readingStats = action.payload.readingStats;
+    },
+    resetLocalLibraryState(state) {
+      state.currentBook = null;
+      state.recentBooks = [];
+      state.readingProgress = {};
+      state.readingStats = {};
+    },
   },
 });
 
@@ -222,6 +236,8 @@ export const {
   removeRecentBook,
   clearRecentBooks,
   clearAllReadingData,
+  hydrateLibraryState,
+  resetLocalLibraryState,
 } = librarySlice.actions;
 
 export default librarySlice.reducer;

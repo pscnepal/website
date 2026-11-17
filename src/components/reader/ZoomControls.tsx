@@ -1,18 +1,8 @@
 import { Minus, MoveHorizontal, Plus, Scan } from 'lucide-react';
-import type { FitMode } from '../../types/reader';
+import type { ZoomControlsProps } from '../../types/reader';
 import { MAX_ZOOM, MIN_ZOOM } from '../../utils/pdfHelpers';
 import { Button } from '../ui/Button';
 import { Tooltip } from '../ui/Tooltip';
-
-interface ZoomControlsProps {
-  displayZoom: number;
-  fitMode: FitMode;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onFitWidth: () => void;
-  onFitPage: () => void;
-  showFitButtons?: boolean;
-}
 
 export function ZoomControls({
   displayZoom,

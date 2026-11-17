@@ -1,18 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
-import { ActionButton, type ActionButtonColor } from './ActionButton';
+import type { ConfirmDialogProps } from '../../types/common';
+import { ActionButton } from './ActionButton';
 
-export interface ConfirmDialogProps {
-  isOpen: boolean;
-  title: string;
-  description: React.ReactNode;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  confirmColor?: ActionButtonColor;
-  onConfirm: () => void;
-  onClose: () => void;
-  isLoading?: boolean;
-}
+export type { ConfirmDialogProps };
 
 export function ConfirmDialog({
   isOpen,

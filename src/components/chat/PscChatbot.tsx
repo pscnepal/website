@@ -23,19 +23,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppSelector } from '../../app/hooks';
 import { ChatMarkdown } from './ChatMarkdown';
-import { PSC_OPEN_CHAT_EVENT, type OpenChatDetail } from './chatEvents';
+import { PSC_OPEN_CHAT_EVENT } from './chatEvents';
 import {
   CHATBOT_STARTER_PROMPTS,
   CHATBOT_WELCOME_CONTENT,
 } from '../../data/chatbotContentData';
 import { generatePscChatResponse } from '../../services/pscChatEngine';
-
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  error?: string;
-}
+import type { ChatMessage, OpenChatDetail } from '../../types/workspace';
 
 const CHAT_STORAGE_KEY = 'psc_nepal_study_assistant_v1';
 

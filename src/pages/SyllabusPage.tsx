@@ -34,11 +34,6 @@ import {
   getPaperTopicIds,
   getUnitTopicIds,
   PSC_CADRE_SYLLABI,
-  type PscCadreId,
-  type PscSyllabusChapter,
-  type PscSyllabusPaper,
-  type PscSyllabusTopic,
-  type PscSyllabusUnit,
 } from '../data/pscSyllabusData';
 import {
   setPaperUnitsCompleted,
@@ -48,11 +43,17 @@ import {
   toggleSyllabusUnitBookmarked,
   toggleSyllabusUnitCompleted,
 } from '../features/psc/pscSlice';
+import type {
+  PscCadreId,
+  PscSyllabusChapter,
+  PscSyllabusPaper,
+  PscSyllabusTopic,
+  PscSyllabusUnit,
+  SyllabusDetailMode as DetailMode,
+  SyllabusPhaseFilter as PhaseFilter,
+  SyllabusUnitStatusFilter as UnitStatusFilter,
+} from '../types';
 import { resolveSampleUrl } from '../utils/urlHelpers';
-
-type PhaseFilter = 'all' | '1' | '2' | '3';
-type UnitStatusFilter = 'all' | 'remaining' | 'completed' | 'bookmarked';
-type DetailMode = 'detailed' | 'compact';
 
 function topicMatchesQuery(topic: PscSyllabusTopic, q: string): boolean {
   if (

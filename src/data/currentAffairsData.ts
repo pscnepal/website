@@ -4,36 +4,12 @@
  * Section Officer (शाखा अधिकृत), Nayab Subba (ना.सु.), and Kharidar (खरिदार).
  */
 
-export type CurrentAffairCategory =
-  | 'national'
-  | 'economy'
-  | 'international'
-  | 'science-environment'
-  | 'governance'
-  | 'sports-awards';
+import type {
+  CurrentAffairCategory,
+  CurrentAffairItem,
+} from '../types/content';
 
-export interface CurrentAffairItem {
-  id: string;
-  titleEn: string;
-  titleNe: string;
-  dateBS: string;
-  dateAD: string;
-  monthBS: string; // e.g. '२०८१ फागुन', '२०८१ माघ', '२०८१ पुस'
-  category: CurrentAffairCategory;
-  categoryLabelEn: string;
-  categoryLabelNe: string;
-  cadreRelevance: Array<'section-officer' | 'nayab-subba' | 'kharidar'>;
-  paperRelevance: string;
-  summaryEn: string;
-  summaryNe: string;
-  keyFacts: string[];
-  examTip: string;
-  likes: number;
-  dislikes: number;
-  views: number;
-  pinned?: boolean;
-  source: string;
-}
+export type { CurrentAffairCategory, CurrentAffairItem };
 
 export const CURRENT_AFFAIRS_CATEGORIES: Array<{
   id: CurrentAffairCategory;

@@ -868,8 +868,8 @@ export const SECTION_OFFICER_PAPER_3: PscSyllabusPaper = {
       quizHref:
         '/quiz/custom?source=%2Fmaterials%2Flocal-government-operation-act-2074.pdf',
       quizLabel: 'Local Governance MCQs',
-      writtenHref: '/written/PSC-WR-304',
-      writtenLabel: 'Economic Diplomacy 5M Q&A',
+      writtenHref: '/written/PSC-WR-308',
+      writtenLabel: 'LDC Graduation & SDGs 10M Q&A',
       simulatePresetId: 'written-paper-3',
     },
     {

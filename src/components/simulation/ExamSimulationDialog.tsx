@@ -25,33 +25,23 @@ import {
   isBilingualQuizQuestion,
   isQuestionCorrect,
   QUIZ_OPTION_KEYS,
-  type QuizOptionKey,
-  type QuizQuestion,
 } from '../../data/quizData';
 import {
   deterministicPermute,
   OMR_PRESETS,
   WRITTEN_PRESETS,
-  type BookletKey,
-  type OmrPreset,
-  type WrittenHallPreset,
 } from '../../data/simulationPresets';
-import type { WrittenQuestion } from '../../data/writtenQuestionsData';
 import { storageService } from '../../services/storageService';
 import {
   QUESTION_EVENTS,
   questionStorageService,
 } from '../../services/questionStorageService';
 import { recordSimulationRun } from '../../features/psc/pscSlice';
-import {
-  recordQuizAttempt,
-  type QuestionOutcome,
-} from '../../features/quiz/quizSlice';
+import { recordQuizAttempt } from '../../features/quiz/quizSlice';
 import {
   addWrittenPracticeSeconds,
   saveWrittenDraft,
   setWrittenQuestionStatus,
-  type WrittenLanguageMode,
 } from '../../features/written/writtenSlice';
 import { recordView } from '../../features/reactions/reactionsSlice';
 import { resolveSampleUrl } from '../../utils/urlHelpers';
@@ -63,29 +53,39 @@ import { QuizAuthGate } from '../auth/QuizAuthGate';
 import { toast } from '../../services/toastService';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
 import { FlagReasonModal } from '../common/FlagReasonModal';
+import type {
+  BookletKey,
+  ExamSimulationDialogProps,
+  HallCountdownRingProps,
+  MobileOmrPane,
+  OmrHallDialogInnerProps,
+  OmrPreset,
+  OmrReviewFilter,
+  QuestionOutcome,
+  QuizOptionKey,
+  QuizQuestion,
+  RubricCredit,
+  WrittenHallDialogInnerProps,
+  WrittenHallPreset,
+  WrittenLanguageMode,
+  WrittenQuestion,
+} from '../../types/assessment';
 
 export {
   deterministicPermute,
   OMR_PRESETS,
   WRITTEN_PRESETS,
   type BookletKey,
+  type ExamSimulationDialogProps,
   type OmrPreset,
+  type RubricCredit,
   type WrittenHallPreset,
 };
-
-export type RubricCredit = 'full' | 'partial' | 'missed';
-type OmrReviewFilter = 'all' | 'wrong' | 'blank' | 'correct' | 'flagged';
-type MobileOmrPane = 'paper' | 'sheet';
 
 export function countWords(text: string): number {
   const trimmed = text.trim();
   if (!trimmed) return 0;
   return trimmed.split(/\s+/).length;
-}
-
-interface HallCountdownRingProps {
-  ratio: number;
-  urgency: 'normal' | 'low' | 'critical';
 }
 
 function HallCountdownRing({ ratio, urgency }: HallCountdownRingProps) {
@@ -151,14 +151,6 @@ function HallCountdownRing({ ratio, urgency }: HallCountdownRingProps) {
 // ============================================================================
 // PHASE I · OMR HALL DIALOG INNER
 // ============================================================================
-
-interface OmrHallDialogInnerProps {
-  preset: OmrPreset;
-  rollNumber: string;
-  bookletKey: BookletKey;
-  onBookletKeyChange: (nextKey: BookletKey) => void;
-  onClose: () => void;
-}
 
 function OmrHallDialogInner({
   preset,
@@ -1858,13 +1850,6 @@ function OmrHallDialogInner({
 // PHASE II · TIMED WRITTEN PAPER HALL DIALOG INNER
 // ============================================================================
 
-interface WrittenHallDialogInnerProps {
-  preset: WrittenHallPreset;
-  rollNumber: string;
-  initialLang: WrittenLanguageMode;
-  onClose: () => void;
-}
-
 function WrittenHallDialogInner({
   preset,
   rollNumber,
@@ -2706,18 +2691,6 @@ function WrittenHallDialogInner({
 // ============================================================================
 // PUBLIC MODAL SHELL
 // ============================================================================
-
-export interface ExamSimulationDialogProps {
-  open: boolean;
-  simulationType: 'omr-hall' | 'written-hall';
-  omrPreset: OmrPreset;
-  writtenPreset: WrittenHallPreset;
-  rollNumber: string;
-  bookletKey: BookletKey;
-  onBookletKeyChange: (key: BookletKey) => void;
-  initialWrittenLang: WrittenLanguageMode;
-  onClose: () => void;
-}
 
 export function ExamSimulationDialog({
   open,

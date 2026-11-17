@@ -1,19 +1,10 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
+import type { RenderTask } from 'pdfjs-dist';
 import {
   isRenderingCancelledError,
   renderPageToCanvas,
 } from '../../services/pdfService';
-
-interface PdfPageProps {
-  pdfDoc: PDFDocumentProxy;
-  pageNumber: number;
-  scale: number;
-  intrinsicWidth: number;
-  intrinsicHeight: number;
-  eager?: boolean;
-  onRegisterElement?: (pageNumber: number, el: HTMLDivElement | null) => void;
-}
+import type { PdfPageProps } from '../../types/pdf';
 
 export const PdfPage = memo(function PdfPage({
   pdfDoc,

@@ -19,19 +19,20 @@ import {
   GlobalErrorListener,
 } from './components/common/ErrorBoundary';
 import { ToastViewport } from './components/common/ToastViewport';
+import { DashboardLayout } from './components/dashboard/DashboardLayout';
 import { ScrollToTopButton } from './components/layout/ScrollToTopButton';
 import { SeoManager } from './components/seo/SeoManager';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { CurrentAffairsPage } from './pages/CurrentAffairsPage';
-import { DashboardLayout } from './components/dashboard/DashboardLayout';
+import { DashboardDataPage } from './pages/dashboard/DashboardDataPage';
+import { DashboardFlaggedPage } from './pages/dashboard/DashboardFlaggedPage';
+import { DashboardInquiriesPage } from './pages/dashboard/DashboardInquiriesPage';
+import { DashboardMaterialsPage } from './pages/dashboard/DashboardMaterialsPage';
 import { DashboardOverviewPage } from './pages/dashboard/DashboardOverviewPage';
 import { DashboardQuizBankPage } from './pages/dashboard/DashboardQuizBankPage';
-import { DashboardFlaggedPage } from './pages/dashboard/DashboardFlaggedPage';
-import { DashboardWrittenBankPage } from './pages/dashboard/DashboardWrittenBankPage';
-import { DashboardMaterialsPage } from './pages/dashboard/DashboardMaterialsPage';
 import { DashboardUsersPage } from './pages/dashboard/DashboardUsersPage';
-import { DashboardDataPage } from './pages/dashboard/DashboardDataPage';
+import { DashboardWrittenBankPage } from './pages/dashboard/DashboardWrittenBankPage';
 import { FeaturesPage } from './pages/FeaturesPage';
 import { FlashcardsPage } from './pages/FlashcardsPage';
 import { HomePage } from './pages/HomePage';
@@ -50,6 +51,69 @@ import { TermsPage } from './pages/TermsPage';
 import { WrittenEvaluatorPage } from './pages/WrittenEvaluatorPage';
 import { WrittenQuestionsPage } from './pages/WrittenQuestionsPage';
 import { revokeAllLocalPdfFiles } from './services/pdfService';
+import type { OptionalParamRouteEntry, RouteEntry } from './types/common';
+
+const DASHBOARD_CHILD_ROUTES: ReadonlyArray<RouteEntry> = [
+  { path: 'quiz-bank', element: <DashboardQuizBankPage /> },
+  { path: 'flagged', element: <DashboardFlaggedPage /> },
+  { path: 'written-bank', element: <DashboardWrittenBankPage /> },
+  { path: 'materials', element: <DashboardMaterialsPage /> },
+  { path: 'users', element: <DashboardUsersPage /> },
+  { path: 'inquiries', element: <DashboardInquiriesPage /> },
+  { path: 'data', element: <DashboardDataPage /> },
+];
+
+const DASHBOARD_REDIRECTS: ReadonlyArray<readonly [from: string, to: string]> = [
+  ['overview', '/dashboard'],
+  ['aspirants', '/dashboard/users'],
+  ['backup', '/dashboard/data'],
+];
+
+const OPTIONAL_PARAM_ROUTES: ReadonlyArray<OptionalParamRouteEntry> = [
+  { basePath: '/syllabus', param: 'cadreId', element: <SyllabusPage /> },
+  { basePath: '/materials', param: 'categoryId', element: <MaterialsPage /> },
+  { basePath: '/quiz', param: 'deckId', element: <QuizPage /> },
+  { basePath: '/written', param: 'questionId', element: <WrittenQuestionsPage /> },
+];
+
+const PUBLIC_PAGE_ROUTES: ReadonlyArray<RouteEntry> = [
+  { path: '/', element: <HomePage /> },
+  { path: '/simulate', element: <SimulationPage /> },
+  { path: '/evaluator', element: <WrittenEvaluatorPage /> },
+  { path: '/current-affairs', element: <CurrentAffairsPage /> },
+  { path: '/calendar', element: <NoticeCalendarPage /> },
+  { path: '/notices', element: <NoticeCalendarPage /> },
+  { path: '/pyq', element: <PyqArchivePage /> },
+  { path: '/flashcards', element: <FlashcardsPage /> },
+  { path: '/progress', element: <ProgressPage /> },
+  { path: '/library', element: <LibraryPage /> },
+  { path: '/features', element: <FeaturesPage /> },
+  { path: '/read', element: <ReaderPage /> },
+  { path: '/about', element: <AboutPage /> },
+  { path: '/contact', element: <ContactPage /> },
+  { path: '/privacy', element: <PrivacyPolicyPage /> },
+  { path: '/terms', element: <TermsPage /> },
+];
+
+const LEGACY_REDIRECT_ROUTES: ReadonlyArray<readonly [from: string, to: string]> = [
+  ['/admin', '/dashboard'],
+  ['/simulation', '/simulate'],
+  ['/ebooks', '/materials'],
+  ['/browse', '/materials'],
+  ['/long-questions', '/written'],
+  ['/written-evaluator', '/evaluator'],
+  ['/rubric', '/evaluator'],
+  ['/samasamayik', '/current-affairs'],
+  ['/affairs', '/current-affairs'],
+  ['/routine', '/calendar'],
+  ['/psc-calendar', '/calendar'],
+  ['/past-questions', '/pyq'],
+  ['/previous-questions', '/pyq'],
+  ['/cards', '/flashcards'],
+  ['/memorize', '/flashcards'],
+  ['/privacy-policy', '/privacy'],
+  ['/terms-of-service', '/terms'],
+];
 
 function ScrollManager() {
   const { pathname, hash } = useLocation();
@@ -127,95 +191,47 @@ export default function App() {
       <LayoutGroup>
         <ErrorBoundary>
           <Routes>
-          <Route path="/" element={<HomePage />} />
-          {/* Dedicated Dashboard Section as Separate Pages */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<DashboardOverviewPage />} />
-            <Route path="overview" element={<DashboardOverviewPage />} />
-            <Route path="quiz-bank" element={<DashboardQuizBankPage />} />
-            <Route path="flagged" element={<DashboardFlaggedPage />} />
-            <Route path="written-bank" element={<DashboardWrittenBankPage />} />
-            <Route path="materials" element={<DashboardMaterialsPage />} />
-            <Route path="users" element={<DashboardUsersPage />} />
-            <Route path="aspirants" element={<Navigate to="/dashboard/users" replace />} />
-            <Route path="data" element={<DashboardDataPage />} />
-            <Route path="backup" element={<Navigate to="/dashboard/data" replace />} />
-          </Route>
-          <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/syllabus" element={<SyllabusPage />} />
-          <Route path="/syllabus/:cadreId" element={<SyllabusPage />} />
-          <Route path="/simulate" element={<SimulationPage />} />
-          <Route
-            path="/simulation"
-            element={<Navigate to="/simulate" replace />}
-          />
-          <Route path="/materials" element={<MaterialsPage />} />
-          <Route path="/materials/:categoryId" element={<MaterialsPage />} />
-          <Route path="/ebooks" element={<Navigate to="/materials" replace />} />
-          <Route path="/browse" element={<Navigate to="/materials" replace />} />
-          <Route path="/quiz" element={<QuizPage />} />
-          <Route path="/quiz/:deckId" element={<QuizPage />} />
-          <Route path="/written" element={<WrittenQuestionsPage />} />
-          <Route path="/written/:questionId" element={<WrittenQuestionsPage />} />
-          <Route
-            path="/long-questions"
-            element={<Navigate to="/written" replace />}
-          />
-          <Route path="/evaluator" element={<WrittenEvaluatorPage />} />
-          <Route
-            path="/written-evaluator"
-            element={<Navigate to="/evaluator" replace />}
-          />
-          <Route
-            path="/rubric"
-            element={<Navigate to="/evaluator" replace />}
-          />
-          <Route path="/current-affairs" element={<CurrentAffairsPage />} />
-          <Route
-            path="/samasamayik"
-            element={<Navigate to="/current-affairs" replace />}
-          />
-          <Route
-            path="/affairs"
-            element={<Navigate to="/current-affairs" replace />}
-          />
-          <Route path="/calendar" element={<NoticeCalendarPage />} />
-          <Route path="/notices" element={<NoticeCalendarPage />} />
-          <Route path="/routine" element={<Navigate to="/calendar" replace />} />
-          <Route
-            path="/psc-calendar"
-            element={<Navigate to="/calendar" replace />}
-          />
-          <Route path="/pyq" element={<PyqArchivePage />} />
-          <Route
-            path="/past-questions"
-            element={<Navigate to="/pyq" replace />}
-          />
-          <Route
-            path="/previous-questions"
-            element={<Navigate to="/pyq" replace />}
-          />
-          <Route path="/flashcards" element={<FlashcardsPage />} />
-          <Route path="/cards" element={<Navigate to="/flashcards" replace />} />
-          <Route path="/memorize" element={<Navigate to="/flashcards" replace />} />
-          <Route path="/progress" element={<ProgressPage />} />
-          <Route path="/library" element={<LibraryPage />} />
-          <Route path="/features" element={<FeaturesPage />} />
-          <Route path="/read" element={<ReaderPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/privacy" element={<PrivacyPolicyPage />} />
-          <Route
-            path="/privacy-policy"
-            element={<Navigate to="/privacy" replace />}
-          />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route
-            path="/terms-of-service"
-            element={<Navigate to="/terms" replace />}
-          />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+            {/* Dedicated Dashboard Section */}
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route index element={<DashboardOverviewPage />} />
+              {DASHBOARD_CHILD_ROUTES.map(({ path, element }) => (
+                <Route key={path} path={path} element={element} />
+              ))}
+              {DASHBOARD_REDIRECTS.map(([from, to]) => (
+                <Route
+                  key={from}
+                  path={from}
+                  element={<Navigate to={to} replace />}
+                />
+              ))}
+            </Route>
+
+            {/* Primary Public & Study Routes */}
+            {PUBLIC_PAGE_ROUTES.map(({ path, element }) => (
+              <Route key={path} path={path} element={element} />
+            ))}
+
+            {/* Parameterized Study Routes */}
+            {OPTIONAL_PARAM_ROUTES.flatMap(({ basePath, param, element }) => [
+              <Route key={basePath} path={basePath} element={element} />,
+              <Route
+                key={`${basePath}/:${param}`}
+                path={`${basePath}/:${param}`}
+                element={element}
+              />,
+            ])}
+
+            {/* Legacy & Alias Redirects */}
+            {LEGACY_REDIRECT_ROUTES.map(([from, to]) => (
+              <Route
+                key={from}
+                path={from}
+                element={<Navigate to={to} replace />}
+              />
+            ))}
+
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
         </ErrorBoundary>
       </LayoutGroup>
       <ScrollToTopButton />

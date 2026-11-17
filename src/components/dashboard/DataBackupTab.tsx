@@ -7,6 +7,7 @@ import {
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { clearWrittenProgress } from '../../features/written/writtenSlice';
 import { clearAllReactions } from '../../features/reactions/reactionsSlice';
+import { clearWrittenEvaluations } from '../../features/workspace/workspaceSlice';
 import { storageService } from '../../services/storageService';
 import { toast } from '../../services/toastService';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
@@ -16,7 +17,8 @@ export function DataBackupTab() {
   const dispatch = useAppDispatch();
   const quizAttempts = useAppSelector((state) => state.quiz.attempts);
   const writtenRecords = useAppSelector((state) => state.written.records);
-  const simulationRuns = useAppSelector((state) => state.psc.simulationHistory);
+  const pscState = useAppSelector((state) => state.psc);
+  const workspaceState = useAppSelector((state) => state.workspace);
   const userReactions = useAppSelector((state) => state.reactions.userReactions);
   const itemViews = useAppSelector((state) => state.reactions.itemViews);
   const recentBooks = useAppSelector((state) => state.library.recentBooks);
@@ -27,12 +29,21 @@ export function DataBackupTab() {
   const handleExportData = () => {
     try {
       const backupData = {
-        version: '1.0',
+        version: '2.0',
         exportedAt: new Date().toISOString(),
         platform: 'PSC Nepal Preparation Workspace',
+        targetCadreId: pscState.targetCadreId,
+        completedUnitIds: pscState.completedUnitIds,
+        completedTopicIds: pscState.completedTopicIds,
+        bookmarkedUnitIds: pscState.bookmarkedUnitIds,
         quizAttempts,
         writtenRecords,
-        simulationRuns,
+        writtenEvaluations: workspaceState.writtenEvaluations,
+        simulationRuns: pscState.simulationHistory,
+        flashcardProgress: workspaceState.flashcardProgress,
+        pyqBookmarks: workspaceState.pyqBookmarks,
+        affairBookmarks: workspaceState.affairBookmarks,
+        examChecklist: workspaceState.examChecklist,
         userReactions,
         itemViews,
         flaggedQuestions: storageService.loadFlaggedQuestions(),
@@ -63,9 +74,10 @@ export function DataBackupTab() {
 
   const handleClearData = () => {
     dispatch(clearWrittenProgress());
+    dispatch(clearWrittenEvaluations());
     dispatch(clearAllReactions());
     setConfirmReset(false);
-    toast.info('Written drafts and reactions cleared.');
+    toast.info('Written drafts, evaluations, and reactions cleared.');
   };
 
   return (
@@ -99,7 +111,7 @@ export function DataBackupTab() {
           <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800">
             <span className="text-zinc-500 font-sans block">Exam Hall Runs</span>
             <span className="text-xl font-bold text-blue-700 dark:text-blue-400">
-              {simulationRuns.length}
+              {pscState.simulationHistory.length}
             </span>
           </div>
 

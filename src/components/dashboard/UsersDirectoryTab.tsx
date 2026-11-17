@@ -27,20 +27,17 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import type {
+  ActionMenuItem,
   CloudUserDirectoryEntry,
   CloudUserStatus,
   CloudUserTargetCadre,
-} from '../../services/cloudSyncService';
+  ColumnDef,
+  TableFilterDef,
+  UserStatusActionState as StatusActionState,
+} from '../../types';
 import { ActionButton } from '../common/ActionButton';
-import {
-  SharedActionMenu,
-  type ActionMenuItem,
-} from '../common/SharedActionMenu';
-import {
-  SharedDataTable,
-  type ColumnDef,
-  type TableFilterDef,
-} from '../common/SharedDataTable';
+import { SharedActionMenu } from '../common/SharedActionMenu';
+import { SharedDataTable } from '../common/SharedDataTable';
 import { SharedSearchSelect } from '../common/SharedSearchSelect';
 import { useDashboardSearch } from './DashboardLayout';
 import { toast } from '../../services/toastService';
@@ -142,11 +139,6 @@ function UserAvatar({
       {user.displayName.charAt(0).toUpperCase()}
     </div>
   );
-}
-
-interface StatusActionState {
-  user: CloudUserDirectoryEntry;
-  targetStatus: CloudUserStatus;
 }
 
 export function UsersDirectoryTab() {

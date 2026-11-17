@@ -1,30 +1,19 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../../app/store';
 import { storageService } from '../../services/storageService';
+import type {
+  CloudStatsCounts,
+  ReactionItemType,
+  ReactionsState,
+  ReactionType,
+} from '../../types';
 
-export type ReactionType = 'like' | 'dislike';
-export type ReactionItemType = 'question' | 'material';
-
-export interface CloudStatsCounts {
-  views: number;
-  likes: number;
-  dislikes: number;
-}
-
-export interface ReactionsState {
-  /** Map of item ID (question ID or material ID) to current user's reaction */
-  userReactions: Record<string, ReactionType>;
-  /** Map of item ID to recorded user views */
-  itemViews: Record<string, number>;
-  /** In-memory map of item IDs to itemType for cloud sync classification */
-  itemTypes: Record<string, ReactionItemType>;
-  /** Public community counts stored in Firestore itemStats/{itemId} */
-  cloudStats: Record<string, CloudStatsCounts>;
-  /** Reactions already committed to Firestore for current user (prevents double-counting) */
-  syncedUserReactions: Record<string, ReactionType>;
-  /** View counts already committed to Firestore for current user (prevents double-counting) */
-  syncedItemViews: Record<string, number>;
-}
+export type {
+  CloudStatsCounts,
+  ReactionItemType,
+  ReactionsState,
+  ReactionType,
+};
 
 const initialReactions = storageService.loadReactions();
 
@@ -192,7 +181,7 @@ export const selectUserReaction = (
 export const selectItemReactionData = (
   state: RootState,
   itemId: string,
-  _itemType: 'question' | 'material' = 'question'
+  _itemType: ReactionItemType = 'question'
 ): {
   likes: number;
   dislikes: number;

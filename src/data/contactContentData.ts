@@ -1,16 +1,11 @@
-import type { InquiryCategory } from '../services/storageService';
+import type {
+  ContactCategoryOption,
+  ContactSupportTopic,
+} from '../types/content';
+import type { InquiryCategory } from '../types/workspace';
 import { SITE_CONFIG } from './siteConfig';
 
-export interface ContactCategoryOption {
-  value: InquiryCategory;
-  label: string;
-  placeholder: string;
-}
-
-export interface ContactSupportTopic {
-  title: string;
-  description: string;
-}
+export type { ContactCategoryOption, ContactSupportTopic };
 
 export const CONTACT_PAGE_HEADER = {
   breadcrumbLabel: 'Contact',
@@ -77,8 +72,8 @@ export const CONTACT_QUICK_LINKS: ReadonlyArray<{ to: string; label: string }> =
 
 export const CONTACT_FORM_COPY = {
   heading: 'Submit an Inquiry or Errata Note',
-  footerNote: 'Generates a reference ticket & ready-to-send email draft.',
-  submitLabel: 'Save & Prepare Inquiry',
+  footerNote: 'Assigns a ticket ID, syncs to your account when signed in, and prepares an optional email copy.',
+  submitLabel: 'Submit Inquiry & Prepare Email',
   detailsPlaceholder:
     'Describe the question correction, requested study document, or reader feedback...',
 } as const;

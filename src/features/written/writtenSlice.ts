@@ -1,22 +1,18 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { storageService } from '../../services/storageService';
+import type {
+  WrittenLanguageMode,
+  WrittenMasteryStatus,
+  WrittenQuestionProgress,
+  WrittenState,
+} from '../../types';
 
-export type WrittenLanguageMode = 'bilingual' | 'en' | 'ne';
-export type WrittenMasteryStatus = 'unseen' | 'practicing' | 'mastered';
-
-export interface WrittenQuestionProgress {
-  questionId: string;
-  status: WrittenMasteryStatus;
-  checkedRubricIndices: number[];
-  draftAnswer: string;
-  timeSpentSeconds: number;
-  updatedAt: string;
-}
-
-export interface WrittenState {
-  preferredLanguage: WrittenLanguageMode;
-  records: Record<string, WrittenQuestionProgress>;
-}
+export type {
+  WrittenLanguageMode,
+  WrittenMasteryStatus,
+  WrittenQuestionProgress,
+  WrittenState,
+};
 
 function getOrCreateRecord(
   records: Record<string, WrittenQuestionProgress>,
@@ -117,6 +113,25 @@ const writtenSlice = createSlice({
     clearWrittenProgress(state) {
       state.records = {};
     },
+
+    hydrateWrittenState(
+      state,
+      action: PayloadAction<{
+        preferredLanguage?: WrittenLanguageMode;
+        records?: Record<string, WrittenQuestionProgress>;
+      }>
+    ) {
+      if (action.payload.preferredLanguage) {
+        state.preferredLanguage = action.payload.preferredLanguage;
+      }
+      if (action.payload.records) {
+        state.records = action.payload.records;
+      }
+    },
+
+    resetLocalWrittenState(state) {
+      state.records = {};
+    },
   },
 });
 
@@ -127,6 +142,8 @@ export const {
   setWrittenQuestionStatus,
   addWrittenPracticeSeconds,
   clearWrittenProgress,
+  hydrateWrittenState,
+  resetLocalWrittenState,
 } = writtenSlice.actions;
 
 export default writtenSlice.reducer;

@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { ActionButton } from '../components/common/ActionButton';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { Footer } from '../components/layout/Footer';
@@ -34,14 +35,15 @@ import {
 import {
   PSC_ANNUAL_CALENDAR_EVENTS,
   PSC_OFFICIAL_NOTICES,
-  type NoticeCategory,
-  type PscNotice,
 } from '../data/pscCalendarData';
+import { toggleExamChecklistItem } from '../features/workspace/workspaceSlice';
+import type { CalendarPageTab, NoticeCategory, PscNotice } from '../types';
 import { copyWithToast } from '../utils/clipboardHelpers';
 
-export type CalendarPageTab = 'calendar' | 'notices' | 'guidelines';
+export type { CalendarPageTab };
 
 export function NoticeCalendarPage() {
+  const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchInputId = useId();
 
@@ -65,24 +67,13 @@ export function NoticeCalendarPage() {
   const [expandedNoticeId, setExpandedNoticeId] = useState<string | null>(null);
   const [copiedNoticeId, setCopiedNoticeId] = useState<string | null>(null);
 
-  // Exam hall checklist state (persisted in localStorage)
-  const [checkedChecklistItems, setCheckedChecklistItems] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem('psc_exam_hall_checklist_v1');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  // Exam hall checklist state (Redux + cloud-synced when signed in)
+  const checkedChecklistItems = useAppSelector(
+    (state) => state.workspace.examChecklist
+  );
 
   const toggleChecklistItem = (key: string) => {
-    setCheckedChecklistItems((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      try {
-        localStorage.setItem('psc_exam_hall_checklist_v1', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
+    dispatch(toggleExamChecklistItem(key));
   };
 
   const handleCopyNotice = (notice: PscNotice) => {

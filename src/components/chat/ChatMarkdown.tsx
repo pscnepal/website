@@ -1,13 +1,8 @@
 import type { ReactNode } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { INTERNAL_ROUTE_PREFIXES } from '../../data/siteConfig';
+import type { ChatMarkdownProps } from '../../types/workspace';
 import { SharedTable } from '../common/SharedTable';
-
-interface ChatMarkdownProps {
-  content: string;
-  showCursor?: boolean;
-  onNavigateInternal: (path: string) => void;
-}
 
 function isInternalAppRoute(href: string): boolean {
   if (href === '/') return true;

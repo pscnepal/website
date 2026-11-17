@@ -17,17 +17,13 @@ import {
   getLocalPdfSessionEntry,
   registerLocalPdfFile,
 } from '../../services/pdfService';
-import type { RecentBookEntry } from '../../types/pdf';
+import type { RecentBookEntry, RecentBooksProps } from '../../types/pdf';
 import {
   formatBytes,
   formatCompactDuration,
   formatRelativeDate,
 } from '../../utils/pdfHelpers';
 import { ReadingStatsView } from '../reader/ReadingStatsView';
-
-interface RecentBooksProps {
-  showEmptyState?: boolean;
-}
 
 export function RecentBooks({ showEmptyState = false }: RecentBooksProps) {
   const recentBooks = useAppSelector((state) => state.library.recentBooks);

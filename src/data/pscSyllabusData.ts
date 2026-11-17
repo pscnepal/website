@@ -10,6 +10,7 @@ import {
 } from './syllabus/sectionOfficerStage1And3.ts';
 import { SECTION_OFFICER_PHASE_2 } from './syllabus/sectionOfficerStage2Service.ts';
 import type {
+  CadreSyllabusStats,
   PscCadreSyllabus,
   PscExamPhase,
   PscSyllabusChapter,
@@ -187,16 +188,6 @@ export function getUnitTopicIds(unit: PscSyllabusUnit): string[] {
 
 export function getPaperTopicIds(paper: PscSyllabusPaper): string[] {
   return paper.units.flatMap((u) => getUnitTopicIds(u));
-}
-
-export interface CadreSyllabusStats {
-  totalPapers: number;
-  totalStreams: number;
-  totalUnits: number;
-  totalChapters: number;
-  totalTopics: number;
-  totalSubtopics: number;
-  topicIds: string[];
 }
 
 export function getCadreSyllabusStats(

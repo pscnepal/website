@@ -159,6 +159,10 @@
           "type": "boolean",
           "description": "Whether the attempt auto-submitted on timeout."
         },
+        "questionOutcomes": {
+          "type": "object",
+          "description": "Per-question outcome map (correct, wrong, skipped) for targeted missed-question review."
+        },
         "completedAt": {
           "type": "string",
           "format": "date-time",
@@ -265,12 +269,12 @@
     },
     "UserItemReaction": {
       "title": "UserItemReaction",
-      "description": "Authenticated user's personal like/dislike state and recorded view count for a question or study material.",
+      "description": "Authenticated user's personal like/dislike state and recorded view count for a question, material, or current affair.",
       "type": "object",
       "properties": {
         "itemId": {
           "type": "string",
-          "description": "Question or study material identifier.",
+          "description": "Question, material, or affair identifier.",
           "minLength": 1,
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
@@ -284,7 +288,7 @@
         },
         "itemType": {
           "type": "string",
-          "enum": ["question", "material"],
+          "enum": ["question", "material", "affair"],
           "description": "Type of study item."
         },
         "reaction": {
@@ -324,14 +328,14 @@
       "properties": {
         "itemId": {
           "type": "string",
-          "description": "Question or study material identifier.",
+          "description": "Question, material, or affair identifier.",
           "minLength": 1,
           "maxLength": 128,
           "pattern": "^[a-zA-Z0-9_\\-]+$"
         },
         "itemType": {
           "type": "string",
-          "enum": ["question", "material"],
+          "enum": ["question", "material", "affair"],
           "description": "Type of study item."
         },
         "viewsCount": {
@@ -363,6 +367,265 @@
         "viewsCount",
         "likesCount",
         "dislikesCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserWorkspacePreferences": {
+      "title": "UserWorkspacePreferences",
+      "description": "Synced reader, quiz, written language, theme, and target cadre preferences.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "theme": { "type": "string", "enum": ["light", "dark"] },
+        "defaultReadingMode": { "type": "string", "enum": ["standard", "flipbook"] },
+        "defaultSoundEnabled": { "type": "boolean" },
+        "preferredQuizMode": { "type": "string", "enum": ["exam", "study"] },
+        "preferredWrittenLanguage": { "type": "string", "enum": ["bilingual", "en", "ne"] },
+        "targetCadreId": { "type": "string", "enum": ["section-officer", "nayab-subba", "kharidar"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "theme",
+        "defaultReadingMode",
+        "defaultSoundEnabled",
+        "preferredQuizMode",
+        "preferredWrittenLanguage",
+        "targetCadreId",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserSyllabusWorkspace": {
+      "title": "UserSyllabusWorkspace",
+      "description": "Synced PSC syllabus unit/topic completion, bookmarked units, and exam day checklist.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "completedUnitIds": { "type": "array" },
+        "completedTopicIds": { "type": "array" },
+        "bookmarkedUnitIds": { "type": "array" },
+        "examChecklist": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "completedUnitIds",
+        "completedTopicIds",
+        "bookmarkedUnitIds",
+        "examChecklist",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserBookmarksWorkspace": {
+      "title": "UserBookmarksWorkspace",
+      "description": "Synced PYQ and Current Affairs bookmarks.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "pyqIds": { "type": "array" },
+        "affairIds": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "pyqIds", "affairIds", "createdAt", "updatedAt"]
+    },
+    "UserFlashcardsWorkspace": {
+      "title": "UserFlashcardsWorkspace",
+      "description": "Synced Leitner spaced-repetition flashcard progress map.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "progressMap": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "progressMap", "createdAt", "updatedAt"]
+    },
+    "UserLibraryWorkspace": {
+      "title": "UserLibraryWorkspace",
+      "description": "Synced PDF reader recent books, last-read pages, and reading statistics.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "recentBooks": { "type": "array" },
+        "readingProgress": { "type": "object" },
+        "readingStats": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "recentBooks",
+        "readingProgress",
+        "readingStats",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserWrittenProgress": {
+      "title": "UserWrittenProgress",
+      "description": "Per-question written practice status, checked rubric points, draft answer, and timer seconds.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "questionId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "status": { "type": "string", "enum": ["unseen", "practicing", "mastered"] },
+        "checkedRubricIndices": { "type": "array" },
+        "draftAnswer": { "type": "string", "maxLength": 30000 },
+        "timeSpentSeconds": { "type": "number" },
+        "clientUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId",
+        "questionId",
+        "status",
+        "checkedRubricIndices",
+        "draftAnswer",
+        "timeSpentSeconds",
+        "clientUpdatedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserWrittenEvaluation": {
+      "title": "UserWrittenEvaluation",
+      "description": "Self-evaluated written answer rubric scorecard saved in Answer Evaluator Studio.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "questionId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "questionTitleNe": { "type": "string", "maxLength": 400 },
+        "questionTitleEn": { "type": "string", "maxLength": 400 },
+        "marks": { "type": "number" },
+        "date": { "type": "string", "maxLength": 64 },
+        "evaluatedAt": { "type": "string", "format": "date-time", "maxLength": 64 },
+        "scoreIntro": { "type": "number" },
+        "scoreCore": { "type": "number" },
+        "scoreStatutes": { "type": "number" },
+        "scoreConclusion": { "type": "number" },
+        "totalScore": { "type": "number" },
+        "timeSpentSeconds": { "type": "number" },
+        "wordCount": { "type": "number" },
+        "userDraft": { "type": "string", "maxLength": 30000 },
+        "feedbackNotes": { "type": "string", "maxLength": 5000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "questionId",
+        "questionTitleNe",
+        "questionTitleEn",
+        "marks",
+        "date",
+        "evaluatedAt",
+        "scoreIntro",
+        "scoreCore",
+        "scoreStatutes",
+        "scoreConclusion",
+        "totalScore",
+        "timeSpentSeconds",
+        "wordCount",
+        "userDraft",
+        "feedbackNotes",
+        "createdAt"
+      ]
+    },
+    "UserSimulationRun": {
+      "title": "UserSimulationRun",
+      "description": "Completed OMR or Written Hall exam simulation sitting.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "presetId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "presetTitle": { "type": "string", "minLength": 1, "maxLength": 220 },
+        "cadreId": { "type": "string", "enum": ["section-officer", "nayab-subba", "kharidar"] },
+        "simulationType": { "type": "string", "enum": ["omr-hall", "written-hall"] },
+        "fullMarks": { "type": "number" },
+        "passMarks": { "type": "number" },
+        "grossMarks": { "type": "number" },
+        "negativeDeduction": { "type": "number" },
+        "netMarks": { "type": "number" },
+        "percentage": { "type": "number" },
+        "passed": { "type": "boolean" },
+        "totalItems": { "type": "number" },
+        "attemptedItems": { "type": "number" },
+        "correctItems": { "type": "number" },
+        "wrongItems": { "type": "number" },
+        "durationSeconds": { "type": "number" },
+        "allocatedSeconds": { "type": "number" },
+        "rollNumber": { "type": "string", "maxLength": 64 },
+        "bookletKey": { "type": "string", "enum": ["A", "B", "C", "D"] },
+        "completedAt": { "type": "string", "format": "date-time", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "presetId",
+        "presetTitle",
+        "cadreId",
+        "simulationType",
+        "fullMarks",
+        "passMarks",
+        "grossMarks",
+        "negativeDeduction",
+        "netMarks",
+        "percentage",
+        "passed",
+        "totalItems",
+        "attemptedItems",
+        "correctItems",
+        "wrongItems",
+        "durationSeconds",
+        "allocatedSeconds",
+        "rollNumber",
+        "bookletKey",
+        "completedAt",
+        "createdAt"
+      ]
+    },
+    "ContactInquiry": {
+      "title": "ContactInquiry",
+      "description": "User-submitted editorial feedback, errata report, or support inquiry synced with the admin desk.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "userId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ticketCode": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "maxLength": 254 },
+        "category": { "type": "string", "enum": ["general", "quiz-errata", "material-request", "reader-support"] },
+        "reference": { "type": "string", "maxLength": 300 },
+        "message": { "type": "string", "minLength": 10, "maxLength": 4000 },
+        "status": { "type": "string", "enum": ["open", "in-review", "resolved"] },
+        "adminReply": { "type": "string", "maxLength": 2000 },
+        "respondedBy": { "type": "string", "maxLength": 128 },
+        "respondedAt": { "type": "string", "format": "date-time" },
+        "clientCreatedAt": { "type": "string", "format": "date-time", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "id",
+        "userId",
+        "ticketCode",
+        "name",
+        "email",
+        "category",
+        "reference",
+        "message",
+        "status",
+        "clientCreatedAt",
         "createdAt",
         "updatedAt"
       ]
@@ -765,7 +1028,7 @@
       "schema": {
         "$ref": "#/entities/UserProfile"
       },
-      "description": "Private owner-only authenticated user profile containing Google display name, email, photo URL, and login timestamps."
+      "description": "Private owner-only authenticated user profile containing Google display name, email, photo URL, target cadre, and login timestamps."
     },
     "/users/{userId}/quizAttempts/{attemptId}": {
       "schema": {
@@ -783,7 +1046,61 @@
       "schema": {
         "$ref": "#/entities/UserItemReaction"
       },
-      "description": "User's personal view count and like/dislike reaction per question or study material."
+      "description": "User's personal view count and like/dislike reaction per question, study material, or current affair."
+    },
+    "/users/{userId}/workspace/preferences": {
+      "schema": {
+        "$ref": "#/entities/UserWorkspacePreferences"
+      },
+      "description": "User's synced reader, quiz mode, language, theme, and target cadre preferences."
+    },
+    "/users/{userId}/workspace/syllabus": {
+      "schema": {
+        "$ref": "#/entities/UserSyllabusWorkspace"
+      },
+      "description": "User's synced PSC syllabus completions, bookmarked units, and exam day checklist."
+    },
+    "/users/{userId}/workspace/bookmarks": {
+      "schema": {
+        "$ref": "#/entities/UserBookmarksWorkspace"
+      },
+      "description": "User's synced PYQ and current affairs bookmarks."
+    },
+    "/users/{userId}/workspace/flashcards": {
+      "schema": {
+        "$ref": "#/entities/UserFlashcardsWorkspace"
+      },
+      "description": "User's synced Leitner flashcard review progress."
+    },
+    "/users/{userId}/workspace/library": {
+      "schema": {
+        "$ref": "#/entities/UserLibraryWorkspace"
+      },
+      "description": "User's synced PDF reading progress, reading statistics, and recent books."
+    },
+    "/users/{userId}/writtenProgress/{questionId}": {
+      "schema": {
+        "$ref": "#/entities/UserWrittenProgress"
+      },
+      "description": "User's per-question written study drafts, checked rubric items, mastery status, and practice time."
+    },
+    "/users/{userId}/writtenEvaluations/{evalId}": {
+      "schema": {
+        "$ref": "#/entities/UserWrittenEvaluation"
+      },
+      "description": "User's saved written answer evaluator scorecards."
+    },
+    "/users/{userId}/simulationRuns/{runId}": {
+      "schema": {
+        "$ref": "#/entities/UserSimulationRun"
+      },
+      "description": "User's completed OMR and Written Hall exam simulation runs."
+    },
+    "/contactInquiries/{inquiryId}": {
+      "schema": {
+        "$ref": "#/entities/ContactInquiry"
+      },
+      "description": "Verified aspirant editorial feedback, errata reports, and support tickets managed by owner and portal admin."
     },
     "/itemStats/{itemId}": {
       "schema": {

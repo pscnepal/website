@@ -1,32 +1,17 @@
 import { ABOUT_HERO_CONTENT, ABOUT_PLATFORM_PILLARS } from '../data/aboutContentData';
-import {
-  PSC_CADRE_SYLLABI,
-  type PscCadreSyllabus,
-  type PscSyllabusPaper,
-  type PscSyllabusTopic,
-} from '../data/pscSyllabusData';
-import type { QuizQuestion } from '../data/quizData';
+import { PSC_CADRE_SYLLABI } from '../data/pscSyllabusData';
 import { SITE_CONFIG } from '../data/siteConfig';
-import type { WrittenQuestion } from '../data/writtenQuestionsData';
+import type {
+  ChatFoundTopic,
+  ChatMessageTurn,
+  ClientStudyContext,
+  PscCadreSyllabus,
+  QuizQuestion,
+  WrittenQuestion,
+} from '../types';
 import { questionStorageService } from './questionStorageService';
 
-export interface ClientStudyContext {
-  currentPath?: string;
-  targetCadreId?: string;
-  completedTopicsCount?: number;
-  completedUnitsCount?: number;
-  quizAttemptsCount?: number;
-  bestQuizAccuracy?: number | null;
-  writtenMasteredCount?: number;
-  writtenPracticingCount?: number;
-  simulationRunsCount?: number;
-  recentBooksCount?: number;
-}
-
-export interface ChatMessageTurn {
-  role: 'user' | 'assistant';
-  content: string;
-}
+export type { ChatMessageTurn, ClientStudyContext };
 
 function extractKeywords(text: string): string[] {
   return Array.from(
@@ -535,13 +520,7 @@ Read the complete official document in the [3D Constitution Flipbook](/read?samp
   }
 
   // 7. General search across Syllabus Topics
-  interface FoundTopic {
-    cadre: PscCadreSyllabus;
-    paper: PscSyllabusPaper;
-    topic: PscSyllabusTopic;
-    score: number;
-  }
-  let bestTopic: FoundTopic | null = null;
+  let bestTopic: ChatFoundTopic | null = null;
   let bestTopicScore = 0;
 
   for (const cadre of PSC_CADRE_SYLLABI) {

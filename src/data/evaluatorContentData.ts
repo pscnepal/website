@@ -1,30 +1,14 @@
-export type RubricDimensionKey =
-  | 'intro'
-  | 'core'
-  | 'statutes'
-  | 'conclusion';
+import type {
+  RubricDimensionKey,
+  WrittenMeritTier,
+  WrittenRubricDimensionConfig,
+} from '../types/assessment';
 
-export interface WrittenRubricDimensionConfig {
-  id: RubricDimensionKey;
-  orderNe: string;
-  titleNe: string;
-  titleEn: string;
-  shortTitleNe: string;
-  weightPercentNe: string;
-  weightPercent: number;
-  descriptionNe: string;
-  guideSummaryNe: string;
-  max10M: number;
-  max5M: number;
-  tierLabels: readonly [string, string, string];
-}
-
-export interface WrittenMeritTier {
-  minPct: number;
-  labelNe: string;
-  labelEn: string;
-  color: 'emerald' | 'blue' | 'amber' | 'crimson';
-}
+export type {
+  RubricDimensionKey,
+  WrittenMeritTier,
+  WrittenRubricDimensionConfig,
+};
 
 export const EVALUATOR_HERO_CONTENT = {
   breadcrumbLabel:

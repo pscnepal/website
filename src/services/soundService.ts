@@ -1,7 +1,9 @@
+import type { PageSoundIntensity } from '../types/reader';
+
+export type { PageSoundIntensity };
+
 const SOUND_URL = '/sounds/page-turn.wav?v=gentle2';
 const MIN_TRIGGER_INTERVAL_MS = 140;
-
-export type PageSoundIntensity = 'full' | 'soft';
 
 class PageTurnSoundService {
   private audioCtx: AudioContext | null = null;

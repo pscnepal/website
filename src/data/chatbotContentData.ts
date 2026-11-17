@@ -1,9 +1,7 @@
+import type { ChatbotStarterPrompt } from '../types/content';
 import { SITE_CONFIG } from './siteConfig';
 
-export interface ChatbotStarterPrompt {
-  label: string;
-  prompt: string;
-}
+export type { ChatbotStarterPrompt };
 
 export const CHATBOT_WELCOME_CONTENT = `Namaste! I am the **PSC Nepal Study Assistant** (लोक सेवा तयारी सहायक). Ask me anything in **English** or **नेपाली** about:
 

@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react';
 import {
   Award,
   BookOpen,
@@ -9,36 +8,14 @@ import {
   Scale,
   Sparkles,
 } from 'lucide-react';
-import type { PscCadreId } from './pscSyllabusData';
+import type {
+  AboutCadreSummary,
+  AboutMissionCard,
+  AboutPlatformPillar,
+} from '../types/content';
 import { SITE_CONFIG } from './siteConfig';
 
-export interface AboutMissionCard {
-  id: 'mission' | 'vision';
-  title: string;
-  body: string;
-  icon: LucideIcon;
-  tone: 'blue' | 'crimson';
-}
-
-export interface AboutPlatformPillar {
-  id: string;
-  title: string;
-  description: string;
-  linkLabel: string;
-  to: string;
-  icon: LucideIcon;
-  tone: 'blue' | 'crimson' | 'emerald' | 'purple' | 'amber' | 'teal';
-}
-
-export interface AboutCadreSummary {
-  cadreId: PscCadreId;
-  levelBadge: string;
-  educationBadge: string;
-  heading: string;
-  description: string;
-  ctaLabel: string;
-  tone: 'blue' | 'crimson' | 'emerald';
-}
+export type { AboutCadreSummary, AboutMissionCard, AboutPlatformPillar };
 
 export const ABOUT_HERO_CONTENT = {
   badge: 'About PSC Nepal (हाम्रो बारेमा)',

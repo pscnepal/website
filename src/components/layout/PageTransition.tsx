@@ -1,20 +1,5 @@
-import { type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-
-interface PageTransitionProps {
-  children: ReactNode;
-  /**
-   * Optional sub-view key (e.g. active cadre or question ID) to animate
-   * transitions within the same route without unmounting the top navbar.
-   */
-  transitionKey?: string;
-  /**
-   * When true, animates opacity only (no vertical translateY) — ideal for
-   * canvas/PDF viewports that measure container geometry on mount.
-   */
-  fadeOnly?: boolean;
-  className?: string;
-}
+import type { PageTransitionProps } from '../../types/common';
 
 const EASE_SETTLE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const EASE_EXIT: [number, number, number, number] = [0.4, 0, 1, 1];

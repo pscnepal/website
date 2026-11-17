@@ -4,10 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../app/hooks';
 import { setCurrentBook } from '../../features/library/librarySlice';
 import { registerLocalPdfFile } from '../../services/pdfService';
-
-interface PdfUploadProps {
-  compact?: boolean;
-}
+import type { PdfUploadProps } from '../../types/pdf';
 
 export function PdfUpload({ compact = false }: PdfUploadProps) {
   const [isDragging, setIsDragging] = useState(false);

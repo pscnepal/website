@@ -1,16 +1,15 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { DashboardUsersProvider } from '../../context/DashboardUsersContext';
-import type { DashboardTab } from '../../pages/DashboardPage';
+import type {
+  DashboardLayoutProps,
+  DashboardSearchContextValue,
+  DashboardTab,
+} from '../../types/dashboard';
 import { DashboardAdminGate } from '../auth/DashboardAdminGate';
 import { DashboardHeader } from './DashboardHeader';
 import { DashboardSidebar } from './DashboardSidebar';
-
-interface DashboardSearchContextValue {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-}
 
 const DashboardSearchContext = createContext<DashboardSearchContextValue | null>(
   null
@@ -20,14 +19,6 @@ export function useDashboardSearch(): DashboardSearchContextValue {
   const ctx = useContext(DashboardSearchContext);
   const [fallbackQuery, setFallbackQuery] = useState('');
   return ctx ?? { searchQuery: fallbackQuery, setSearchQuery: setFallbackQuery };
-}
-
-interface DashboardLayoutProps {
-  activeTab?: DashboardTab;
-  onSelectTab?: (tab: DashboardTab) => void;
-  searchQuery?: string;
-  onSearchChange?: (query: string) => void;
-  children?: React.ReactNode;
 }
 
 const STORAGE_KEY_SIDEBAR = 'pscnepal_dashboard_sidebar_collapsed';
@@ -64,6 +55,7 @@ export function DashboardLayout({
     if (pathname.includes('/written-bank')) return 'written-bank';
     if (pathname.includes('/materials')) return 'materials';
     if (pathname.includes('/users') || pathname.includes('/aspirants')) return 'users';
+    if (pathname.includes('/inquiries')) return 'inquiries';
     if (pathname.includes('/data') || pathname.includes('/backup')) return 'data';
     return 'overview';
   };

@@ -1,56 +1,18 @@
 import React, { forwardRef } from 'react';
-import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import type {
+  ActionButtonColor,
+  ActionButtonProps,
+  ActionButtonSize,
+  ActionButtonVariant,
+} from '../../types/common';
 
-export type ActionButtonColor =
-  | 'blue'
-  | 'crimson'
-  | 'emerald'
-  | 'amber'
-  | 'zinc'
-  | 'purple'
-  | 'red';
-
-export type ActionButtonVariant = 'solid' | 'outline' | 'subtle' | 'ghost';
-export type ActionButtonSize = 'xs' | 'sm' | 'md' | 'lg';
-
-export interface ActionButtonProps {
-  /** Text label displayed inside button (can be omitted for icon-only buttons) */
-  label?: React.ReactNode;
-  /** Mandatory title / tooltip explaining the action for accessibility & user guidance */
-  title: string;
-  /** Primary semantic color theme */
-  color?: ActionButtonColor;
-  /** Visual button style */
-  variant?: ActionButtonVariant;
-  /** Button dimensions */
-  size?: ActionButtonSize;
-  /** Optional icon component */
-  icon?: LucideIcon | React.ComponentType<{ className?: string }>;
-  /** Position of icon relative to label */
-  iconPosition?: 'left' | 'right';
-  /** Click event handler */
-  onClick?: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
-  /** If provided, renders as an internal React Router Link */
-  to?: string;
-  /** If provided, renders as an external HTML anchor tag */
-  href?: string;
-  /** Download attribute when href is provided */
-  download?: boolean | string;
-  /** Open in new tab when href is provided */
-  target?: string;
-  rel?: string;
-  /** Disabled state */
-  disabled?: boolean;
-  /** Custom accessible label */
-  ariaLabel?: string;
-  /** Custom styling classes */
-  className?: string;
-  /** Active toggle state (for pressed toggles) */
-  active?: boolean;
-  /** HTML button type */
-  type?: 'button' | 'submit' | 'reset';
-}
+export type {
+  ActionButtonColor,
+  ActionButtonProps,
+  ActionButtonSize,
+  ActionButtonVariant,
+};
 
 const COLOR_MAP: Record<
   ActionButtonColor,

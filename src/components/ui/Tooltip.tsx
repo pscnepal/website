@@ -1,11 +1,5 @@
-import { useId, useState, type ReactNode } from 'react';
-
-interface TooltipProps {
-  content: string;
-  shortcut?: string;
-  position?: 'bottom' | 'top';
-  children: ReactNode;
-}
+import { useId, useState } from 'react';
+import type { TooltipProps } from '../../types/common';
 
 export function Tooltip({
   content,

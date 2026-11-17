@@ -81,11 +81,9 @@ export const LEGACY_MATERIAL_PATH_MAP: Record<string, string> = {
     'https://lawcommission.gov.np/np/wp-content/uploads/2019/03/Sarbajanik-Kharid-Ain-2063.pdf',
 };
 
-export interface UrlValidationResult {
-  valid: boolean;
-  normalizedUrl: string;
-  errorMessage?: string;
-}
+import type { UrlValidationResult } from '../types/common';
+
+export type { UrlValidationResult };
 
 /**
  * Validates user-entered PDF URLs. Supports absolute http(s) URLs as well as

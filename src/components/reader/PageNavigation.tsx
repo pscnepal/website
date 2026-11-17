@@ -1,15 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type { PageNavigationProps } from '../../types/reader';
 import { Button } from '../ui/Button';
 import { Tooltip } from '../ui/Tooltip';
-
-interface PageNavigationProps {
-  currentPage: number;
-  totalPages: number;
-  onPrev: () => void;
-  onNext: () => void;
-  onJumpToPage: (page: number) => void;
-}
 
 export function PageNavigation({
   currentPage,

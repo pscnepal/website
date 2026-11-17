@@ -4,14 +4,9 @@ import {
   recordPageTurnStats,
   recordReadingTick,
 } from '../features/library/librarySlice';
+import type { UseReadingStatsParams } from '../types/reader';
 
 const IDLE_THRESHOLD_MS = 180_000; // Pause timer if no interaction for 3 minutes
-
-interface UseReadingStatsParams {
-  bookId: string | null;
-  isActiveDocument: boolean;
-  currentPage: number;
-}
 
 export function useReadingStats({
   bookId,

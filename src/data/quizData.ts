@@ -1,44 +1,18 @@
-export type QuizOptionKey = 'A' | 'B' | 'C' | 'D';
-export type QuizDifficulty = 'Easy' | 'Medium' | 'Hard';
+import type {
+  QuizDeck,
+  QuizDifficulty,
+  QuizOption,
+  QuizOptionKey,
+  QuizQuestion,
+} from '../types/assessment';
 
-export interface QuizOption {
-  key: QuizOptionKey;
-  text: string;
-  textNe?: string;
-}
-
-export interface QuizQuestion {
-  id: string;
-  level: string;
-  service: string;
-  group: string;
-  post: string;
-  paper: string;
-  subject: string;
-  topicId: string;
-  topic: string;
-  subtopicId: string;
-  subtopic: string;
-  question: string;
-  questionNe?: string;
-  options: QuizOption[];
-  correct_options: QuizOptionKey[];
-  is_multi_select: boolean;
-  explanation: string;
-  explanationNe?: string;
-  difficulty: QuizDifficulty;
-  marks: number;
-  sourceTitle?: string;
-  sourcePath?: string;
-}
-
-export interface QuizDeck {
-  id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  questions: QuizQuestion[];
-}
+export type {
+  QuizDeck,
+  QuizDifficulty,
+  QuizOption,
+  QuizOptionKey,
+  QuizQuestion,
+};
 
 export const QUIZ_OPTION_KEYS: readonly QuizOptionKey[] = [
   'A',

@@ -12,10 +12,6 @@ import {
 } from 'lucide-react';
 import { useAppDispatch } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
-import type {
-  ReadingMaterialCategory,
-  ReadingMaterialItem,
-} from '../../data/readingMaterials';
 import {
   MATERIAL_EVENTS,
   materialStorageService,
@@ -23,29 +19,22 @@ import {
 import { resolveSampleUrl } from '../../utils/urlHelpers';
 import { ActionButton } from '../common/ActionButton';
 import { ConfirmDialog } from '../common/ConfirmDialog';
-import {
-  SharedActionMenu,
-  type ActionMenuItem,
-} from '../common/SharedActionMenu';
+import { SharedActionMenu } from '../common/SharedActionMenu';
 import { ReactionButtons } from '../common/ReactionButtons';
-import {
-  SharedDataTable,
-  type ColumnDef,
-  type TableFilterDef,
-} from '../common/SharedDataTable';
-import {
-  MaterialFormModal,
-  type MaterialFormSavePayload,
-} from './MaterialFormModal';
+import { SharedDataTable } from '../common/SharedDataTable';
+import { MaterialFormModal } from './MaterialFormModal';
 import { useDashboardSearch } from './DashboardLayout';
 import { toast } from '../../services/toastService';
 import { copyWithToast } from '../../utils/clipboardHelpers';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
-
-type MaterialTableRow = ReadingMaterialItem & {
-  categoryName: string;
-  categoryId: string;
-};
+import type {
+  ActionMenuItem,
+  ColumnDef,
+  MaterialFormSavePayload,
+  MaterialTableRow,
+  ReadingMaterialCategory,
+  TableFilterDef,
+} from '../../types';
 
 export function MaterialsInventoryTab() {
   const dispatch = useAppDispatch();

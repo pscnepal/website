@@ -1,34 +1,12 @@
-import type { PscCadreId } from './pscSyllabusData.ts';
-import type { QuizQuestion } from './quizData.ts';
+import type {
+  BookletKey,
+  OmrPreset,
+  QuizQuestion,
+  WrittenHallPreset,
+} from '../types/assessment';
 import { questionStorageService } from '../services/questionStorageService';
 
-export type BookletKey = 'A' | 'B' | 'C' | 'D';
-
-export interface OmrPreset {
-  id: string;
-  cadreId: PscCadreId;
-  cadreLabel: string;
-  title: string;
-  nepaliTitle: string;
-  questionCount: number;
-  marksPerQuestion: number;
-  negativeRate: number;
-  passPercent: number;
-  allocatedSeconds: number;
-  blueprintSummary: string;
-  selectQuestions: () => QuizQuestion[];
-}
-
-export interface WrittenHallPreset {
-  id: string;
-  cadreId: PscCadreId;
-  paperCode: string;
-  title: string;
-  nepaliTitle: string;
-  allocatedSeconds: number;
-  questionIds: string[];
-  description: string;
-}
+export type { BookletKey, OmrPreset, WrittenHallPreset };
 
 export function deterministicPermute<T>(items: T[], key: BookletKey): T[] {
   const seedMap: Record<BookletKey, number> = {

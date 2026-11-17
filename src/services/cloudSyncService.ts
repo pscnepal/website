@@ -32,26 +32,69 @@ import {
   OperationType,
   reportFirestoreSnapshotError,
 } from '../lib/firebase';
-import type { QuizDifficulty, QuizOptionKey, QuizQuestion } from '../data/quizData';
-import type { ReadingMaterialItem } from '../data/readingMaterials';
-import {
-  WRITTEN_PAPERS,
-  type BilingualRubricPoint,
-  type BilingualSection,
-  type WrittenPaperCode,
-  type WrittenQuestion,
-  type WrittenQuestionType,
-} from '../data/writtenQuestionsData';
-import type { FlaggedQuestionRecord } from './storageService';
+import { WRITTEN_PAPERS } from '../data/writtenQuestionsData';
+import type {
+  BilingualRubricPoint,
+  BilingualSection,
+  BookReadingStats,
+  CloudItemStatsEntry,
+  CloudItemType,
+  CloudMaterialOverride,
+  CloudQuizQuestionOverride,
+  CloudReactionValue,
+  CloudUserDirectoryEntry,
+  CloudUserFlaggedQuestionSummary,
+  CloudUserQuizAttemptSummary,
+  CloudUserStatus,
+  CloudUserTargetCadre,
+  CloudUserWorkspaceBundle,
+  CloudWrittenQuestionOverride,
+  ContactInquiryRecord,
+  FlaggedQuestionRecord,
+  FlashcardProgress,
+  InquiryStatus,
+  LeitnerBoxLevel,
+  PscCadreId,
+  QuizDifficulty,
+  QuizOptionKey,
+  QuizQuestion,
+  ReadingMaterialItem,
+  ReadingProgressEntry,
+  RecentBookEntry,
+  SimulationRunRecord,
+  UpdateAdminUserDetailsInput,
+  UpsertMaterialPayload,
+  WorkspaceBookmarksPayload,
+  WorkspaceLibraryPayload,
+  WorkspacePreferencesPayload,
+  WorkspaceSyllabusPayload,
+  WrittenEvaluationRecord,
+  WrittenPaperCode,
+  WrittenQuestion,
+  WrittenQuestionProgress,
+  WrittenQuestionType,
+} from '../types';
 
-export type CloudItemType = 'question' | 'material';
-export type CloudReactionValue = 'like' | 'dislike' | 'none';
-
-export interface CloudItemStatsEntry {
-  views: number;
-  likes: number;
-  dislikes: number;
-}
+export type {
+  CloudItemStatsEntry,
+  CloudItemType,
+  CloudMaterialOverride,
+  CloudQuizQuestionOverride,
+  CloudReactionValue,
+  CloudUserDirectoryEntry,
+  CloudUserFlaggedQuestionSummary,
+  CloudUserQuizAttemptSummary,
+  CloudUserStatus,
+  CloudUserTargetCadre,
+  CloudUserWorkspaceBundle,
+  CloudWrittenQuestionOverride,
+  UpdateAdminUserDetailsInput,
+  UpsertMaterialPayload,
+  WorkspaceBookmarksPayload,
+  WorkspaceLibraryPayload,
+  WorkspacePreferencesPayload,
+  WorkspaceSyllabusPayload,
+};
 
 const VALID_ID_REGEX = /^[a-zA-Z0-9_-]+$/;
 
@@ -151,7 +194,7 @@ export async function fetchAllCloudItemStats(): Promise<
   try {
     const q = query(
       collection(db, 'itemStats'),
-      where('itemType', 'in', ['question', 'material']),
+      where('itemType', 'in', ['question', 'material', 'affair']),
       limit(1000)
     );
     const snapshot = await getDocs(q);
@@ -178,7 +221,7 @@ export function subscribeToCloudItemStats(
   const path = 'itemStats';
   const q = query(
     collection(db, 'itemStats'),
-    where('itemType', 'in', ['question', 'material']),
+    where('itemType', 'in', ['question', 'material', 'affair']),
     limit(1000)
   );
   return onSnapshot(
@@ -638,58 +681,6 @@ export async function clearUserQuizAttemptsInFirestore(
 // ADMIN USERS DIRECTORY & TELEMETRY (Read-Only for Verified Dashboard Admin)
 // ============================================================================
 
-export type CloudUserStatus = 'active' | 'disabled' | 'banned';
-export type CloudUserTargetCadre = 'section-officer' | 'nayab-subba' | 'kharidar';
-
-export interface CloudUserQuizAttemptSummary {
-  id: string;
-  deckTitle: string;
-  mode: 'exam' | 'study';
-  totalQuestions: number;
-  correctCount: number;
-  wrongCount: number;
-  accuracyPercent: number;
-  pscNetScore: number;
-  durationSeconds: number;
-  completedAt: string;
-}
-
-export interface CloudUserFlaggedQuestionSummary {
-  questionId: string;
-  flaggedAt: string;
-  source: 'quiz' | 'simulation' | 'dashboard';
-  deckTitle: string;
-  cadreId: string;
-  reason: string;
-  note: string;
-}
-
-export interface CloudUserDirectoryEntry {
-  uid: string;
-  displayName: string;
-  email: string;
-  photoURL: string;
-  role: 'admin' | 'aspirant';
-  status: CloudUserStatus;
-  statusReason: string;
-  targetCadre: CloudUserTargetCadre | '';
-  phone: string;
-  adminNotes: string;
-  statusUpdatedAt: string | null;
-  updatedAt: string | null;
-  createdAt: string | null;
-  lastLoginAt: string | null;
-  quizAttemptsCount: number;
-  questionsAnswered: number;
-  averageAccuracy: number | null;
-  bestAccuracy: number | null;
-  flaggedCount: number;
-  reactionsCount: number;
-  viewsCount: number;
-  recentAttempts: CloudUserQuizAttemptSummary[];
-  flaggedQuestions: CloudUserFlaggedQuestionSummary[];
-}
-
 function toIsoStringOrNull(raw: unknown): string | null {
   if (!raw) return null;
   if (typeof raw === 'string') return raw;
@@ -996,20 +987,6 @@ export async function updateAdminUserStatus(params: {
   }
 }
 
-export interface UpdateAdminUserDetailsInput {
-  uid: string;
-  displayName: string;
-  email?: string;
-  photoURL?: string;
-  role: 'admin' | 'aspirant';
-  status?: CloudUserStatus;
-  statusReason?: string;
-  targetCadre?: CloudUserTargetCadre | '';
-  phone?: string;
-  adminNotes?: string;
-  statusChanged?: boolean;
-}
-
 export async function updateAdminUserDetails(
   params: UpdateAdminUserDetailsInput
 ): Promise<void> {
@@ -1055,7 +1032,13 @@ export async function updateAdminUserDetails(
 
 async function deleteSubcollectionForUser(
   uid: string,
-  subcollection: 'quizAttempts' | 'flaggedQuestions' | 'itemReactions'
+  subcollection:
+    | 'quizAttempts'
+    | 'flaggedQuestions'
+    | 'itemReactions'
+    | 'writtenProgress'
+    | 'writtenEvaluations'
+    | 'simulationRuns'
 ): Promise<void> {
   const colPath = `users/${uid}/${subcollection}`;
   let hasMore = true;
@@ -1092,10 +1075,30 @@ async function deleteSubcollectionForUser(
   }
 }
 
+const WORKSPACE_DOC_IDS = [
+  'preferences',
+  'syllabus',
+  'bookmarks',
+  'flashcards',
+  'library',
+] as const;
+
 export async function deleteAdminUserFromFirestore(uid: string): Promise<void> {
   await deleteSubcollectionForUser(uid, 'quizAttempts');
   await deleteSubcollectionForUser(uid, 'flaggedQuestions');
   await deleteSubcollectionForUser(uid, 'itemReactions');
+  await deleteSubcollectionForUser(uid, 'writtenProgress');
+  await deleteSubcollectionForUser(uid, 'writtenEvaluations');
+  await deleteSubcollectionForUser(uid, 'simulationRuns');
+
+  for (const wsId of WORKSPACE_DOC_IDS) {
+    const wsPath = `users/${uid}/workspace/${wsId}`;
+    try {
+      await deleteDoc(doc(db, 'users', uid, 'workspace', wsId));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, wsPath);
+    }
+  }
 
   const userPath = `users/${uid}`;
   try {
@@ -1233,18 +1236,6 @@ export async function updateCurrentAdminPassword(
 // ============================================================================
 // QUESTION BANK CLOUD SYNC (MCQ & WRITTEN OVERRIDES / ADDITIONS / DELETIONS)
 // ============================================================================
-
-export interface CloudQuizQuestionOverride {
-  question: QuizQuestion;
-  isDeleted: boolean;
-  updatedAtMs: number;
-}
-
-export interface CloudWrittenQuestionOverride {
-  question: WrittenQuestion;
-  isDeleted: boolean;
-  updatedAtMs: number;
-}
 
 function toEpochMs(raw: unknown): number {
   if (!raw) return 0;
@@ -1863,24 +1854,6 @@ export async function resetAllWrittenOverridesInFirestore(): Promise<void> {
 // READING MATERIALS CLOUD SYNC (OVERRIDES / ADDITIONS / DELETIONS)
 // ============================================================================
 
-export interface CloudMaterialOverride {
-  material: ReadingMaterialItem;
-  categoryId: string;
-  categoryName?: string;
-  categorySubtitle?: string;
-  categoryDescription?: string;
-  isDeleted: boolean;
-  updatedAtMs: number;
-}
-
-export interface UpsertMaterialPayload {
-  item: ReadingMaterialItem;
-  categoryId: string;
-  categoryName?: string;
-  categorySubtitle?: string;
-  categoryDescription?: string;
-}
-
 function parseMaterialOverrideDoc(
   docId: string,
   data: Record<string, unknown>
@@ -2115,6 +2088,1062 @@ export async function resetAllMaterialOverridesInFirestore(): Promise<void> {
     }
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
+// ============================================================================
+// USER PROFILE TARGET CADRE SYNC
+// ============================================================================
+
+export async function updateUserTargetCadreInFirestore(
+  userId: string,
+  targetCadre: PscCadreId
+): Promise<void> {
+  const path = `users/${userId}`;
+  return enqueueItemTask(`profile-cadre:${userId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        targetCadre,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, path);
+    }
+  });
+}
+
+// ============================================================================
+// USER STUDY WORKSPACE DOCS SYNC (Preferences, Syllabus, Bookmarks, Flashcards, Library)
+// ============================================================================
+
+function sanitizeBooleanMap(
+  raw: unknown,
+  maxEntries: number
+): Record<string, boolean> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const result: Record<string, boolean> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (v && typeof k === 'string' && k.trim()) {
+      result[k.trim().slice(0, 128)] = true;
+      if (Object.keys(result).length >= maxEntries) break;
+    }
+  }
+  return result;
+}
+
+function sanitizeStringArray(raw: unknown, maxLen: number): string[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item === 'string' && item.trim()) {
+      const cleaned = item.trim().slice(0, 160);
+      if (!seen.has(cleaned)) {
+        seen.add(cleaned);
+        out.push(cleaned);
+        if (out.length >= maxLen) break;
+      }
+    }
+  }
+  return out;
+}
+
+export async function fetchUserWorkspaceBundle(
+  userId: string
+): Promise<CloudUserWorkspaceBundle> {
+  const readWorkspaceDoc = async (docName: (typeof WORKSPACE_DOC_IDS)[number]) => {
+    const path = `users/${userId}/workspace/${docName}`;
+    try {
+      return await getDoc(doc(db, 'users', userId, 'workspace', docName));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  };
+
+  const [prefSnap, sylSnap, bmSnap, fcSnap, libSnap] = await Promise.all([
+    readWorkspaceDoc('preferences'),
+    readWorkspaceDoc('syllabus'),
+    readWorkspaceDoc('bookmarks'),
+    readWorkspaceDoc('flashcards'),
+    readWorkspaceDoc('library'),
+  ]);
+
+  let preferences: WorkspacePreferencesPayload | null = null;
+  if (prefSnap.exists()) {
+    const d = prefSnap.data();
+    preferences = {
+      theme: d.theme === 'dark' ? 'dark' : 'light',
+      defaultReadingMode:
+        d.defaultReadingMode === 'standard' ? 'standard' : 'flipbook',
+      defaultSoundEnabled:
+        typeof d.defaultSoundEnabled === 'boolean' ? d.defaultSoundEnabled : true,
+      preferredQuizMode: d.preferredQuizMode === 'study' ? 'study' : 'exam',
+      preferredWrittenLanguage:
+        d.preferredWrittenLanguage === 'en' || d.preferredWrittenLanguage === 'ne'
+          ? d.preferredWrittenLanguage
+          : 'bilingual',
+      targetCadreId:
+        d.targetCadreId === 'nayab-subba' || d.targetCadreId === 'kharidar'
+          ? d.targetCadreId
+          : 'section-officer',
+    };
+  }
+
+  let syllabus: WorkspaceSyllabusPayload | null = null;
+  if (sylSnap.exists()) {
+    const d = sylSnap.data();
+    syllabus = {
+      completedUnitIds: sanitizeStringArray(d.completedUnitIds, 500),
+      completedTopicIds: sanitizeStringArray(d.completedTopicIds, 2500),
+      bookmarkedUnitIds: sanitizeStringArray(d.bookmarkedUnitIds, 500),
+      examChecklist: sanitizeBooleanMap(d.examChecklist, 50),
+    };
+  }
+
+  let bookmarks: WorkspaceBookmarksPayload | null = null;
+  if (bmSnap.exists()) {
+    const d = bmSnap.data();
+    bookmarks = {
+      pyqIds: sanitizeStringArray(d.pyqIds, 500),
+      affairIds: sanitizeStringArray(d.affairIds, 500),
+    };
+  }
+
+  let flashcards: Record<string, FlashcardProgress> | null = null;
+  if (fcSnap.exists()) {
+    const d = fcSnap.data();
+    const rawMap =
+      d.progressMap && typeof d.progressMap === 'object' ? d.progressMap : {};
+    flashcards = {};
+    for (const [cardId, val] of Object.entries(rawMap as Record<string, unknown>)) {
+      if (!val || typeof val !== 'object') continue;
+      const entry = val as Record<string, unknown>;
+      const boxLevel: LeitnerBoxLevel =
+        entry.boxLevel === 2 ? 2 : entry.boxLevel === 3 ? 3 : 1;
+      flashcards[cardId] = {
+        boxLevel,
+        lastReviewedAt: Number(entry.lastReviewedAt) || 0,
+        timesReviewed: Math.max(0, Number(entry.timesReviewed) || 0),
+        timesCorrect: Math.max(0, Number(entry.timesCorrect) || 0),
+      };
+    }
+  }
+
+  let library: WorkspaceLibraryPayload | null = null;
+  if (libSnap.exists()) {
+    const d = libSnap.data();
+    const rawBooks = Array.isArray(d.recentBooks) ? d.recentBooks : [];
+    const recentBooks: RecentBookEntry[] = rawBooks
+      .filter((b): b is Record<string, unknown> => Boolean(b && typeof b === 'object'))
+      .slice(0, 12)
+      .map((b) => ({
+        id: String(b.id ?? ''),
+        title: String(b.title ?? 'Study Material'),
+        ...(typeof b.author === 'string' && b.author ? { author: b.author } : {}),
+        sourceType: (b.sourceType === 'local' ? 'local' : 'url') as 'local' | 'url',
+        url: b.sourceType === 'local' ? '' : String(b.url ?? ''),
+        ...(typeof b.fileName === 'string' && b.fileName
+          ? { fileName: b.fileName }
+          : {}),
+        ...(typeof b.fileSize === 'number' && b.fileSize >= 0
+          ? { fileSize: b.fileSize }
+          : {}),
+        lastPage: Math.max(1, Number(b.lastPage) || 1),
+        totalPages: Math.max(1, Number(b.totalPages) || 1),
+        lastOpenedAt: String(b.lastOpenedAt ?? new Date().toISOString()),
+      }))
+      .filter((b) => Boolean(b.id));
+
+    const readingProgress: Record<string, ReadingProgressEntry> = {};
+    if (d.readingProgress && typeof d.readingProgress === 'object') {
+      for (const [k, v] of Object.entries(
+        d.readingProgress as Record<string, unknown>
+      ).slice(0, 200)) {
+        if (!v || typeof v !== 'object') continue;
+        const p = v as Record<string, unknown>;
+        readingProgress[k] = {
+          lastPage: Math.max(1, Number(p.lastPage) || 1),
+          totalPages: Math.max(1, Number(p.totalPages) || 1),
+          updatedAt: String(p.updatedAt ?? new Date().toISOString()),
+        };
+      }
+    }
+
+    const readingStats: Record<string, BookReadingStats> = {};
+    if (d.readingStats && typeof d.readingStats === 'object') {
+      for (const [k, v] of Object.entries(
+        d.readingStats as Record<string, unknown>
+      ).slice(0, 200)) {
+        if (!v || typeof v !== 'object') continue;
+        const s = v as Record<string, unknown>;
+        readingStats[k] = {
+          totalReadingSeconds: Math.max(0, Number(s.totalReadingSeconds) || 0),
+          pagesReadCount: Math.max(0, Number(s.pagesReadCount) || 0),
+          pagesPerMinute: Math.max(0, Number(s.pagesPerMinute) || 0),
+          uniquePagesVisited: Array.isArray(s.uniquePagesVisited)
+            ? s.uniquePagesVisited
+                .map((n) => Math.max(1, Number(n) || 1))
+                .slice(0, 1000)
+            : [],
+          sessionsCount: Math.max(0, Number(s.sessionsCount) || 0),
+          lastReadAt: String(s.lastReadAt ?? new Date().toISOString()),
+        };
+      }
+    }
+
+    library = { recentBooks, readingProgress, readingStats };
+  }
+
+  return { preferences, syllabus, bookmarks, flashcards, library };
+}
+
+export async function upsertWorkspacePreferencesInFirestore(
+  userId: string,
+  prefs: WorkspacePreferencesPayload
+): Promise<void> {
+  const docPath = `users/${userId}/workspace/preferences`;
+  return enqueueItemTask(`ws-prefs:${userId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'users', userId, 'workspace', 'preferences');
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const fields = {
+      theme: prefs.theme === 'dark' ? 'dark' : 'light',
+      defaultReadingMode:
+        prefs.defaultReadingMode === 'standard' ? 'standard' : 'flipbook',
+      defaultSoundEnabled: Boolean(prefs.defaultSoundEnabled),
+      preferredQuizMode: prefs.preferredQuizMode === 'study' ? 'study' : 'exam',
+      preferredWrittenLanguage:
+        prefs.preferredWrittenLanguage === 'en' ||
+        prefs.preferredWrittenLanguage === 'ne'
+          ? prefs.preferredWrittenLanguage
+          : 'bilingual',
+      targetCadreId:
+        prefs.targetCadreId === 'nayab-subba' || prefs.targetCadreId === 'kharidar'
+          ? prefs.targetCadreId
+          : 'section-officer',
+      updatedAt: serverTimestamp(),
+    };
+
+    if (!existingSnap.exists()) {
+      try {
+        await setDoc(ref, {
+          userId,
+          ...fields,
+          createdAt: serverTimestamp(),
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      try {
+        await updateDoc(ref, fields);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  });
+}
+
+export async function upsertWorkspaceSyllabusInFirestore(
+  userId: string,
+  syllabus: WorkspaceSyllabusPayload
+): Promise<void> {
+  const docPath = `users/${userId}/workspace/syllabus`;
+  return enqueueItemTask(`ws-syl:${userId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'users', userId, 'workspace', 'syllabus');
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const fields = {
+      completedUnitIds: sanitizeStringArray(syllabus.completedUnitIds, 500),
+      completedTopicIds: sanitizeStringArray(syllabus.completedTopicIds, 2500),
+      bookmarkedUnitIds: sanitizeStringArray(syllabus.bookmarkedUnitIds, 500),
+      examChecklist: sanitizeBooleanMap(syllabus.examChecklist, 50),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (!existingSnap.exists()) {
+      try {
+        await setDoc(ref, {
+          userId,
+          ...fields,
+          createdAt: serverTimestamp(),
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      try {
+        await updateDoc(ref, fields);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  });
+}
+
+export async function upsertWorkspaceBookmarksInFirestore(
+  userId: string,
+  bookmarks: WorkspaceBookmarksPayload
+): Promise<void> {
+  const docPath = `users/${userId}/workspace/bookmarks`;
+  return enqueueItemTask(`ws-bm:${userId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'users', userId, 'workspace', 'bookmarks');
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const fields = {
+      pyqIds: sanitizeStringArray(bookmarks.pyqIds, 500),
+      affairIds: sanitizeStringArray(bookmarks.affairIds, 500),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (!existingSnap.exists()) {
+      try {
+        await setDoc(ref, {
+          userId,
+          ...fields,
+          createdAt: serverTimestamp(),
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      try {
+        await updateDoc(ref, fields);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  });
+}
+
+export async function upsertWorkspaceFlashcardsInFirestore(
+  userId: string,
+  progressMap: Record<string, FlashcardProgress>
+): Promise<void> {
+  const docPath = `users/${userId}/workspace/flashcards`;
+  return enqueueItemTask(`ws-fc:${userId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'users', userId, 'workspace', 'flashcards');
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const cleanMap: Record<string, FlashcardProgress> = {};
+    for (const [k, v] of Object.entries(progressMap).slice(0, 500)) {
+      if (!v) continue;
+      cleanMap[k] = {
+        boxLevel: v.boxLevel === 2 ? 2 : v.boxLevel === 3 ? 3 : 1,
+        lastReviewedAt: Number(v.lastReviewedAt) || 0,
+        timesReviewed: Math.max(0, Math.round(Number(v.timesReviewed) || 0)),
+        timesCorrect: Math.max(0, Math.round(Number(v.timesCorrect) || 0)),
+      };
+    }
+
+    const fields = {
+      progressMap: cleanMap,
+      updatedAt: serverTimestamp(),
+    };
+
+    if (!existingSnap.exists()) {
+      try {
+        await setDoc(ref, {
+          userId,
+          ...fields,
+          createdAt: serverTimestamp(),
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      try {
+        await updateDoc(ref, fields);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  });
+}
+
+export async function upsertWorkspaceLibraryInFirestore(
+  userId: string,
+  library: WorkspaceLibraryPayload
+): Promise<void> {
+  const docPath = `users/${userId}/workspace/library`;
+  return enqueueItemTask(`ws-lib:${userId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'users', userId, 'workspace', 'library');
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const cleanBooks = library.recentBooks.slice(0, 12).map((b) => ({
+      id: String(b.id).slice(0, 128),
+      title: String(b.title || 'Study Material').slice(0, 260),
+      ...(b.author ? { author: String(b.author).slice(0, 160) } : {}),
+      sourceType: b.sourceType === 'local' ? 'local' : 'url',
+      url: b.sourceType === 'local' ? '' : String(b.url || '').slice(0, 1000),
+      ...(b.fileName ? { fileName: String(b.fileName).slice(0, 260) } : {}),
+      ...(typeof b.fileSize === 'number' && b.fileSize >= 0
+        ? { fileSize: Math.round(b.fileSize) }
+        : {}),
+      lastPage: Math.max(1, Math.round(Number(b.lastPage) || 1)),
+      totalPages: Math.max(1, Math.round(Number(b.totalPages) || 1)),
+      lastOpenedAt: String(b.lastOpenedAt || new Date().toISOString()).slice(0, 64),
+    }));
+
+    const cleanProgress: Record<string, ReadingProgressEntry> = {};
+    for (const [k, v] of Object.entries(library.readingProgress).slice(0, 200)) {
+      if (!v) continue;
+      cleanProgress[k] = {
+        lastPage: Math.max(1, Math.round(Number(v.lastPage) || 1)),
+        totalPages: Math.max(1, Math.round(Number(v.totalPages) || 1)),
+        updatedAt: String(v.updatedAt || new Date().toISOString()).slice(0, 64),
+      };
+    }
+
+    const cleanStats: Record<string, BookReadingStats> = {};
+    for (const [k, v] of Object.entries(library.readingStats).slice(0, 200)) {
+      if (!v) continue;
+      cleanStats[k] = {
+        totalReadingSeconds: Math.max(
+          0,
+          Math.round(Number(v.totalReadingSeconds) || 0)
+        ),
+        pagesReadCount: Math.max(0, Math.round(Number(v.pagesReadCount) || 0)),
+        pagesPerMinute: Math.max(
+          0,
+          Math.round((Number(v.pagesPerMinute) || 0) * 100) / 100
+        ),
+        uniquePagesVisited: Array.isArray(v.uniquePagesVisited)
+          ? v.uniquePagesVisited
+              .map((n) => Math.max(1, Math.round(Number(n) || 1)))
+              .slice(0, 1000)
+          : [],
+        sessionsCount: Math.max(0, Math.round(Number(v.sessionsCount) || 0)),
+        lastReadAt: String(v.lastReadAt || new Date().toISOString()).slice(0, 64),
+      };
+    }
+
+    const fields = {
+      recentBooks: cleanBooks,
+      readingProgress: cleanProgress,
+      readingStats: cleanStats,
+      updatedAt: serverTimestamp(),
+    };
+
+    if (!existingSnap.exists()) {
+      try {
+        await setDoc(ref, {
+          userId,
+          ...fields,
+          createdAt: serverTimestamp(),
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      try {
+        await updateDoc(ref, fields);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  });
+}
+
+// ============================================================================
+// WRITTEN STUDY PROGRESS & DRAFTS CLOUD SYNC
+// ============================================================================
+
+export async function fetchUserWrittenProgress(
+  userId: string
+): Promise<Record<string, WrittenQuestionProgress>> {
+  const path = `users/${userId}/writtenProgress`;
+  try {
+    const q = query(
+      collection(db, 'users', userId, 'writtenProgress'),
+      where('userId', '==', userId),
+      limit(300)
+    );
+    const snapshot = await getDocs(q);
+    const map: Record<string, WrittenQuestionProgress> = {};
+    snapshot.docs.forEach((docSnap) => {
+      const d = docSnap.data();
+      const qId = String(d.questionId ?? docSnap.id);
+      map[qId] = {
+        questionId: qId,
+        status:
+          d.status === 'mastered'
+            ? 'mastered'
+            : d.status === 'practicing'
+              ? 'practicing'
+              : 'unseen',
+        checkedRubricIndices: Array.isArray(d.checkedRubricIndices)
+          ? d.checkedRubricIndices
+              .filter((n) => typeof n === 'number' && n >= 0)
+              .slice(0, 50)
+          : [],
+        draftAnswer: typeof d.draftAnswer === 'string' ? d.draftAnswer : '',
+        timeSpentSeconds: Math.max(0, Number(d.timeSpentSeconds) || 0),
+        updatedAt: String(
+          d.clientUpdatedAt ?? toIsoStringOrNull(d.updatedAt) ?? new Date().toISOString()
+        ),
+      };
+    });
+    return map;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+}
+
+export async function upsertWrittenProgressInFirestore(
+  userId: string,
+  record: WrittenQuestionProgress
+): Promise<void> {
+  const safeQId = sanitizeFirestoreId(record.questionId, 'wq');
+  const docPath = `users/${userId}/writtenProgress/${safeQId}`;
+
+  return enqueueItemTask(`wr-prog:${userId}:${safeQId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'users', userId, 'writtenProgress', safeQId);
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const fields = {
+      status:
+        record.status === 'mastered'
+          ? 'mastered'
+          : record.status === 'practicing'
+            ? 'practicing'
+            : 'unseen',
+      checkedRubricIndices: Array.isArray(record.checkedRubricIndices)
+        ? record.checkedRubricIndices
+            .filter((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0)
+            .slice(0, 50)
+        : [],
+      draftAnswer: String(record.draftAnswer ?? '').slice(0, 30000),
+      timeSpentSeconds: Math.min(
+        360000,
+        Math.max(0, Math.round(Number(record.timeSpentSeconds) || 0))
+      ),
+      clientUpdatedAt: (record.updatedAt || new Date().toISOString()).slice(0, 64),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (!existingSnap.exists()) {
+      try {
+        await setDoc(ref, {
+          userId,
+          questionId: safeQId,
+          ...fields,
+          createdAt: serverTimestamp(),
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      try {
+        await updateDoc(ref, fields);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+  });
+}
+
+export async function clearUserWrittenProgressInFirestore(
+  userId: string
+): Promise<void> {
+  await deleteSubcollectionForUser(userId, 'writtenProgress');
+}
+
+// ============================================================================
+// WRITTEN ANSWER EVALUATOR SCORECARDS CLOUD SYNC
+// ============================================================================
+
+export async function fetchUserWrittenEvaluations(
+  userId: string
+): Promise<WrittenEvaluationRecord[]> {
+  const path = `users/${userId}/writtenEvaluations`;
+  try {
+    const q = query(
+      collection(db, 'users', userId, 'writtenEvaluations'),
+      where('userId', '==', userId),
+      limit(100)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .map((docSnap) => {
+        const d = docSnap.data();
+        return {
+          id: String(d.id ?? docSnap.id),
+          questionId: String(d.questionId ?? ''),
+          questionTitleNe: String(d.questionTitleNe ?? ''),
+          questionTitleEn: String(d.questionTitleEn ?? ''),
+          marks: (Number(d.marks) === 5 ? 5 : 10) as 5 | 10,
+          date: String(d.date ?? ''),
+          evaluatedAt: String(
+            d.evaluatedAt ?? toIsoStringOrNull(d.createdAt) ?? new Date().toISOString()
+          ),
+          scoreIntro: Number(d.scoreIntro) || 0,
+          scoreCore: Number(d.scoreCore) || 0,
+          scoreStatutes: Number(d.scoreStatutes) || 0,
+          scoreConclusion: Number(d.scoreConclusion) || 0,
+          totalScore: Number(d.totalScore) || 0,
+          timeSpentSeconds: Math.max(0, Number(d.timeSpentSeconds) || 0),
+          wordCount: Math.max(0, Number(d.wordCount) || 0),
+          userDraft: String(d.userDraft ?? ''),
+          feedbackNotes: String(d.feedbackNotes ?? ''),
+        };
+      })
+      .sort((a, b) =>
+        (b.evaluatedAt || '').localeCompare(a.evaluatedAt || '')
+      );
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+}
+
+export async function createWrittenEvaluationInFirestore(
+  userId: string,
+  record: WrittenEvaluationRecord
+): Promise<void> {
+  const safeId = sanitizeFirestoreId(record.id, 'eval');
+  const safeQId = sanitizeFirestoreId(record.questionId, 'wq');
+  const docPath = `users/${userId}/writtenEvaluations/${safeId}`;
+
+  return enqueueItemTask(`wr-eval:${userId}:${safeId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'users', userId, 'writtenEvaluations', safeId);
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+    if (existingSnap.exists()) return;
+
+    const marks: 5 | 10 = record.marks === 5 ? 5 : 10;
+    const clampScore = (v: number) =>
+      Math.min(marks, Math.max(0, Math.round((Number(v) || 0) * 100) / 100));
+
+    try {
+      await setDoc(ref, {
+        id: safeId,
+        userId,
+        questionId: safeQId,
+        questionTitleNe: String(record.questionTitleNe ?? '').slice(0, 400),
+        questionTitleEn: String(record.questionTitleEn ?? '').slice(0, 400),
+        marks,
+        date: String(record.date ?? '').slice(0, 64),
+        evaluatedAt: (record.evaluatedAt || new Date().toISOString()).slice(0, 64),
+        scoreIntro: clampScore(record.scoreIntro),
+        scoreCore: clampScore(record.scoreCore),
+        scoreStatutes: clampScore(record.scoreStatutes),
+        scoreConclusion: clampScore(record.scoreConclusion),
+        totalScore: clampScore(record.totalScore),
+        timeSpentSeconds: Math.min(
+          36000,
+          Math.max(0, Math.round(Number(record.timeSpentSeconds) || 0))
+        ),
+        wordCount: Math.min(
+          50000,
+          Math.max(0, Math.round(Number(record.wordCount) || 0))
+        ),
+        userDraft: String(record.userDraft ?? '').slice(0, 30000),
+        feedbackNotes: String(record.feedbackNotes ?? '').slice(0, 5000),
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, docPath);
+    }
+  });
+}
+
+export async function deleteWrittenEvaluationInFirestore(
+  userId: string,
+  evalId: string
+): Promise<void> {
+  const safeId = sanitizeFirestoreId(evalId, 'eval');
+  const docPath = `users/${userId}/writtenEvaluations/${safeId}`;
+  try {
+    await deleteDoc(doc(db, 'users', userId, 'writtenEvaluations', safeId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, docPath);
+  }
+}
+
+export async function clearUserWrittenEvaluationsInFirestore(
+  userId: string
+): Promise<void> {
+  await deleteSubcollectionForUser(userId, 'writtenEvaluations');
+}
+
+// ============================================================================
+// EXAM HALL SIMULATION RUNS CLOUD SYNC
+// ============================================================================
+
+export async function fetchUserSimulationRuns(
+  userId: string
+): Promise<SimulationRunRecord[]> {
+  const path = `users/${userId}/simulationRuns`;
+  try {
+    const q = query(
+      collection(db, 'users', userId, 'simulationRuns'),
+      where('userId', '==', userId),
+      limit(100)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .map((docSnap) => {
+        const d = docSnap.data();
+        const cadreId: PscCadreId =
+          d.cadreId === 'nayab-subba' || d.cadreId === 'kharidar'
+            ? d.cadreId
+            : 'section-officer';
+        const bookletKey =
+          d.bookletKey === 'B' || d.bookletKey === 'C' || d.bookletKey === 'D'
+            ? d.bookletKey
+            : 'A';
+        return {
+          id: String(d.id ?? docSnap.id),
+          presetId: String(d.presetId ?? ''),
+          presetTitle: String(d.presetTitle ?? 'PSC Simulation'),
+          cadreId,
+          simulationType: (
+            d.simulationType === 'written-hall' ? 'written-hall' : 'omr-hall'
+          ) as 'omr-hall' | 'written-hall',
+          fullMarks: Math.max(1, Number(d.fullMarks) || 100),
+          passMarks: Math.max(0, Number(d.passMarks) || 0),
+          grossMarks: Math.max(0, Number(d.grossMarks) || 0),
+          negativeDeduction: Math.max(0, Number(d.negativeDeduction) || 0),
+          netMarks: Math.max(0, Number(d.netMarks) || 0),
+          percentage: Math.max(0, Math.min(100, Number(d.percentage) || 0)),
+          passed: Boolean(d.passed),
+          totalItems: Math.max(1, Number(d.totalItems) || 1),
+          attemptedItems: Math.max(0, Number(d.attemptedItems) || 0),
+          correctItems: Math.max(0, Number(d.correctItems) || 0),
+          wrongItems: Math.max(0, Number(d.wrongItems) || 0),
+          durationSeconds: Math.max(0, Number(d.durationSeconds) || 0),
+          allocatedSeconds: Math.max(1, Number(d.allocatedSeconds) || 1),
+          rollNumber: String(d.rollNumber ?? ''),
+          bookletKey: bookletKey as 'A' | 'B' | 'C' | 'D',
+          completedAt: String(d.completedAt ?? new Date().toISOString()),
+        };
+      })
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+}
+
+export async function createSimulationRunInFirestore(
+  userId: string,
+  run: SimulationRunRecord
+): Promise<void> {
+  const safeId = sanitizeFirestoreId(run.id, 'sim');
+  const docPath = `users/${userId}/simulationRuns/${safeId}`;
+
+  return enqueueItemTask(`sim-run:${userId}:${safeId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'users', userId, 'simulationRuns', safeId);
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+    if (existingSnap.exists()) return;
+
+    const fullMarks = Math.min(1000, Math.max(1, Number(run.fullMarks) || 100));
+    const clampMark = (v: number) =>
+      Math.min(fullMarks, Math.max(0, Math.round((Number(v) || 0) * 100) / 100));
+    const totalItems = Math.min(500, Math.max(1, Math.round(Number(run.totalItems) || 1)));
+    const clampItems = (v: number) =>
+      Math.min(totalItems, Math.max(0, Math.round(Number(v) || 0)));
+
+    try {
+      await setDoc(ref, {
+        id: safeId,
+        userId,
+        presetId: String(run.presetId || 'preset').slice(0, 128),
+        presetTitle: String(run.presetTitle || 'PSC Simulation').slice(0, 220),
+        cadreId:
+          run.cadreId === 'nayab-subba' || run.cadreId === 'kharidar'
+            ? run.cadreId
+            : 'section-officer',
+        simulationType:
+          run.simulationType === 'written-hall' ? 'written-hall' : 'omr-hall',
+        fullMarks,
+        passMarks: clampMark(run.passMarks),
+        grossMarks: clampMark(run.grossMarks),
+        negativeDeduction: clampMark(run.negativeDeduction),
+        netMarks: clampMark(run.netMarks),
+        percentage: Math.min(100, Math.max(0, Math.round((Number(run.percentage) || 0) * 10) / 10)),
+        passed: Boolean(run.passed),
+        totalItems,
+        attemptedItems: clampItems(run.attemptedItems),
+        correctItems: clampItems(run.correctItems),
+        wrongItems: clampItems(run.wrongItems),
+        durationSeconds: Math.min(
+          36000,
+          Math.max(0, Math.round(Number(run.durationSeconds) || 0))
+        ),
+        allocatedSeconds: Math.min(
+          36000,
+          Math.max(1, Math.round(Number(run.allocatedSeconds) || 1))
+        ),
+        rollNumber: String(run.rollNumber ?? '').slice(0, 64),
+        bookletKey:
+          run.bookletKey === 'B' || run.bookletKey === 'C' || run.bookletKey === 'D'
+            ? run.bookletKey
+            : 'A',
+        completedAt: (run.completedAt || new Date().toISOString()).slice(0, 64),
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, docPath);
+    }
+  });
+}
+
+export async function clearUserSimulationRunsInFirestore(
+  userId: string
+): Promise<void> {
+  await deleteSubcollectionForUser(userId, 'simulationRuns');
+}
+
+// ============================================================================
+// CONTACT & ERRATA INQUIRIES CLOUD SYNC
+// ============================================================================
+
+function parseContactInquiryDoc(
+  docId: string,
+  d: Record<string, unknown>
+): ContactInquiryRecord {
+  return {
+    id: String(d.id ?? docId),
+    ...(typeof d.userId === 'string' && d.userId ? { userId: d.userId } : {}),
+    ticketCode: String(d.ticketCode ?? 'PSC-INQ'),
+    name: String(d.name ?? ''),
+    email: String(d.email ?? ''),
+    category:
+      d.category === 'quiz-errata' ||
+      d.category === 'material-request' ||
+      d.category === 'reader-support'
+        ? d.category
+        : 'general',
+    reference: String(d.reference ?? ''),
+    message: String(d.message ?? ''),
+    status:
+      d.status === 'in-review' || d.status === 'resolved' ? d.status : 'open',
+    ...(typeof d.adminReply === 'string' && d.adminReply
+      ? { adminReply: d.adminReply }
+      : {}),
+    ...(typeof d.respondedBy === 'string' && d.respondedBy
+      ? { respondedBy: d.respondedBy }
+      : {}),
+    ...(d.respondedAt
+      ? { respondedAt: toIsoStringOrNull(d.respondedAt) ?? undefined }
+      : {}),
+    createdAt: String(
+      d.clientCreatedAt ?? toIsoStringOrNull(d.createdAt) ?? new Date().toISOString()
+    ),
+    ...(d.updatedAt
+      ? { updatedAt: toIsoStringOrNull(d.updatedAt) ?? undefined }
+      : {}),
+  };
+}
+
+export async function fetchUserContactInquiries(
+  userId: string
+): Promise<ContactInquiryRecord[]> {
+  const path = 'contactInquiries';
+  try {
+    const q = query(
+      collection(db, 'contactInquiries'),
+      where('userId', '==', userId),
+      limit(100)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .map((docSnap) =>
+        parseContactInquiryDoc(docSnap.id, docSnap.data() as Record<string, unknown>)
+      )
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+}
+
+export async function fetchAllContactInquiriesForAdmin(): Promise<
+  ContactInquiryRecord[]
+> {
+  const path = 'contactInquiries';
+  try {
+    const q = query(
+      collection(db, 'contactInquiries'),
+      orderBy('createdAt', 'desc'),
+      limit(300)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .map((docSnap) =>
+        parseContactInquiryDoc(docSnap.id, docSnap.data() as Record<string, unknown>)
+      )
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+}
+
+export async function createContactInquiryInFirestore(
+  userId: string,
+  inquiry: ContactInquiryRecord
+): Promise<ContactInquiryRecord> {
+  const safeId = sanitizeFirestoreId(inquiry.id, 'inq');
+  const docPath = `contactInquiries/${safeId}`;
+
+  return enqueueItemTask(`inquiry:${safeId}`, async () => {
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'contactInquiries', safeId);
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    if (existingSnap.exists()) {
+      return parseContactInquiryDoc(
+        existingSnap.id,
+        existingSnap.data() as Record<string, unknown>
+      );
+    }
+
+    const cleanMessage = inquiry.message.trim().slice(0, 4000);
+    const cleanName = (inquiry.name.trim() || 'PSC Aspirant').slice(0, 120);
+    const cleanEmail = (inquiry.email.trim() || 'aspirant@pscnepal.local').slice(
+      0,
+      254
+    );
+    const cleanTicket = (inquiry.ticketCode.trim() || `PSC-${Date.now()}`).slice(
+      0,
+      32
+    );
+    const clientCreatedAt = (
+      inquiry.createdAt || new Date().toISOString()
+    ).slice(0, 64);
+
+    if (cleanMessage.length < 10) {
+      throw new Error('Inquiry message must be at least 10 characters long.');
+    }
+
+    try {
+      await setDoc(ref, {
+        id: safeId,
+        userId,
+        ticketCode: cleanTicket,
+        name: cleanName,
+        email: cleanEmail,
+        category:
+          inquiry.category === 'quiz-errata' ||
+          inquiry.category === 'material-request' ||
+          inquiry.category === 'reader-support'
+            ? inquiry.category
+            : 'general',
+        reference: (inquiry.reference || '').trim().slice(0, 300),
+        message: cleanMessage,
+        status: 'open',
+        clientCreatedAt,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, docPath);
+    }
+
+    return {
+      ...inquiry,
+      id: safeId,
+      userId,
+      ticketCode: cleanTicket,
+      name: cleanName,
+      email: cleanEmail,
+      message: cleanMessage,
+      status: 'open',
+      createdAt: clientCreatedAt,
+    };
+  });
+}
+
+export async function updateContactInquiryAdminInFirestore(params: {
+  inquiryId: string;
+  status: InquiryStatus;
+  adminReply?: string;
+}): Promise<void> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error('Admin authentication is required to update inquiries.');
+  }
+  const safeId = sanitizeFirestoreId(params.inquiryId, 'inq');
+  const docPath = `contactInquiries/${safeId}`;
+  const cleanReply = (params.adminReply ?? '').trim().slice(0, 2000);
+
+  try {
+    await updateDoc(doc(db, 'contactInquiries', safeId), {
+      status:
+        params.status === 'in-review' || params.status === 'resolved'
+          ? params.status
+          : 'open',
+      adminReply: cleanReply ? cleanReply : deleteField(),
+      respondedBy: currentUser.uid,
+      respondedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, docPath);
+  }
+}
+
+export async function deleteContactInquiryInFirestore(
+  inquiryId: string
+): Promise<void> {
+  const safeId = sanitizeFirestoreId(inquiryId, 'inq');
+  const docPath = `contactInquiries/${safeId}`;
+  try {
+    await deleteDoc(doc(db, 'contactInquiries', safeId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, docPath);
   }
 }
 

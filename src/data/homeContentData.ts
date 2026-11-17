@@ -1,38 +1,10 @@
-export interface HomePillarDefinition {
-  id: string;
-  order: string;
-  to: string;
-  title: string;
-  description: string;
-  spanWide?: boolean;
-  metaTag?: string;
-  ctaLabel?: string;
-}
+import type {
+  HomeFaqItem,
+  HomePillarDefinition,
+  StudyTrackItem,
+} from '../types/content';
 
-export interface StudyTrackItem {
-  id: string;
-  code: string;
-  title: string;
-  summary: string;
-  syllabusHref: string;
-  readHref: string;
-  readLabel: string;
-  quizHref: string;
-  quizLabel: string;
-  writtenHref: string;
-  writtenLabel: string;
-}
-
-export interface HomeFaqItem {
-  id: string;
-  question: string;
-  answerLead: string;
-  /** Used for plain-text Schema.org FAQPage JSON-LD so SEO & visible FAQ share exact wording */
-  getPlainAnswer: (counts: {
-    totalSyllabusUnits: number;
-    totalWrittenQuestions: number;
-  }) => string;
-}
+export type { HomeFaqItem, HomePillarDefinition, StudyTrackItem };
 
 export const HOME_HERO_CONTENT = {
   headline: 'Your central command hub for Lok Sewa PSC preparation.',

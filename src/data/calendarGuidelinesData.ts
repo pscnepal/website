@@ -1,23 +1,11 @@
+import type {
+  ExamDayChecklistItem,
+  HallRuleItem,
+  OmrScoringRuleCard,
+} from '../types/content';
 import { SITE_CONFIG } from './siteConfig';
 
-export interface HallRuleItem {
-  id: string;
-  titleNe: string;
-  detailNe: string;
-}
-
-export interface OmrScoringRuleCard {
-  id: string;
-  titleNe: string;
-  headlineNe: string;
-  descriptionNe: string;
-  tone: 'emerald' | 'crimson' | 'zinc';
-}
-
-export interface ExamDayChecklistItem {
-  id: string;
-  label: string;
-}
+export type { ExamDayChecklistItem, HallRuleItem, OmrScoringRuleCard };
 
 export const CALENDAR_HERO_CONTENT = {
   breadcrumbLabel:

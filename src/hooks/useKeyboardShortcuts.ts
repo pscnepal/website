@@ -1,18 +1,5 @@
 import { useEffect } from 'react';
-
-interface UseKeyboardShortcutsOptions {
-  enabled: boolean;
-  onPrevPage: () => void;
-  onNextPage: () => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onFitToPage: () => void;
-  onToggleFullscreen: () => void;
-  onToggleMode: () => void;
-  onToggleSound: () => void;
-  onToggleStats: () => void;
-  onEscapeOverlay: () => void;
-}
+import type { UseKeyboardShortcutsOptions } from '../types/reader';
 
 function isEditableElement(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;

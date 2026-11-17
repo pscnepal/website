@@ -1,30 +1,19 @@
 import {
   fetchBaseQuery,
   type BaseQueryFn,
-  type FetchArgs,
-  type FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react';
 import { auth } from '../../lib/firebase';
+import type {
+  AppBaseQueryArgs,
+  AppBaseQueryError,
+  FirestoreQueryArgs,
+} from '../../types/cloud';
 import {
   extractRawErrorMessage,
   isFirestoreOfflineError,
 } from '../../utils/errorHelpers';
 
-export interface FirestoreQueryArgs<T = unknown> {
-  kind: 'firestore';
-  operation: string;
-  run: () => Promise<T>;
-}
-
-export type AppBaseQueryArgs = string | FetchArgs | FirestoreQueryArgs;
-
-export type AppBaseQueryError =
-  | FetchBaseQueryError
-  | {
-      status: 'CUSTOM_ERROR';
-      error: string;
-      data?: string;
-    };
+export type { AppBaseQueryArgs, AppBaseQueryError, FirestoreQueryArgs };
 
 export const rawFetchBaseQuery = fetchBaseQuery({
   baseUrl: '/',

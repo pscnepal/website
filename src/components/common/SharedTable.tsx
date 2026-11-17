@@ -6,78 +6,11 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import type { ColumnDef, SharedTableProps } from '../../types/common';
 import { ActionButton } from './ActionButton';
 import { SharedSearchSelect } from './SharedSearchSelect';
 
-export interface ColumnDef<T> {
-  /** Unique key for the column */
-  id: string;
-  /** Header title or component */
-  header: React.ReactNode;
-  /** Property on item to display directly if no custom render is given */
-  accessorKey?: keyof T;
-  /** Custom render function */
-  render?: (item: T, index: number) => React.ReactNode;
-  /** Alignment of column text */
-  align?: 'left' | 'center' | 'right';
-  /** Width class or inline width */
-  width?: string;
-  /** Additional classes applied to td cells */
-  className?: string;
-  /** Additional classes applied to th header */
-  headerClassName?: string;
-  /** If true, column is hidden on mobile screens (< 768px) */
-  hideOnMobile?: boolean;
-  /** If true, column is hidden on tablets (< 1024px) */
-  hideOnTablet?: boolean;
-  /** Whether the column can be sorted */
-  sortable?: boolean;
-  /** Optional custom sorting accessor function */
-  sortKey?: (item: T) => string | number | boolean;
-}
-
-export interface SharedTableProps<T> {
-  /** Array of row items */
-  data: T[];
-  /** Column definitions */
-  columns: ColumnDef<T>[];
-  /** Unique key extractor for each row */
-  keyExtractor: (item: T, index: number) => string | number;
-  /** Message displayed when data is empty */
-  emptyMessage?: string;
-  /** Sub-description displayed when empty */
-  emptyDescription?: string;
-  /** Action button or element rendered in empty state */
-  emptyAction?: React.ReactNode;
-  /** Accessible table caption */
-  caption?: string;
-  /** Table wrapper class name */
-  className?: string;
-  /** Whether rows should alternate background colors */
-  striped?: boolean;
-  /** Optional row click handler */
-  onRowClick?: (item: T) => void;
-  /** Highlight on hover */
-  hoverable?: boolean;
-  /** Enable built-in pagination (defaults to true if data length > defaultPageSize) */
-  pagination?: boolean;
-  /** Initial rows per page (default: 15) */
-  defaultPageSize?: number;
-  /** Available page size choices */
-  pageSizeOptions?: number[];
-  /** Optional row selection support */
-  selectable?: boolean;
-  /** Set of selected keys */
-  selectedKeys?: Set<string | number>;
-  /** Callback when selected rows change */
-  onSelectionChange?: (selected: Set<string | number>) => void;
-  /** Optional custom class per table row */
-  rowClassName?: (item: T, index: number) => string;
-  /** Hide the table header row for key-value summary tables */
-  hideHeader?: boolean;
-  /** Use compact cell padding (suitable for chat & embedded summaries) */
-  compact?: boolean;
-}
+export type { ColumnDef, SharedTableProps };
 
 export function SharedTable<T>({
   data,

@@ -1,4 +1,3 @@
-import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
   BookOpen,
@@ -7,23 +6,9 @@ import {
   Sliders,
   Volume2,
 } from 'lucide-react';
+import type { ReaderFeatureItem, ReaderShortcutItem } from '../types/content';
 
-export interface ReaderFeatureItem {
-  index: string;
-  title: string;
-  description: string;
-  icon: LucideIcon;
-}
-
-export interface ReaderShortcutItem {
-  id: string;
-  keys: string;
-  dialogKey: string;
-  action: string;
-  dialogDescription: string;
-  showInGuide: boolean;
-  showInDialog: boolean;
-}
+export type { ReaderFeatureItem, ReaderShortcutItem };
 
 export const FEATURES_PAGE_HEADER = {
   breadcrumbLabel: 'Features & Shortcuts',

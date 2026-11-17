@@ -18,30 +18,17 @@ import {
   sendUserPasswordReset,
   subscribeToAdminUsersDirectory,
   updateCurrentAdminPassword,
-  type CloudUserDirectoryEntry,
-  type CloudUserStatus,
-  type UpdateAdminUserDetailsInput,
 } from '../services/cloudSyncService';
+import type {
+  CloudUserDirectoryEntry,
+  CloudUserStatus,
+  DashboardUsersContextValue,
+  UpdateAdminUserDetailsInput,
+} from '../types';
 import { toast } from '../services/toastService';
 import { formatUserFriendlyError } from '../utils/errorHelpers';
 
-interface DashboardUsersContextValue {
-  users: CloudUserDirectoryEntry[];
-  isLoading: boolean;
-  isRefreshing: boolean;
-  error: string | null;
-  lastSyncedAt: string | null;
-  refreshUsers: () => Promise<void>;
-  updateUserStatus: (params: {
-    uid: string;
-    status: CloudUserStatus;
-    reason?: string;
-  }) => Promise<void>;
-  updateUserDetails: (params: UpdateAdminUserDetailsInput) => Promise<void>;
-  deleteUser: (uid: string) => Promise<void>;
-  sendPasswordReset: (email: string) => Promise<void>;
-  updateOwnPassword: (newPassword: string) => Promise<'updated' | 'linked'>;
-}
+export type { DashboardUsersContextValue };
 
 const DashboardUsersContext = createContext<DashboardUsersContextValue | null>(
   null

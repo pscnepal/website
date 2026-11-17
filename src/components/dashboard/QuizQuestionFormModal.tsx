@@ -7,28 +7,21 @@ import {
   X,
 } from 'lucide-react';
 import { QUIZ_DIFFICULTY_OPTIONS as DIFFICULTY_OPTIONS } from '../../data/catalogOptionsData';
-import {
-  isLanguageOnlySubject,
-  QUIZ_OPTION_KEYS,
-  type QuizDifficulty,
-  type QuizOptionKey,
-  type QuizQuestion,
-} from '../../data/quizData';
+import { isLanguageOnlySubject, QUIZ_OPTION_KEYS } from '../../data/quizData';
+import type {
+  QuizDifficulty,
+  QuizOptionKey,
+  QuizQuestion,
+  QuizQuestionFormModalProps,
+  SearchSelectOption,
+} from '../../types';
 import { materialStorageService } from '../../services/materialStorageService';
 import { questionStorageService } from '../../services/questionStorageService';
 import { ActionButton } from '../common/ActionButton';
-import {
-  SharedSearchSelect,
-  type SearchSelectOption,
-} from '../common/SharedSearchSelect';
+import { SharedSearchSelect } from '../common/SharedSearchSelect';
 import { SelectOrCustomField } from './SelectOrCustomField';
 
-export interface QuizQuestionFormModalProps {
-  isOpen: boolean;
-  questionToEdit?: QuizQuestion | null;
-  onClose: () => void;
-  onSave: (question: QuizQuestion) => void;
-}
+export type { QuizQuestionFormModalProps };
 
 const CUSTOM_SOURCE_SENTINEL = '__CUSTOM_SOURCE_PATH__';
 

@@ -1,21 +1,9 @@
-export interface ReadingMaterialItem {
-  id: string;
-  title: string;
-  authority: string;
-  codeOrEdition: string;
-  pages: number;
-  path: string;
-  description: string;
-  externalSourceUrl?: string;
-}
+import type {
+  ReadingMaterialCategory,
+  ReadingMaterialItem,
+} from '../types/materials';
 
-export interface ReadingMaterialCategory {
-  id: string;
-  name: string;
-  subtitle: string;
-  description: string;
-  items: ReadingMaterialItem[];
-}
+export type { ReadingMaterialCategory, ReadingMaterialItem };
 
 export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
   {

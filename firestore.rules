@@ -124,6 +124,7 @@ service cloud.firestore {
           'durationSeconds',
           'deadlineSeconds',
           'timedOut',
+          'questionOutcomes',
           'completedAt',
           'createdAt'
         ])
@@ -165,6 +166,7 @@ service cloud.firestore {
         && data.deadlineSeconds >= 1
         && data.deadlineSeconds <= 36000
         && data.timedOut is bool
+        && (!('questionOutcomes' in data) || (data.questionOutcomes is map && data.questionOutcomes.size() <= 300))
         && data.completedAt is string
         && data.completedAt.size() >= 1
         && data.completedAt.size() <= 64
@@ -197,7 +199,7 @@ service cloud.firestore {
         && isValidId(data.itemId)
         && isValidId(data.userId)
         && data.userId == request.auth.uid
-        && data.itemType in ['question', 'material']
+        && data.itemType in ['question', 'material', 'affair']
         && data.reaction in ['like', 'dislike', 'none']
         && data.viewCount is number
         && data.viewCount >= 0
@@ -211,7 +213,7 @@ service cloud.firestore {
       return data.keys().hasAll(['itemId', 'itemType', 'viewsCount', 'likesCount', 'dislikesCount', 'createdAt', 'updatedAt'])
         && data.keys().hasOnly(['itemId', 'itemType', 'viewsCount', 'likesCount', 'dislikesCount', 'createdAt', 'updatedAt'])
         && isValidId(data.itemId)
-        && data.itemType in ['question', 'material']
+        && data.itemType in ['question', 'material', 'affair']
         && data.viewsCount is number
         && data.viewsCount >= 0
         && data.viewsCount <= 10000000
@@ -225,10 +227,400 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    // Entity Validation Blueprints: User Study Workspaces
+    function isValidWorkspacePreferences(data, userId) {
+      return data.keys().hasAll([
+        'userId',
+        'theme',
+        'defaultReadingMode',
+        'defaultSoundEnabled',
+        'preferredQuizMode',
+        'preferredWrittenLanguage',
+        'targetCadreId',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'userId',
+          'theme',
+          'defaultReadingMode',
+          'defaultSoundEnabled',
+          'preferredQuizMode',
+          'preferredWrittenLanguage',
+          'targetCadreId',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.theme in ['light', 'dark']
+        && data.defaultReadingMode in ['standard', 'flipbook']
+        && data.defaultSoundEnabled is bool
+        && data.preferredQuizMode in ['exam', 'study']
+        && data.preferredWrittenLanguage in ['bilingual', 'en', 'ne']
+        && data.targetCadreId in ['section-officer', 'nayab-subba', 'kharidar']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspaceSyllabus(data, userId) {
+      return data.keys().hasAll([
+        'userId',
+        'completedUnitIds',
+        'completedTopicIds',
+        'bookmarkedUnitIds',
+        'examChecklist',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'userId',
+          'completedUnitIds',
+          'completedTopicIds',
+          'bookmarkedUnitIds',
+          'examChecklist',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.completedUnitIds is list
+        && data.completedUnitIds.size() <= 500
+        && (data.completedUnitIds.size() == 0 || data.completedUnitIds[0] is string)
+        && data.completedTopicIds is list
+        && data.completedTopicIds.size() <= 2500
+        && (data.completedTopicIds.size() == 0 || data.completedTopicIds[0] is string)
+        && data.bookmarkedUnitIds is list
+        && data.bookmarkedUnitIds.size() <= 500
+        && (data.bookmarkedUnitIds.size() == 0 || data.bookmarkedUnitIds[0] is string)
+        && data.examChecklist is map
+        && data.examChecklist.size() <= 50
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspaceBookmarks(data, userId) {
+      return data.keys().hasAll(['userId', 'pyqIds', 'affairIds', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'pyqIds', 'affairIds', 'createdAt', 'updatedAt'])
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.pyqIds is list
+        && data.pyqIds.size() <= 500
+        && (data.pyqIds.size() == 0 || data.pyqIds[0] is string)
+        && data.affairIds is list
+        && data.affairIds.size() <= 500
+        && (data.affairIds.size() == 0 || data.affairIds[0] is string)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspaceFlashcards(data, userId) {
+      return data.keys().hasAll(['userId', 'progressMap', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'progressMap', 'createdAt', 'updatedAt'])
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.progressMap is map
+        && data.progressMap.size() <= 500
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspaceLibrary(data, userId) {
+      return data.keys().hasAll(['userId', 'recentBooks', 'readingProgress', 'readingStats', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['userId', 'recentBooks', 'readingProgress', 'readingStats', 'createdAt', 'updatedAt'])
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.recentBooks is list
+        && data.recentBooks.size() <= 12
+        && (data.recentBooks.size() == 0 || data.recentBooks[0] is map)
+        && data.readingProgress is map
+        && data.readingProgress.size() <= 200
+        && data.readingStats is map
+        && data.readingStats.size() <= 200
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWrittenProgress(data, questionId) {
+      return data.keys().hasAll([
+        'userId',
+        'questionId',
+        'status',
+        'checkedRubricIndices',
+        'draftAnswer',
+        'timeSpentSeconds',
+        'clientUpdatedAt',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'userId',
+          'questionId',
+          'status',
+          'checkedRubricIndices',
+          'draftAnswer',
+          'timeSpentSeconds',
+          'clientUpdatedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.userId)
+        && data.userId == request.auth.uid
+        && isValidId(data.questionId)
+        && data.questionId == questionId
+        && data.status in ['unseen', 'practicing', 'mastered']
+        && data.checkedRubricIndices is list
+        && data.checkedRubricIndices.size() <= 50
+        && (data.checkedRubricIndices.size() == 0 || data.checkedRubricIndices[0] is number)
+        && data.draftAnswer is string
+        && data.draftAnswer.size() <= 30000
+        && data.timeSpentSeconds is number
+        && data.timeSpentSeconds >= 0
+        && data.timeSpentSeconds <= 360000
+        && data.clientUpdatedAt is string
+        && data.clientUpdatedAt.size() >= 1
+        && data.clientUpdatedAt.size() <= 64
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWrittenEvaluation(data, evalId) {
+      return data.keys().hasAll([
+        'id',
+        'userId',
+        'questionId',
+        'questionTitleNe',
+        'questionTitleEn',
+        'marks',
+        'date',
+        'evaluatedAt',
+        'scoreIntro',
+        'scoreCore',
+        'scoreStatutes',
+        'scoreConclusion',
+        'totalScore',
+        'timeSpentSeconds',
+        'wordCount',
+        'userDraft',
+        'feedbackNotes',
+        'createdAt'
+      ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'questionId',
+          'questionTitleNe',
+          'questionTitleEn',
+          'marks',
+          'date',
+          'evaluatedAt',
+          'scoreIntro',
+          'scoreCore',
+          'scoreStatutes',
+          'scoreConclusion',
+          'totalScore',
+          'timeSpentSeconds',
+          'wordCount',
+          'userDraft',
+          'feedbackNotes',
+          'createdAt'
+        ])
+        && isValidId(data.id)
+        && data.id == evalId
+        && isValidId(data.userId)
+        && data.userId == request.auth.uid
+        && isValidId(data.questionId)
+        && data.questionTitleNe is string && data.questionTitleNe.size() <= 400
+        && data.questionTitleEn is string && data.questionTitleEn.size() <= 400
+        && data.marks in [5, 10]
+        && data.date is string && data.date.size() <= 64
+        && data.evaluatedAt is string && data.evaluatedAt.size() >= 1 && data.evaluatedAt.size() <= 64
+        && data.scoreIntro is number && data.scoreIntro >= 0 && data.scoreIntro <= data.marks
+        && data.scoreCore is number && data.scoreCore >= 0 && data.scoreCore <= data.marks
+        && data.scoreStatutes is number && data.scoreStatutes >= 0 && data.scoreStatutes <= data.marks
+        && data.scoreConclusion is number && data.scoreConclusion >= 0 && data.scoreConclusion <= data.marks
+        && data.totalScore is number && data.totalScore >= 0 && data.totalScore <= data.marks
+        && data.timeSpentSeconds is number && data.timeSpentSeconds >= 0 && data.timeSpentSeconds <= 36000
+        && data.wordCount is number && data.wordCount >= 0 && data.wordCount <= 50000
+        && data.userDraft is string && data.userDraft.size() <= 30000
+        && data.feedbackNotes is string && data.feedbackNotes.size() <= 5000
+        && data.createdAt is timestamp;
+    }
+
+    function isValidSimulationRun(data, runId) {
+      return data.keys().hasAll([
+        'id',
+        'userId',
+        'presetId',
+        'presetTitle',
+        'cadreId',
+        'simulationType',
+        'fullMarks',
+        'passMarks',
+        'grossMarks',
+        'negativeDeduction',
+        'netMarks',
+        'percentage',
+        'passed',
+        'totalItems',
+        'attemptedItems',
+        'correctItems',
+        'wrongItems',
+        'durationSeconds',
+        'allocatedSeconds',
+        'rollNumber',
+        'bookletKey',
+        'completedAt',
+        'createdAt'
+      ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'presetId',
+          'presetTitle',
+          'cadreId',
+          'simulationType',
+          'fullMarks',
+          'passMarks',
+          'grossMarks',
+          'negativeDeduction',
+          'netMarks',
+          'percentage',
+          'passed',
+          'totalItems',
+          'attemptedItems',
+          'correctItems',
+          'wrongItems',
+          'durationSeconds',
+          'allocatedSeconds',
+          'rollNumber',
+          'bookletKey',
+          'completedAt',
+          'createdAt'
+        ])
+        && isValidId(data.id)
+        && data.id == runId
+        && isValidId(data.userId)
+        && data.userId == request.auth.uid
+        && data.presetId is string && data.presetId.size() >= 1 && data.presetId.size() <= 128
+        && data.presetTitle is string && data.presetTitle.size() >= 1 && data.presetTitle.size() <= 220
+        && data.cadreId in ['section-officer', 'nayab-subba', 'kharidar']
+        && data.simulationType in ['omr-hall', 'written-hall']
+        && data.fullMarks is number && data.fullMarks >= 1 && data.fullMarks <= 1000
+        && data.passMarks is number && data.passMarks >= 0 && data.passMarks <= data.fullMarks
+        && data.grossMarks is number && data.grossMarks >= 0 && data.grossMarks <= data.fullMarks
+        && data.negativeDeduction is number && data.negativeDeduction >= 0 && data.negativeDeduction <= data.fullMarks
+        && data.netMarks is number && data.netMarks >= 0 && data.netMarks <= data.fullMarks
+        && data.percentage is number && data.percentage >= 0 && data.percentage <= 100
+        && data.passed is bool
+        && data.totalItems is number && data.totalItems >= 1 && data.totalItems <= 500
+        && data.attemptedItems is number && data.attemptedItems >= 0 && data.attemptedItems <= data.totalItems
+        && data.correctItems is number && data.correctItems >= 0 && data.correctItems <= data.totalItems
+        && data.wrongItems is number && data.wrongItems >= 0 && data.wrongItems <= data.totalItems
+        && data.durationSeconds is number && data.durationSeconds >= 0 && data.durationSeconds <= 36000
+        && data.allocatedSeconds is number && data.allocatedSeconds >= 1 && data.allocatedSeconds <= 36000
+        && data.rollNumber is string && data.rollNumber.size() <= 64
+        && data.bookletKey in ['A', 'B', 'C', 'D']
+        && data.completedAt is string && data.completedAt.size() >= 1 && data.completedAt.size() <= 64
+        && data.createdAt is timestamp;
+    }
+
+    function isValidContactInquiry(data, inquiryId) {
+      return data.keys().hasAll([
+        'id',
+        'userId',
+        'ticketCode',
+        'name',
+        'email',
+        'category',
+        'reference',
+        'message',
+        'status',
+        'clientCreatedAt',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'ticketCode',
+          'name',
+          'email',
+          'category',
+          'reference',
+          'message',
+          'status',
+          'adminReply',
+          'respondedBy',
+          'respondedAt',
+          'clientCreatedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == inquiryId
+        && isValidId(data.userId)
+        && data.ticketCode is string && data.ticketCode.size() >= 1 && data.ticketCode.size() <= 32
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 254
+        && data.category in ['general', 'quiz-errata', 'material-request', 'reader-support']
+        && data.reference is string && data.reference.size() <= 300
+        && data.message is string && data.message.size() >= 10 && data.message.size() <= 4000
+        && data.status in ['open', 'in-review', 'resolved']
+        && (!('adminReply' in data) || (data.adminReply is string && data.adminReply.size() <= 2000))
+        && (!('respondedBy' in data) || (data.respondedBy is string && data.respondedBy.size() <= 128))
+        && (!('respondedAt' in data) || data.respondedAt is timestamp)
+        && data.clientCreatedAt is string && data.clientCreatedAt.size() >= 1 && data.clientCreatedAt.size() <= 64
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Contact & Errata Inquiries Collection
+    match /contactInquiries/{inquiryId} {
+      allow get: if isValidId(inquiryId) && (
+        (isVerifiedUser() && existing().userId == request.auth.uid)
+        || isAdmin()
+      );
+      allow list: if (isVerifiedUser() && existing().userId == request.auth.uid)
+        || isAdmin();
+      allow create: if isVerifiedUser()
+        && isValidId(inquiryId)
+        && isValidContactInquiry(incoming(), inquiryId)
+        && isActiveSignedInUser()
+        && incoming().userId == request.auth.uid
+        && incoming().status == 'open'
+        && !('adminReply' in incoming())
+        && !('respondedBy' in incoming())
+        && !('respondedAt' in incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(inquiryId)
+        && isValidContactInquiry(incoming(), inquiryId)
+        && incoming().id == existing().id
+        && incoming().userId == existing().userId
+        && incoming().ticketCode == existing().ticketCode
+        && incoming().name == existing().name
+        && incoming().email == existing().email
+        && incoming().category == existing().category
+        && incoming().reference == existing().reference
+        && incoming().message == existing().message
+        && incoming().clientCreatedAt == existing().clientCreatedAt
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().respondedBy == request.auth.uid
+        && (!('respondedAt' in incoming()) || incoming().respondedAt == request.time)
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'adminReply', 'respondedBy', 'respondedAt', 'updatedAt']);
+      allow delete: if isValidId(inquiryId) && (
+        (isOwner(existing().userId) && isActiveAccount(existing().userId))
+        || isAdmin()
+      );
+    }
+
     // Public Non-PII Community Item Stats (Views, Likes, Dislikes)
     match /itemStats/{itemId} {
       allow get: if isValidId(itemId);
-      allow list: if existing().itemType in ['question', 'material'];
+      allow list: if existing().itemType in ['question', 'material', 'affair'];
       allow create: if isVerifiedUser()
         && isValidId(itemId)
         && isValidItemStats(incoming())
@@ -284,8 +676,18 @@ service cloud.firestore {
           (
             isOwner(userId)
             && (!('status' in existing()) || existing().status == 'active')
-            && incoming().lastLoginAt == request.time
-            && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'photoURL', 'lastLoginAt'])
+            && (
+              (
+                incoming().lastLoginAt == request.time
+                && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'photoURL', 'lastLoginAt'])
+              )
+              ||
+              (
+                incoming().lastLoginAt == existing().lastLoginAt
+                && incoming().updatedAt == request.time
+                && incoming().diff(existing()).affectedKeys().hasOnly(['targetCadre', 'updatedAt'])
+              )
+            )
           )
           ||
           (
@@ -393,6 +795,212 @@ service cloud.firestore {
           && incoming().updatedAt == request.time
           && incoming().diff(existing()).affectedKeys().hasOnly(['reaction', 'viewCount', 'updatedAt']);
         allow delete: if isValidId(userId) && isValidId(itemId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      // User's Synced Study Workspaces (Preferences, Syllabus, Bookmarks, Flashcards, Library)
+      match /workspace/preferences {
+        allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow list: if false;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspacePreferences(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspacePreferences(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'theme',
+            'defaultReadingMode',
+            'defaultSoundEnabled',
+            'preferredQuizMode',
+            'preferredWrittenLanguage',
+            'targetCadreId',
+            'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      match /workspace/syllabus {
+        allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow list: if false;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspaceSyllabus(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspaceSyllabus(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'completedUnitIds',
+            'completedTopicIds',
+            'bookmarkedUnitIds',
+            'examChecklist',
+            'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      match /workspace/bookmarks {
+        allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow list: if false;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspaceBookmarks(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspaceBookmarks(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['pyqIds', 'affairIds', 'updatedAt']);
+        allow delete: if isValidId(userId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      match /workspace/flashcards {
+        allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow list: if false;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspaceFlashcards(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspaceFlashcards(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['progressMap', 'updatedAt']);
+        allow delete: if isValidId(userId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      match /workspace/library {
+        allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow list: if false;
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspaceLibrary(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isActiveAccount(userId)
+          && isValidWorkspaceLibrary(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'recentBooks',
+            'readingProgress',
+            'readingStats',
+            'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      // User's Per-Question Written Study Drafts & Rubric Progress
+      match /writtenProgress/{questionId} {
+        allow get: if isValidId(userId) && isValidId(questionId) && (isOwner(userId) || isAdmin());
+        allow list: if (isOwner(userId) && existing().userId == request.auth.uid)
+          || (isAdmin() && existing().userId == userId);
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(questionId)
+          && isValidWrittenProgress(incoming(), questionId)
+          && isActiveAccount(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(questionId)
+          && isValidWrittenProgress(incoming(), questionId)
+          && isActiveAccount(userId)
+          && incoming().userId == existing().userId
+          && incoming().questionId == existing().questionId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'status',
+            'checkedRubricIndices',
+            'draftAnswer',
+            'timeSpentSeconds',
+            'clientUpdatedAt',
+            'updatedAt'
+          ]);
+        allow delete: if isValidId(userId) && isValidId(questionId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      // User's Written Answer Evaluator Scorecards
+      match /writtenEvaluations/{evalId} {
+        allow get: if isValidId(userId) && isValidId(evalId) && (isOwner(userId) || isAdmin());
+        allow list: if (isOwner(userId) && existing().userId == request.auth.uid)
+          || (isAdmin() && existing().userId == userId);
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(evalId)
+          && isValidWrittenEvaluation(incoming(), evalId)
+          && isActiveAccount(userId)
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(evalId) && (
+          (isOwner(userId) && isActiveAccount(userId))
+          || (isAdmin() && userId != request.auth.uid)
+        );
+      }
+
+      // User's Completed Exam Hall Simulations (OMR & Written Hall)
+      match /simulationRuns/{runId} {
+        allow get: if isValidId(userId) && isValidId(runId) && (isOwner(userId) || isAdmin());
+        allow list: if (isOwner(userId) && existing().userId == request.auth.uid)
+          || (isAdmin() && existing().userId == userId);
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(runId)
+          && isValidSimulationRun(incoming(), runId)
+          && isActiveAccount(userId)
+          && incoming().createdAt == request.time;
+        allow update: if false;
+        allow delete: if isValidId(userId) && isValidId(runId) && (
           (isOwner(userId) && isActiveAccount(userId))
           || (isAdmin() && userId != request.auth.uid)
         );

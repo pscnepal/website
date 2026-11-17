@@ -14,12 +14,12 @@ import {
   RefreshCw,
   Search,
   Sparkles,
-  ThumbsDown,
-  ThumbsUp,
   X,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { ActionButton } from '../components/common/ActionButton';
+import { ReactionButtons } from '../components/common/ReactionButtons';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
@@ -29,13 +29,12 @@ import {
   type CurrentAffairCategory,
   type CurrentAffairItem,
 } from '../data/currentAffairsData';
+import { recordView } from '../features/reactions/reactionsSlice';
+import { toggleAffairBookmark } from '../features/workspace/workspaceSlice';
 import { copyWithToast } from '../utils/clipboardHelpers';
 
-const STORAGE_KEY_LIKES = 'psc_affairs_likes_v1';
-const STORAGE_KEY_DISLIKES = 'psc_affairs_dislikes_v1';
-const STORAGE_KEY_BOOKMARKS = 'psc_affairs_bookmarks_v1';
-
 export function CurrentAffairsPage() {
+  const dispatch = useAppDispatch();
   const searchInputId = useId();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CurrentAffairCategory | 'all'>('all');
@@ -46,82 +45,18 @@ export function CurrentAffairsPage() {
   const [isDigestModalOpen, setIsDigestModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Local storage state for user engagement (Likes, Dislikes, Bookmarks)
-  const [userLikes, setUserLikes] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_LIKES);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const [userDislikes, setUserDislikes] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_DISLIKES);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const [bookmarkedIds, setBookmarkedIds] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_BOOKMARKS);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const handleToggleLike = (id: string) => {
-    setUserLikes((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      try {
-        localStorage.setItem(STORAGE_KEY_LIKES, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-    // Remove dislike if like is enabled
-    if (!userLikes[id] && userDislikes[id]) {
-      setUserDislikes((prev) => {
-        const next = { ...prev, [id]: false };
-        try {
-          localStorage.setItem(STORAGE_KEY_DISLIKES, JSON.stringify(next));
-        } catch {}
-        return next;
-      });
-    }
-  };
-
-  const handleToggleDislike = (id: string) => {
-    setUserDislikes((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      try {
-        localStorage.setItem(STORAGE_KEY_DISLIKES, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-    // Remove like if dislike is enabled
-    if (!userDislikes[id] && userLikes[id]) {
-      setUserLikes((prev) => {
-        const next = { ...prev, [id]: false };
-        try {
-          localStorage.setItem(STORAGE_KEY_LIKES, JSON.stringify(next));
-        } catch {}
-        return next;
-      });
-    }
-  };
+  const bookmarkedIds = useAppSelector((state) => state.workspace.affairBookmarks);
 
   const handleToggleBookmark = (id: string) => {
-    setBookmarkedIds((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      try {
-        localStorage.setItem(STORAGE_KEY_BOOKMARKS, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
+    dispatch(toggleAffairBookmark(id));
+  };
+
+  const handleToggleExpand = (id: string) => {
+    const isOpening = expandedItemId !== id;
+    if (isOpening) {
+      dispatch(recordView({ itemId: id, itemType: 'affair' }));
+    }
+    setExpandedItemId(isOpening ? id : null);
   };
 
   const handleCopyCitation = (item: CurrentAffairItem) => {
@@ -421,12 +356,6 @@ export function CurrentAffairsPage() {
               {filteredItems.map((item) => {
                 const isExpanded = expandedItemId === item.id;
                 const isBookmarked = Boolean(bookmarkedIds[item.id]);
-                const isLiked = Boolean(userLikes[item.id]);
-                const isDisliked = Boolean(userDislikes[item.id]);
-
-                // Calculate interactive counts
-                const displayLikes = item.likes + (isLiked ? 1 : 0);
-                const displayDislikes = item.dislikes + (isDisliked ? 1 : 0);
 
                 return (
                   <article
@@ -501,8 +430,8 @@ export function CurrentAffairsPage() {
                         {item.keyFacts.length > 3 && (
                           <button
                             type="button"
-                            onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
-                            className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-medium"
+                            onClick={() => handleToggleExpand(item.id)}
+                            className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-medium cursor-pointer"
                           >
                             {isExpanded ? (
                               <>
@@ -535,39 +464,18 @@ export function CurrentAffairsPage() {
                         </div>
                       )}
 
-                      {/* Bottom Action Footer with Shared Action Buttons, Likes, Dislikes, View */}
+                      {/* Bottom Action Footer with Shared Action Buttons & Cloud-Synced Reactions */}
                       <div className="mt-5 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-                        {/* Engagement: Likes, Dislikes, Views */}
-                        <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
-                          {/* Like Button */}
-                          <ActionButton
-                            icon={ThumbsUp}
-                            label={String(displayLikes)}
-                            title={isLiked ? 'Remove like' : 'Like this current affair'}
-                            color={isLiked ? 'blue' : 'zinc'}
-                            variant={isLiked ? 'subtle' : 'ghost'}
-                            size="xs"
-                            onClick={() => handleToggleLike(item.id)}
-                            className={isLiked ? 'font-bold' : ''}
-                          />
-
-                          {/* Dislike Button */}
-                          <ActionButton
-                            icon={ThumbsDown}
-                            label={String(displayDislikes)}
-                            title={isDisliked ? 'Remove dislike' : 'Dislike this current affair'}
-                            color={isDisliked ? 'red' : 'zinc'}
-                            variant={isDisliked ? 'subtle' : 'ghost'}
-                            size="xs"
-                            onClick={() => handleToggleDislike(item.id)}
-                            className={isDisliked ? 'font-bold' : ''}
-                          />
-
-                          {/* View Count */}
-                          <span className="text-[11px] text-zinc-400 ml-1">
-                            {item.views.toLocaleString()} views
-                          </span>
-                        </div>
+                        <ReactionButtons
+                          itemId={item.id}
+                          itemType="affair"
+                          size="xs"
+                          baseCounts={{
+                            views: item.views,
+                            likes: item.likes,
+                            dislikes: item.dislikes,
+                          }}
+                        />
 
                         {/* Actions: Copy, Bookmark, Toggle expand */}
                         <div className="flex items-center gap-2">
@@ -598,7 +506,7 @@ export function CurrentAffairsPage() {
                             color="zinc"
                             variant="ghost"
                             size="xs"
-                            onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                            onClick={() => handleToggleExpand(item.id)}
                           />
                         </div>
                       </div>

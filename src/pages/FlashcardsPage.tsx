@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import {
   Brain,
   ChevronLeft,
@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../app/hooks';
 import { ActionButton } from '../components/common/ActionButton';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { Footer } from '../components/layout/Footer';
@@ -22,22 +23,17 @@ import {
   type FlashcardDeckId,
   type FlashcardItem,
 } from '../data/flashcardsData';
+import {
+  resetFlashcardDeck,
+  scoreFlashcard,
+} from '../features/workspace/workspaceSlice';
+import type { LeitnerBoxLevel } from '../services/storageService';
 import { toast } from '../services/toastService';
-import { formatUserFriendlyError } from '../utils/errorHelpers';
 
-// Leitner Box level: 1 = Learning (New / Needs practice), 2 = Review, 3 = Mastered
-export type LeitnerBoxLevel = 1 | 2 | 3;
-
-interface FlashcardProgress {
-  boxLevel: LeitnerBoxLevel;
-  lastReviewedAt: number;
-  timesReviewed: number;
-  timesCorrect: number;
-}
-
-const STORAGE_KEY_PROGRESS = 'psc_flashcards_progress_v2';
+export type { LeitnerBoxLevel };
 
 export function FlashcardsPage() {
+  const dispatch = useAppDispatch();
   const searchInputId = useId();
 
   // Selected deck & view mode
@@ -51,47 +47,8 @@ export function FlashcardsPage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
-  // Progress state from localStorage
-  const [progressMap, setProgressMap] = useState<Record<string, FlashcardProgress>>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_PROGRESS);
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const saveProgress = (cardId: string, level: LeitnerBoxLevel) => {
-    setProgressMap((prev) => {
-      const current = prev[cardId] || {
-        boxLevel: 1,
-        lastReviewedAt: 0,
-        timesReviewed: 0,
-        timesCorrect: 0,
-      };
-
-      const updated: FlashcardProgress = {
-        boxLevel: level,
-        lastReviewedAt: Date.now(),
-        timesReviewed: current.timesReviewed + 1,
-        timesCorrect: level > 1 ? current.timesCorrect + 1 : current.timesCorrect,
-      };
-
-      const next = { ...prev, [cardId]: updated };
-      try {
-        localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(next));
-      } catch (err) {
-        toast.warning(
-          formatUserFriendlyError(
-            err,
-            'Could not save flashcard progress right now.'
-          ),
-          { id: 'flashcard-storage-err' }
-        );
-      }
-      return next;
-    });
-  };
+  // Leitner retention state hydrated from Redux workspace slice (synced with Firestore)
+  const progressMap = useAppSelector((state) => state.workspace.flashcardProgress);
 
   // Filtered deck items
   const activeDeckCards = useMemo(() => {
@@ -130,6 +87,24 @@ export function FlashcardsPage() {
     setIsFlipped(false);
   }, [selectedDeckId, filterBoxLevel, searchQuery]);
 
+  const handleScoreCard = useCallback(
+    (level: LeitnerBoxLevel) => {
+      if (!activeCard) return;
+
+      dispatch(scoreFlashcard({ cardId: activeCard.id, level }));
+      setIsFlipped(false);
+
+      // Advance to next card
+      if (currentCardIndex < activeDeckCards.length - 1) {
+        setCurrentCardIndex((prev) => prev + 1);
+      } else {
+        // Finished deck
+        setCurrentCardIndex(0);
+      }
+    },
+    [activeCard, activeDeckCards.length, currentCardIndex, dispatch]
+  );
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -155,22 +130,7 @@ export function FlashcardsPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFlipped, activeCard]);
-
-  const handleScoreCard = (level: LeitnerBoxLevel) => {
-    if (!activeCard) return;
-
-    saveProgress(activeCard.id, level);
-    setIsFlipped(false);
-
-    // Advance to next card
-    if (currentCardIndex < activeDeckCards.length - 1) {
-      setCurrentCardIndex((prev) => prev + 1);
-    } else {
-      // Finished deck
-      setCurrentCardIndex(0);
-    }
-  };
+  }, [isFlipped, activeCard, handleScoreCard]);
 
   const handleShuffle = () => {
     setCurrentCardIndex(Math.floor(Math.random() * Math.max(1, activeDeckCards.length)));
@@ -182,21 +142,8 @@ export function FlashcardsPage() {
   };
 
   const confirmResetProgress = () => {
-    setProgressMap((prev) => {
-      const next = { ...prev };
-      activeDeckCards.forEach((c) => {
-        delete next[c.id];
-      });
-      try {
-        localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(next));
-        toast.info('Reset Leitner progress for this deck.');
-      } catch (err) {
-        toast.error(
-          formatUserFriendlyError(err, 'Failed to reset saved flashcard progress.')
-        );
-      }
-      return next;
-    });
+    dispatch(resetFlashcardDeck(activeDeckCards.map((c) => c.id)));
+    toast.info('Reset Leitner progress for this deck.');
     setCurrentCardIndex(0);
     setIsFlipped(false);
     setIsResetConfirmOpen(false);

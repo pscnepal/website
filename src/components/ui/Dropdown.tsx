@@ -4,17 +4,9 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-
-interface DropdownProps {
-  trigger: (props: {
-    open: boolean;
-    toggle: () => void;
-  }) => ReactNode;
-  children: (props: { close: () => void }) => ReactNode;
-}
+import type { DropdownProps } from '../../types/common';
 
 export function Dropdown({ trigger, children }: DropdownProps) {
   const [open, setOpen] = useState(false);

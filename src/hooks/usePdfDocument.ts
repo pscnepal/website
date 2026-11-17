@@ -5,24 +5,15 @@ import {
   extractPdfMetadata,
   isRenderingCancelledError,
 } from '../services/pdfService';
-import type { PdfErrorInfo, PdfPageDimensions } from '../types/pdf';
+import type {
+  PdfErrorInfo,
+  PdfPageDimensions,
+  UsePdfDocumentParams,
+  UsePdfDocumentResult,
+} from '../types/pdf';
 import { classifyPdfError } from '../utils/pdfHelpers';
 
-interface UsePdfDocumentParams {
-  url: string | null;
-  password?: string;
-  retryKey: number;
-}
-
-export interface UsePdfDocumentResult {
-  pdfDoc: PDFDocumentProxy | null;
-  numPages: number;
-  pageDimensions: PdfPageDimensions | null;
-  docMetadata: { title?: string; author?: string };
-  isLoading: boolean;
-  progressPercent: number | null;
-  error: PdfErrorInfo | null;
-}
+export type { UsePdfDocumentParams, UsePdfDocumentResult };
 
 export function usePdfDocument({
   url,

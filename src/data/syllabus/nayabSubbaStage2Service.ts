@@ -140,8 +140,8 @@ export const NAYAB_SUBBA_PAPER_3_ADMIN: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
       materialTitle: 'Official Nayab Subba Phase II PDF',
-      writtenHref: '/written/PSC-WR-401',
-      writtenLabel: 'Service Delivery & E-Gov Q&A',
+      writtenHref: '/written/PSC-WR-406',
+      writtenLabel: 'Tippani & Paripatra 5M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
     {
@@ -460,6 +460,8 @@ export const NAYAB_SUBBA_PAPER_3_ACCOUNTS_AUDIT: PscSyllabusPaper = {
         'FCGO Accounting Manuals · Fiscal Accountability Act, 2076 · NPSAS',
       materialPath: '/materials/public-procurement-fiscal-act.pdf',
       materialTitle: 'Procurement & Fiscal Act Digest',
+      writtenHref: '/written/PSC-WR-409',
+      writtenLabel: 'LMBIS, TSA, CGAS & NPSAS Q&A',
       simulatePresetId: 'written-office-nasu',
     },
     {
@@ -531,6 +533,8 @@ export const NAYAB_SUBBA_PAPER_3_ACCOUNTS_AUDIT: PscSyllabusPaper = {
         'Public Procurement Act, 2063 · FCGO PAMS & RMIS Directives',
       materialPath: '/materials/public-procurement-fiscal-act.pdf',
       materialTitle: 'Procurement & Fiscal Act Digest',
+      writtenHref: '/written/PSC-WR-404',
+      writtenLabel: 'Procurement & e-GP 10M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
     {
@@ -589,6 +593,8 @@ export const NAYAB_SUBBA_PAPER_3_ACCOUNTS_AUDIT: PscSyllabusPaper = {
         'Audit Act, 2075 · Fiscal Accountability Act, 2076 · Income Tax Act, 2058 · VAT Act, 2052',
       materialPath: '/materials/public-procurement-fiscal-act.pdf',
       materialTitle: 'Procurement & Fiscal Act Digest',
+      writtenHref: '/written/PSC-WR-405',
+      writtenLabel: 'Audit Act & Beruju 10M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
   ],
@@ -663,6 +669,8 @@ export const NAYAB_SUBBA_PAPER_3_REVENUE: PscSyllabusPaper = {
         'Economic Survey (MoF) · NRB Monetary Policy · 16th Periodic Plan',
       materialPath: '/materials/sixteenth-plan-summary.pdf',
       materialTitle: 'Sixteenth Plan Summary',
+      writtenHref: '/written/PSC-WR-309',
+      writtenLabel: 'Three-Pillar Economy 5M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
     {
@@ -719,6 +727,8 @@ export const NAYAB_SUBBA_PAPER_3_REVENUE: PscSyllabusPaper = {
         'Income Tax Act, 2058 · VAT Act, 2052 · Customs Act, 2064 · Excise Act, 2058',
       materialPath: '/materials/public-procurement-fiscal-act.pdf',
       materialTitle: 'Procurement & Fiscal Act Digest',
+      writtenHref: '/written/PSC-WR-408',
+      writtenLabel: 'VAT, Income Tax & TDS 10M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
     {
@@ -779,6 +789,8 @@ export const NAYAB_SUBBA_PAPER_3_REVENUE: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
       materialTitle: 'Official Nayab Subba Phase II PDF',
+      writtenHref: '/written/PSC-WR-310',
+      writtenLabel: 'AML & Leakage Control 5M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
   ],
@@ -856,6 +868,8 @@ export const NAYAB_SUBBA_PAPER_3_JUSTICE: PscSyllabusPaper = {
         'Constitution Part 11 · Interpretation of Laws Act, 2010 · Nepal Treaty Act, 2047',
       materialPath: '/materials/constitution-of-nepal-2072.pdf',
       materialTitle: 'Constitution of Nepal (2072)',
+      writtenHref: '/written/PSC-WR-412',
+      writtenLabel: 'Writs & Procedural Codes 10M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
     {
@@ -913,6 +927,8 @@ export const NAYAB_SUBBA_PAPER_3_JUSTICE: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
       materialTitle: 'Official Nayab Subba Phase II PDF',
+      writtenHref: '/written/PSC-WR-412',
+      writtenLabel: 'Myad Tameli & Writs 10M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
     {
@@ -973,6 +989,8 @@ export const NAYAB_SUBBA_PAPER_3_JUSTICE: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
       materialTitle: 'Official Nayab Subba Phase II PDF',
+      writtenHref: '/written/PSC-WR-417',
+      writtenLabel: 'Criminal Procedure & Art. 158 Q&A',
       simulatePresetId: 'written-office-nasu',
     },
   ],
@@ -1110,6 +1128,8 @@ export const NAYAB_SUBBA_PAPER_3_FOREIGN: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
       materialTitle: 'Official Nayab Subba Phase II PDF',
+      writtenHref: '/written/PSC-WR-308',
+      writtenLabel: 'LDC Graduation 2026 10M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
     {
@@ -1170,8 +1190,8 @@ export const NAYAB_SUBBA_PAPER_3_FOREIGN: PscSyllabusPaper = {
       materialPath:
         '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
       materialTitle: 'Official Nayab Subba Phase II PDF',
-      writtenHref: '/written/PSC-WR-304',
-      writtenLabel: 'Economic Diplomacy 5M Q&A',
+      writtenHref: '/written/PSC-WR-413',
+      writtenLabel: 'Note Verbale & Consular 5M Q&A',
       simulatePresetId: 'written-office-nasu',
     },
   ],

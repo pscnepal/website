@@ -1,26 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { AlertCircle, Flag, X } from 'lucide-react';
 import { QUICK_FLAG_REASONS } from '../../data/siteConfig';
+import type {
+  FlagReasonModalProps,
+  FlagReasonTargetQuestion,
+} from '../../types/common';
 import { ActionButton } from './ActionButton';
 
-export { QUICK_FLAG_REASONS };
-
-export interface FlagReasonTargetQuestion {
-  id: string;
-  question: string;
-  questionNe?: string;
-  subject?: string;
-}
-
-interface FlagReasonModalProps {
-  open: boolean;
-  question: FlagReasonTargetQuestion | null;
-  initialReason?: string;
-  title?: string;
-  submitLabel?: string;
-  onConfirm: (reason: string) => void;
-  onCancel: () => void;
-}
+export { QUICK_FLAG_REASONS, type FlagReasonTargetQuestion };
 
 export function FlagReasonModal({
   open,

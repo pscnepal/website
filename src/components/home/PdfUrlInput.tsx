@@ -2,11 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { ArrowRight, Link2, AlertCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/Button';
+import type { PdfUrlInputProps } from '../../types/pdf';
 import { validatePdfUrl } from '../../utils/urlHelpers';
-
-interface PdfUrlInputProps {
-  compact?: boolean;
-}
 
 export function PdfUrlInput({ compact = false }: PdfUrlInputProps) {
   const [urlInput, setUrlInput] = useState('');

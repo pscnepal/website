@@ -7,15 +7,12 @@ import {
   questionStorageService,
 } from '../../services/questionStorageService';
 
-export type AssessmentWorkspaceTab =
-  | 'syllabus'
-  | 'quiz'
-  | 'written'
-  | 'simulate';
+import type {
+  AssessmentFormatNavProps,
+  AssessmentWorkspaceTab,
+} from '../../types/assessment';
 
-interface AssessmentFormatNavProps {
-  active: AssessmentWorkspaceTab;
-}
+export type { AssessmentWorkspaceTab };
 
 export function AssessmentFormatNav({ active }: AssessmentFormatNavProps) {
   const shouldReduceMotion = Boolean(useReducedMotion());

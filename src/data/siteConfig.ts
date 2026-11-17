@@ -1,42 +1,16 @@
-export type SiteDashboardTab =
-  | 'overview'
-  | 'quiz-bank'
-  | 'flagged'
-  | 'written-bank'
-  | 'materials'
-  | 'users'
-  | 'data';
+import type {
+  DashboardAccentColor,
+  DashboardModuleConfig,
+  SiteDashboardTab,
+  SiteNavLinkItem,
+} from '../types/dashboard';
 
-export interface SiteNavLinkItem {
-  to: string;
-  label: string;
-  end?: boolean;
-}
-
-export type DashboardAccentColor =
-  | 'blue'
-  | 'emerald'
-  | 'amber'
-  | 'crimson'
-  | 'purple'
-  | 'zinc';
-
-export interface DashboardModuleConfig {
-  id: SiteDashboardTab;
-  path: string;
-  label: string;
-  quickActionLabel: string;
-  category: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  quickDescription: string;
-  seoTitle: string;
-  seoDescription: string;
-  seoBreadcrumb: string;
-  color: DashboardAccentColor;
-  dividerBefore?: boolean;
-}
+export type {
+  DashboardAccentColor,
+  DashboardModuleConfig,
+  SiteDashboardTab,
+  SiteNavLinkItem,
+};
 
 export const SITE_CONFIG = {
   brandName: 'PSC Nepal',
@@ -229,6 +203,22 @@ export const DASHBOARD_NAV_MODULES: ReadonlyArray<DashboardModuleConfig> = [
     seoBreadcrumb: 'Aspirants Cohort',
     color: 'purple',
     dividerBefore: true,
+  },
+  {
+    id: 'inquiries',
+    path: '/dashboard/inquiries',
+    label: 'Contact & Errata Inbox',
+    quickActionLabel: 'Contact & Errata Inbox',
+    category: 'Directory',
+    title: 'Contact & Errata Inbox',
+    subtitle: 'Candidate errata reports, material requests & official replies',
+    description: 'Triage support tickets and reply via Firestore',
+    quickDescription: 'Triage support & errata tickets',
+    seoTitle: `Contact & Errata Inbox | ${SITE_CONFIG.brandName}`,
+    seoDescription:
+      'Manage candidate contact inquiries, question bank errata reports, and reading material requests in real time.',
+    seoBreadcrumb: 'Contact & Errata Inbox',
+    color: 'amber',
   },
   {
     id: 'data',

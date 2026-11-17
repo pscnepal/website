@@ -22,12 +22,7 @@ import {
 import { Link } from 'react-router-dom';
 import { useAppDispatch } from '../../app/hooks';
 import { recordView } from '../../features/reactions/reactionsSlice';
-import type {
-  FitMode,
-  ReadingMode,
-  StandardLayout,
-  ThemeMode,
-} from '../../types/reader';
+import type { ReaderToolbarProps } from '../../types/reader';
 import { formatCompactDuration } from '../../utils/pdfHelpers';
 import { Button } from '../ui/Button';
 import { Dropdown } from '../ui/Dropdown';
@@ -36,43 +31,6 @@ import { ReactionButtons } from '../common/ReactionButtons';
 import { FullscreenButton } from './FullscreenButton';
 import { PageNavigation } from './PageNavigation';
 import { ZoomControls } from './ZoomControls';
-
-interface ReaderToolbarProps {
-  bookTitle: string;
-  materialId?: string;
-  backTo?: string;
-  backLabel?: string;
-  currentPage: number;
-  totalPages: number;
-  displayZoom: number;
-  fitMode: FitMode;
-  readingMode: ReadingMode;
-  standardLayout: StandardLayout;
-  isSidebarOpen: boolean;
-  soundEnabled: boolean;
-  theme: ThemeMode;
-  isFullscreen: boolean;
-  isFullscreenSupported: boolean;
-  canDownload: boolean;
-  isStatsOpen: boolean;
-  totalReadingSeconds: number;
-  onPrevPage: () => void;
-  onNextPage: () => void;
-  onJumpToPage: (page: number) => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onFitWidth: () => void;
-  onFitPage: () => void;
-  onChangeMode: (mode: ReadingMode) => void;
-  onChangeStandardLayout: (layout: StandardLayout) => void;
-  onToggleSidebar: () => void;
-  onToggleSound: () => void;
-  onToggleTheme: () => void;
-  onToggleFullscreen: () => void;
-  onOpenShortcuts: () => void;
-  onToggleStats: () => void;
-  onDownload: () => void;
-}
 
 export function ReaderToolbar({
   bookTitle,

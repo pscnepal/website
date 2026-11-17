@@ -1,30 +1,11 @@
-export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
+import type {
+  ToastAction,
+  ToastItem,
+  ToastOptions,
+  ToastVariant,
+} from '../types/common';
 
-export interface ToastAction {
-  label: string;
-  onClick: () => void;
-}
-
-export interface ToastOptions {
-  /** Optional stable ID to deduplicate/update existing toasts of the same category */
-  id?: string;
-  /** Optional concise bold title above the message */
-  title?: string;
-  /** Auto-dismiss delay in ms. Pass 0 for a persistent toast until dismissed. */
-  duration?: number;
-  /** Optional single-click recovery/navigation button */
-  action?: ToastAction;
-}
-
-export interface ToastItem {
-  id: string;
-  variant: ToastVariant;
-  title?: string;
-  message: string;
-  duration: number;
-  action?: ToastAction;
-  createdAt: number;
-}
+export type { ToastAction, ToastItem, ToastOptions, ToastVariant };
 
 const MAX_ACTIVE_TOASTS = 4;
 

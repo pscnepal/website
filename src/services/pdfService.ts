@@ -5,18 +5,13 @@ import type {
   PDFPageProxy,
 } from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import type { LoadPdfOptions, LocalPdfSessionEntry } from '../types/pdf';
 import { createBookIdFromLocalFile, deriveTitleFromSource } from '../utils/urlHelpers';
+
+export type { LoadPdfOptions, LocalPdfSessionEntry };
 
 // Configure PDF.js worker once for the entire client session
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
-
-export interface LocalPdfSessionEntry {
-  id: string;
-  objectUrl: string;
-  fileName: string;
-  fileSize: number;
-  title: string;
-}
 
 const localFileRegistry = new Map<string, LocalPdfSessionEntry>();
 
@@ -53,12 +48,6 @@ export function revokeAllLocalPdfFiles(): void {
     URL.revokeObjectURL(entry.objectUrl);
   }
   localFileRegistry.clear();
-}
-
-export interface LoadPdfOptions {
-  url: string;
-  password?: string;
-  onProgress?: (loaded: number, total: number) => void;
 }
 
 export function createPdfLoadingTask({

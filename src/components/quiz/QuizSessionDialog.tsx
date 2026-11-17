@@ -31,17 +31,23 @@ import {
   isBilingualQuizQuestion,
   isQuestionCorrect,
   QUIZ_OPTION_KEYS,
-  type QuizDeck,
-  type QuizDifficulty,
-  type QuizOptionKey,
-  type QuizQuestion,
 } from '../../data/quizData';
 import {
   recordQuizAttempt,
   setPreferredQuizMode,
-  type QuestionOutcome,
-  type QuizPlayMode,
 } from '../../features/quiz/quizSlice';
+import type {
+  AnimatedScoreGaugeProps,
+  QuestionOutcome,
+  QuizDialogInnerProps,
+  QuizDifficulty,
+  QuizOptionKey,
+  QuizPlayMode,
+  QuizQuestion,
+  QuizReviewFilter as ReviewFilter,
+  QuizSessionDialogProps,
+  RadialCountdownProps,
+} from '../../types/assessment';
 import { resolveSampleUrl } from '../../utils/urlHelpers';
 import { storageService } from '../../services/storageService';
 import { ReactionButtons } from '../common/ReactionButtons';
@@ -54,8 +60,6 @@ import { QuizAuthGate } from '../auth/QuizAuthGate';
 import { toast } from '../../services/toastService';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
 import { FlagReasonModal } from '../common/FlagReasonModal';
-
-type ReviewFilter = 'all' | 'incorrect' | 'unanswered' | 'correct' | 'flagged';
 
 export function formatReverseClock(totalSeconds: number): string {
   const safe = Math.max(0, Math.floor(totalSeconds));
@@ -92,14 +96,6 @@ function formatOptionList(
       return `${match.key}. ${match.text}${textNe}`;
     })
     .join(' · ');
-}
-
-interface RadialCountdownProps {
-  ratio: number;
-  size?: number;
-  strokeWidth?: number;
-  urgency: 'normal' | 'low' | 'critical';
-  children?: ReactNode;
 }
 
 function RadialCountdown({
@@ -162,11 +158,6 @@ function RadialCountdown({
       )}
     </div>
   );
-}
-
-interface AnimatedScoreGaugeProps {
-  percent: number;
-  reduceMotion: boolean;
 }
 
 function AnimatedScoreGauge({
@@ -267,19 +258,6 @@ function AnimatedScoreGauge({
       </div>
     </div>
   );
-}
-
-interface QuizSessionDialogProps {
-  open: boolean;
-  deck: QuizDeck | null;
-  initialMode: QuizPlayMode;
-  onClose: () => void;
-}
-
-interface QuizDialogInnerProps {
-  deck: QuizDeck;
-  initialMode: QuizPlayMode;
-  onClose: () => void;
 }
 
 function QuizDialogInner({

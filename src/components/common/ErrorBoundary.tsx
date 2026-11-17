@@ -1,20 +1,11 @@
-import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useEffect, useState, type ErrorInfo } from 'react';
 import { AlertTriangle, ChevronDown, ChevronUp, Home, RotateCcw } from 'lucide-react';
 import { toast } from '../../services/toastService';
+import type { ErrorBoundaryProps, ErrorBoundaryState } from '../../types/common';
 import {
   extractRawErrorMessage,
   formatUserFriendlyError,
 } from '../../utils/errorHelpers';
-
-interface ErrorBoundaryProps {
-  children: ReactNode;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-  showDetails: boolean;
-}
 
 export class ErrorBoundary extends Component<
   ErrorBoundaryProps,

@@ -10,96 +10,21 @@ import {
   Search,
   X,
 } from 'lucide-react';
+import type {
+  ColumnDef,
+  SharedDataTableProps,
+  TableFilterDef,
+  TableFilterOption,
+} from '../../types/common';
 import { ActionButton } from './ActionButton';
 import { SharedSearchSelect } from './SharedSearchSelect';
 
-export interface ColumnDef<T> {
-  id: string;
-  header: React.ReactNode;
-  accessorKey?: keyof T;
-  render?: (item: T, index: number) => React.ReactNode;
-  align?: 'left' | 'center' | 'right';
-  width?: string;
-  className?: string;
-  headerClassName?: string;
-  hideOnMobile?: boolean;
-  hideOnTablet?: boolean;
-  sortable?: boolean;
-  sortKey?: (item: T) => string | number | boolean | null | undefined;
-}
-
-export interface TableFilterOption {
-  label: string;
-  value: string;
-}
-
-export interface TableFilterDef {
-  id: string;
-  label?: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: TableFilterOption[];
-  ariaLabel?: string;
-  width?: string;
-}
-
-export interface SharedDataTableProps<T> {
-  /** Array of data records */
-  data: T[];
-  /** Column definitions */
-  columns: ColumnDef<T>[];
-  /** Unique key extractor */
-  keyExtractor: (item: T, index: number) => string | number;
-  /** Optional table title */
-  title?: string;
-  /** Optional description */
-  subtitle?: string;
-  /** Total count before filters (for displaying "Showing X of Y") */
-  totalCount?: number;
-  /** Search state & handler */
-  searchQuery?: string;
-  onSearchChange?: (query: string) => void;
-  searchPlaceholder?: string;
-  /** Filter definitions rendered in toolbar */
-  filters?: TableFilterDef[];
-  /** Custom extra filter buttons/controls */
-  customFilters?: React.ReactNode;
-  /** Function to reset all filters */
-  onResetFilters?: () => void;
-  /** Whether filters are currently non-default */
-  isFiltered?: boolean;
-  /** Header action buttons (e.g. Export, Add New, etc.) */
-  actions?: React.ReactNode;
-  /** Enable built-in CSV export button */
-  enableCsvExport?: boolean;
-  csvFilename?: string;
-  /** Empty state message and description */
-  emptyMessage?: string;
-  emptyDescription?: string;
-  emptyAction?: React.ReactNode;
-  /** Row click handler */
-  onRowClick?: (item: T) => void;
-  /** Whether rows are hoverable */
-  hoverable?: boolean;
-  /** Alternating row striping */
-  striped?: boolean;
-  /** Enable pagination */
-  pagination?: boolean;
-  defaultPageSize?: number;
-  pageSizeOptions?: number[];
-  /** Row selection */
-  selectable?: boolean;
-  selectedKeys?: Set<string | number>;
-  onSelectionChange?: (selected: Set<string | number>) => void;
-  /** View mode for rendering: 'table' or 'cards' */
-  viewMode?: 'table' | 'cards';
-  /** Custom card renderer when viewMode is 'cards' */
-  renderCard?: (item: T, index: number) => React.ReactNode;
-  /** Custom grid classes for card layout */
-  gridClassName?: string;
-  /** Wrapper className */
-  className?: string;
-}
+export type {
+  ColumnDef,
+  SharedDataTableProps,
+  TableFilterDef,
+  TableFilterOption,
+};
 
 export function SharedDataTable<T>({
   data,

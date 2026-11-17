@@ -580,8 +580,8 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
               materialTitle: 'Constitution of Nepal (2072)',
               quizHref: '/quiz/laws-and-constitution',
               quizLabel: 'Constitution Quiz',
-              writtenHref: '/written/PSC-WR-203',
-              writtenLabel: 'Rule of Law 5M Q&A',
+              writtenHref: '/written/PSC-WR-212',
+              writtenLabel: 'Civic Conscience & Art. 48 5M Q&A',
               simulatePresetId: 'written-paper-2',
             },
             {
@@ -767,8 +767,8 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
               materialTitle: 'Civil Service Act, 2049',
               quizHref: '/quiz/laws-and-constitution',
               quizLabel: 'Service Laws Quiz',
-              writtenHref: '/written/PSC-WR-206',
-              writtenLabel: 'RTI 5M Model Answer',
+              writtenHref: '/written/PSC-WR-411',
+              writtenLabel: 'Vital Reg, NID & Charter 5M Q&A',
             },
             {
               id: 'kh-p3-u2',
@@ -867,6 +867,8 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
               quizHref:
                 '/quiz/custom?source=%2Fmaterials%2Fpublic-procurement-fiscal-act.pdf',
               quizLabel: 'Procurement & Accounting MCQs',
+              writtenHref: '/written/PSC-WR-407',
+              writtenLabel: 'Jinsi Sresta & PAMS 5M Q&A',
             },
             {
               id: 'kh-p3-u3',
@@ -936,6 +938,8 @@ export const KHARIDAR_SYLLABUS: PscCadreSyllabus = {
               quizHref:
                 '/quiz/custom?source=%2Fmaterials%2Fcorruption-prevention-act-2059.pdf',
               quizLabel: 'Anti-Corruption & Law MCQs',
+              writtenHref: '/written/PSC-WR-412',
+              writtenLabel: 'Courts, Myad Tameli & Writs Q&A',
             },
           ],
         },

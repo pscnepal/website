@@ -9,58 +9,13 @@ import React, {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, ChevronDown, Search, X } from 'lucide-react';
+import type {
+  SearchSelectOption,
+  SearchSelectSize,
+  SharedSearchSelectProps,
+} from '../../types/common';
 
-export interface SearchSelectOption {
-  value: string;
-  label: string;
-  description?: string;
-  badge?: string | number;
-  disabled?: boolean;
-  icon?: React.ComponentType<{ className?: string }>;
-}
-
-export type SearchSelectSize = 'xs' | 'sm' | 'md';
-
-export interface SharedSearchSelectProps {
-  /** Selected value */
-  value: string;
-  /** Value change callback */
-  onChange: (value: string) => void;
-  /** Available options */
-  options: (SearchSelectOption | { label: string; value: string })[];
-  /** Placeholder when no option is selected */
-  placeholder?: string;
-  /** Placeholder for the search input */
-  searchPlaceholder?: string;
-  /** Optional field label above trigger */
-  label?: string;
-  /** Optional accessible aria label */
-  ariaLabel?: string;
-  /** Whether the select is disabled */
-  disabled?: boolean;
-  /** Enable search filter input (defaults to true if options count > 3) */
-  enableSearch?: boolean;
-  /** Whether a clear 'X' button is shown when a value is selected */
-  clearable?: boolean;
-  /** Value to set when cleared (defaults to 'all' or empty string) */
-  clearValue?: string;
-  /** Control dimensions */
-  size?: SearchSelectSize;
-  /** Popover horizontal alignment */
-  align?: 'left' | 'right';
-  /** Popover min-width (e.g. 'w-48', 'w-64', 'min-w-[200px]') */
-  popoverWidth?: string;
-  /** Custom wrapper class */
-  className?: string;
-  /** Custom trigger button class */
-  triggerClassName?: string;
-  /** Custom popover class */
-  popoverClassName?: string;
-  /** Optional HTML id */
-  id?: string;
-  /** Optional HTML name */
-  name?: string;
-}
+export type { SearchSelectOption, SearchSelectSize, SharedSearchSelectProps };
 
 const SIZE_STYLES: Record<
   SearchSelectSize,

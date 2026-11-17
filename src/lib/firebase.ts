@@ -12,7 +12,10 @@ import {
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { toast } from '../services/toastService';
+import type { FirestoreErrorInfo } from '../types/cloud';
 import { isFirestoreOfflineError } from '../utils/errorHelpers';
+
+export type { FirestoreErrorInfo };
 
 const app = initializeApp(firebaseConfig);
 
@@ -58,23 +61,6 @@ export enum OperationType {
   LIST = 'list',
   GET = 'get',
   WRITE = 'write',
-}
-
-export interface FirestoreErrorInfo {
-  error: string;
-  operationType: OperationType;
-  path: string | null;
-  authInfo: {
-    userId?: string | null;
-    email?: string | null;
-    emailVerified?: boolean | null;
-    isAnonymous?: boolean | null;
-    tenantId?: string | null;
-    providerInfo?: {
-      providerId?: string | null;
-      email?: string | null;
-    }[];
-  };
 }
 
 export class FirestoreOfflineError extends Error {

@@ -10,10 +10,10 @@ import { CURRENT_AFFAIRS_ITEMS } from '../../data/currentAffairsData';
 import {
   DASHBOARD_TAB_META,
   SITE_CONFIG,
-  type SiteDashboardTab,
 } from '../../data/siteConfig';
 import { materialStorageService } from '../../services/materialStorageService';
 import { questionStorageService } from '../../services/questionStorageService';
+import type { ResolvedSeoPayload, SiteDashboardTab } from '../../types';
 
 export const BASE_SITE_URL = SITE_CONFIG.siteUrl;
 const BRAND_NAME = SITE_CONFIG.brandName;
@@ -21,15 +21,6 @@ const DEFAULT_TITLE = SITE_CONFIG.defaultSeoTitle;
 const DEFAULT_DESCRIPTION = SITE_CONFIG.defaultSeoDescription;
 const OG_IMAGE_PATH = SITE_CONFIG.ogImagePath;
 const ROUTE_JSONLD_SCRIPT_ID = 'psc-nepal-route-jsonld';
-
-interface ResolvedSeoPayload {
-  title: string;
-  description: string;
-  canonicalPath: string;
-  robots: string;
-  ogType: 'website' | 'article';
-  jsonLd: Record<string, unknown>;
-}
 
 function clampText(text: string, maxLength: number): string {
   const clean = text.replace(/\s+/g, ' ').trim();
@@ -156,9 +147,21 @@ function resolveRouteSeo(
     };
   }
 
-  // 2. Command Dashboard (/dashboard & /dashboard?tab=...)
-  if (normalizedPath === '/dashboard') {
-    const rawTab = searchParams.get('tab');
+  // 2. Command Dashboard (/dashboard, /dashboard/:tab & /dashboard?tab=...)
+  if (
+    normalizedPath === '/dashboard' ||
+    normalizedPath.startsWith('/dashboard/')
+  ) {
+    const rawSubpath = normalizedPath.startsWith('/dashboard/')
+      ? normalizedPath.slice('/dashboard/'.length).split('/')[0]
+      : null;
+    const normalizedSubpath =
+      rawSubpath === 'aspirants'
+        ? 'users'
+        : rawSubpath === 'backup'
+          ? 'data'
+          : rawSubpath;
+    const rawTab = normalizedSubpath || searchParams.get('tab');
     const activeTab: SiteDashboardTab =
       rawTab && rawTab in DASHBOARD_TAB_META
         ? (rawTab as SiteDashboardTab)
@@ -169,7 +172,7 @@ function resolveRouteSeo(
     const breadcrumbName = tabMeta.seoBreadcrumb;
 
     const canonicalPath =
-      activeTab === 'overview' ? '/dashboard' : `/dashboard?tab=${activeTab}`;
+      activeTab === 'overview' ? '/dashboard' : `/dashboard/${activeTab}`;
     const crumbs = [
       { name: 'Home', path: '/' },
       { name: 'Dashboard', path: '/dashboard' },

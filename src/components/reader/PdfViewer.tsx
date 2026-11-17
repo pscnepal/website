@@ -7,27 +7,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
-import type { PdfPageDimensions } from '../../types/pdf';
-import type { FitMode, StandardLayout } from '../../types/reader';
+import type {
+  PdfViewerHandle,
+  PdfViewerProps,
+} from '../../types/pdf';
 import { clampZoom } from '../../utils/pdfHelpers';
 import { PdfPage } from './PdfPage';
 
-export interface PdfViewerHandle {
-  scrollToPage: (pageNumber: number) => void;
-}
-
-interface PdfViewerProps {
-  pdfDoc: PDFDocumentProxy;
-  totalPages: number;
-  currentPage: number;
-  zoom: number;
-  fitMode: FitMode;
-  layout: StandardLayout;
-  pageDimensions: PdfPageDimensions;
-  onPageInViewChange: (page: number) => void;
-  onEffectiveZoomChange: (zoomPct: number) => void;
-}
+export type { PdfViewerHandle };
 
 const NATURAL_SCALE = 1.25;
 

@@ -5,13 +5,18 @@ import {
   Database,
   Flag,
   HelpCircle,
+  MessageSquare,
   PenLine,
   Users,
 } from 'lucide-react';
 import { useAppSelector } from '../../app/hooks';
 import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import { ActionButton } from '../common/ActionButton';
-import type { ReadingMaterialCategory } from '../../data/readingMaterials';
+import type {
+  DashboardOverviewTabProps,
+  DashboardTab,
+  ReadingMaterialCategory,
+} from '../../types';
 import {
   MATERIAL_EVENTS,
   materialStorageService,
@@ -22,32 +27,12 @@ import {
 } from '../../services/questionStorageService';
 import { formatCompactDuration } from '../../utils/pdfHelpers';
 
-export interface DashboardOverviewTabProps {
-  onSwitchTab?: (
-    tab:
-      | 'overview'
-      | 'quiz-bank'
-      | 'flagged'
-      | 'written-bank'
-      | 'users'
-      | 'materials'
-      | 'data'
-  ) => void;
-}
+export type { DashboardOverviewTabProps };
 
 export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps) {
   const navigate = useNavigate();
   const { users: dbUsers, isLoading: isUsersLoading } = useDashboardUsers();
-  const handleSwitchTab = (
-    tab:
-      | 'overview'
-      | 'quiz-bank'
-      | 'flagged'
-      | 'written-bank'
-      | 'users'
-      | 'materials'
-      | 'data'
-  ) => {
+  const handleSwitchTab = (tab: DashboardTab) => {
     if (onSwitchTab) {
       onSwitchTab(tab);
     } else {
@@ -358,9 +343,19 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
             />
 
             <ActionButton
+              onClick={() => handleSwitchTab('inquiries')}
+              label="Inquiries Inbox"
+              title="Review candidate errata reports and support inquiries"
+              color="amber"
+              variant="outline"
+              size="md"
+              icon={MessageSquare}
+            />
+
+            <ActionButton
               onClick={() => handleSwitchTab('data')}
               label="Backup & Storage"
-              title="Export, backup, or reset local study telemetry"
+              title="Export, backup, or clear workspace study telemetry"
               color="purple"
               variant="outline"
               size="md"

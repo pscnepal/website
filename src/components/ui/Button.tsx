@@ -1,13 +1,11 @@
-import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import { forwardRef } from 'react';
+import type {
+  ButtonProps,
+  ButtonSize,
+  ButtonVariant,
+} from '../../types/common';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'icon';
-export type ButtonSize = 'sm' | 'md' | 'lg';
-
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  active?: boolean;
-}
+export type { ButtonProps, ButtonSize, ButtonVariant };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (

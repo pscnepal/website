@@ -1,9 +1,5 @@
 import type { FC } from 'react';
-
-interface HimalayanLandscapeVectorProps {
-  className?: string;
-  variant?: 'subtle' | 'vibrant';
-}
+import type { HimalayanLandscapeVectorProps } from '../../types/common';
 
 export const HimalayanLandscapeVector: FC<HimalayanLandscapeVectorProps> = ({
   className = '',

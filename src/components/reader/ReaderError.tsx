@@ -1,16 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { AlertTriangle, ArrowLeft, Lock, RotateCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { PdfErrorInfo } from '../../types/pdf';
+import type { ReaderErrorProps } from '../../types/reader';
 import { PdfUpload } from '../home/PdfUpload';
 import { Button } from '../ui/Button';
-
-interface ReaderErrorProps {
-  error: PdfErrorInfo;
-  documentUrl?: string | null;
-  onRetry: () => void;
-  onSubmitPassword?: (password: string) => void;
-}
 
 export function ReaderError({
   error,

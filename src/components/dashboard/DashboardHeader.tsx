@@ -7,6 +7,7 @@ import {
   Globe,
   Maximize2,
   Menu,
+  MessageSquare,
   Minimize2,
   Moon,
   PanelLeftClose,
@@ -24,24 +25,14 @@ import {
   DASHBOARD_NAV_MODULES,
   DASHBOARD_TAB_META,
   SITE_CONFIG,
-  type SiteDashboardTab,
 } from '../../data/siteConfig';
 import { toggleTheme } from '../../features/settings/settingsSlice';
 import { useFullscreen } from '../../hooks/useFullscreen';
-import type { DashboardTab } from '../../pages/DashboardPage';
+import type { DashboardHeaderProps, DashboardTab } from '../../types/dashboard';
 import { SharedActionMenu } from '../common/SharedActionMenu';
 
-interface DashboardHeaderProps {
-  activeTab?: DashboardTab;
-  isSidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
-  onOpenMobileSidebar: () => void;
-  searchQuery?: string;
-  onSearchChange?: (query: string) => void;
-}
-
 const QUICK_ACTION_ICONS: Record<
-  SiteDashboardTab,
+  DashboardTab,
   typeof Sparkles
 > = {
   overview: Sparkles,
@@ -50,6 +41,7 @@ const QUICK_ACTION_ICONS: Record<
   'written-bank': PenLine,
   materials: BookOpen,
   users: UserCheck,
+  inquiries: MessageSquare,
   data: Database,
 };
 
@@ -68,6 +60,7 @@ export function DashboardHeader({
     if (path.includes('/written-bank')) return 'written-bank';
     if (path.includes('/materials')) return 'materials';
     if (path.includes('/users') || path.includes('/aspirants')) return 'users';
+    if (path.includes('/inquiries')) return 'inquiries';
     if (path.includes('/data') || path.includes('/backup')) return 'data';
     return 'overview';
   };

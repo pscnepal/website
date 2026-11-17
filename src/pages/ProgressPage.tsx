@@ -19,12 +19,7 @@ import { PageTransition } from '../components/layout/PageTransition';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import { formatReverseClock } from '../components/quiz/QuizSessionDialog';
 import { ALL_SYLLABUS_UNITS, PSC_CADRE_SYLLABI } from '../data/pscSyllabusData';
-import type { QuizQuestion } from '../data/quizData';
-import type { ReadingMaterialCategory } from '../data/readingMaterials';
-import {
-  WRITTEN_PAPERS,
-  type WrittenQuestion,
-} from '../data/writtenQuestionsData';
+import { WRITTEN_PAPERS } from '../data/writtenQuestionsData';
 import {
   MATERIAL_EVENTS,
   materialStorageService,
@@ -39,34 +34,26 @@ import {
   clearSimulationHistory,
 } from '../features/psc/pscSlice';
 import { clearQuizHistory } from '../features/quiz/quizSlice';
+import {
+  clearAffairBookmarks,
+  clearAllFlashcards,
+  clearExamChecklist,
+  clearPyqBookmarks,
+  clearWrittenEvaluations,
+} from '../features/workspace/workspaceSlice';
 import { clearWrittenProgress } from '../features/written/writtenSlice';
 import {
   formatCompactDuration,
   formatRelativeDate,
 } from '../utils/pdfHelpers';
 import { createBookIdFromUrl, resolveSampleUrl } from '../utils/urlHelpers';
-
-type CurriculumStatusFilter = 'all' | 'in-progress' | 'completed' | 'unread';
-
-interface EnrichedCatalogMaterial {
-  id: string;
-  categoryId: string;
-  categoryName: string;
-  title: string;
-  codeOrEdition: string;
-  path: string;
-  fullUrl: string;
-  bookId: string;
-  totalPages: number;
-  lastPage: number;
-  uniqueVisitedCount: number;
-  readingSeconds: number;
-  completionPct: number;
-  status: 'unread' | 'in-progress' | 'completed';
-  linkedQuestionCount: number;
-  linkedWrittenCount: number;
-  updatedAt: string | null;
-}
+import type {
+  CurriculumStatusFilter,
+  EnrichedCatalogMaterial,
+  QuizQuestion,
+  ReadingMaterialCategory,
+  WrittenQuestion,
+} from '../types';
 
 export function ProgressPage() {
   const dispatch = useAppDispatch();
@@ -86,6 +73,21 @@ export function ProgressPage() {
     (state) => state.psc.simulationHistory
   );
   const targetCadreId = useAppSelector((state) => state.psc.targetCadreId);
+  const writtenEvaluations = useAppSelector(
+    (state) => state.workspace.writtenEvaluations
+  );
+  const flashcardProgress = useAppSelector(
+    (state) => state.workspace.flashcardProgress
+  );
+  const pyqBookmarks = useAppSelector(
+    (state) => state.workspace.pyqBookmarks
+  );
+  const affairBookmarks = useAppSelector(
+    (state) => state.workspace.affairBookmarks
+  );
+  const examChecklist = useAppSelector(
+    (state) => state.workspace.examChecklist
+  );
 
   const [statusFilter, setStatusFilter] =
     useState<CurriculumStatusFilter>('all');
@@ -149,15 +151,6 @@ export function ProgressPage() {
     }
     return map;
   }, [writtenQuestions]);
-
-  const writtenEvaluations = useMemo(() => {
-    try {
-      const saved = localStorage.getItem('psc_written_evaluations_v2');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  }, []);
 
   const evalSummary = useMemo(() => {
     if (writtenEvaluations.length === 0) return null;
@@ -676,6 +669,11 @@ export function ProgressPage() {
     Object.keys(readingProgress).length > 0 ||
     attempts.length > 0 ||
     Object.keys(writtenRecords).length > 0 ||
+    writtenEvaluations.length > 0 ||
+    Object.keys(flashcardProgress).length > 0 ||
+    Object.keys(pyqBookmarks).length > 0 ||
+    Object.keys(affairBookmarks).length > 0 ||
+    Object.keys(examChecklist).length > 0 ||
     completedUnitIds.length > 0 ||
     simulationHistory.length > 0;
 
@@ -692,6 +690,11 @@ export function ProgressPage() {
     dispatch(clearAllReadingData());
     dispatch(clearQuizHistory());
     dispatch(clearWrittenProgress());
+    dispatch(clearWrittenEvaluations());
+    dispatch(clearAllFlashcards());
+    dispatch(clearExamChecklist());
+    dispatch(clearPyqBookmarks());
+    dispatch(clearAffairBookmarks());
     dispatch(clearPscSyllabusProgress());
     dispatch(clearSimulationHistory());
     setConfirmReset(false);

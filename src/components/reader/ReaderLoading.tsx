@@ -1,7 +1,4 @@
-interface ReaderLoadingProps {
-  title?: string;
-  progressPercent: number | null;
-}
+import type { ReaderLoadingProps } from '../../types/reader';
 
 export function ReaderLoading({ title, progressPercent }: ReaderLoadingProps) {
   return (

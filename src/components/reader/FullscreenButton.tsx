@@ -1,12 +1,7 @@
 import { Maximize, Minimize } from 'lucide-react';
+import type { FullscreenButtonProps } from '../../types/reader';
 import { Button } from '../ui/Button';
 import { Tooltip } from '../ui/Tooltip';
-
-interface FullscreenButtonProps {
-  isFullscreen: boolean;
-  isSupported: boolean;
-  onToggle: () => void;
-}
 
 export function FullscreenButton({
   isFullscreen,

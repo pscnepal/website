@@ -4,11 +4,7 @@ import {
   READER_SHORTCUT_ITEMS,
   READER_SHORTCUTS_INTRO,
 } from '../../data/featuresContentData';
-
-interface KeyboardShortcutsDialogProps {
-  open: boolean;
-  onClose: () => void;
-}
+import type { KeyboardShortcutsDialogProps } from '../../types/reader';
 
 export function KeyboardShortcutsDialog({
   open,

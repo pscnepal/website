@@ -1,15 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import type { DashboardTab } from '../types/dashboard';
 import { DashboardOverviewPage } from './dashboard/DashboardOverviewPage';
 
-export type DashboardTab =
-  | 'overview'
-  | 'quiz-bank'
-  | 'flagged'
-  | 'written-bank'
-  | 'users'
-  | 'materials'
-  | 'data';
+export type { DashboardTab };
 
 export function DashboardPage() {
   const [searchParams] = useSearchParams();
@@ -19,7 +13,7 @@ export function DashboardPage() {
   useEffect(() => {
     if (
       tabParam &&
-      ['quiz-bank', 'flagged', 'written-bank', 'users', 'materials', 'data'].includes(tabParam)
+      ['quiz-bank', 'flagged', 'written-bank', 'users', 'inquiries', 'materials', 'data'].includes(tabParam)
     ) {
       navigate(`/dashboard/${tabParam}`, { replace: true });
     }

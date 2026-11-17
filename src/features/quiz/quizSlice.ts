@@ -1,33 +1,13 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { storageService } from '../../services/storageService';
+import type {
+  QuestionOutcome,
+  QuizAttemptRecord,
+  QuizPlayMode,
+  QuizState,
+} from '../../types';
 
-export type QuizPlayMode = 'exam' | 'study';
-
-export type QuestionOutcome = 'correct' | 'wrong' | 'skipped';
-
-export interface QuizAttemptRecord {
-  id: string;
-  deckId: string;
-  deckTitle: string;
-  mode: QuizPlayMode;
-  totalQuestions: number;
-  totalMarks?: number;
-  correctCount: number;
-  wrongCount: number;
-  unansweredCount: number;
-  accuracyPercent: number;
-  pscNetScore: number;
-  durationSeconds: number;
-  deadlineSeconds: number;
-  timedOut: boolean;
-  completedAt: string;
-  questionOutcomes?: Record<string, QuestionOutcome>;
-}
-
-export interface QuizState {
-  preferredMode: QuizPlayMode;
-  attempts: QuizAttemptRecord[];
-}
+export type { QuestionOutcome, QuizAttemptRecord, QuizPlayMode, QuizState };
 
 const initialState: QuizState = storageService.loadQuizState();
 
@@ -64,6 +44,9 @@ const quizSlice = createSlice({
     resetLocalQuizHistory(state) {
       state.attempts = [];
     },
+    hydrateQuizPreferences(state, action: PayloadAction<QuizPlayMode>) {
+      state.preferredMode = action.payload;
+    },
   },
 });
 
@@ -73,6 +56,7 @@ export const {
   mergeRemoteQuizAttempts,
   clearQuizHistory,
   resetLocalQuizHistory,
+  hydrateQuizPreferences,
 } = quizSlice.actions;
 
 export default quizSlice.reducer;

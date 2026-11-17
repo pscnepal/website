@@ -1,8 +1,8 @@
-export const PSC_OPEN_CHAT_EVENT = 'psc-nepal:open-chat';
+import type { OpenChatDetail } from '../../types/workspace';
 
-export interface OpenChatDetail {
-  prompt?: string;
-}
+export type { OpenChatDetail };
+
+export const PSC_OPEN_CHAT_EVENT = 'psc-nepal:open-chat';
 
 export function openPscChat(prompt?: string): void {
   if (typeof window === 'undefined') return;

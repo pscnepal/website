@@ -2,21 +2,21 @@ import {
   ALL_QUIZ_QUESTIONS,
   isBilingualQuizQuestion,
   QUIZ_DECKS,
-  type QuizDeck,
-  type QuizQuestion,
 } from '../data/quizData';
-import {
-  WRITTEN_QUESTIONS,
-  type WrittenQuestion,
-} from '../data/writtenQuestionsData';
+import { WRITTEN_QUESTIONS } from '../data/writtenQuestionsData';
 import { auth } from '../lib/firebase';
+import type {
+  CloudQuizQuestionOverride,
+  CloudWrittenQuestionOverride,
+  QuizDeck,
+  QuizQuestion,
+  WrittenQuestion,
+} from '../types';
 import {
   resetAllQuizOverridesInFirestore,
   resetAllWrittenOverridesInFirestore,
   upsertQuizQuestionInFirestore,
   upsertWrittenQuestionInFirestore,
-  type CloudQuizQuestionOverride,
-  type CloudWrittenQuestionOverride,
 } from './cloudSyncService';
 import { SITE_CONFIG } from '../data/siteConfig';
 import { toast } from './toastService';

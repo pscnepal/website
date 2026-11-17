@@ -4,48 +4,9 @@
  * Section Officer (शाखा अधिकृत), Nayab Subba (ना.सु.), and Kharidar (खरिदार).
  */
 
-export interface PyqRecurringTopic {
-  id: string;
-  topicNameNe: string;
-  topicNameEn: string;
-  cadreFocus: Array<'section-officer' | 'nayab-subba' | 'kharidar'>;
-  frequencyScore: number; // e.g. 8 out of 10 years
-  recurrencePercentage: number; // e.g. 80%
-  trend: 'rising' | 'evergreen' | 'stable';
-  corePapers: string[];
-  whyItRepeatsNe: string;
-  whyItRepeatsEn: string;
-  rankerTipNe: string;
-  suggestedStatutes: string[];
-}
+import type { PyqQuestion, PyqRecurringTopic } from '../types/content';
 
-export interface PyqQuestion {
-  id: string;
-  yearBS: string; // e.g. '२०८०', '२०७९', '२०७८', '२०७७', '२०७६', '२०७५'
-  cadre: 'section-officer' | 'nayab-subba' | 'kharidar';
-  cadreLabelNe: string;
-  cadreLabelEn: string;
-  paper: 'Paper I (OMR)' | 'Paper II' | 'Paper III' | 'Paper IV';
-  paperNameNe: string;
-  paperNameEn: string;
-  marks: 5 | 10;
-  questionType: 'subjective-short' | 'subjective-long' | 'case-study';
-  questionNe: string;
-  questionEn: string;
-  topicCategory:
-    | 'governance'
-    | 'constitution-law'
-    | 'economy-budget'
-    | 'foreign-affairs'
-    | 'social-development'
-    | 'environment-disaster';
-  topicCategoryLabelNe: string;
-  topicCategoryLabelEn: string;
-  recurringFrequencyBadge: 'Tested 7+ Times' | 'Tested 5+ Times' | 'Tested 3+ Times' | 'Standard Frequency';
-  outlineHintsNe: string[];
-  outlineHintsEn: string[];
-  linkedWrittenQuestionId?: string;
-}
+export type { PyqQuestion, PyqRecurringTopic };
 
 export const PYQ_RECURRING_TOPIC_STATS: PyqRecurringTopic[] = [
   {

@@ -41,11 +41,7 @@ import { ReactionButtons } from '../components/common/ReactionButtons';
 import { useAuth } from '../context/AuthContext';
 import { recordView } from '../features/reactions/reactionsSlice';
 import { materialStorageService } from '../services/materialStorageService';
-import {
-  WRITTEN_PAPERS,
-  type LocalizedAnswerContent,
-  type WrittenQuestion,
-} from '../data/writtenQuestionsData';
+import { WRITTEN_PAPERS } from '../data/writtenQuestionsData';
 import {
   QUESTION_EVENTS,
   questionStorageService,
@@ -58,15 +54,19 @@ import {
   setPreferredWrittenLanguage,
   setWrittenQuestionStatus,
   toggleWrittenRubricPoint,
-  type WrittenLanguageMode,
-  type WrittenMasteryStatus,
 } from '../features/written/writtenSlice';
+import type {
+  AnswerBlockProps,
+  LocalizedAnswerContent,
+  WrittenLanguageMode,
+  WrittenMarksFilter as MarksFilter,
+  WrittenMasteryStatus,
+  WrittenQuestion,
+  WrittenStatusFilter as StatusFilter,
+} from '../types';
 import { formatCompactDuration } from '../utils/pdfHelpers';
 import { resolveSampleUrl } from '../utils/urlHelpers';
 import { toast } from '../services/toastService';
-
-type MarksFilter = 'all' | '5' | '10';
-type StatusFilter = 'all' | WrittenMasteryStatus;
 
 function countWords(text: string): number {
   const trimmed = text.trim();
@@ -108,11 +108,6 @@ function formatQuestionForClipboard(
     'English',
     q.en
   )}\n\n${'—'.repeat(32)}\n\n${formatBlock('नेपाली', q.ne)}`;
-}
-
-interface AnswerBlockProps {
-  question: WrittenQuestion;
-  languageMode: WrittenLanguageMode;
 }
 
 function StructuredModelAnswer({ question, languageMode }: AnswerBlockProps) {

@@ -1,23 +1,10 @@
 import { useMemo, useState } from 'react';
-import {
-  SharedSearchSelect,
-  type SearchSelectOption,
-} from '../common/SharedSearchSelect';
+import type { SearchSelectOption, SelectOrCustomFieldProps } from '../../types';
+import { SharedSearchSelect } from '../common/SharedSearchSelect';
+
+export type { SelectOrCustomFieldProps };
 
 const CUSTOM_SENTINEL = '__PSC_CUSTOM_VALUE__';
-
-export interface SelectOrCustomFieldProps {
-  label: string;
-  required?: boolean;
-  value: string;
-  onChange: (value: string) => void;
-  options: SearchSelectOption[];
-  placeholder?: string;
-  customPlaceholder?: string;
-  searchPlaceholder?: string;
-  customOptionLabel?: string;
-  focusRingClass?: string;
-}
 
 export function SelectOrCustomField({
   label,

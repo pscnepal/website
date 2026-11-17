@@ -2,28 +2,17 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { BookOpen, CheckCircle2, FileText, X } from 'lucide-react';
 import { DEFAULT_MATERIAL_AUTHORITIES as DEFAULT_AUTHORITIES } from '../../data/catalogOptionsData';
 import type {
+  MaterialFormModalProps,
+  MaterialFormSavePayload,
   ReadingMaterialCategory,
   ReadingMaterialItem,
-} from '../../data/readingMaterials';
+  SearchSelectOption,
+} from '../../types';
 import { materialStorageService } from '../../services/materialStorageService';
 import { ActionButton } from '../common/ActionButton';
-import type { SearchSelectOption } from '../common/SharedSearchSelect';
 import { SelectOrCustomField } from './SelectOrCustomField';
 
-export interface MaterialFormSavePayload {
-  categoryId: string;
-  categoryName?: string;
-  categorySubtitle?: string;
-  categoryDescription?: string;
-  item: ReadingMaterialItem;
-}
-
-export interface MaterialFormModalProps {
-  isOpen: boolean;
-  materialToEdit?: (ReadingMaterialItem & { categoryId: string }) | null;
-  onClose: () => void;
-  onSave: (payload: MaterialFormSavePayload) => void;
-}
+export type { MaterialFormModalProps, MaterialFormSavePayload };
 
 function slugifyId(raw: string, fallback: string): string {
   const cleaned = raw
