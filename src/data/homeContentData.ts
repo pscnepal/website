@@ -84,12 +84,12 @@ export const HOME_PILLAR_ITEMS: ReadonlyArray<HomePillarDefinition> = [
     id: 'current-affairs',
     order: '07',
     to: '/current-affairs',
-    title: 'समसामयिक विषयवस्तु तथा घटनाक्रम (2081/82 Feed)',
+    title: 'समसामयिक विषयवस्तु तथा घटनाक्रम (Daily · Weekly · Monthly)',
     metaTag: 'समसामयिक (Current Affairs)',
     description:
-      'High-yield national and international affairs, periodic plan targets, budget outlays, and demographic indicators curated for Paper I GK and Papers II–IV written analytical bullets. Includes monthly printable digests.',
+      'Daily, weekly, and monthly current affairs briefings paired with a dedicated 16-question bilingual MCQ quiz deck, Paper III analytical written Q&As, verified .gov.np reading materials, and compiled reference digests.',
     spanWide: true,
-    ctaLabel: 'Explore Feed',
+    ctaLabel: 'Open Current Affairs Hub',
   },
 ];
 

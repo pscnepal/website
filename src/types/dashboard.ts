@@ -167,3 +167,61 @@ export interface UserStatusActionState {
   user: CloudUserDirectoryEntry;
   targetStatus: CloudUserStatus;
 }
+
+// ============================================================================
+// DAILY QUIZ WIDGET TYPES
+// ============================================================================
+
+export type DailyQuizLanguageMode = 'bilingual' | 'en' | 'ne';
+
+export interface DailyQuizPersistedState {
+  dateKey: string;
+  rotationOffset: number;
+  selectedAnswers: Record<string, string[]>;
+  revealedIds: Record<string, boolean>;
+  savedRotations: Record<string, boolean>;
+}
+
+export interface DailyQuizWidgetProps {
+  maxQuestions?: number;
+}
+
+// ============================================================================
+// QUESTION BANK CSV IMPORT / EXPORT TYPES
+// ============================================================================
+
+export interface CsvImportRowError {
+  rowNumber: number;
+  questionId?: string;
+  message: string;
+}
+
+export interface CsvImportParseResult<T> {
+  validItems: T[];
+  errors: CsvImportRowError[];
+  totalRows: number;
+  newCount: number;
+  updateCount: number;
+}
+
+export interface BulkImportSummary {
+  created: number;
+  updated: number;
+  cloudSynced: number;
+  cloudFailed: number;
+  cloudSkipped?: boolean;
+}
+
+export interface QuestionCsvImportModalProps<T extends { id: string }> {
+  isOpen: boolean;
+  kind: 'quiz' | 'written';
+  existingIds: Set<string>;
+  onClose: () => void;
+  onDownloadTemplate: () => void;
+  onParseCsv: (
+    csvText: string,
+    existingIds: Set<string>
+  ) => CsvImportParseResult<T>;
+  onConfirmImport: (items: T[]) => Promise<BulkImportSummary>;
+}
+

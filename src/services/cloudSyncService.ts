@@ -53,6 +53,7 @@ import type {
   FlaggedQuestionRecord,
   FlashcardProgress,
   InquiryStatus,
+  LeaderboardEntry,
   LeitnerBoxLevel,
   PscCadreId,
   QuizDifficulty,
@@ -88,6 +89,7 @@ export type {
   CloudUserTargetCadre,
   CloudUserWorkspaceBundle,
   CloudWrittenQuestionOverride,
+  LeaderboardEntry,
   UpdateAdminUserDetailsInput,
   UpsertMaterialPayload,
   WorkspaceBookmarksPayload,
@@ -287,6 +289,9 @@ export async function fetchUserCloudReactions(userId: string): Promise<{
 
     return { userReactions, itemViews };
   } catch (error) {
+    if (!isVerifiedCurrentUser(userId)) {
+      return { userReactions: {}, itemViews: {} };
+    }
     handleFirestoreError(error, OperationType.LIST, path);
   }
 }
@@ -543,6 +548,9 @@ export async function fetchUserFlaggedQuestions(
     });
     return map;
   } catch (error) {
+    if (!isVerifiedCurrentUser(userId)) {
+      return {};
+    }
     handleFirestoreError(error, OperationType.LIST, path);
   }
 }
@@ -958,6 +966,9 @@ export async function fetchAdminUsersDirectory(
     );
     snapshot = await getDocs(q);
   } catch (error) {
+    if (!isVerifiedCurrentUser()) {
+      return [];
+    }
     handleFirestoreError(error, OperationType.LIST, path);
   }
 
@@ -1153,6 +1164,13 @@ export async function deleteAdminUserFromFirestore(uid: string): Promise<void> {
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, wsPath);
     }
+  }
+
+  const leaderboardPath = `leaderboard/${uid}`;
+  try {
+    await deleteDoc(doc(db, 'leaderboard', uid));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, leaderboardPath);
   }
 
   const userPath = `users/${uid}`;
@@ -2684,6 +2702,9 @@ export async function fetchUserWrittenProgress(
     });
     return map;
   } catch (error) {
+    if (!isVerifiedCurrentUser(userId)) {
+      return {};
+    }
     handleFirestoreError(error, OperationType.LIST, path);
   }
 }
@@ -2799,6 +2820,9 @@ export async function fetchUserWrittenEvaluations(
         (b.evaluatedAt || '').localeCompare(a.evaluatedAt || '')
       );
   } catch (error) {
+    if (!isVerifiedCurrentUser(userId)) {
+      return [];
+    }
     handleFirestoreError(error, OperationType.LIST, path);
   }
 }
@@ -2935,6 +2959,9 @@ export async function fetchUserSimulationRuns(
       })
       .sort((a, b) => b.completedAt.localeCompare(a.completedAt));
   } catch (error) {
+    if (!isVerifiedCurrentUser(userId)) {
+      return [];
+    }
     handleFirestoreError(error, OperationType.LIST, path);
   }
 }
@@ -3077,6 +3104,9 @@ export async function fetchUserContactInquiries(
       )
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   } catch (error) {
+    if (!isVerifiedCurrentUser(userId)) {
+      return [];
+    }
     handleFirestoreError(error, OperationType.LIST, path);
   }
 }
@@ -3101,6 +3131,9 @@ export async function fetchAllContactInquiriesForAdmin(): Promise<
       )
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   } catch (error) {
+    if (!isVerifiedCurrentUser()) {
+      return [];
+    }
     handleFirestoreError(error, OperationType.LIST, path);
   }
 }
@@ -3225,4 +3258,290 @@ export async function deleteContactInquiryInFirestore(
     handleFirestoreError(error, OperationType.DELETE, docPath);
   }
 }
+
+// ============================================================================
+// PUBLIC ZERO-PII STUDY LEADERBOARD SYNC & SUBSCRIPTIONS
+// ============================================================================
+
+const leaderboardVisibilityCache = new Map<string, boolean>();
+
+export function clearLeaderboardVisibilityCache(userId?: string): void {
+  if (userId) {
+    leaderboardVisibilityCache.delete(userId);
+  } else {
+    leaderboardVisibilityCache.clear();
+  }
+}
+
+export function getCachedLeaderboardVisibility(userId: string): boolean | undefined {
+  return leaderboardVisibilityCache.get(userId);
+}
+
+function parseLeaderboardDoc(
+  docId: string,
+  d: Record<string, unknown>
+): LeaderboardEntry {
+  const targetCadre: PscCadreId =
+    d.targetCadre === 'nayab-subba' || d.targetCadre === 'kharidar'
+      ? d.targetCadre
+      : 'section-officer';
+
+  const photoURL =
+    typeof d.photoURL === 'string' && d.photoURL.trim()
+      ? d.photoURL.trim()
+      : undefined;
+
+  return {
+    userId: String(d.userId ?? docId),
+    displayName: String(d.displayName ?? 'PSC Aspirant').trim() || 'PSC Aspirant',
+    ...(photoURL ? { photoURL } : {}),
+    targetCadre,
+    isPublic: d.isPublic !== false,
+    booksReadCount: Math.max(0, Math.round(Number(d.booksReadCount) || 0)),
+    totalPagesRead: Math.max(0, Math.round(Number(d.totalPagesRead) || 0)),
+    readingMinutes: Math.max(0, Math.round(Number(d.readingMinutes) || 0)),
+    writtenPracticedCount: Math.max(
+      0,
+      Math.round(Number(d.writtenPracticedCount) || 0)
+    ),
+    writtenMasteredCount: Math.max(
+      0,
+      Math.round(Number(d.writtenMasteredCount) || 0)
+    ),
+    writtenEvaluationsCount: Math.max(
+      0,
+      Math.round(Number(d.writtenEvaluationsCount) || 0)
+    ),
+    writtenWordsCount: Math.max(
+      0,
+      Math.round(Number(d.writtenWordsCount) || 0)
+    ),
+    quizAttemptsCount: Math.max(
+      0,
+      Math.round(Number(d.quizAttemptsCount) || 0)
+    ),
+    omrSimulationsCount: Math.max(
+      0,
+      Math.round(Number(d.omrSimulationsCount) || 0)
+    ),
+    quizQuestionsSolved: Math.max(
+      0,
+      Math.round(Number(d.quizQuestionsSolved) || 0)
+    ),
+    quizAvgAccuracy: Math.min(
+      100,
+      Math.max(0, Math.round((Number(d.quizAvgAccuracy) || 0) * 10) / 10)
+    ),
+    quizTotalNetScore: Math.round((Number(d.quizTotalNetScore) || 0) * 100) / 100,
+    totalScore: Math.max(0, Math.round(Number(d.totalScore) || 0)),
+    updatedAt: toIsoStringOrNull(d.updatedAt),
+    createdAt: toIsoStringOrNull(d.createdAt),
+  };
+}
+
+export async function fetchOwnLeaderboardEntry(
+  userId: string
+): Promise<LeaderboardEntry | null> {
+  if (!isVerifiedCurrentUser(userId)) {
+    return null;
+  }
+  const docPath = `leaderboard/${userId}`;
+  try {
+    const snap = await getDoc(doc(db, 'leaderboard', userId));
+    if (!snap.exists()) return null;
+    const parsed = parseLeaderboardDoc(
+      snap.id,
+      snap.data() as Record<string, unknown>
+    );
+    leaderboardVisibilityCache.set(userId, parsed.isPublic);
+    return parsed;
+  } catch (error) {
+    if (!isVerifiedCurrentUser(userId)) {
+      return null;
+    }
+    handleFirestoreError(error, OperationType.GET, docPath);
+  }
+}
+
+export async function upsertLeaderboardEntryInFirestore(
+  userId: string,
+  payload: Omit<LeaderboardEntry, 'createdAt' | 'updatedAt'>,
+  options?: { overrideIsPublic?: boolean }
+): Promise<LeaderboardEntry | null> {
+  if (!isVerifiedCurrentUser(userId)) {
+    return null;
+  }
+
+  const docPath = `leaderboard/${userId}`;
+  return enqueueItemTask(`leaderboard:${userId}`, async () => {
+    if (!isVerifiedCurrentUser(userId)) {
+      return null;
+    }
+    await ensureAuthenticatedUserDocExists(userId);
+    const ref = doc(db, 'leaderboard', userId);
+    let existingSnap;
+    try {
+      existingSnap = await getDoc(ref);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, docPath);
+    }
+
+    const existingPublic = existingSnap.exists()
+      ? existingSnap.data().isPublic !== false
+      : leaderboardVisibilityCache.get(userId) ?? true;
+
+    const resolvedIsPublic =
+      options?.overrideIsPublic !== undefined
+        ? options.overrideIsPublic
+        : existingPublic;
+
+    leaderboardVisibilityCache.set(userId, resolvedIsPublic);
+
+    const safeName =
+      (payload.displayName || 'PSC Aspirant').trim().slice(0, 120) ||
+      'PSC Aspirant';
+    const safePhoto = payload.photoURL?.trim().slice(0, 512) || '';
+    const safeCadre: PscCadreId =
+      payload.targetCadre === 'nayab-subba' || payload.targetCadre === 'kharidar'
+        ? payload.targetCadre
+        : 'section-officer';
+
+    const clampInt = (n: number, max: number) =>
+      Math.min(max, Math.max(0, Math.round(Number(n) || 0)));
+
+    const numericFields = {
+      displayName: safeName,
+      targetCadre: safeCadre,
+      isPublic: Boolean(resolvedIsPublic),
+      booksReadCount: clampInt(payload.booksReadCount, 1000),
+      totalPagesRead: clampInt(payload.totalPagesRead, 500_000),
+      readingMinutes: clampInt(payload.readingMinutes, 500_000),
+      writtenPracticedCount: clampInt(payload.writtenPracticedCount, 1000),
+      writtenMasteredCount: clampInt(payload.writtenMasteredCount, 1000),
+      writtenEvaluationsCount: clampInt(payload.writtenEvaluationsCount, 500),
+      writtenWordsCount: clampInt(payload.writtenWordsCount, 5_000_000),
+      quizAttemptsCount: clampInt(payload.quizAttemptsCount, 1000),
+      omrSimulationsCount: clampInt(payload.omrSimulationsCount, 1000),
+      quizQuestionsSolved: clampInt(payload.quizQuestionsSolved, 100_000),
+      quizAvgAccuracy: Math.min(
+        100,
+        Math.max(0, Math.round((Number(payload.quizAvgAccuracy) || 0) * 10) / 10)
+      ),
+      quizTotalNetScore: Math.min(
+        50_000,
+        Math.max(
+          -5000,
+          Math.round((Number(payload.quizTotalNetScore) || 0) * 100) / 100
+        )
+      ),
+      totalScore: clampInt(payload.totalScore, 10_000_000),
+      updatedAt: serverTimestamp(),
+    };
+
+    if (!existingSnap.exists()) {
+      const createDoc: Record<string, unknown> = {
+        userId,
+        ...numericFields,
+        createdAt: serverTimestamp(),
+      };
+      if (safePhoto) {
+        createDoc.photoURL = safePhoto;
+      }
+      try {
+        await setDoc(ref, createDoc);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, docPath);
+      }
+    } else {
+      const updateDocPayload: Record<string, unknown> = {
+        ...numericFields,
+        photoURL: safePhoto ? safePhoto : deleteField(),
+      };
+      try {
+        await updateDoc(ref, updateDocPayload);
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, docPath);
+      }
+    }
+
+    const nowIso = new Date().toISOString();
+    return {
+      userId,
+      displayName: numericFields.displayName,
+      ...(safePhoto ? { photoURL: safePhoto } : {}),
+      targetCadre: numericFields.targetCadre,
+      isPublic: numericFields.isPublic,
+      booksReadCount: numericFields.booksReadCount,
+      totalPagesRead: numericFields.totalPagesRead,
+      readingMinutes: numericFields.readingMinutes,
+      writtenPracticedCount: numericFields.writtenPracticedCount,
+      writtenMasteredCount: numericFields.writtenMasteredCount,
+      writtenEvaluationsCount: numericFields.writtenEvaluationsCount,
+      writtenWordsCount: numericFields.writtenWordsCount,
+      quizAttemptsCount: numericFields.quizAttemptsCount,
+      omrSimulationsCount: numericFields.omrSimulationsCount,
+      quizQuestionsSolved: numericFields.quizQuestionsSolved,
+      quizAvgAccuracy: numericFields.quizAvgAccuracy,
+      quizTotalNetScore: numericFields.quizTotalNetScore,
+      totalScore: numericFields.totalScore,
+      createdAt:
+        existingSnap.exists()
+          ? toIsoStringOrNull(existingSnap.data().createdAt) ?? nowIso
+          : nowIso,
+      updatedAt: nowIso,
+    };
+  });
+}
+
+export async function fetchPublicLeaderboard(
+  limitCount = 150
+): Promise<LeaderboardEntry[]> {
+  const path = 'leaderboard';
+  try {
+    const q = query(
+      collection(db, 'leaderboard'),
+      where('isPublic', '==', true),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .map((docSnap) =>
+        parseLeaderboardDoc(docSnap.id, docSnap.data() as Record<string, unknown>)
+      )
+      .sort((a, b) => b.totalScore - a.totalScore);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, path);
+  }
+}
+
+export function subscribeToPublicLeaderboard(
+  onData: (entries: LeaderboardEntry[]) => void,
+  onError?: (error: unknown) => void,
+  limitCount = 150
+): Unsubscribe {
+  const path = 'leaderboard';
+  const q = query(
+    collection(db, 'leaderboard'),
+    where('isPublic', '==', true),
+    limit(limitCount)
+  );
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const entries = snapshot.docs
+        .map((docSnap) =>
+          parseLeaderboardDoc(docSnap.id, docSnap.data() as Record<string, unknown>)
+        )
+        .sort((a, b) => b.totalScore - a.totalScore);
+      onData(entries);
+    },
+    (error) => {
+      reportFirestoreSnapshotError(error, OperationType.LIST, path);
+      if (onError) {
+        onError(error);
+      }
+    }
+  );
+}
+
 

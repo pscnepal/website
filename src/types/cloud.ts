@@ -232,4 +232,29 @@ export interface DashboardUsersContextValue {
   updateOwnPassword: (newPassword: string) => Promise<'updated' | 'linked'>;
 }
 
+export interface LeaderboardEntry {
+  userId: string;
+  displayName: string;
+  photoURL?: string;
+  targetCadre: PscCadreId;
+  isPublic: boolean;
+  booksReadCount: number;
+  totalPagesRead: number;
+  readingMinutes: number;
+  writtenPracticedCount: number;
+  writtenMasteredCount: number;
+  writtenEvaluationsCount: number;
+  writtenWordsCount: number;
+  quizAttemptsCount: number;
+  omrSimulationsCount: number;
+  quizQuestionsSolved: number;
+  quizAvgAccuracy: number;
+  quizTotalNetScore: number;
+  totalScore: number;
+  updatedAt: string | null;
+  createdAt: string | null;
+}
+
+export type LeaderboardCategory = 'overall' | 'reading' | 'written' | 'quiz';
+
 export type CloudQuizOutcomeMap = Record<string, QuestionOutcome>;

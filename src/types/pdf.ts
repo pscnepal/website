@@ -90,7 +90,8 @@ export interface LocalPdfSessionEntry {
 }
 
 export interface LoadPdfOptions {
-  url: string;
+  url?: string;
+  data?: Uint8Array;
   password?: string;
   onProgress?: (loaded: number, total: number) => void;
 }

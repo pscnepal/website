@@ -157,6 +157,28 @@ export const reactionsSlice = createSlice({
       state.syncedUserReactions = {};
       state.syncedItemViews = {};
     },
+    hydrateLocalReactions: (
+      state,
+      action: PayloadAction<{
+        userReactions?: Record<string, ReactionType>;
+        itemViews?: Record<string, number>;
+      }>
+    ) => {
+      if (action.payload.userReactions) {
+        for (const [id, val] of Object.entries(action.payload.userReactions)) {
+          if (!state.userReactions[id]) {
+            state.userReactions[id] = val;
+          }
+        }
+      }
+      if (action.payload.itemViews) {
+        for (const [id, views] of Object.entries(action.payload.itemViews)) {
+          if ((state.itemViews[id] ?? 0) < views) {
+            state.itemViews[id] = views;
+          }
+        }
+      }
+    },
   },
 });
 
@@ -171,6 +193,7 @@ export const {
   resetCloudReactionSyncState,
   resetLocalUserReactions,
   clearAllReactions,
+  hydrateLocalReactions,
 } = reactionsSlice.actions;
 
 export const selectUserReaction = (

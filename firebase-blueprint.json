@@ -1021,6 +1021,123 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Publicly readable, zero-PII aspirant study summary showing reading, written practice, and quiz/OMR simulation metrics.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Verified owner Firebase Auth UID.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Public display name on the leaderboard.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Optional public avatar URL.",
+          "maxLength": 512
+        },
+        "targetCadre": {
+          "type": "string",
+          "enum": ["section-officer", "nayab-subba", "kharidar"],
+          "description": "Target Nepal PSC cadre."
+        },
+        "isPublic": {
+          "type": "boolean",
+          "description": "Whether the aspirant is visible on the public leaderboard."
+        },
+        "booksReadCount": {
+          "type": "number",
+          "description": "Distinct PDF volumes opened or read."
+        },
+        "totalPagesRead": {
+          "type": "number",
+          "description": "Cumulative pages read/turned across documents."
+        },
+        "readingMinutes": {
+          "type": "number",
+          "description": "Cumulative active PDF reading minutes."
+        },
+        "writtenPracticedCount": {
+          "type": "number",
+          "description": "Written questions practiced or drafted."
+        },
+        "writtenMasteredCount": {
+          "type": "number",
+          "description": "Written questions marked as mastered."
+        },
+        "writtenEvaluationsCount": {
+          "type": "number",
+          "description": "Saved Paper II-IV answer evaluator scorecards."
+        },
+        "writtenWordsCount": {
+          "type": "number",
+          "description": "Cumulative words authored in written drafts and evaluations."
+        },
+        "quizAttemptsCount": {
+          "type": "number",
+          "description": "Completed timed MCQ quiz sessions."
+        },
+        "omrSimulationsCount": {
+          "type": "number",
+          "description": "Completed exam hall OMR and written simulations."
+        },
+        "quizQuestionsSolved": {
+          "type": "number",
+          "description": "Total objective questions answered across quizzes and OMR simulations."
+        },
+        "quizAvgAccuracy": {
+          "type": "number",
+          "description": "Mean percentage accuracy across completed quizzes (0-100)."
+        },
+        "quizTotalNetScore": {
+          "type": "number",
+          "description": "Cumulative PSC net marks scored across quizzes and simulations."
+        },
+        "totalScore": {
+          "type": "number",
+          "description": "Deterministic composite study XP combining reading, written, and quiz engagement."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when leaderboard entry was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of latest study stats sync."
+        }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "targetCadre",
+        "isPublic",
+        "booksReadCount",
+        "totalPagesRead",
+        "readingMinutes",
+        "writtenPracticedCount",
+        "writtenMasteredCount",
+        "writtenEvaluationsCount",
+        "writtenWordsCount",
+        "quizAttemptsCount",
+        "omrSimulationsCount",
+        "quizQuestionsSolved",
+        "quizAvgAccuracy",
+        "quizTotalNetScore",
+        "totalScore",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -1125,6 +1242,12 @@
         "$ref": "#/entities/ReadingMaterialOverride"
       },
       "description": "Publicly readable, admin-managed reading material overrides and additions."
+    },
+    "/leaderboard/{userId}": {
+      "schema": {
+        "$ref": "#/entities/LeaderboardEntry"
+      },
+      "description": "Publicly readable zero-PII aspirant study summary leaderboard showing reading, written, and quiz quantities."
     }
   }
 }

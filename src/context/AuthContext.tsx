@@ -80,6 +80,7 @@ import {
 import { pscApi } from '../app/api/pscApi';
 import {
   clearEnsuredProfileCache,
+  clearLeaderboardVisibilityCache,
   createContactInquiryInFirestore,
   createSimulationRunInFirestore,
   createWrittenEvaluationInFirestore,
@@ -94,6 +95,7 @@ import {
   subscribeToCloudWrittenOverrides,
   updateUserTargetCadreInFirestore,
   upsertFlaggedQuestionInFirestore,
+  upsertLeaderboardEntryInFirestore,
   upsertWorkspaceBookmarksInFirestore,
   upsertWorkspaceFlashcardsInFirestore,
   upsertWorkspaceLibraryInFirestore,
@@ -101,6 +103,7 @@ import {
   upsertWorkspaceSyllabusInFirestore,
   upsertWrittenProgressInFirestore,
 } from '../services/cloudSyncService';
+import { buildLeaderboardStatsPayload } from '../utils/leaderboardHelpers';
 import { materialStorageService } from '../services/materialStorageService';
 import { questionStorageService } from '../services/questionStorageService';
 import { storageService } from '../services/storageService';
@@ -427,6 +430,13 @@ async function fetchUserQuizAttempts(
       };
     });
   } catch (error) {
+    if (
+      !auth.currentUser ||
+      !auth.currentUser.emailVerified ||
+      auth.currentUser.uid !== userId
+    ) {
+      return [];
+    }
     handleFirestoreError(error, OperationType.LIST, collectionPath);
   }
 }
@@ -682,8 +692,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       syncedUidRef.current = null;
       if (uidToClear) {
         clearEnsuredProfileCache(uidToClear);
+        clearLeaderboardVisibilityCache(uidToClear);
       } else {
         clearEnsuredProfileCache();
+        clearLeaderboardVisibilityCache();
       }
       storageService.clearLastCloudUid();
       storageService.clearLocalFlaggedQuestionsOnly();
@@ -1205,6 +1217,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         storageService.saveContactInquiries(mergedInquiries);
         dispatch(pscApi.util.invalidateTags(['ContactInquiries', 'AdminInquiries']));
 
+        // 9. Sync Public Zero-PII Study Leaderboard Entry
+        if (auth.currentUser?.uid !== firebaseUser.uid) return;
+        const latestState = store.getState();
+        const lbPayload = buildLeaderboardStatsPayload({
+          userId: firebaseUser.uid,
+          displayName:
+            firebaseUser.displayName?.trim() ||
+            firebaseUser.email?.split('@')[0] ||
+            'PSC Aspirant',
+          photoURL: firebaseUser.photoURL || undefined,
+          targetCadre: latestState.psc.targetCadreId,
+          recentBooks: latestState.library.recentBooks,
+          readingProgress: latestState.library.readingProgress,
+          readingStats: latestState.library.readingStats,
+          writtenRecords: latestState.written.records,
+          writtenEvaluations: latestState.workspace.writtenEvaluations,
+          quizAttempts: latestState.quiz.attempts,
+          simulationHistory: latestState.psc.simulationHistory,
+        });
+        await upsertLeaderboardEntryInFirestore(firebaseUser.uid, lbPayload);
+
         if (auth.currentUser?.uid === firebaseUser.uid) {
           syncedUidRef.current = firebaseUser.uid;
         }
@@ -1242,6 +1275,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             'Cloud database is currently offline. Local progress is saved and will sync automatically when reconnected.',
             { id: 'firebase-offline', title: 'Offline Mode' }
           );
+          return;
+        }
+
+        if (
+          auth.currentUser?.uid !== firebaseUser.uid ||
+          !auth.currentUser?.emailVerified
+        ) {
           return;
         }
 
@@ -1285,6 +1325,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           resetAllLocalAccountData();
         } else {
           clearEnsuredProfileCache();
+          clearLeaderboardVisibilityCache();
           dispatch(resetCloudReactionSyncState());
         }
         return;

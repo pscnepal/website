@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from 'pdfjs-dist';
 import {
+  cachePdfFromUrl,
   createPdfLoadingTask,
   extractPdfMetadata,
+  getOfflinePdfBytes,
   isRenderingCancelledError,
 } from '../services/pdfService';
 import type {
@@ -46,7 +48,7 @@ export function usePdfDocument({
     }
 
     let isCancelled = false;
-    let loadingTask: PDFDocumentLoadingTask | null = null;
+    let activeLoadingTask: PDFDocumentLoadingTask | null = null;
     let loadedDocument: PDFDocumentProxy | null = null;
 
     setIsLoading(true);
@@ -56,85 +58,138 @@ export function usePdfDocument({
     setNumPages(0);
     setPageDimensions(null);
 
-    try {
-      loadingTask = createPdfLoadingTask({
-        url,
-        password,
-        onProgress: (loaded, total) => {
-          if (isCancelled) return;
-          if (total > 0) {
-            const pct = Math.min(99, Math.round((loaded / total) * 100));
-            setProgressPercent(pct);
-          }
-        },
-      });
-    } catch (syncErr) {
-      setError(classifyPdfError(syncErr));
-      setIsLoading(false);
-      return;
-    }
+    const finalizeDocument = async (
+      doc: PDFDocumentProxy,
+      fromOfflineCache: boolean
+    ) => {
+      if (isCancelled) {
+        await doc.cleanup();
+        await doc.loadingTask.destroy();
+        return;
+      }
 
-    loadingTask.promise
-      .then(async (doc) => {
-        if (isCancelled) {
-          await doc.cleanup();
-          await doc.loadingTask.destroy();
-          return;
+      loadedDocument = doc;
+      if (doc.numPages < 1) {
+        await doc.cleanup();
+        await doc.loadingTask.destroy();
+        loadedDocument = null;
+        if (!isCancelled) {
+          setError({
+            code: 'INVALID_PDF',
+            title: 'Empty PDF Document',
+            message: 'This PDF file contains zero readable pages.',
+          });
+          setIsLoading(false);
         }
+        return;
+      }
 
-        loadedDocument = doc;
-        if (doc.numPages < 1) {
-          await doc.cleanup();
-          await doc.loadingTask.destroy();
-          loadedDocument = null;
-          if (!isCancelled) {
-            setError({
-              code: 'INVALID_PDF',
-              title: 'Empty PDF Document',
-              message: 'This PDF file contains zero readable pages.',
-            });
-            setIsLoading(false);
-          }
-          return;
-        }
+      const [firstPage, meta] = await Promise.all([
+        doc.getPage(1),
+        extractPdfMetadata(doc),
+      ]);
 
-        const [firstPage, meta] = await Promise.all([
-          doc.getPage(1),
-          extractPdfMetadata(doc),
-        ]);
-
-        if (isCancelled) {
-          firstPage.cleanup();
-          await doc.cleanup();
-          await doc.loadingTask.destroy();
-          loadedDocument = null;
-          return;
-        }
-
-        const viewport = firstPage.getViewport({ scale: 1 });
-        const width = Math.max(1, viewport.width);
-        const height = Math.max(1, viewport.height);
+      if (isCancelled) {
         firstPage.cleanup();
+        await doc.cleanup();
+        await doc.loadingTask.destroy();
+        loadedDocument = null;
+        return;
+      }
 
-        setPageDimensions({
-          width,
-          height,
-          aspectRatio: width / height,
+      const viewport = firstPage.getViewport({ scale: 1 });
+      const width = Math.max(1, viewport.width);
+      const height = Math.max(1, viewport.height);
+      firstPage.cleanup();
+
+      setPageDimensions({
+        width,
+        height,
+        aspectRatio: width / height,
+      });
+      setDocMetadata(meta);
+      setNumPages(doc.numPages);
+      setPdfDoc(doc);
+      setProgressPercent(100);
+      setIsLoading(false);
+
+      // Silently cache loaded same-origin PDFs into IndexedDB so they remain available offline
+      if (
+        !fromOfflineCache &&
+        typeof window !== 'undefined' &&
+        !url.startsWith('blob:') &&
+        (url.startsWith(window.location.origin) || url.startsWith('/'))
+      ) {
+        void cachePdfFromUrl(url, { title: meta.title });
+      }
+    };
+
+    const loadDocument = async () => {
+      const isOffline =
+        typeof navigator !== 'undefined' && navigator.onLine === false;
+
+      // Prefer IndexedDB cached bytes immediately when offline or for blob-less local recovery
+      const cachedBytes = await getOfflinePdfBytes(url);
+      if (isCancelled) return;
+
+      if (cachedBytes && isOffline) {
+        const offlineTask = createPdfLoadingTask({
+          data: cachedBytes,
+          password,
         });
-        setDocMetadata(meta);
-        setNumPages(doc.numPages);
-        setPdfDoc(doc);
-        setProgressPercent(100);
-        setIsLoading(false);
-      })
-      .catch((err: unknown) => {
-        if (isCancelled || isRenderingCancelledError(err)) return;
-        const name = (err as { name?: string })?.name;
+        activeLoadingTask = offlineTask;
+        const doc = await offlineTask.promise;
+        await finalizeDocument(doc, true);
+        return;
+      }
+
+      try {
+        const networkTask = createPdfLoadingTask({
+          url,
+          password,
+          onProgress: (loaded, total) => {
+            if (isCancelled) return;
+            if (total > 0) {
+              const pct = Math.min(99, Math.round((loaded / total) * 100));
+              setProgressPercent(pct);
+            }
+          },
+        });
+        activeLoadingTask = networkTask;
+        const doc = await networkTask.promise;
+        await finalizeDocument(doc, false);
+      } catch (networkErr: unknown) {
+        if (isCancelled || isRenderingCancelledError(networkErr)) return;
+        const name = (networkErr as { name?: string })?.name;
         if (name === 'AbortException') return;
 
-        setError(classifyPdfError(err));
-        setIsLoading(false);
-      });
+        // Do not swallow password prompts with cached copy if same password applies; otherwise try cached fallback
+        if (
+          name !== 'PasswordException' &&
+          cachedBytes
+        ) {
+          const fallbackTask = createPdfLoadingTask({
+            data: cachedBytes,
+            password,
+          });
+          activeLoadingTask = fallbackTask;
+          const doc = await fallbackTask.promise;
+          await finalizeDocument(doc, true);
+          return;
+        }
+
+        throw networkErr;
+      }
+    };
+
+    loadDocument().catch((err: unknown) => {
+      if (isCancelled || isRenderingCancelledError(err)) return;
+      const name = (err as { name?: string })?.name;
+      if (name === 'AbortException') return;
+
+      setError(classifyPdfError(err));
+      setIsLoading(false);
+    });
 
     return () => {
       isCancelled = true;
@@ -143,8 +198,8 @@ export function usePdfDocument({
           // Ignore document cleanup errors
         });
       }
-      if (loadingTask) {
-        loadingTask.destroy().catch(() => {
+      if (activeLoadingTask) {
+        activeLoadingTask.destroy().catch(() => {
           // Ignore task teardown errors
         });
       }

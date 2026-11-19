@@ -21,6 +21,7 @@ import {
 import { ToastViewport } from './components/common/ToastViewport';
 import { DashboardLayout } from './components/dashboard/DashboardLayout';
 import { ScrollToTopButton } from './components/layout/ScrollToTopButton';
+import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 import { SeoManager } from './components/seo/SeoManager';
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
@@ -36,6 +37,7 @@ import { DashboardWrittenBankPage } from './pages/dashboard/DashboardWrittenBank
 import { FeaturesPage } from './pages/FeaturesPage';
 import { FlashcardsPage } from './pages/FlashcardsPage';
 import { HomePage } from './pages/HomePage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import { LibraryPage } from './pages/LibraryPage';
 import { MaterialsPage } from './pages/MaterialsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -85,6 +87,7 @@ const PUBLIC_PAGE_ROUTES: ReadonlyArray<RouteEntry> = [
   { path: '/notices', element: <NoticeCalendarPage /> },
   { path: '/pyq', element: <PyqArchivePage /> },
   { path: '/flashcards', element: <FlashcardsPage /> },
+  { path: '/leaderboard', element: <LeaderboardPage /> },
   { path: '/progress', element: <ProgressPage /> },
   { path: '/library', element: <LibraryPage /> },
   { path: '/features', element: <FeaturesPage /> },
@@ -111,6 +114,7 @@ const LEGACY_REDIRECT_ROUTES: ReadonlyArray<readonly [from: string, to: string]>
   ['/previous-questions', '/pyq'],
   ['/cards', '/flashcards'],
   ['/memorize', '/flashcards'],
+  ['/rankings', '/leaderboard'],
   ['/privacy-policy', '/privacy'],
   ['/terms-of-service', '/terms'],
 ];
@@ -235,6 +239,7 @@ export default function App() {
         </ErrorBoundary>
       </LayoutGroup>
       <ScrollToTopButton />
+      <OfflineIndicator />
       <PscChatbot />
       <ToastViewport />
     </BrowserRouter>

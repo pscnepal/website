@@ -1,8 +1,9 @@
-import { useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import {
   ArrowUpRight,
   BarChart3,
   BookOpen,
+  CheckCircle2,
   FolderOpen,
   Trash2,
 } from 'lucide-react';
@@ -14,8 +15,13 @@ import {
   setCurrentBook,
 } from '../../features/library/librarySlice';
 import {
+  OFFLINE_CACHE_EVENTS,
+  offlineDbService,
+} from '../../services/offlineDbService';
+import {
   getLocalPdfSessionEntry,
   registerLocalPdfFile,
+  restoreLocalPdfFromIndexedDB,
 } from '../../services/pdfService';
 import type { RecentBookEntry, RecentBooksProps } from '../../types/pdf';
 import {
@@ -33,6 +39,23 @@ export function RecentBooks({ showEmptyState = false }: RecentBooksProps) {
   const relinkInputRef = useRef<HTMLInputElement | null>(null);
   const pendingBookRef = useRef<RecentBookEntry | null>(null);
   const [statsBook, setStatsBook] = useState<RecentBookEntry | null>(null);
+  const [cachedPdfIds, setCachedPdfIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let active = true;
+    const refreshCached = () => {
+      void offlineDbService.listCachedPdfSummaries().then((items) => {
+        if (!active) return;
+        setCachedPdfIds(new Set(items.map((item) => item.id)));
+      });
+    };
+    refreshCached();
+    window.addEventListener(OFFLINE_CACHE_EVENTS.CHANGED, refreshCached);
+    return () => {
+      active = false;
+      window.removeEventListener(OFFLINE_CACHE_EVENTS.CHANGED, refreshCached);
+    };
+  }, []);
 
   if (recentBooks.length === 0) {
     if (!showEmptyState) {
@@ -68,7 +91,7 @@ export function RecentBooks({ showEmptyState = false }: RecentBooksProps) {
     );
   }
 
-  const handleOpenRecent = (book: RecentBookEntry) => {
+  const handleOpenRecent = async (book: RecentBookEntry) => {
     const navState = { from: '/library', fromLabel: 'Back to Library' };
 
     if (book.sourceType === 'url' && book.url) {
@@ -78,8 +101,11 @@ export function RecentBooks({ showEmptyState = false }: RecentBooksProps) {
       return;
     }
 
-    // Local file: check if still registered in current browser tab session
-    const activeSession = getLocalPdfSessionEntry(book.id);
+    // Local file: check in-memory tab registry or restore from IndexedDB offline cache
+    const activeSession =
+      getLocalPdfSessionEntry(book.id) ??
+      (await restoreLocalPdfFromIndexedDB(book.id));
+
     if (activeSession) {
       dispatch(
         setCurrentBook({
@@ -172,9 +198,10 @@ export function RecentBooks({ showEmptyState = false }: RecentBooksProps) {
             book.totalPages > 0
               ? Math.min(100, Math.round((book.lastPage / book.totalPages) * 100))
               : 0;
+          const isCachedOffline = cachedPdfIds.has(book.id);
           const isLocalSessionActive =
             book.sourceType === 'local'
-              ? Boolean(getLocalPdfSessionEntry(book.id))
+              ? Boolean(getLocalPdfSessionEntry(book.id)) || isCachedOffline
               : true;
           const docStats = readingStats[book.id];
 
@@ -186,7 +213,7 @@ export function RecentBooks({ showEmptyState = false }: RecentBooksProps) {
               <div className="min-w-0 flex-1">
                 <button
                   type="button"
-                  onClick={() => handleOpenRecent(book)}
+                  onClick={() => void handleOpenRecent(book)}
                   className="text-left group/title focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded cursor-pointer max-w-full"
                 >
                   <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 group-hover/title:text-blue-700 dark:group-hover/title:text-blue-400 transition-colors truncate">
@@ -219,6 +246,15 @@ export function RecentBooks({ showEmptyState = false }: RecentBooksProps) {
                       <span>{formatBytes(book.fileSize)}</span>
                     </>
                   ) : null}
+                  {isCachedOffline && (
+                    <>
+                      <span aria-hidden="true">·</span>
+                      <span className="font-sans inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Offline Ready</span>
+                      </span>
+                    </>
+                  )}
                   <span aria-hidden="true">·</span>
                   <span className="font-sans">
                     {formatRelativeDate(book.lastOpenedAt)}
@@ -236,7 +272,7 @@ export function RecentBooks({ showEmptyState = false }: RecentBooksProps) {
 
                 <button
                   type="button"
-                  onClick={() => handleOpenRecent(book)}
+                  onClick={() => void handleOpenRecent(book)}
                   className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
                   {book.sourceType === 'local' && !isLocalSessionActive ? (

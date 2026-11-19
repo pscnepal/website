@@ -12,6 +12,7 @@ import {
 import { useAppSelector } from '../../app/hooks';
 import { useDashboardUsers } from '../../context/DashboardUsersContext';
 import { ActionButton } from '../common/ActionButton';
+import { DailyQuizWidget } from './DailyQuizWidget';
 import type {
   DashboardOverviewTabProps,
   DashboardTab,
@@ -216,6 +217,9 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
           </div>
         </div>
       </section>
+
+      {/* Daily Rotating Current Affairs 5-Question Quiz Widget */}
+      <DailyQuizWidget />
 
       {/* Candidate Personal Progress vs Cadre Benchmark */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

@@ -4,12 +4,16 @@ import {
   ArrowRight,
   ArrowUpRight,
   Check,
+  CheckCircle2,
   Clock,
   Copy,
   Download,
   ExternalLink,
+  HardDriveDownload,
+  Loader2,
   PenLine,
   Search,
+  Trash2,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
@@ -27,9 +31,19 @@ import {
   materialStorageService,
 } from '../../services/materialStorageService';
 import {
+  OFFLINE_CACHE_EVENTS,
+  offlineDbService,
+} from '../../services/offlineDbService';
+import {
+  cachePdfFromUrl,
+  cacheStudyPackPdfs,
+} from '../../services/pdfService';
+import {
   QUESTION_EVENTS,
   questionStorageService,
 } from '../../services/questionStorageService';
+import { toast } from '../../services/toastService';
+import { formatBytes } from '../../utils/pdfHelpers';
 import { createBookIdFromUrl, resolveSampleUrl } from '../../utils/urlHelpers';
 import { ReactionButtons } from '../common/ReactionButtons';
 import { BookCoverVector } from '../vectors/BookCoverVector';
@@ -56,6 +70,32 @@ export function BrowseMaterials() {
   const [categories, setCategories] = useState<ReadingMaterialCategory[]>(() =>
     materialStorageService.loadMaterialCategories()
   );
+  const [cachedPdfMap, setCachedPdfMap] = useState<Record<string, number>>({});
+  const [savingPdfId, setSavingPdfId] = useState<string | null>(null);
+  const [packProgress, setPackProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const syncOfflinePdfs = () => {
+      void offlineDbService.listCachedPdfSummaries().then((items) => {
+        if (!active) return;
+        const map: Record<string, number> = {};
+        for (const item of items) {
+          map[item.id] = item.fileSize;
+        }
+        setCachedPdfMap(map);
+      });
+    };
+    syncOfflinePdfs();
+    window.addEventListener(OFFLINE_CACHE_EVENTS.CHANGED, syncOfflinePdfs);
+    return () => {
+      active = false;
+      window.removeEventListener(OFFLINE_CACHE_EVENTS.CHANGED, syncOfflinePdfs);
+    };
+  }, []);
 
   useEffect(() => {
     const syncQuiz = () =>
@@ -198,6 +238,80 @@ export function BrowseMaterials() {
     }
   };
 
+  const handleToggleOfflinePdf = async (
+    event: MouseEvent<HTMLButtonElement>,
+    item: ReadingMaterialItem,
+    fullUrl: string,
+    bookId: string
+  ) => {
+    event.stopPropagation();
+    if (cachedPdfMap[bookId] !== undefined) {
+      await offlineDbService.deletePdfRecord(bookId);
+      toast.info(`Removed "${item.title}" from offline cache.`);
+      return;
+    }
+
+    setSavingPdfId(bookId);
+    const saved = await cachePdfFromUrl(fullUrl, {
+      id: bookId,
+      title: item.title,
+    });
+    setSavingPdfId((prev) => (prev === bookId ? null : prev));
+
+    if (saved) {
+      toast.success(
+        `Saved "${item.title}" (${formatBytes(saved.fileSize)}) for offline reading.`
+      );
+    } else {
+      toast.warning(
+        `Could not cache "${item.title}" directly (external host restriction or unreachable offline).`,
+        { id: `offline-save-fail-${bookId}` }
+      );
+    }
+  };
+
+  const handleCacheLocalBundle = async () => {
+    if (packProgress) return;
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : '';
+    const candidates = categories
+      .flatMap((cat) => cat.items)
+      .filter((item) => item.path.startsWith('/materials/'))
+      .map((item) => {
+        const fullUrl = resolveSampleUrl(item.path);
+        return {
+          url: fullUrl,
+          id: createBookIdFromUrl(fullUrl),
+          title: item.title,
+        };
+      })
+      .filter((entry) =>
+        origin ? entry.url.startsWith(origin) : true
+      );
+
+    if (candidates.length === 0) return;
+
+    setPackProgress({ done: 0, total: candidates.length });
+    const summary = await cacheStudyPackPdfs(candidates, (done, total) => {
+      setPackProgress({ done, total });
+    });
+    setPackProgress(null);
+
+    if (summary.cached > 0) {
+      toast.success(
+        `Saved ${summary.cached} official PSC study PDFs into IndexedDB for offline access.`
+      );
+    } else {
+      toast.info('Core PSC study PDFs are already cached offline.');
+    }
+  };
+
+  const cachedCount = Object.keys(cachedPdfMap).length;
+  const cachedTotalBytes = Object.values(cachedPdfMap).reduce(
+    (sum, size) => sum + size,
+    0
+  );
+
   const transitionProps = shouldReduceMotion
     ? { duration: 0 }
     : { duration: 0.16, ease: [0.16, 1, 0.3, 1] as const };
@@ -243,7 +357,7 @@ export function BrowseMaterials() {
           <p className="mt-2.5 text-fluid-lead text-zinc-600 dark:text-zinc-400">
             {selectedCategory
               ? selectedCategory.description
-              : 'Explore authentic Government of Nepal PSC collections—including 22 Official Lok Sewa Aayog Syllabi, Syllabus Digests, Nepal Parichaya (1st–14th Editions & English), Constitution & Admin Laws, 16th Plan & Integrity, Public Finance/Revenue/Audit, Economy/Budget/Census, and Justice/Foreign Policy/Environment.'}
+              : 'Explore 9 authentic Government of Nepal PSC collections—including 22 Official Lok Sewa Aayog Syllabi, Syllabus Digests, Nepal Parichaya (1st–14th Editions & English), Constitution & Admin Laws, 16th Plan & Integrity, Public Finance/Revenue/Audit, Economy/Budget/Census, Justice/Foreign Policy/Environment, and Current Affairs & Official Briefings.'}
           </p>
         </div>
 
@@ -288,6 +402,65 @@ export function BrowseMaterials() {
           </div>
         </div>
       </div>
+
+      {/* Offline Study Library Pack Strip */}
+      {offlineDbService.isSupported() && (
+        <div className="mb-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3.5 sm:px-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/60 text-blue-700 dark:text-blue-300 flex items-center justify-center shrink-0">
+              <HardDriveDownload className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                Offline IndexedDB Study Vault
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {cachedCount > 0
+                  ? `${cachedCount} study ${cachedCount === 1 ? 'PDF' : 'PDFs'} saved (${formatBytes(cachedTotalBytes)}) · Available without internet`
+                  : 'Save core Nepal Lok Sewa syllabi & statutory PDFs locally for instant offline reading.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              disabled={Boolean(packProgress)}
+              onClick={() => void handleCacheLocalBundle()}
+              className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-medium transition-colors disabled:opacity-60 cursor-pointer whitespace-nowrap shrink-0"
+            >
+              {packProgress ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>
+                    Caching {packProgress.done}/{packProgress.total}...
+                  </span>
+                </>
+              ) : (
+                <>
+                  <HardDriveDownload className="w-3.5 h-3.5" />
+                  <span>Save Core Pack Offline</span>
+                </>
+              )}
+            </button>
+
+            {cachedCount > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  void offlineDbService.clearAllPdfs();
+                  toast.info('Cleared offline PDF cache.');
+                }}
+                aria-label="Clear cached offline PDFs"
+                className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Clear Cache</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {isUnknownCategory ? (
         <div className="py-16 text-center border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
@@ -717,6 +890,48 @@ export function BrowseMaterials() {
                                     </span>
                                     <ExternalLink className="w-3 h-3" />
                                   </a>
+                                )}
+                                {offlineDbService.isSupported() && (
+                                  <button
+                                    type="button"
+                                    disabled={savingPdfId === bookId}
+                                    onClick={(e) =>
+                                      void handleToggleOfflinePdf(
+                                        e,
+                                        item,
+                                        fullUrl,
+                                        bookId
+                                      )
+                                    }
+                                    onKeyDown={(e) => e.stopPropagation()}
+                                    aria-label={
+                                      cachedPdfMap[bookId] !== undefined
+                                        ? `Remove ${item.title} from offline cache`
+                                        : `Save ${item.title} offline`
+                                    }
+                                    className={`inline-flex items-center gap-1 text-[11px] font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 rounded px-1 ${
+                                      cachedPdfMap[bookId] !== undefined
+                                        ? 'text-emerald-700 dark:text-emerald-400 hover:text-red-600 dark:hover:text-red-400'
+                                        : 'text-zinc-500 hover:text-blue-700 dark:text-zinc-400 dark:hover:text-blue-400'
+                                    }`}
+                                  >
+                                    {savingPdfId === bookId ? (
+                                      <>
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                        <span>Saving</span>
+                                      </>
+                                    ) : cachedPdfMap[bookId] !== undefined ? (
+                                      <>
+                                        <CheckCircle2 className="w-3 h-3" />
+                                        <span>Saved Offline</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <HardDriveDownload className="w-3 h-3" />
+                                        <span>Save Offline</span>
+                                      </>
+                                    )}
+                                  </button>
                                 )}
                                 <a
                                   href={fullUrl}

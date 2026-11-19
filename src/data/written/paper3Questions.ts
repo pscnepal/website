@@ -1207,4 +1207,318 @@ export const PAPER_3_QUESTIONS: WrittenQuestion[] = [
       },
     ],
   },
+  {
+    id: 'PSC-WR-316',
+    paper: 'Paper III: Contemporary Issues & Development',
+    subject: 'Current Affairs: Fiscal & Monetary Policy',
+    postTarget: 'Section Officer / Nayab Subba',
+    marks: 10,
+    recommendedMinutes: 18,
+    questionType: 'Long Analytical',
+    sourceTitle: 'Economic Survey FY 2082/83 (Ministry of Finance)',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/Economic%20Survey%202082%2083%20(1)_cimkjjb.pdf',
+    en: {
+      title:
+        'Macroeconomic Synchronization: Federal Budget Execution, NRB Monetary Stance & Capital Absorption',
+      question:
+        'Why does structural imbalance persist between Nepal’s rising recurrent/debt-servicing expenditure and sluggish capital expenditure in recent federal budgets? Analyze how coordinated Ministry of Finance fiscal policy and Nepal Rastra Bank monetary policy can spur sustainable growth without destabilizing external reserves.',
+      marksAllocation: '5 + 5 = 10 Marks',
+      introduction:
+        'Macroeconomic stability in Nepal depends on harmonizing the Government’s Federal Budget (fiscal policy) with Nepal Rastra Bank’s Monetary Policy. While external sector buffers (remittances and foreign exchange reserves) remain resilient, domestic capital expenditure absorption persistently lags while recurrent outlays and public debt-servicing rise.',
+      sections: [
+        {
+          heading: '1. Drivers of Fiscal Structural Rigidities & Weak Capital Absorption',
+          points: [
+            'Mandatory Recurrent Commitments & Debt Servicing: Social security transfers, civil service salaries/pensions, provincial/local fiscal transfers, and rising principal/interest financing ("Bittiya Byabastha") leave shrinking fiscal space for capital formation.',
+            'Project Readiness Deficit ("Asare Bikash"): Budget inclusion of unready projects lacking Detailed Project Reports (DPR), EIA clearance, or land acquisition causes procurement delays and frantic Q4 spending spikes.',
+            'Sub-national Capacity & Beruju Risks: Weak PFM capacity at tiers, fragmented conditional grants, and contract variation disputes—highlighted annually in Auditor General (OAG) reports—slow execution.',
+          ],
+        },
+        {
+          heading: '2. Harmonizing Fiscal & Monetary Policy Tools',
+          points: [
+            'Target Productive Credit via Interest Rate Corridor: NRB’s cautious-flexible policy rate corridor, CRR/SLR liquidity calibration, and directed lending quotas (agriculture, energy, SMEs, IT) must channel banking liquidity into job-creating real sectors rather than real estate or import consumption.',
+            'Discipline in MTEF & Project Bank (NPC): Fund only National Project Bank–vetted P1 projects with green-lighted DPR/land clearances, enforce LMBIS multi-year milestone contracts, and tie fiscal transfers to performance indicators.',
+            'Revenue Base Broadening & Green/Digital Mobilization: Curb informal economy leakages, widen tax compliance digitally, and crowd in private/PPP investment under sovereign credit transparency.',
+          ],
+        },
+      ],
+      conclusion:
+        'Sustainable economic growth cannot be driven by monetary expansion or recurrent deficits alone. Enforcing strict project readiness before budget allocation alongside calibrated NRB productive-sector credit will turn fiscal outlays into durable infrastructure and employment.',
+    },
+    ne: {
+      title:
+        'समष्टिगत आर्थिक समन्वय: संघीय बजेट कार्यान्वयन, मौद्रिक नीति र पुँजीगत खर्च सुधार',
+      question:
+        'नेपालका पछिल्ला संघीय बजेटमा चालु खर्च तथा वित्तीय व्यवस्था (साँवा–ब्याज भुक्तानी) को भार बढ्दै जाने र पुँजीगत खर्च न्यून रहने संरचनात्मक असन्तुलन किन कायमै छ ? बाह्य क्षेत्रको स्थायित्व नखल्बल्याई दिगो आर्थिक वृद्धि हासिल गर्न अर्थ मन्त्रालयको वित्त नीति र नेपाल राष्ट्र बैंकको मौद्रिक नीतिबीच कसरी प्रभावकारी समन्वय गर्न सकिन्छ ? विश्लेषण गर्नुहोस् ।',
+      marksAllocation: '५ + ५ = १० अङ्क',
+      introduction:
+        'मुलुकको समष्टिगत आर्थिक स्थायित्व र उच्च वृद्धिका लागि नेपाल सरकारको वित्त नीति (बजेट) र नेपाल राष्ट्र बैंकको मौद्रिक नीतिबीच तादात्म्य अपरिहार्य हुन्छ । विप्रेषण र विदेशी मुद्रा सञ्चिति सुदृढ रहँदा समेत आन्तरिक पुँजीगत खर्च क्षमता कमजोर रहनु र चालु तथा ऋण दायित्व बढ्नु नेपालको अर्थतन्त्रको मुख्य चुनौती हो ।',
+      sections: [
+        {
+          heading: '१. वित्तीय असन्तुलन र कमजोर पुँजीगत खर्चका कारणहरू',
+          points: [
+            'अनिवार्य चालु खर्च र ऋण सेवाको चाप: सामाजिक सुरक्षा भत्ता, तलब–पेन्सन, वित्तीय हस्तान्तरण र बढ्दो साँवा–ब्याज (वित्तीय व्यवस्था) ले पुँजीगत बजेटको हिस्सा साँघुरो बनाउँदै लगेको ।',
+            'आयोजना पूर्वतयारीको कमी र "असारे विकास": विस्तृत आयोजना प्रतिवेदन (DPR), वातावरणीय स्वीकृति र जग्गा अधिग्रहणबिनै बजेटमा आयोजना राखिँदा खरिद प्रक्रिया ढिलो भई आर्थिक वर्षको अन्त्यमा गुणस्तरहीन खर्च हुने ।',
+            'बेरुजु र कार्यान्वयन कमजोरी: महालेखापरीक्षकका प्रतिवेदनले औँल्याएझैँ ठेक्का व्यवस्थापन, अन्तर-निकाय समन्वय र प्राविधिक जनशक्ति अभावले विकास खर्च प्रभावित हुनु ।',
+          ],
+        },
+        {
+          heading: '२. वित्त नीति र मौद्रिक नीतिबीच समन्वय र सुधारका उपाय',
+          points: [
+            'उत्पादनशील कर्जा प्रवाह र ब्याजदर करिडोर: राष्ट्र बैंकले नीतिगत दर, CRR/SLR र निर्देशित कर्जा सीमामर्फत बैंकको अधिक तरलतालाई अनुत्पादक घरजग्गा र आयात उपभोगको सट्टा कृषि, ऊर्जा, पर्यटन, साना उद्यम र IT क्षेत्रमा प्रवाहित गर्ने ।',
+            'राष्ट्रिय आयोजना बैंक र MTEF को कडाइ: पूर्वतयारी सम्पन्न भई आयोजना बैंकमा प्रविष्ट पी–१ आयोजनामा मात्र बजेट विनियोजन गर्ने, बहुवर्षीय ठेक्कामा LMBIS अनुशासन लागू गर्ने ।',
+            'राजस्व आधार विस्तार र निजी/PPP लगानी: कर दायरा डिजिटल माध्यमबाट फराकिलो पारी आन्तरिक राजस्व बढाउने र ठूला पूर्वाधारमा सार्वजनिक–निजी साझेदारी आकर्षित गर्ने ।',
+          ],
+        },
+      ],
+      conclusion:
+        'बजेटमा पूर्वतयारी र समयबद्ध खरिद अनुशासन कायम गर्दै राष्ट्र बैंकको मौद्रिक नीतिलाई उत्पादनशील पुँजी निर्माणतर्फ उन्मुख गराएमा बाह्य स्थायित्वसहितको उच्च र दिगो आर्थिक वृद्धि सम्भव हुन्छ ।',
+    },
+    rubric: [
+      {
+        en: 'Explained fiscal rigidity (recurrent + debt servicing overtaking capital) and project-readiness ("Asare Bikash") bottlenecks.',
+        ne: 'बढ्दो चालु/वित्तीय व्यवस्था र पूर्वतयारी अभाव ("असारे विकास") का कारण पुँजीगत खर्च कमजोर भएको विश्लेषण गरिएको ।',
+      },
+      {
+        en: 'Articulated NRB tools (policy rate corridor, CRR/SLR, directed credit) working alongside MTEF, Project Bank, and OAG/LMBIS accountability.',
+        ne: 'मौद्रिक नीतिका औजार (करिडोर, निर्देशित कर्जा) र वित्त नीतिका सुधार (आयोजना बैंक, MTEF, LMBIS) बीच समन्वय स्पष्ट पारिएको ।',
+      },
+    ],
+  },
+  {
+    id: 'PSC-WR-317',
+    paper: 'Paper III: Contemporary Issues & Development',
+    subject: 'Current Affairs: LDC Graduation & Trade',
+    postTarget: 'Section Officer / Nayab Subba',
+    marks: 10,
+    recommendedMinutes: 18,
+    questionType: 'Long Analytical',
+    sourceTitle: 'Sixteenth Periodic Plan of Nepal (2081/82–2085/86)',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/%E0%A4%B8%E0%A5%8B%E0%A4%B9%E0%A5%8D%E0%A4%B0%E0%A5%8C%E0%A4%82%20%E0%A4%AF%E0%A5%8B%E0%A4%9C%E0%A4%A8%E0%A4%BE_rfucaur.pdf',
+    en: {
+      title:
+        'Nepal’s LDC Graduation (November 2026): Commercial Challenges & Smooth Transition Strategy',
+      question:
+        'Assess Nepal’s UN Least Developed Country (LDC) graduation trajectory slated for November 2026. What trade preferences, concessional financing, and IP flexibilities face phase-out post-graduation, and how does the Smooth Transition Strategy (STS) address them?',
+      marksAllocation: '4 + 6 = 10 Marks',
+      introduction:
+        'Pursuant to UN General Assembly Resolution A/RES/76/8, Nepal is scheduled to graduate from the Least Developed Country (LDC) category on November 24, 2026—having met two consecutive triennial thresholds for the Human Assets Index (HAI) and Economic and Environmental Vulnerability Index (EVI) despite GNI per capita lagging behind the single-criterion bar.',
+      sections: [
+        {
+          heading: '1. Graduation Basis & Post-2026 Support Phase-Out Risks',
+          points: [
+            'Loss of Unilateral DFQF & EBA Preferences: Duty-Free Quota-Free market access and flexible Rules of Origin under EU Everything But Arms (EBA), UK, and partner GSP schemes transition after grace periods (e.g., EU 3-year window till 2029), threatening apparel, carpets, pashmina, and agro-exports.',
+            'Stricter WTO TRIPS & Subsidies Rules: Pharmaceutical patent waivers (TRIPS LDC extension) and export-subsidy flexibilities cease, requiring IP compliance.',
+            'Aid Architecture Shift: LDC-dedicated windows (UNCDF, Enhanced Integrated Framework, select climate/ODA grants) gradually narrow toward blended/concessional loan terms.',
+          ],
+        },
+        {
+          heading: '2. Smooth Transition Strategy (STS) & Policy Safeguards',
+          points: [
+            'Secure GSP+ & Bilateral FTAs: Fulfill EU GSP+ 27 international human-rights, labour, climate, and governance conventions; negotiate preferential trade agreements (PTAs/FTAs) with major partners and revitalize SAFTA/BIMSTEC connectivity.',
+            'Supply-Side Competitiveness & Quality Infrastructure: Cut landlocked transit costs via dry ports/rail links, upgrade accredited SPS/TBT quarantine labs, and pivot toward higher-value exports (clean hydroelectricity, IT/BPO services, specialty herbs, tourism).',
+            'Macroeconomic Stability & Sovereign Rating: Attract FITTA-enabled FDI and expand domestic productive employment so graduation remains irreversible.',
+          ],
+        },
+      ],
+      conclusion:
+        'LDC graduation is a milestone of human-capital pride that demands urgent structural reform. Executing the Smooth Transition Strategy, upgrading trade diplomacy for GSP+, and boosting domestic export productivity will convert graduation into lasting economic dignity.',
+    },
+    ne: {
+      title:
+        'अतिकम विकसित मुलुक (LDC) बाट स्तरोन्नति २०२६: व्यापारिक चुनौती र सहज रूपान्तरण रणनीति (STS)',
+      question:
+        'नेपालको सन् २०२६ नोभेम्बर २४ मा हुने अतिकम विकसित मुलुक (LDC) बाट विकासशील मुलुकमा स्तरोन्नतिको आधार मूल्याङ्कन गर्नुहोस् । स्तरोन्नतिपछि कस्ता व्यापारिक सहुलियत र अन्तर्राष्ट्रिय सहायता कटौती हुने जोखिम छन् तथा सहज रूपान्तरण रणनीति (STS) ले तिनलाई कसरी सम्बोधन गर्दछ ? व्याख्या गर्नुहोस् ।',
+      marksAllocation: '४ + ६ = १० अङ्क',
+      introduction:
+        'संयुक्त राष्ट्रसंघको महासभाको प्रस्तावबमोजिम नेपाल सन् २०२६ नोभेम्बर २४ मा अतिकम विकसित राष्ट्र (LDC) बाट विकासशील राष्ट्रमा स्तरोन्नति हुँदैछ । प्रतिव्यक्ति कुल राष्ट्रिय आय (GNI) सूचक पूरा नभए पनि मानव सम्पत्ति सूचकाङ्क (HAI) र आर्थिक तथा वातावरणीय जोखिम सूचकाङ्क (EVI) मा लगातार प्रगति हासिल गरेकाले नेपाल स्तरोन्नतिमा छनोट भएको हो ।',
+      sections: [
+        {
+          heading: '१. स्तरोन्नतिपछि समाप्त हुने सहुलियत र चुनौतीहरू',
+          points: [
+            'भन्साररहित बजार पहुँच (DFQF/EBA) मा कटौती: युरोपेली संघ (EBA — सन् २०२९ सम्म ३ वर्षे सहुलियत अवधि पछि), बेलायत लगायत देशमा पाइने शून्य भन्सार तथा लचिलो उत्पत्तिको नियम (Rules of Origin) सुविधा घट्दा तयारी पोशाक, गलैँचा, पश्मिना निर्यातमा मूल्य प्रतिस्पर्धात्मकता घट्ने ।',
+            'WTO TRIPS र अनुदान सीमा: औषधि र बौद्धिक सम्पत्ति (TRIPS) मा पाएको LDC छुट तथा निर्यात अनुदान सहुलियत समाप्त हुने ।',
+            'सहायता संरचनामा बदलाव: LDC केन्द्रित अनुदान कोषहरू घटेर सहुलियतपूर्ण वा मिश्रित ऋणतर्फ जाने र जलवायु वित्तमा प्रतिस्पर्धा बढ्ने ।',
+          ],
+        },
+        {
+          heading: '२. सहज रूपान्तरण रणनीति (STS) र तयारीका उपायहरू',
+          points: [
+            'GSP+ र द्विपक्षीय व्यापार सम्झौता: युरोपेली संघको GSP+ सुविधा पाउन २७ अन्तर्राष्ट्रिय महासन्धि (मानव अधिकार, श्रम, सुशासन र जलवायु) कार्यान्वयन गर्ने तथा प्रमुख व्यापारिक साझेदारसँग PTA/FTA वार्ता अघि बढाउने ।',
+            'उत्पादकत्व, गुणस्तर प्रयोगशाला र सेवा निर्यात: पारवहन लागत घटाउन सुक्खा बन्दरगाह र सडक–रेल सुधार गर्ने, मान्यताप्राप्त SPS/TBT प्रयोगशाला विस्तार गर्ने तथा स्वच्छ विद्युत्, IT/BPO सेवा र जडीबुटी निर्यात बढाउने ।',
+            'आर्थिक रूपान्तरण र FDI आकर्षण: १६ औँ योजना र STS अनुरूप आन्तरिक रोजगारी, राजस्व र निजी लगानी सुदृढ पारी स्तरोन्नतिलाई दिगो र अपरिवर्तनीय बनाउने ।',
+          ],
+        },
+      ],
+      conclusion:
+        'LDC स्तरोन्नति नेपालको सामाजिक–मानव विकासको अन्तर्राष्ट्रिय मान्यता हो । सहज रूपान्तरण रणनीति (STS) को कडा कार्यान्वयन, आर्थिक कूटनीति र निर्यात विविधीकरणले मात्र स्तरोन्नतिपश्चात्को संक्रमणलाई अवसरमा बदल्नेछ ।',
+    },
+    rubric: [
+      {
+        en: 'Accurately stated Nov 24, 2026 date, HAI & EVI qualification (despite GNI gap), and DFQF/EBA/TRIPS/ODA impacts.',
+        ne: 'स्तरोन्नति मिति (२०२६ नोभेम्बर २४), HAI र EVI सूचक पूरा भएको तथ्य तथा DFQF/EBA र TRIPS प्रभाव सही उल्लेख गरिएको ।',
+      },
+      {
+        en: 'Detailed Smooth Transition Strategy (STS) levers: EU GSP+ (27 conventions), PTAs/FTAs, SPS/TBT quality labs, energy & IT exports.',
+        ne: 'सहज रूपान्तरण रणनीति (STS), EU GSP+, द्विपक्षीय व्यापार सम्झौता, गुणस्तर प्रयोगशाला र ऊर्जा/IT निर्यात उपाय समेटिएको ।',
+      },
+    ],
+  },
+  {
+    id: 'PSC-WR-318',
+    paper: 'Paper III: Contemporary Issues & Development',
+    subject: 'Current Affairs: Poverty, NLSS-IV & SDGs',
+    postTarget: 'Section Officer / Nayab Subba',
+    marks: 5,
+    recommendedMinutes: 9,
+    questionType: 'Short Analytical',
+    sourceTitle: 'Nepal Living Standards Survey IV (NLSS-IV)',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/app/public/36/posts/1719375782_27.pdf',
+    en: {
+      title:
+        'Poverty Dynamics Under NLSS-IV (20.27%), Multidimensional Deprivation & SDG Localization',
+      question:
+        'Interpret the key findings of Nepal Living Standards Survey IV (NLSS-IV) showing 20.27% monetary poverty and widening provincial disparities. Suggest targeted interventions to achieve 16th Plan and SDG 2030 poverty eradication goals.',
+      marksAllocation: '2 + 3 = 5 Marks',
+      introduction:
+        'According to the National Statistics Office’s fourth Nepal Living Standards Survey (NLSS-IV 2022/23), 20.27% of Nepal’s population lives below the updated national poverty line (NPR 72,908 per person/year), alongside a 17.4% Multidimensional Poverty Index (MPI)—exposing sharp rural-urban and inter-provincial gaps.',
+      sections: [
+        {
+          heading: '1. Key Spatial & Socio-Economic Insights from NLSS-IV',
+          points: [
+            'Rural-Urban & Provincial Skew: Rural poverty (24.66%) remains significantly higher than urban poverty (18.34%), with Sudurpashchim (~34.16%) and Karnali (~26.69%) lagging far behind Gandaki (~11.88%) and Bagmati (~12.59%).',
+            'Vulnerability Near the Line: Although extreme hunger dropped over two decades, inflation, climate shocks, informal-wage precarity, and high out-of-pocket health costs push near-poor households back into poverty.',
+          ],
+        },
+        {
+          heading: '2. Policy Roadmap for 16th Plan & SDG Localization',
+          points: [
+            'Targeted Geographies & Value-Chain Jobs: Focus agro-modernization, irrigation, market roads, and off-farm SME micro-credit in lagging Karnali, Sudurpashchim, and Madhesh corridors.',
+            'Universal Human-Capital Cushion: Expand Quality Health Insurance coverage, technical TVET scholarships, and National ID-linked social protection registries to prevent catastrophic medical/disaster shocks.',
+            'SDG Localization at 753 Local Levels: Align municipal budgets directly to SDG indicators with gender- and poverty-responsive tracking.',
+          ],
+        },
+      ],
+      conclusion:
+        'Sustained poverty eradication requires shifting from broad consumption handouts to provincial equity, climate-resilient rural livelihoods, and high-return investments in health and technical skills.',
+    },
+    ne: {
+      title:
+        'नेपाल जीवनस्तर सर्वेक्षण चौथो (NLSS-IV: २०.२७% गरिबी), असमानता र दिगो विकास लक्ष्य स्थानीयकरण',
+      question:
+        'नेपाल जीवनस्तर सर्वेक्षण चौथो (NLSS-IV) ले देखाएको २०.२७ प्रतिशत गरिबी र प्रादेशिक असमानताको तस्वीर विश्लेषण गर्दै सोह्रौँ योजना र दिगो विकास लक्ष्य (SDG २०३०) बमोजिम गरिबी निवारणका लक्षित उपायहरू सुझउनुहोस् ।',
+      marksAllocation: '२ + ३ = ५ अङ्क',
+      introduction:
+        'राष्ट्रिय तथ्याङ्क कार्यालयद्वारा जारी नेपाल जीवनस्तर सर्वेक्षण–IV (२०२२/२३) अनुसार अद्यावधिक गरिबी रेखा (वार्षिक रु. ७२,९०८ प्रतिव्यक्ति) मुनि २०.२७ प्रतिशत जनसङ्ख्या रहेको छ भने बहुआयामिक गरिबी १७.४% कायम छ । यसले ग्रामीण–सहरी र प्रादेशिक असमानता स्पष्ट देखाउँछ ।',
+      sections: [
+        {
+          heading: '१. NLSS-IV का प्रमुख प्रवृत्ति र असमानता',
+          points: [
+            'ग्रामीण र प्रादेशिक अन्तर: सहरी (१८.३४%) भन्दा ग्रामीण गरिबी (२४.६६%) उच्च रहनुका साथै सुदूरपश्चिम (करिब ३४.१६%) र कर्णाली (२६.६९%) गण्डकी (११.८८%) र बागमती (१२.५९%) को तुलनामा पछाडि परेका छन् ।',
+            'पुनः गरिबीमा फर्कने जोखिम: महँगी, जलवायु विपद्, अनौपचारिक रोजगारी र स्वास्थ्य उपचारमा व्यक्तिगत खर्च (Out-of-pocket) उच्च हुँदा सीमान्तकृत परिवार गरिबी रेखाको वरपरै अड्किएका छन् ।',
+          ],
+        },
+        {
+          heading: '२. १६ औँ योजना र SDG २०३० का लक्षित समाधान',
+          points: [
+            'पछाडि परेका क्षेत्रकेन्द्रित उत्पादन कार्यक्रम: कर्णाली, सुदूरपश्चिम र मधेशमा सिँचाइ, कृषि प्रशोधन, बजार पहुँच र गैर-कृषि साना उद्यममा लक्षित सहुलियत कर्जा विस्तार गर्ने ।',
+            'मानव पुँजी र स्वास्थ्य बीमा सुरक्षा: गुणस्तरीय प्राविधिक शिक्षा (TVET), प्रभावकारी स्वास्थ्य बीमा र राष्ट्रिय परिचयपत्रमा आबद्ध लक्षित सामाजिक सुरक्षा उपलब्ध गराउने ।',
+            '७५३ स्थानीय तहमा SDG स्थानीयकरण: पालिकाको वार्षिक बजेटलाई स्थानीय गरिबी नक्सा र दिगो विकास सूचकसँग आबद्ध गर्ने ।',
+          ],
+        },
+      ],
+      conclusion:
+        'गरिबी अन्त्यका लागि वितरणमुखी सहायताभन्दा प्रादेशिक समन्याय, सीपमूलक रोजगारी र विपद्–स्वास्थ्य जोखिमबाट जोगाउने उत्पादनशील सुरक्षा प्रणाली अपरिहार्य छ ।',
+    },
+    rubric: [
+      {
+        en: 'Cited NLSS-IV figures accurately (20.27% poverty, NPR 72,908 threshold, rural 24.66% vs urban 18.34%, regional gaps).',
+        ne: 'NLSS-IV का तथ्य (२०.२७% गरिबी, रु. ७२,९०८ रेखा, ग्रामीण–सहरी र प्रादेशिक अन्तर) सही उल्लेख गरिएको ।',
+      },
+      {
+        en: 'Linked remedies to 16th Plan & SDG localization: regional value-chains, health insurance/TVET safety nets, and NID-targeted registries.',
+        ne: '१६ औँ योजना र SDG स्थानीयकरणअनुरूप प्रादेशिक उद्यम, स्वास्थ्य बीमा/TVET र लक्षित पञ्जीकरण उपाय दिइएको ।',
+      },
+    ],
+  },
+  {
+    id: 'PSC-WR-319',
+    paper: 'Paper III: Contemporary Issues & Development',
+    subject: 'Current Affairs: E-Governance & Digital Nepal',
+    postTarget: 'Section Officer / Nayab Subba / Kharidar',
+    marks: 5,
+    recommendedMinutes: 9,
+    questionType: 'Short Analytical',
+    sourceTitle: 'Nepal Bimonthly Issue #256 — DoIB Current Affairs Digest',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/Nepal%20Bimonthly_%20256_Final%20For%20Web_nutxxqx.pdf',
+    en: {
+      title:
+        'Digital Public Infrastructure (NID, Nagarik App) & Paperless Service Delivery Reform',
+      question:
+        'Evaluate how Digital Public Infrastructure—anchored by the National Identity Card (NID), Nagarik App, and e-GP/LMBIS portals—can eliminate administrative delays and middlemen ("Bicholiya") in Nepal’s public service delivery. What cybersecurity and digital-divide bottlenecks must be addressed?',
+      marksAllocation: '3 + 2 = 5 Marks',
+      introduction:
+        'Under the Digital Nepal Framework and Good Governance Act, 2064 (Sec. 15–19 citizen service benchmarks), Nepal is transitioning toward interoperable Digital Public Infrastructure (DPI) integrating the National ID (NID), Nagarik App (60+ citizen services), e-GP procurement, and online revenue portals.',
+      sections: [
+        {
+          heading: '1. Administrative Gains of Integrated Digital Service Delivery',
+          points: [
+            'Eliminating Middlemen & Queue Culture: Real-time API integration among Department of National ID & Civil Registration, Passport, Transport, Inland Revenue (PAN), and Land Management (Mero Kitta) removes redundant paper notarizations and discretionary bribes.',
+            'Transparency & Audit Trail: End-to-end digital timestamps across e-GP tenders, LMBIS budget releases, and Hello Sarkar grievances enforce accountability.',
+          ],
+        },
+        {
+          heading: '2. Critical Bottlenecks: Silos, Cyber Risk & Digital Divide',
+          points: [
+            'Institutional Data Silos & Downtime: Separate legacy databases across ministries often fail to share verified records smoothly, forcing citizens to carry printouts.',
+            'Cybersecurity & Rural Digital Divide: Safeguard citizen biometrics via modern Data Protection legislation, empower the National Cyber Security Center, and bridge rural bandwidth/literacy gaps through Ward-level assisted e-kiosks.',
+          ],
+        },
+      ],
+      conclusion:
+        'Technology delivers good governance only when paired with backend legal interoperability, strong cybersecurity safeguards, and inclusive Ward-level digital assistance for elderly and rural citizens.',
+    },
+    ne: {
+      title:
+        'डिजिटल सार्वजनिक पूर्वाधार (राष्ट्रिय परिचयपत्र, नागरिक एप) र कागजरहित सेवा प्रवाह सुधार',
+      question:
+        'राष्ट्रिय परिचयपत्र (NID), नागरिक एप र e-GP/LMBIS जस्ता डिजिटल सार्वजनिक पूर्वाधारले नेपालको सार्वजनिक सेवा प्रवाहमा हुने प्रशासनिक ढिलासुस्ती र बिचौलिया प्रथा कसरी अन्त्य गर्न सक्छन् ? यस क्रममा देखिएका साइबर सुरक्षा र डिजिटल विभाजनका चुनौतीहरू उल्लेख गर्नुहोस् ।',
+      marksAllocation: '३ + २ = ५ अङ्क',
+      introduction:
+        'डिजिटल नेपाल फ्रेमवर्क र सुशासन (व्यवस्थापन तथा सञ्चालन) ऐन, २०६४ को मर्मबमोजिम नेपालले राष्ट्रिय परिचयपत्र, नागरिक एप, विद्युतीय खरिद (e-GP) र मेरो कित्ताजस्ता डिजिटल सार्वजनिक पूर्वाधारमार्फत कागजरहित (Paperless) र अनुहाररहित (Faceless) प्रशासनको अभ्यास अघि बढाएको छ ।',
+      sections: [
+        {
+          heading: '१. प्रशासनिक सुधार र बिचौलिया नियन्त्रणमा योगदान',
+          points: [
+            'बिचौलिया र कागजी झन्झटको अन्त्य: नागरिक एपमार्फत प्यान दर्ता, सवारी चालक अनुमतिपत्र, राहदानी, मालपोत र सामाजिक सुरक्षा कोष जस्ता ६०+ सेवा एकीकृत हुँदा अनावश्यक सिफारिस, लाइन र घूसखोरी कम भएको छ ।',
+            'पारदर्शिता र डिजिटल प्रमाण: e-GP र हेलो सरकार पोर्टलबाट निर्णय प्रक्रियाको डिजिटल ट्रेस (Audit Trail) रहने भई जवाफदेहिता बढ्दछ ।',
+          ],
+        },
+        {
+          heading: '२. साइबर सुरक्षा र डिजिटल विभाजनका चुनौती र समाधान',
+          points: [
+            'अन्तर-निकाय डेटा समन्वय (Interoperability): विभिन्न मन्त्रालयका अलग सफ्टवेयरबीच API एकीकरण नहुँदा अनलाइन फारम भरेर पनि प्रिन्ट बुझाउनुपर्ने बाध्यता हटाउनुपर्ने ।',
+            'डेटा संरक्षण र ग्रामीण पहुँच: नागरिकको बायोमेट्रिक डेटा जोगाउन बलियो डेटा संरक्षण कानुन र राष्ट्रिय साइबर सुरक्षा केन्द्र सक्रिय पार्ने तथा दुर्गम वडा कार्यालयमा सहयोगी डिजिटल हेल्प–डेस्क राख्ने ।',
+          ],
+        },
+      ],
+      conclusion:
+        'प्रविधिको प्रयोग केवल फारम अनलाइन राख्नुमा सीमित नराखी कानुनी अन्तर-आबद्धता, बलियो साइबर सुरक्षा र ग्रामीण डिजिटल साक्षरतासँग जोडेमा मात्र "डिजिटल सुशासन" सार्थक हुन्छ ।',
+    },
+    rubric: [
+      {
+        en: 'Demonstrated how NID, Nagarik App, Mero Kitta, and e-GP remove discretionary friction, middlemen, and strengthen audit trails.',
+        ne: 'राष्ट्रिय परिचयपत्र, नागरिक एप र e-GP ले बिचौलिया अन्त्य र पारदर्शितामा पुर्‍याएको योगदान स्पष्ट पारिएको ।',
+      },
+      {
+        en: 'Addressed interoperability silos, biometric/cybersecurity protection, and rural/elderly digital-divide mitigation.',
+        ne: 'अन्तर-निकाय डेटा एकीकरण, साइबर/डेटा सुरक्षा र ग्रामीण डिजिटल पहुँचका चुनौती र उपाय उल्लेख गरिएको ।',
+      },
+    ],
+  },
 ];

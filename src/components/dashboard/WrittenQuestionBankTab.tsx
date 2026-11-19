@@ -6,9 +6,12 @@ import {
   Download,
   Edit3,
   Eye,
+  FileSpreadsheet,
+  FileText,
   Plus,
   RotateCcw,
   Trash2,
+  Upload,
   X,
 } from 'lucide-react';
 import {
@@ -33,10 +36,16 @@ import {
   type TableFilterDef,
 } from '../common/SharedDataTable';
 import { WrittenQuestionFormModal } from './WrittenQuestionFormModal';
+import { QuestionCsvImportModal } from './QuestionCsvImportModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { useDashboardSearch } from './DashboardLayout';
 import { toast } from '../../services/toastService';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
+import {
+  downloadWrittenCsvTemplate,
+  downloadWrittenQuestionsCsv,
+  parseWrittenQuestionsCsv,
+} from '../../utils/questionCsvHelpers';
 
 export function WrittenQuestionBankTab() {
   const dispatch = useAppDispatch();
@@ -50,11 +59,17 @@ export function WrittenQuestionBankTab() {
   const [modalLang, setModalLang] = useState<'bilingual' | 'en' | 'ne'>('bilingual');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // CRUD State
+  // CRUD & CSV Import State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState<WrittenQuestion | null>(null);
   const [questionToDelete, setQuestionToDelete] = useState<WrittenQuestion | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
+  const existingIds = useMemo(
+    () => new Set(questions.map((q) => q.id)),
+    [questions]
+  );
 
   useEffect(() => {
     const handleSyncQuestions = () => {
@@ -155,6 +170,27 @@ export function WrittenQuestionBankTab() {
     } catch (err) {
       toast.error(
         formatUserFriendlyError(err, 'Failed to export written bank JSON.')
+      );
+    }
+  };
+
+  const handleExportCsv = (onlyFiltered = false) => {
+    const target = onlyFiltered ? filteredQuestions : questions;
+    if (target.length === 0) {
+      toast.info('No written questions available to export.');
+      return;
+    }
+    try {
+      const filename = onlyFiltered
+        ? 'psc-written-filtered.csv'
+        : 'psc-written-question-bank.csv';
+      downloadWrittenQuestionsCsv(target, filename);
+      toast.success(
+        `Exported ${target.length} written question${target.length === 1 ? '' : 's'} as CSV.`
+      );
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to export written bank CSV.')
       );
     }
   };
@@ -401,7 +437,7 @@ export function WrittenQuestionBankTab() {
         isFiltered={isFiltered}
         onResetFilters={handleResetFilters}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <ActionButton
               label="Add Written Prompt"
               title="Create a new subjective written question with rubric"
@@ -414,15 +450,82 @@ export function WrittenQuestionBankTab() {
                 setIsFormModalOpen(true);
               }}
             />
+            <ActionButton
+              label="Import CSV"
+              title="Bulk import or update written questions and rubrics from a CSV file"
+              icon={Upload}
+              color="zinc"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsImportModalOpen(true)}
+            />
+            <ActionButton
+              label={
+                isFiltered
+                  ? `Export CSV (${filteredQuestions.length})`
+                  : 'Export CSV'
+              }
+              title={
+                isFiltered
+                  ? `Export ${filteredQuestions.length} filtered written questions as full round-trip CSV`
+                  : `Export all ${questions.length} written questions as full round-trip CSV`
+              }
+              icon={Download}
+              color="zinc"
+              variant="outline"
+              size="sm"
+              disabled={filteredQuestions.length === 0}
+              onClick={() => handleExportCsv(isFiltered)}
+            />
             <SharedActionMenu
               items={[
+                {
+                  id: 'import-csv',
+                  label: 'Import Questions (CSV)',
+                  description: 'Upload spreadsheet to add or update written prompts',
+                  icon: Upload,
+                  color: 'blue',
+                  onClick: () => setIsImportModalOpen(true),
+                },
+                {
+                  id: 'export-csv-all',
+                  label: `Export All Written (CSV · ${questions.length})`,
+                  description: 'Full bilingual CSV with model answers & rubrics',
+                  icon: FileSpreadsheet,
+                  color: 'emerald',
+                  onClick: () => handleExportCsv(false),
+                },
+                ...(isFiltered
+                  ? [
+                      {
+                        id: 'export-csv-filtered',
+                        label: `Export Filtered View (CSV · ${filteredQuestions.length})`,
+                        description: 'Download only current search/filter rows',
+                        icon: Download,
+                        color: 'zinc' as const,
+                        onClick: () => handleExportCsv(true),
+                      },
+                    ]
+                  : []),
+                {
+                  id: 'download-csv-template',
+                  label: 'Download CSV Import Template',
+                  description: 'Sample spreadsheet with exact column headers',
+                  icon: FileText,
+                  color: 'zinc',
+                  onClick: () => {
+                    downloadWrittenCsvTemplate();
+                    toast.success('Downloaded Written CSV import template.');
+                  },
+                },
                 {
                   id: 'export-json',
                   label: 'Export Written Bank (JSON)',
                   description: 'Download JSON backup of all written questions',
                   icon: Download,
-                  color: 'emerald',
+                  color: 'zinc',
                   onClick: handleExportJson,
+                  divider: true,
                 },
                 {
                   id: 'reset-default',
@@ -439,11 +542,11 @@ export function WrittenQuestionBankTab() {
               color="zinc"
               variant="outline"
               size="sm"
+              width="w-72"
             />
           </div>
         }
-        enableCsvExport={true}
-        csvFilename="psc-written-question-bank.csv"
+        enableCsvExport={false}
         pagination={true}
         defaultPageSize={15}
         pageSizeOptions={[10, 15, 25, 50]}
@@ -670,6 +773,24 @@ export function WrittenQuestionBankTab() {
           setQuestionToEdit(null);
         }}
         onSave={handleSaveQuestion}
+      />
+
+      {/* CSV Import Modal */}
+      <QuestionCsvImportModal<WrittenQuestion>
+        isOpen={isImportModalOpen}
+        kind="written"
+        existingIds={existingIds}
+        onClose={() => setIsImportModalOpen(false)}
+        onDownloadTemplate={() => {
+          downloadWrittenCsvTemplate();
+          toast.success('Downloaded Written CSV import template.');
+        }}
+        onParseCsv={parseWrittenQuestionsCsv}
+        onConfirmImport={async (items) => {
+          const summary = await questionStorageService.importWrittenQuestions(items);
+          setQuestions(questionStorageService.loadWrittenQuestions());
+          return summary;
+        }}
       />
 
       {/* Delete Confirmation Dialog */}

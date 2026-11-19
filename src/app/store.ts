@@ -31,6 +31,7 @@ import {
   fetchAllCloudItemStats,
   syncReactionAndStatsToFirestore,
   updateUserTargetCadreInFirestore,
+  upsertLeaderboardEntryInFirestore,
   upsertWorkspaceBookmarksInFirestore,
   upsertWorkspaceFlashcardsInFirestore,
   upsertWorkspaceLibraryInFirestore,
@@ -40,6 +41,7 @@ import {
 } from '../services/cloudSyncService';
 import { storageService } from '../services/storageService';
 import { toast } from '../services/toastService';
+import { buildLeaderboardStatsPayload } from '../utils/leaderboardHelpers';
 import type {
   ReactionItemType,
   SimulationRunRecord,
@@ -157,6 +159,68 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
     }
 
     const uid = currentUser.uid;
+
+    // Schedule public zero-PII leaderboard summary sync for study progress mutations
+    if (
+      action.type === 'quiz/recordQuizAttempt' ||
+      action.type === 'quiz/clearQuizHistory' ||
+      action.type === 'psc/recordSimulationRun' ||
+      action.type === 'psc/clearSimulationHistory' ||
+      action.type === 'psc/setTargetCadre' ||
+      action.type === 'library/recordBookOpened' ||
+      action.type === 'library/updateReadingProgress' ||
+      action.type === 'library/recordReadingTick' ||
+      action.type === 'library/recordPageTurnStats' ||
+      action.type === 'library/resetBookReadingStats' ||
+      action.type === 'library/clearAllReadingData' ||
+      action.type === 'written/saveWrittenDraft' ||
+      action.type === 'written/toggleWrittenRubricPoint' ||
+      action.type === 'written/setWrittenQuestionStatus' ||
+      action.type === 'written/addWrittenPracticeSeconds' ||
+      action.type === 'written/clearWrittenProgress' ||
+      action.type === 'workspace/addWrittenEvaluation' ||
+      action.type === 'workspace/deleteWrittenEvaluation' ||
+      action.type === 'workspace/clearWrittenEvaluations'
+    ) {
+      const lbDelayMs =
+        action.type === 'library/recordReadingTick' ||
+        action.type === 'written/addWrittenPracticeSeconds' ||
+        action.type === 'written/saveWrittenDraft'
+          ? 5000
+          : 1200;
+
+      scheduleDebouncedTask(`leaderboard:${uid}`, lbDelayMs, uid, () => {
+        const active = auth.currentUser;
+        if (!active || active.uid !== uid || !active.emailVerified) return;
+        const st = storeApi.getState();
+        const lbPayload = buildLeaderboardStatsPayload({
+          userId: uid,
+          displayName:
+            active.displayName?.trim() ||
+            active.email?.split('@')[0] ||
+            'PSC Aspirant',
+          photoURL: active.photoURL || undefined,
+          targetCadre: st.psc.targetCadreId,
+          recentBooks: st.library.recentBooks,
+          readingProgress: st.library.readingProgress,
+          readingStats: st.library.readingStats,
+          writtenRecords: st.written.records,
+          writtenEvaluations: st.workspace.writtenEvaluations,
+          quizAttempts: st.quiz.attempts,
+          simulationHistory: st.psc.simulationHistory,
+        });
+        void upsertLeaderboardEntryInFirestore(uid, lbPayload).catch((err) => {
+          if (isFirestoreOfflineError(err)) {
+            console.warn(
+              'Leaderboard sync deferred while offline:',
+              err instanceof Error ? err.message : err
+            );
+            return;
+          }
+          console.error('Background leaderboard sync failed:', err);
+        });
+      });
+    }
 
     // 1. Quiz Attempt History Clear
     if (action.type === 'quiz/clearQuizHistory') {

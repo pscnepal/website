@@ -40,6 +40,7 @@ export const DESKTOP_NAV_ITEMS: ReadonlyArray<SiteNavLinkItem> = [
   { to: '/materials', label: 'Materials', end: false },
   { to: '/quiz', label: 'Quiz', end: false },
   { to: '/written', label: 'Written', end: false },
+  { to: '/leaderboard', label: 'Leaderboard', end: false },
 ];
 
 export const MOBILE_NAV_ITEMS: ReadonlyArray<SiteNavLinkItem> = [
@@ -50,6 +51,7 @@ export const MOBILE_NAV_ITEMS: ReadonlyArray<SiteNavLinkItem> = [
   { to: '/materials', label: 'Study Materials', end: false },
   { to: '/quiz', label: 'Objective Quiz', end: false },
   { to: '/written', label: 'Written Q&A (EN/ने)', end: false },
+  { to: '/leaderboard', label: 'Public Leaderboard (अग्रस्थान)', end: false },
   { to: '/evaluator', label: 'Answer Evaluator (रुब्रिक मूल्याङ्कन)', end: false },
   { to: '/pyq', label: 'Past Questions & PYQ (विगतका प्रश्न)', end: false },
   { to: '/flashcards', label: 'Flashcards & Memory (स्मरण कार्ड)', end: false },
@@ -66,6 +68,7 @@ export const FOOTER_STUDY_LINKS: ReadonlyArray<SiteNavLinkItem> = [
   { to: '/materials', label: 'Study Materials' },
   { to: '/quiz', label: 'Objective Quizzes' },
   { to: '/written', label: 'Written Q&A (EN/ने)' },
+  { to: '/leaderboard', label: 'Public Leaderboard' },
   { to: '/current-affairs', label: 'समसामयिक (Affairs)' },
   { to: '/calendar', label: 'कार्यतालिका (Calendar)' },
   { to: '/pyq', label: 'विगतका प्रश्न (PYQ)' },
@@ -95,6 +98,7 @@ export const INTERNAL_ROUTE_PREFIXES: ReadonlyArray<string> = [
   '/evaluator',
   '/pyq',
   '/flashcards',
+  '/leaderboard',
   '/simulate',
   '/progress',
   '/library',

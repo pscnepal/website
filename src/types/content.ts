@@ -6,6 +6,8 @@ import type { InquiryCategory } from './workspace';
 // CURRENT AFFAIRS (SAMASAMAYIK)
 // ============================================================================
 
+export type CurrentAffairCadence = 'daily' | 'weekly' | 'monthly';
+
 export type CurrentAffairCategory =
   | 'national'
   | 'economy'
@@ -16,6 +18,9 @@ export type CurrentAffairCategory =
 
 export interface CurrentAffairItem {
   id: string;
+  cadence: CurrentAffairCadence;
+  periodLabelEn?: string;
+  periodLabelNe?: string;
   titleEn: string;
   titleNe: string;
   dateBS: string;
@@ -35,6 +40,9 @@ export interface CurrentAffairItem {
   views: number;
   pinned?: boolean;
   source: string;
+  linkedQuizIds?: string[];
+  linkedWrittenIds?: string[];
+  linkedMaterialIds?: string[];
 }
 
 // ============================================================================

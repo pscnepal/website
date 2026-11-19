@@ -8,6 +8,7 @@ import {
   SITE_CONFIG,
 } from '../../data/siteConfig';
 import { toggleTheme } from '../../features/settings/settingsSlice';
+import { PWAInstallButton } from '../pwa/PWAInstallButton';
 
 export function Footer() {
   const dispatch = useAppDispatch();
@@ -33,7 +34,7 @@ export function Footer() {
             <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-sm">
               {SITE_CONFIG.footerDescription}
             </p>
-            <div className="pt-1">
+            <div className="pt-1 flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => dispatch(toggleTheme())}
@@ -54,6 +55,7 @@ export function Footer() {
                   </>
                 )}
               </button>
+              <PWAInstallButton variant="footer" />
             </div>
           </div>
 

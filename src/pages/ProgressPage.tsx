@@ -733,8 +733,16 @@ export function ProgressPage() {
               </p>
             </div>
 
-            {hasAnyProgress && !confirmReset && (
-              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <Link
+                to="/leaderboard"
+                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors whitespace-nowrap shrink-0"
+              >
+                <Trophy className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>Public Leaderboard</span>
+              </Link>
+
+              {hasAnyProgress && !confirmReset && (
                 <button
                   type="button"
                   onClick={() => setConfirmReset(true)}
@@ -743,8 +751,8 @@ export function ProgressPage() {
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Reset Progress</span>
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Inline Reset Confirmation Strip */}

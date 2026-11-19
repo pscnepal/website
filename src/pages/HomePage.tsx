@@ -528,7 +528,7 @@ export function HomePage() {
                 written: `${totalWrittenQuestions} long Q&As · EN/नेपाली`,
                 simulate: 'OMR Sheet · Written Hall · Merit Lab',
                 progress: 'Mastery & study analytics',
-                'current-affairs': '16th Plan, Budget 2081/82, Fast Track, COP29',
+                'current-affairs': 'Daily · Weekly · Monthly · 16 MCQs · Written Q&As · PDFs',
               };
 
               if (pillar.spanWide) {
@@ -557,7 +557,7 @@ export function HomePage() {
                         </div>
                         <h3 className="mt-2 font-serif text-fluid-h3 font-semibold text-zinc-950 dark:text-zinc-50 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center gap-2">
                           <span>{pillar.title}</span>
-                          <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
+                          <Flame className="w-4 h-4 text-amber-500" />
                         </h3>
                         <p className="mt-1.5 text-fluid-body text-zinc-600 dark:text-zinc-400 max-w-3xl">
                           {pillar.description}

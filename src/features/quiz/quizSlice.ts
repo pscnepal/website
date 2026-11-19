@@ -47,6 +47,10 @@ const quizSlice = createSlice({
     hydrateQuizPreferences(state, action: PayloadAction<QuizPlayMode>) {
       state.preferredMode = action.payload;
     },
+    hydrateQuizState(state, action: PayloadAction<QuizState>) {
+      state.preferredMode = action.payload.preferredMode;
+      state.attempts = action.payload.attempts.slice(0, 30);
+    },
   },
 });
 
@@ -57,6 +61,7 @@ export const {
   clearQuizHistory,
   resetLocalQuizHistory,
   hydrateQuizPreferences,
+  hydrateQuizState,
 } = quizSlice.actions;
 
 export default quizSlice.reducer;

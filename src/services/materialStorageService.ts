@@ -12,6 +12,7 @@ import {
   upsertReadingMaterialInFirestore,
 } from './cloudSyncService';
 import { SITE_CONFIG } from '../data/siteConfig';
+import { offlineDbService } from './offlineDbService';
 import { toast } from './toastService';
 import { formatUserFriendlyError } from '../utils/errorHelpers';
 
@@ -201,6 +202,7 @@ export const materialStorageService = {
 
   saveMaterialCategories(categories: ReadingMaterialCategory[]): void {
     safeWriteCategories(categories);
+    void offlineDbService.putStudyBank('material_categories', categories);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
         new CustomEvent(MATERIAL_EVENTS.CHANGED, { detail: categories })
@@ -252,7 +254,7 @@ export const materialStorageService = {
       overrideMap.set(ov.material.id, ov);
     }
 
-    // Start with the 4 seed categories
+    // Start with the official seed categories
     const categoryBuckets = new Map<string, ReadingMaterialCategory>();
     for (const seedCat of READING_MATERIAL_CATEGORIES) {
       categoryBuckets.set(seedCat.id, {
@@ -604,11 +606,13 @@ export const materialStorageService = {
 
   resetMaterialsToDefault(): void {
     pendingMaterialMutations.clear();
+    const defaults = cloneSeedCategories();
+    void offlineDbService.putStudyBank('material_categories', defaults);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(MATERIALS_STORAGE_KEY);
       window.dispatchEvent(
         new CustomEvent(MATERIAL_EVENTS.CHANGED, {
-          detail: cloneSeedCategories(),
+          detail: defaults,
         })
       );
     }

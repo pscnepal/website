@@ -47,7 +47,10 @@ import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { usePdfDocument } from '../hooks/usePdfDocument';
 import { useReadingProgress } from '../hooks/useReadingProgress';
 import { useReadingStats } from '../hooks/useReadingStats';
-import { getLocalPdfSessionEntry } from '../services/pdfService';
+import {
+  getLocalPdfSessionEntry,
+  restoreLocalPdfFromIndexedDB,
+} from '../services/pdfService';
 import { soundService } from '../services/soundService';
 import type { BookMetadata, PdfErrorInfo } from '../types/pdf';
 import { clampZoom, ZOOM_STEP } from '../utils/pdfHelpers';
@@ -92,10 +95,42 @@ export function ReaderPage() {
   const [retryKey, setRetryKey] = useState(0);
   const [pdfPassword, setPdfPassword] = useState<string | undefined>(undefined);
   const [effectiveZoom, setEffectiveZoom] = useState<number>(100);
+  const [localRestoreRevision, setLocalRestoreRevision] = useState(0);
+  const [isRestoringLocalPdf, setIsRestoringLocalPdf] = useState(false);
 
   const urlParam = searchParams.get('url');
   const sourceParam = searchParams.get('source');
   const localIdParam = searchParams.get('id');
+
+  const pendingLocalRestoreId =
+    sourceParam === 'local' && localIdParam
+      ? localIdParam
+      : currentBookInStore?.sourceType === 'local'
+        ? currentBookInStore.id
+        : null;
+
+  useEffect(() => {
+    if (!pendingLocalRestoreId) return;
+    if (getLocalPdfSessionEntry(pendingLocalRestoreId)) return;
+
+    let cancelled = false;
+    setIsRestoringLocalPdf(true);
+    void restoreLocalPdfFromIndexedDB(pendingLocalRestoreId)
+      .then((restored) => {
+        if (!cancelled && restored) {
+          setLocalRestoreRevision((r) => r + 1);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsRestoringLocalPdf(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pendingLocalRestoreId]);
 
   // Resolve active PDF source (URL query parameter vs local session file)
   const resolvedSource = useMemo<{
@@ -192,7 +227,7 @@ export function ReaderPage() {
       url: null,
       book: null,
     };
-  }, [urlParam, sourceParam, localIdParam, currentBookInStore]);
+  }, [urlParam, sourceParam, localIdParam, currentBookInStore, localRestoreRevision]);
 
   // Reset password when switching to a different book
   const activeBookId = resolvedSource.book?.id ?? null;
@@ -535,7 +570,7 @@ export function ReaderPage() {
 
       {/* Main Workspace */}
       <PageTransition fadeOnly className="flex-1 min-h-0 flex relative overflow-hidden">
-        {activeError ? (
+        {activeError && !isRestoringLocalPdf ? (
           <ReaderError
             error={activeError}
             documentUrl={resolvedSource.url}
@@ -545,7 +580,7 @@ export function ReaderPage() {
               setRetryKey((k) => k + 1);
             }}
           />
-        ) : isLoading || !pdfDoc || !pageDimensions ? (
+        ) : isRestoringLocalPdf || isLoading || !pdfDoc || !pageDimensions ? (
           <ReaderLoading
             title={resolvedSource.book?.title}
             progressPercent={progressPercent}

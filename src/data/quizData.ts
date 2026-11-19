@@ -4118,6 +4118,818 @@ const COMPREHENSIVE_EXTRA_QUESTIONS: QuizQuestion[] = [
 ];
 
 /**
+ * Current Affairs & Contemporary Samasamayik Objective Questions (समसामयिक वस्तुगत प्रश्नहरू)
+ */
+export const CURRENT_AFFAIRS_QUESTIONS: QuizQuestion[] = [
+  {
+    id: 'PSC-CA-501',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'Administration / Foreign / Audit',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-ECON',
+    topic: 'Planning & Economic Policy',
+    subtopicId: 'CA-ECON-01',
+    subtopic: 'Sixteenth Periodic Plan Targets',
+    question:
+      'What is the core vision motto and target average annual economic growth rate set by Nepal’s Sixteenth Periodic Plan (FY 2081/82–2085/86)?',
+    questionNe:
+      'नेपालको सोह्रौँ आवधिक योजना (आ.व. २०८१/८२–२०८५/८६) को मुख्य सोच/नारा र औसत वार्षिक आर्थिक वृद्धिदरको लक्ष्य कति रहेको छ?',
+    options: [
+      {
+        key: 'A',
+        text: 'Good Governance, Social Justice, and Prosperity; Target Growth Rate 7.3%',
+        textNe: 'सुशासन, सामाजिक न्याय र समृद्धि; वार्षिक औसत आर्थिक वृद्धिदर ७.३%',
+      },
+      {
+        key: 'B',
+        text: 'Prosperous Nepal, Happy Nepali; Target Growth Rate 10.3%',
+        textNe: 'समृद्ध नेपाल, सुखी नेपाली; वार्षिक औसत आर्थिक वृद्धिदर १०.३%',
+      },
+      {
+        key: 'C',
+        text: 'Green Federalism and Digital Equity; Target Growth Rate 6.5%',
+        textNe: 'हरित संघीयता र डिजिटल समता; वार्षिक औसत आर्थिक वृद्धिदर ६.५%',
+      },
+      {
+        key: 'D',
+        text: 'Sustainable Industrialization and Jobs; Target Growth Rate 8.5%',
+        textNe: 'दिगो औद्योगीकरण र रोजगारी; वार्षिक औसत आर्थिक वृद्धिदर ८.५%',
+      },
+    ],
+    correct_options: ['A'],
+    is_multi_select: false,
+    explanation:
+      'Approved by the Council of Ministers in Jestha 2081, the 16th Periodic Plan centers on "Good Governance, Social Justice, and Prosperity" with an average annual economic growth target of 7.3% and multidimensional poverty reduction below 11%.',
+    explanationNe:
+      '२०८१ जेठमा स्वीकृत सोह्रौँ योजनाको मुख्य सोच "सुशासन, सामाजिक न्याय र समृद्धि" हो र यसले योजना अवधिमा औसत ७.३% आर्थिक वृद्धि तथा बहुआयामिक गरिबी ११% मुनि झार्ने लक्ष्य लिएको छ।',
+    difficulty: 'Easy',
+    marks: 1,
+    sourceTitle: 'सोह्रौँ योजना (आ.व. २०८१/८२–२०८५/८६) — Sixteenth Periodic Plan',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/%E0%A4%B8%E0%A5%8B%E0%A4%B9%E0%A5%8D%E0%A4%B0%E0%A5%8C%E0%A4%82%20%E0%A4%AF%E0%A5%8B%E0%A4%9C%E0%A4%A8%E0%A4%BE_rfucaur.pdf',
+  },
+  {
+    id: 'PSC-CA-502',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration / Revenue',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-ECON',
+    topic: 'Monetary Policy & Central Banking',
+    subtopicId: 'CA-ECON-02',
+    subtopic: 'NRB Monetary Instruments',
+    question:
+      'Under Nepal Rastra Bank’s Monetary Policy governance pursuant to the NRB Act 2058 (2002), which institution sets the Interest Rate Corridor (Bank Rate, Policy Rate, and Deposit Collection Rate) and Cash Reserve Ratio (CRR)?',
+    questionNe:
+      'नेपाल राष्ट्र बैंक ऐन, २०५८ बमोजिम नेपालमा ब्याजदर करिडोर (बैंक दर, नीतिगत दर र निक्षेप संकलन दर) तथा अनिवार्य नगद मौज्दात (CRR) निर्धारण कसले गर्दछ?',
+    options: [
+      {
+        key: 'A',
+        text: 'Ministry of Finance Budget Division',
+        textNe: 'अर्थ मन्त्रालयको बजेट तथा कार्यक्रम महाशाखा',
+      },
+      {
+        key: 'B',
+        text: 'Nepal Rastra Bank (Central Bank Monetary Policy)',
+        textNe: 'नेपाल राष्ट्र बैंक (मौद्रिक नीति मार्फत)',
+      },
+      {
+        key: 'C',
+        text: 'National Planning Commission (NPC)',
+        textNe: 'राष्ट्रिय योजना आयोग',
+      },
+      {
+        key: 'D',
+        text: 'Securities Board of Nepal (SEBON)',
+        textNe: 'नेपाल धितोपत्र बोर्ड',
+      },
+    ],
+    correct_options: ['B'],
+    is_multi_select: false,
+    explanation:
+      'Nepal Rastra Bank formulates and executes Monetary Policy independently under the NRB Act, 2058 to maintain price stability, external sector stability (forex reserves covering ~7+ months of imports), and financial sector soundness via policy rate corridors, CRR, and SLR.',
+    explanationNe:
+      'नेपाल राष्ट्र बैंक ऐन, २०५८ अनुसार मूल्य स्थायित्व, बाह्य क्षेत्र स्थायित्व र वित्तीय सन्तुलन कायम गर्न नेपाल राष्ट्र बैंकले मौद्रिक नीतिमार्फत ब्याजदर करिडोर, CRR र SLR निर्धारण गर्दछ।',
+    difficulty: 'Easy',
+    marks: 1,
+    sourceTitle: 'Monetary Policy for FY 2083/84 (2026/27) — Nepal Rastra Bank',
+    sourcePath:
+      'https://www.nrb.org.np/contents/uploads/2026/07/Monetary_Policy-2083_84-1.pdf',
+  },
+  {
+    id: 'PSC-CA-503',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'Administration / Audit',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-GOV',
+    topic: 'Constitutional Audit & Integrity',
+    subtopicId: 'CA-GOV-01',
+    subtopic: 'OAG 63rd Annual Report (2083)',
+    question:
+      'In Nepal’s constitutional accountability framework, to whom does the Auditor General submit the Annual Audit Report (such as the 63rd Annual Report, 2083 BS) before it is tabled in the Federal Parliament?',
+    questionNe:
+      'नेपालको संविधानअनुसार महालेखापरीक्षकले आफ्नो वार्षिक प्रतिवेदन (जस्तै: ६३ औँ वार्षिक प्रतिवेदन, २०८३) संघीय संसदमा पेश गर्नुअघि सर्वप्रथम कोसमक्ष पेश गर्दछन्?',
+    options: [
+      {
+        key: 'A',
+        text: 'The Prime Minister',
+        textNe: 'प्रधानमन्त्रीसमक्ष',
+      },
+      {
+        key: 'B',
+        text: 'The President of Nepal (Article 294 & Article 241)',
+        textNe: 'राष्ट्रपतिसमक्ष (संविधानको धारा २९४ र २४१ बमोजिम)',
+      },
+      {
+        key: 'C',
+        text: 'The Speaker of the House of Representatives directly',
+        textNe: 'सीधै प्रतिनिधि सभाका सभामुखसमक्ष',
+      },
+      {
+        key: 'D',
+        text: 'The Minister of Finance',
+        textNe: 'अर्थमन्त्रीसमक्ष',
+      },
+    ],
+    correct_options: ['B'],
+    is_multi_select: false,
+    explanation:
+      'Under Article 294 of the Constitution of Nepal, the Auditor General submits the Annual Report (like the 63rd Annual Report, 2083) to the President, who causes it to be laid before the Federal Parliament through the Prime Minister for Public Accounts Committee (PAC) scrutiny.',
+    explanationNe:
+      'नेपालको संविधानको धारा २९४ बमोजिम महालेखापरीक्षकले वार्षिक प्रतिवेदन राष्ट्रपतिसमक्ष पेश गर्दछन् र राष्ट्रपतिले प्रधानमन्त्रीमार्फत संघीय संसदमा पेश गर्न लगाउनुहुन्छ।',
+    difficulty: 'Easy',
+    marks: 1,
+    sourceTitle:
+      'महालेखापरीक्षकको त्रिसट्ठिऔँ वार्षिक प्रतिवेदन, २०८३ (63rd OAG Annual Report)',
+    sourcePath:
+      'https://oag.gov.np/site_uploads/mahalkhaparakashhakaka-ou-varashhaka-paratavathana-1435411017.pdf',
+  },
+  {
+    id: 'PSC-CA-504',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'Administration / Foreign Service',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-INTL',
+    topic: 'LDC Graduation & Trade Diplomacy',
+    subtopicId: 'CA-INTL-01',
+    subtopic: 'UN LDC Graduation Criteria',
+    question:
+      'Nepal is scheduled to graduate from the UN Least Developed Country (LDC) status on November 24, 2026. Which TWO of the three UN Committee for Development Policy (CDP) criteria did Nepal successfully satisfy?',
+    questionNe:
+      'नेपाल सन् २०२६ नोभेम्बर २४ मा अतिकम विकसित मुलुक (LDC) बाट स्तरोन्नति हुँदैछ। संयुक्त राष्ट्रसंघको CDP ले तोकेका तीन मापदण्डमध्ये नेपालले कुन दुई सूचक पूरा गरेको हो?',
+    options: [
+      {
+        key: 'A',
+        text: 'GNI per capita and Human Assets Index (HAI)',
+        textNe: 'प्रतिव्यक्ति कुल राष्ट्रिय आय (GNI) र मानव सम्पत्ति सूचकाङ्क (HAI)',
+      },
+      {
+        key: 'B',
+        text: 'Human Assets Index (HAI) and Economic & Environmental Vulnerability Index (EVI)',
+        textNe: 'मानव सम्पत्ति सूचकाङ्क (HAI) र आर्थिक तथा वातावरणीय जोखिम सूचकाङ्क (EVI)',
+      },
+      {
+        key: 'C',
+        text: 'GNI per capita and Environmental Vulnerability Index (EVI)',
+        textNe: 'प्रतिव्यक्ति कुल राष्ट्रिय आय (GNI) र वातावरणीय जोखिम सूचकाङ्क (EVI)',
+      },
+      {
+        key: 'D',
+        text: 'Foreign Exchange Adequacy and Ease of Doing Business Index',
+        textNe: 'विदेशी मुद्रा सञ्चिति र व्यवसाय गर्ने सहजता सूचकाङ्क',
+      },
+    ],
+    correct_options: ['B'],
+    is_multi_select: false,
+    explanation:
+      'Nepal qualified for LDC graduation (effective Nov 24, 2026) by meeting two of the three criteria—Human Assets Index (HAI) and Economic and Environmental Vulnerability Index (EVI)—in consecutive triennial reviews even though GNI per capita had not yet crossed the income threshold.',
+    explanationNe:
+      'नेपालले प्रतिव्यक्ति आय (GNI) को सीमा पार नगरे पनि लगातार दुई त्रैवार्षिक समीक्षामा मानव सम्पत्ति सूचकाङ्क (HAI) र आर्थिक तथा वातावरणीय जोखिम सूचकाङ्क (EVI) पूरा गरेकाले २०२६ नोभेम्बर २४ मा स्तरोन्नति हुन लागेको हो।',
+    difficulty: 'Medium',
+    marks: 1,
+    sourceTitle: 'सोह्रौँ योजना (आ.व. २०८१/८२–२०८५/८६) — Sixteenth Periodic Plan',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/%E0%A4%B8%E0%A5%8B%E0%A4%B9%E0%A5%8D%E0%A4%B0%E0%A5%8C%E0%A4%82%20%E0%A4%AF%E0%A5%8B%E0%A4%9C%E0%A4%A8%E0%A4%BE_rfucaur.pdf',
+  },
+  {
+    id: 'PSC-CA-505',
+    level: 'Non-Gazetted First Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration / Procurement',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-GOV',
+    topic: 'Recent Governance Directives',
+    subtopicId: 'CA-GOV-02',
+    subtopic: 'Public Procurement Labour Protection 2083',
+    question:
+      'What primary protection does the OPMCM Procedure on Remuneration and Social Security of Workers Engaged in Public Procurement, 2083 BS mandate?',
+    questionNe:
+      'सार्वजनिक खरिदमा आबद्ध श्रमिकको पारिश्रमिक तथा सामाजिक सुरक्षा सम्बन्धी कार्यविधि, २०८३ को मुख्य उद्देश्य के हो?',
+    options: [
+      {
+        key: 'A',
+        text: 'Guaranteeing statutory minimum wages, transparent banking payment, and Social Security Fund (SSF) coverage for workers employed by public contractors',
+        textNe: 'सार्वजनिक निर्माण/खरिद ठेक्कामा कार्यरत श्रमिकको न्यूनतम पारिश्रमिक, बैंकिङ भुक्तानी र सामाजिक सुरक्षा कोष (SSF) आबद्धता सुनिश्चित गर्नु',
+      },
+      {
+        key: 'B',
+        text: 'Replacing international competitive bidding with direct departmental procurement only',
+        textNe: 'अन्तर्राष्ट्रिय बोलपत्र खारेज गरी विभागीय खरिद मात्र लागू गर्नु',
+      },
+      {
+        key: 'C',
+        text: 'Increasing bid security deposits from 2% to 15% across local tenders',
+        textNe: 'स्थानीय ठेक्कामा बोलपत्र जमानत २% बाट १५% पुर्‍याउनु',
+      },
+      {
+        key: 'D',
+        text: 'Exempting road contractors from VAT and income tax deduction at source',
+        textNe: 'सडक ठेकेदारलाई भ्याट र अग्रिम कर कट्टीबाट छुट दिनु',
+      },
+    ],
+    correct_options: ['A'],
+    is_multi_select: false,
+    explanation:
+      'Issued by the Office of the Prime Minister and Council of Ministers (OPMCM) in 2083 BS, this procedure closes exploitation gaps in public contracting by verifying workers’ minimum wage compliance, formal payment, and SSF protection.',
+    explanationNe:
+      'प्रधानमन्त्री तथा मन्त्रिपरिषद्को कार्यालयद्वारा जारी कार्यविधि, २०८३ ले सार्वजनिक खरिद तथा निर्माण ठेक्कामा काम गर्ने श्रमिकको न्यूनतम ज्याला, बैंक खाताबाट भुक्तानी र सामाजिक सुरक्षा कोष (SSF) सुरक्षा अनिवार्य गरेको छ।',
+    difficulty: 'Medium',
+    marks: 1,
+    sourceTitle:
+      'सार्वजनिक खरिद ऐन, २०६३ र OPMCM श्रमिक पारिश्रमिक कार्यविधि २०८३',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/8.%E0%A4%B8%E0%A4%BE%E0%A4%B0%E0%A5%8D%E0%A4%B5%E0%A4%9C%E0%A4%A8%E0%A4%BF%E0%A4%95%20%E0%A4%96%E0%A4%B0%E0%A4%BF%E0%A4%A6%20%E0%A4%90%E0%A4%A8%2C%20%E0%A5%A8%E0%A5%A6%E0%A5%AC%E0%A5%A9_dsrretl.pdf',
+  },
+  {
+    id: 'PSC-CA-506',
+    level: 'Non-Gazetted First Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration / Statistics',
+    post: 'Section Officer / Nayab Subba / Kharidar target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-NAT',
+    topic: 'Demography & National Accounts',
+    subtopicId: 'CA-NAT-01',
+    subtopic: 'Census 2078 Key Indicators',
+    question:
+      'According to the National Statistics Office (NSO) National Population and Housing Census 2078 report, what is Nepal’s Total Population, Annual Population Growth Rate, and Overall Literacy Rate (5 years and above)?',
+    questionNe:
+      'राष्ट्रिय तथ्याङ्क कार्यालय (NSO) को राष्ट्रिय जनगणना २०७८ को अन्तिम प्रतिवेदनअनुसार नेपालको कुल जनसंख्या, वार्षिक जनसंख्या वृद्धिदर र कुल साक्षरता दर (५ वर्ष र सोभन्दा माथि) कति रहेको छ?',
+    options: [
+      {
+        key: 'A',
+        text: 'Population 29,164,578 · Growth Rate 0.92% · Literacy Rate 76.2%',
+        textNe: 'जनसंख्या २,९१,६४,५७८ · वृद्धिदर ०.९२% · साक्षरता दर ७६.२%',
+      },
+      {
+        key: 'B',
+        text: 'Population 26,494,504 · Growth Rate 1.35% · Literacy Rate 65.9%',
+        textNe: 'जनसंख्या २,६४,९४,५०४ · वृद्धिदर १.३५% · साक्षरता दर ६५.९%',
+      },
+      {
+        key: 'C',
+        text: 'Population 30,520,100 · Growth Rate 1.15% · Literacy Rate 71.8%',
+        textNe: 'जनसंख्या ३,०५,२०,१०० · वृद्धिदर १.१५% · साक्षरता दर ७१.८%',
+      },
+      {
+        key: 'D',
+        text: 'Population 28,950,000 · Growth Rate 0.78% · Literacy Rate 81.4%',
+        textNe: 'जनसंख्या २,८९,५०,००० · वृद्धिदर ०.७८% · साक्षरता दर ८१.४%',
+      },
+    ],
+    correct_options: ['A'],
+    is_multi_select: false,
+    explanation:
+      'NSO’s Census 2078 National Report records a total population of 29,164,578 (51.04% female, 48.96% male), an 80-year low annual growth rate of 0.92%, population density of 198/sq km, and overall literacy of 76.2% (Male 83.6%, Female 69.4%).',
+    explanationNe:
+      'जनगणना २०७८ अनुसार कुल जनसंख्या २,९१,६४,५७८, वार्षिक वृद्धिदर विगत ८ दशककै न्यून ०.९२%, जनघनत्व १९८ व्यक्ति/वर्ग कि.मि. र साक्षरता दर ७६.२% (पुरुष ८३.६%, महिला ६९.४%) रहेको छ।',
+    difficulty: 'Easy',
+    marks: 1,
+    sourceTitle:
+      'National Population and Housing Census 2021 (2078 BS) — National Report',
+    sourcePath:
+      'https://censusresults.nsonepal.gov.np/files/result-folder/National%20Report_English.pdf',
+  },
+  {
+    id: 'PSC-CA-507',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration / Economist',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-ECON',
+    topic: 'National Accounts & GDP Structure',
+    subtopicId: 'CA-ECON-03',
+    subtopic: 'Sectoral GDP Contribution',
+    question:
+      'In NSO’s National Accounts Statistics and Nepal in Figures 2082, which broad economic sector accounts for the largest share of Nepal’s Gross Domestic Product (GDP)?',
+    questionNe:
+      'राष्ट्रिय तथ्याङ्क कार्यालयको राष्ट्रिय लेखा तथ्याङ्क र नेपालको तथ्याङ्कीय झलक २०८२ अनुसार नेपालको कुल गार्हस्थ्य उत्पादन (GDP) मा सबैभन्दा ठूलो योगदान कुन क्षेत्रको रहेको छ?',
+    options: [
+      {
+        key: 'A',
+        text: 'Primary Sector (Agriculture, Forestry, Fishing, Mining)',
+        textNe: 'प्राथमिक क्षेत्र (कृषि, वन, मत्स्य र खानी)',
+      },
+      {
+        key: 'B',
+        text: 'Secondary Sector (Manufacturing, Construction, Electricity)',
+        textNe: 'द्वितीय क्षेत्र (उद्योग, निर्माण र विद्युत्)',
+      },
+      {
+        key: 'C',
+        text: 'Tertiary / Service Sector (Wholesale/Retail Trade, Transport, Finance, Real Estate, Public Admin)',
+        textNe: 'तृतीयक / सेवा क्षेत्र (थोक तथा खुद्रा व्यापार, यातायात, वित्तीय, प्रशासन आदि)',
+      },
+      {
+        key: 'D',
+        text: 'Information Technology Exports Alone',
+        textNe: 'सूचना प्रविधि निर्यात मात्र',
+      },
+    ],
+    correct_options: ['C'],
+    is_multi_select: false,
+    explanation:
+      'Nepal’s economy has undergone structural transformation toward the Tertiary (Service) sector, which contributes over ~62% of GDP, followed by the Primary sector (~24–25%, Agriculture/Forestry) and Secondary/Industrial sector (~12–13%).',
+    explanationNe:
+      'नेपालको GDP मा तृतीयक (सेवा) क्षेत्रको योगदान सर्वाधिक (करिब ६२% भन्दा बढी) रहेको छ भने प्राथमिक क्षेत्र (करिब २४–२५%) दोस्रो र द्वितीय क्षेत्र (करिब १२–१३%) तेस्रो स्थानमा छ।',
+    difficulty: 'Easy',
+    marks: 1,
+    sourceTitle: 'National Accounts Statistics of Nepal 2025/26 — NSO',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/National%20Accounts%20Statistics%20of%20Nepal%202025_26_oszafcl.pdf',
+  },
+  {
+    id: 'PSC-CA-508',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-GOV',
+    topic: 'Executive Decisions & RTI Disclosure',
+    subtopicId: 'CA-GOV-03',
+    subtopic: 'Cabinet Spokesperson & Proactive Publication',
+    question:
+      'Which ministry regularly publishes the official monthly Council of Ministers (Cabinet) decisions digest on behalf of the Government of Nepal, and under which statutory section do agencies like NPC publish quarterly "Swatah Prakashan" (Proactive Disclosure)?',
+    questionNe:
+      'नेपाल सरकारको मन्त्रिपरिषद् बैठकका निर्णयहरू आधिकारिक रूपमा कुन मन्त्रालय/प्रवक्तामार्फत सार्वजनिक गरिन्छ र राष्ट्रिय योजना आयोगले त्रैमासिक "स्वतः प्रकाशन" कुन ऐनको दफाबमोजिम जारी गर्दछ?',
+    options: [
+      {
+        key: 'A',
+        text: 'Ministry of Communication & Information Technology (MoCIT); Proactive Disclosure under Section 5(3) of the Right to Information Act, 2064',
+        textNe: 'सञ्चार तथा सूचना प्रविधि मन्त्रालय; सूचनाको हक सम्बन्धी ऐन, २०६४ को दफा ५(३) बमोजिम स्वतः प्रकाशन',
+      },
+      {
+        key: 'B',
+        text: 'Ministry of Home Affairs; Good Governance Act Sec. 40',
+        textNe: 'गृह मन्त्रालय; सुशासन ऐन दफा ४०',
+      },
+      {
+        key: 'C',
+        text: 'Public Service Commission; Civil Service Act Sec. 12',
+        textNe: 'लोक सेवा आयोग; निजामती सेवा ऐन दफा १२',
+      },
+      {
+        key: 'D',
+        text: 'Office of the Auditor General; Audit Act Sec. 9',
+        textNe: 'महालेखापरीक्षकको कार्यालय; लेखापरीक्षण ऐन दफा ९',
+      },
+    ],
+    correct_options: ['A'],
+    is_multi_select: false,
+    explanation:
+      'The Minister for Communication and Information Technology serves as the official Government Spokesperson releasing Cabinet decisions digests, while Section 5(3) of the Right to Information Act, 2064 obligates public bodies to issue Proactive Disclosures (स्वतः प्रकाशन) every three months.',
+    explanationNe:
+      'सञ्चार तथा सूचना प्रविधि मन्त्री नेपाल सरकारको आधिकारिक प्रवक्ताका रूपमा मन्त्रिपरिषद् निर्णय सार्वजनिक गर्नुहुन्छ भने सूचनाको हक सम्बन्धी ऐन, २०६४ को दफा ५(३) अनुसार सार्वजनिक निकायले हरेक तीन महिनामा स्वतः प्रकाशन अद्यावधिक गर्नुपर्दछ।',
+    difficulty: 'Medium',
+    marks: 1,
+    sourceTitle:
+      '२०८३ असोज महिनाको मन्त्रिपरिषद् बैठकका निर्णयहरू — Cabinet Decisions (Asoj 2083)',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/2083%20%E0%A4%85%E0%A4%B8%E0%A5%8B%E0%A4%9C%20%E0%A4%AE%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A4%BE%E0%A4%95%E0%A5%8B%20%E0%A4%AE%E0%A4%A8%E0%A5%8D%E0%A4%A4%E0%A5%8D%E0%A4%B0%E0%A4%BF%E0%A4%AA%E0%A4%B0%E0%A4%BF%E0%A4%B7%E0%A4%A6%E0%A5%8D%20%E0%A4%AC%E0%A5%88%E0%A4%A0%E0%A4%95%E0%A4%95%E0%A4%BE%20%E0%A4%A8%E0%A4%BF%E0%A4%B0%E0%A5%8D%E0%A4%A3%E0%A4%AF%E0%A4%B9%E0%A4%B0%E0%A5%81_mrxonxh.pdf',
+  },
+  {
+    id: 'PSC-CA-509',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration / Accounts / Revenue',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-ECON',
+    topic: 'Federal Budget Constitutional Calendar',
+    subtopicId: 'CA-ECON-04',
+    subtopic: 'Article 119 Jestha 15 Budget Mandate',
+    question:
+      'Under Article 119(3) of the Constitution of Nepal, on which exact Nepali calendar date every year MUST the Federal Finance Minister present the annual estimate of revenue and expenditure (Federal Budget, such as FY 2083/84) before a joint sitting of both Houses of Parliament?',
+    questionNe:
+      'नेपालको संविधानको धारा ११९(३) बमोजिम संघीय अर्थमन्त्रीले प्रत्येक वर्ष कुन गते संघीय संसदको दुवै सदनको संयुक्त बैठकमा राजस्व र व्ययको वार्षिक अनुमान (बजेट) पेश गर्नुपर्दछ?',
+    options: [
+      {
+        key: 'A',
+        text: 'Baisakh 15 (वैशाख १५)',
+        textNe: 'वैशाख १५ गते',
+      },
+      {
+        key: 'B',
+        text: 'Jestha 15 (जेठ १५ गते)',
+        textNe: 'जेठ १५ गते',
+      },
+      {
+        key: 'C',
+        text: 'Ashadh 1 (असार १ गते)',
+        textNe: 'असार १ गते',
+      },
+      {
+        key: 'D',
+        text: 'Ashadh 10 (असार १० गते)',
+        textNe: 'असार १० गते',
+      },
+    ],
+    correct_options: ['B'],
+    is_multi_select: false,
+    explanation:
+      'Nepal’s budget calendar is constitutionally anchored: Federal Budget on Jestha 15 (Art. 119(3)), Provincial Budgets on Ashadh 1 (IGFA 2074), and Local Level Budgets on Ashadh 10 (LGOA 2074 Sec. 71).',
+    explanationNe:
+      'संविधानको धारा ११९(३) अनुसार संघीय बजेट जेठ १५, प्रदेश बजेट असार १ र स्थानीय तहको बजेट असार १० गते पेश गर्नुपर्ने संवैधानिक तथा कानुनी व्यवस्था छ।',
+    difficulty: 'Easy',
+    marks: 1,
+    sourceTitle: 'आ.व. २०८३/८४ को बजेट वक्तव्य — Federal Budget Speech 2083/84 (Nepali)',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/budget%20speech%202083_nz9wmgt_cix58wu.pdf',
+  },
+  {
+    id: 'PSC-CA-510',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration / Revenue',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-ECON',
+    topic: 'Federal Budget & Economic Survey',
+    subtopicId: 'CA-ECON-05',
+    subtopic: 'Economic Survey & Budget Alignment',
+    question:
+      'Select ALL true statements regarding Nepal’s FY 2081/82–2083/84 fiscal documentation and Economic Survey practices. (Multi-select)',
+    questionNe:
+      'नेपालको संघीय बजेट र आर्थिक सर्वेक्षण सम्बन्धी तलका कुन–कुन कथनहरू सही छन्? (एकभन्दा बढी सही उत्तर छान्नुहोस्)',
+    options: [
+      {
+        key: 'A',
+        text: 'The Economic Survey is tabled in Parliament prior to the Jestha 15 Budget Speech to review macroeconomic performance',
+        textNe: 'समष्टिगत आर्थिक अवस्था समीक्षाका लागि जेठ १५ को बजेटअघि संसदमा आर्थिक सर्वेक्षण पेश गरिन्छ',
+      },
+      {
+        key: 'B',
+        text: 'The Finance Bill (Economic Act) gives legal authority to collect taxes and revise customs/VAT/excise duties',
+        textNe: 'आर्थिक ऐन (विधेयक) ले कर संकलन र भन्सार/भ्याट/अन्तःशुल्क दर परिमार्जनको कानुनी अख्तियारी दिन्छ',
+      },
+      {
+        key: 'C',
+        text: 'In recent federal budgets, Financial Management (debt principal & interest servicing) has rivaled or exceeded Capital Expenditure allocation',
+        textNe: 'पछिल्ला संघीय बजेटहरूमा वित्तीय व्यवस्था (साँवा–ब्याज भुक्तानी) तर्फको विनियोजन पुँजीगत खर्चको हाराहारी वा सोभन्दा बढी देखिएको छ',
+      },
+      {
+        key: 'D',
+        text: 'Provinces and Local Levels are prohibited from receiving equalization grants from the Federal Consolidated Fund',
+        textNe: 'प्रदेश र स्थानीय तहले संघीय सञ्चित कोषबाट वित्तीय समानीकरण अनुदान पाउन संवैधानिक बन्देज छ',
+      },
+    ],
+    correct_options: ['A', 'B', 'C'],
+    is_multi_select: true,
+    explanation:
+      'A, B, and C are accurate: Ministry of Finance presents the Economic Survey ahead of the Jestha 15 budget; the Economic Act authorizes annual taxation; and rising debt-servicing ("Bittiya Byabastha") has strained capital allocations. Option D is false because Article 60 mandates fiscal equalization, conditional, complementary, and special grants.',
+    explanationNe:
+      'कथन A, B र C सही छन्। जेठ १५ अघि आर्थिक सर्वेक्षण पेश गरिन्छ, आर्थिक ऐनले कर उठाउने अधिकार दिन्छ र ऋण दायित्वले पुँजीगत बजेटमा चाप परेको छ। धारा ६० अनुसार समानीकरण अनुदान अनिवार्य भएकाले D गलत हो।',
+    difficulty: 'Hard',
+    marks: 1,
+    sourceTitle: 'आर्थिक सर्वेक्षण २०८२/८३ — Economic Survey FY 2082/83',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/Economic%20Survey%202082%2083%20(1)_cimkjjb.pdf',
+  },
+  {
+    id: 'PSC-CA-511',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration / Judicial',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-GOV',
+    topic: 'Anti-Corruption & CPI Index',
+    subtopicId: 'CA-GOV-04',
+    subtopic: 'CIAA Annual Report & CPI',
+    question:
+      'In Transparency International’s Corruption Perceptions Index (CPI 2024), what score (out of 100) and global rank did Nepal record, and which constitutional body submits annual anti-corruption prosecution reports (such as the 35th Annual Report FY 2081/82)?',
+    questionNe:
+      'ट्रान्सपरेन्सी इन्टरनेसनलको भ्रष्टाचार अवधारणा सूचकाङ्क (CPI २०२४) मा नेपालले कति अङ्क र कतिऔँ स्थान प्राप्त गरेको छ, तथा भ्रष्टाचार अभियोजनको ३५ औँ वार्षिक प्रतिवेदन कुन संवैधानिक आयोगले पेश गरेको हो?',
+    options: [
+      {
+        key: 'A',
+        text: 'Score 35/100 · 108th Rank; Commission for the Investigation of Abuse of Authority (CIAA)',
+        textNe: '३५ अङ्क · १०८ औँ स्थान; अख्तियार दुरुपयोग अनुसन्धान आयोग (CIAA)',
+      },
+      {
+        key: 'B',
+        text: 'Score 48/100 · 65th Rank; National Vigilance Center',
+        textNe: '४८ अङ्क · ६५ औँ स्थान; राष्ट्रिय सतर्कता केन्द्र',
+      },
+      {
+        key: 'C',
+        text: 'Score 31/100 · 125th Rank; Judicial Council',
+        textNe: '३१ अङ्क · १२५ औँ स्थान; न्याय परिषद्',
+      },
+      {
+        key: 'D',
+        text: 'Score 55/100 · 49th Rank; Public Service Commission',
+        textNe: '५५ अङ्क · ४९ औँ स्थान; लोक सेवा आयोग',
+      },
+    ],
+    correct_options: ['A'],
+    is_multi_select: false,
+    explanation:
+      'Transparency International’s CPI 2024 scored Nepal 35/100 (108th out of 180 countries), signaling high corruption risk below the 50-point threshold. Under Constitution Part 21 (Art. 238–239), CIAA investigates and prosecutes corruption before the Special Court.',
+    explanationNe:
+      'CPI २०२४ मा नेपाल १०० मा ३५ अङ्कसहित १८० देशमध्ये १०८ औँ स्थानमा छ। संविधानको भाग २१ बमोजिम अख्तियार दुरुपयोग अनुसन्धान आयोगले भ्रष्टाचार मुद्दा विशेष अदालतमा दायर गर्दछ।',
+    difficulty: 'Medium',
+    marks: 1,
+    sourceTitle:
+      'अख्तियार दुरुपयोग अनुसन्धान आयोगको ३५ औँ वार्षिक प्रतिवेदन (२०८१/८२)',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/https___ciaa.gov.np_uploads_publicationsAndReports_g5a7AK_o8hkh0m.pdf',
+  },
+  {
+    id: 'PSC-CA-512',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration / Statistics',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-NAT',
+    topic: 'Poverty & Living Standards',
+    subtopicId: 'CA-NAT-02',
+    subtopic: 'NLSS-IV Monetary Poverty Line',
+    question:
+      'According to the National Statistics Office (NSO) Nepal Living Standards Survey IV (NLSS-IV), what percentage of Nepal’s population lives below the updated national poverty line (NPR 72,908 per person annually)?',
+    questionNe:
+      'राष्ट्रिय तथ्याङ्क कार्यालयद्वारा सार्वजनिक नेपाल जीवनस्तर सर्वेक्षण–चौथो (NLSS-IV) अनुसार अद्यावधिक गरिबी रेखा (वार्षिक रु. ७२,९०८ प्रतिव्यक्ति) मुनि रहेको जनसंख्या प्रतिशत कति छ?',
+    options: [
+      {
+        key: 'A',
+        text: '15.10%',
+        textNe: '१५.१०%',
+      },
+      {
+        key: 'B',
+        text: '20.27%',
+        textNe: '२०.२७%',
+      },
+      {
+        key: 'C',
+        text: '25.16%',
+        textNe: '२५.१६%',
+      },
+      {
+        key: 'D',
+        text: '11.50%',
+        textNe: '११.५०%',
+      },
+    ],
+    correct_options: ['B'],
+    is_multi_select: false,
+    explanation:
+      'NLSS-IV (2022/23) updated the poverty threshold basket to NPR 72,908 per person/year and estimated national poverty headcount at 20.27% (rural 24.66%, urban 18.34%), with Sudurpashchim recording the highest provincial rate (~34.16%).',
+    explanationNe:
+      'NLSS-IV अनुसार अद्यावधिक मापदण्डमा नेपालको गरिबी दर २०.२७% (ग्रामीण २४.६६% र सहरी १८.३४%) रहेको छ भने प्रदेशगत रूपमा सुदूरपश्चिममा सर्वाधिक करिब ३४.१६% गरिबी छ।',
+    difficulty: 'Medium',
+    marks: 1,
+    sourceTitle:
+      'Nepal Living Standards Survey IV (NLSS-IV 2022/23) Statistical Report',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/app/public/36/posts/1719375782_27.pdf',
+  },
+  {
+    id: 'PSC-CA-513',
+    level: 'Non-Gazetted First Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration',
+    post: 'Section Officer / Nayab Subba / Kharidar target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-NAT',
+    topic: 'Nepal Parichaya & National Updates',
+    subtopicId: 'CA-NAT-03',
+    subtopic: 'DoIB Nepal Parichaya 14th Ed & Fast Track',
+    question:
+      'Which Department publishes Nepal’s official state reference compendium "Nepal Parichaya" (14th Edition, 2083 BS) and the "Nepal" Bimonthly periodical, and what is the total length of the Kathmandu–Terai/Madhesh Fast Track National Pride Project?',
+    questionNe:
+      'नेपालको आधिकारिक सन्दर्भ ग्रन्थ "नेपाल परिचय" (१४ औँ संस्करण, २०८३) तथा "नेपाल" द्वैमासिक कुन विभागले प्रकाशन गर्दछ, र काठमाडौँ–तराई/मधेश द्रुतमार्ग (फास्ट ट्र्याक) को कुल लम्बाइ कति रहेको छ?',
+    options: [
+      {
+        key: 'A',
+        text: 'Department of Information and Broadcasting (DoIB); Fast Track length 70.977 km',
+        textNe: 'सूचना तथा प्रसारण विभाग (DoIB); द्रुतमार्गको लम्बाइ ७०.९७७ कि.मि.',
+      },
+      {
+        key: 'B',
+        text: 'Department of Archaeology; Fast Track length 92.4 km',
+        textNe: 'पुरातत्त्व विभाग; द्रुतमार्गको लम्बाइ ९२.४ कि.मि.',
+      },
+      {
+        key: 'C',
+        text: 'Central Bureau of Statistics; Fast Track length 58.5 km',
+        textNe: 'केन्द्रीय तथ्याङ्क विभाग; द्रुतमार्गको लम्बाइ ५८.५ कि.मि.',
+      },
+      {
+        key: 'D',
+        text: 'Nepal Law Commission; Fast Track length 84.0 km',
+        textNe: 'नेपाल कानून आयोग; द्रुतमार्गको लम्बाइ ८४.० कि.मि.',
+      },
+    ],
+    correct_options: ['A'],
+    is_multi_select: false,
+    explanation:
+      'The Department of Information and Broadcasting (DoIB) under MoCIT publishes Nepal Parichaya (latest 14th Ed, 2083 BS) and Nepal Bimonthly. The Khokana–Nijgadh Fast Track spans 70.977 km (reduced from 72.5 km after alignment refinements) with 6 twin-tube tunnels including Dhedre & Lendanda.',
+    explanationNe:
+      'सूचना तथा प्रसारण विभाग (DoIB) ले नेपाल परिचय (१४ औँ संस्करण, २०८३) र नेपाल द्वैमासिक प्रकाशन गर्दछ। खोकना–निजगढ द्रुतमार्गको कुल लम्बाइ ७०.९७७ कि.मि. रहेको छ।',
+    difficulty: 'Easy',
+    marks: 1,
+    sourceTitle: 'नेपाल परिचय (१४ औं संस्करण), २०८३',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/Nepal%20Parichaya%2014th%20edition_2083_With%20Cover_fjr5vfa.pdf',
+  },
+  {
+    id: 'PSC-CA-514',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration / Planning',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-ENV',
+    topic: 'Climate Diplomacy & International Events',
+    subtopicId: 'CA-ENV-01',
+    subtopic: 'COP29 Baku & Nepal Net-Zero 2045',
+    question:
+      'During the UN Climate Change Conference COP29 held in Baku (Azerbaijan), developing countries negotiated a New Collective Quantified Goal (NCQG) by 2035. What annual climate finance target was agreed, and by which year has Nepal pledged to achieve Net-Zero GHG emissions?',
+    questionNe:
+      'अजरबैजानको बाकुमा सम्पन्न कोप–२९ (COP29) जलवायु सम्मेलनमा सन् २०३५ सम्मका लागि तय गरिएको नयाँ सामूहिक वित्तीय लक्ष्य (NCQG) वार्षिक कति हो, र नेपालले कुन वर्षसम्म खुद शून्य कार्बन उत्सर्जन (Net-Zero) हासिल गर्ने लक्ष्य राखेको छ?',
+    options: [
+      {
+        key: 'A',
+        text: 'USD 100 billion annually; Nepal Net-Zero by 2050',
+        textNe: 'वार्षिक १०० अर्ब अमेरिकी डलर; नेपाल सन् २०५० सम्म खुद शून्य',
+      },
+      {
+        key: 'B',
+        text: 'USD 300 billion annually by 2035; Nepal Net-Zero target 2045',
+        textNe: 'सन् २०३५ सम्म वार्षिक ३०० अर्ब अमेरिकी डलर; नेपाल सन् २०४५ सम्म खुद शून्य',
+      },
+      {
+        key: 'C',
+        text: 'USD 500 billion annually by 2030; Nepal Net-Zero target 2035',
+        textNe: 'सन् २०३० सम्म वार्षिक ५०० अर्ब अमेरिकी डलर; नेपाल सन् २०३५ सम्म खुद शून्य',
+      },
+      {
+        key: 'D',
+        text: 'USD 50 billion annually; Nepal Net-Zero target 2060',
+        textNe: 'वार्षिक ५० अर्ब अमेरिकी डलर; नेपाल सन् २०६० सम्म खुद शून्य',
+      },
+    ],
+    correct_options: ['B'],
+    is_multi_select: false,
+    explanation:
+      'COP29 in Baku set the New Collective Quantified Goal (NCQG) at USD 300 billion per year by 2035 (with broader mobilization aspirations to USD 1.3 trillion). Nepal, contributing roughly 0.027% of global emissions, pledged Net-Zero by 2045 AD and advocated mountain climate justice and Loss & Damage grants.',
+    explanationNe:
+      'COP29 (बाकु) मा सन् २०३५ सम्म विकासोन्मुख देशलाई वार्षिक ३०० अर्ब डलर जलवायु वित्त (NCQG) जुटाउने सहमति भयो। विश्व उत्सर्जनको ०.०२७% मात्र हिस्सा बोकेको नेपालले सन् २०४५ सम्म Net-Zero पुग्ने लक्ष्य लिएको छ।',
+    difficulty: 'Medium',
+    marks: 1,
+    sourceTitle: 'नेपालको परराष्ट्र नीति, २०७७ — Nepal Foreign Policy, 2077',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pages/files/%E0%A4%AA%E0%A4%B0%E0%A4%B0%E0%A4%BE%E0%A4%B7%E0%A5%8D%E0%A4%9F%E0%A5%8D%E0%A4%B0-%E0%A4%A8%E0%A5%80%E0%A4%A4%E0%A4%BF-%E0%A5%A8%E0%A5%A6%E0%A5%AD%E0%A5%AD_2pavhb3.pdf',
+  },
+  {
+    id: 'PSC-CA-515',
+    level: 'Gazetted Third Class',
+    service: 'Federal Civil Service preparation',
+    group: 'Administration / Foreign Service',
+    post: 'Section Officer / Nayab Subba target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-INTL',
+    topic: 'Regional Energy Diplomacy',
+    subtopicId: 'CA-INTL-02',
+    subtopic: 'Tripartite Power Trade & MTEF',
+    question:
+      'Under the landmark tripartite electricity trade agreement signed among Nepal (NEA), India (NVVN), and Bangladesh (BPDB) on October 3, 2024 (Asoj 17, 2081), how much clean hydroelectricity was contracted for export to Bangladesh via the Indian grid?',
+    questionNe:
+      '२०८१ असोज १७ (अक्टोबर ३, २०२४) मा नेपाल (NEA), भारत (NVVN) र बङ्गलादेश (BPDB) बीच सम्पन्न ऐतिहासिक त्रिपक्षीय विद्युत् व्यापार सम्झौताअनुसार भारतीय ग्रिड हुँदै बङ्गलादेश कति मेगावाट विद्युत् निर्यात गर्ने सहमति भएको छ?',
+    options: [
+      {
+        key: 'A',
+        text: '40 MW during the 5-month wet season (June 15 – November 15) at ~6.4 US cents/kWh',
+        textNe: 'वर्षायामका ५ महिना (जुन १५ – नोभेम्बर १५) मा ४० मेगावाट (करिब ६.४ अमेरिकी सेन्ट प्रतियुनिट)',
+      },
+      {
+        key: 'B',
+        text: '456 MW round-the-year from Upper Tamakoshi directly',
+        textNe: 'माथिल्लो तामाकोशीबाट वर्षैभरि ४५६ मेगावाट',
+      },
+      {
+        key: 'C',
+        text: '120 MW during winter months only',
+        textNe: 'हिउँदयाममा मात्र १२० मेगावाट',
+      },
+      {
+        key: 'D',
+        text: '500 MW via Bhutan transmission corridor',
+        textNe: 'भुटान प्रसारण कोरिडोर हुँदै ५०० मेगावाट',
+      },
+    ],
+    correct_options: ['A'],
+    is_multi_select: false,
+    explanation:
+      'Signed on Asoj 17, 2081 in Kathmandu, the tripartite deal enables Nepal to export 40 MW (25 MW Trishuli + 22 MW Chilime allocation mix) to Bangladesh for 5 monsoon months annually via the 400 kV Dhalkebar–Muzaffarpur–Bheramara corridor—Nepal’s first third-country power export beyond India.',
+    explanationNe:
+      '२०८१ असोज १७ मा काठमाडौँमा हस्ताक्षरित सम्झौताअनुसार भारत बाहेक तेस्रो मुलुक (बङ्गलादेश) मा पहिलो पटक ढल्केबर–मुजफ्फरपुर–भेरामारा हुँदै ५ महिना (जुन १५–नोभेम्बर १५) ४० मेगावाट विद्युत् निर्यात गर्ने बाटो खुलेको हो।',
+    difficulty: 'Easy',
+    marks: 1,
+    sourceTitle: "Report on Nepal's Foreign Affairs (2023–2024) — MoFA Annual Report",
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/Annual%20Report%202023-2024_16ovpix.pdf',
+  },
+  {
+    id: 'PSC-CA-516',
+    level: 'Non-Gazetted First Class',
+    service: 'Federal Civil Service preparation',
+    group: 'General Administration',
+    post: 'Section Officer / Nayab Subba / Kharidar target',
+    paper: 'Paper I: General Knowledge (Current Affairs)',
+    subject: 'Current Affairs & Samasamayik',
+    topicId: 'CA-AWD',
+    topic: 'Honors, Sports & Literature GK',
+    subtopicId: 'CA-AWD-01',
+    subtopic: 'Madan Puraskar & T20 World Cup',
+    question:
+      'Which of the following statements about Nepal’s 2080 BS literary honors and ICC Men’s T20 World Cup 2024 participation are TRUE? (Multi-select)',
+    questionNe:
+      'विसं २०८० का राष्ट्रिय साहित्यिक सम्मान र आईसीसी पुरुष टी–२० विश्वकप २०२४ मा नेपालको सहभागिताबारे तलका कुन–कुन कथनहरू सही छन्? (एकभन्दा बढी छान्नुहोस्)',
+    options: [
+      {
+        key: 'A',
+        text: 'Madan Puraskar 2080 BS was awarded to Mohan Mainali for his non-fiction book "Bhokko Lekhapadi" (भोकको लेखापढी)',
+        textNe: '२०८० को मदन पुरस्कार मोहन मैनालीको गैरआख्यान कृति "भोकको लेखापढी" लाई प्रदान गरियो',
+      },
+      {
+        key: 'B',
+        text: 'Jagadamba-Shree 2080 BS was conferred upon senior linguist Prof. Dr. Yogendra Prasad Yadav',
+        textNe: '२०८० को जगदम्बा–श्री सम्मान वरिष्ठ भाषाविद् प्रा. डा. योगेन्द्रप्रसाद यादवलाई प्रदान गरियो',
+      },
+      {
+        key: 'C',
+        text: 'Captain Rohit Kumar Paudel led Nepal in its second T20 World Cup appearance (USA & West Indies, 2024) after first appearing in 2014',
+        textNe: 'कप्तान रोहित कुमार पौडेलको नेतृत्वमा नेपालले सन् २०१४ पछि दोस्रो पटक २०२४ को टी–२० विश्वकप खेल्यो',
+      },
+      {
+        key: 'D',
+        text: 'The cash prize for Madan Puraskar is NPR 1,000,000 and Nepal won the 2024 T20 World Cup trophy',
+        textNe: 'मदन पुरस्कारको राशि रु. १० लाख हो र २०२४ टी–२० विश्वकपको उपाधि नेपालले जितेको थियो',
+      },
+    ],
+    correct_options: ['A', 'B', 'C'],
+    is_multi_select: true,
+    explanation:
+      'Statements A, B, and C are correct: Mohan Mainali ("Bhokko Lekhapadi") and Prof. Dr. Yogendra Prasad Yadav received Madan Puraskar & Jagadamba-Shree 2080 (each NPR 400,000, not 1M); Rohit Paudel captained Nepal in its 2nd T20 World Cup (after 2014 Bangladesh) while India won the 2024 trophy.',
+    explanationNe:
+      'A, B र C सही छन्। मोहन मैनाली ("भोकको लेखापढी") र प्रा. डा. योगेन्द्रप्रसाद यादव (पुरस्कार राशि रु. ४ लाख) सम्मानित भए, र रोहित पौडेलको कप्तानीमा नेपालले २०१४ पछि २०२४ मा दोस्रो विश्वकप खेल्यो (विजेता: भारत)।',
+    difficulty: 'Medium',
+    marks: 1,
+    sourceTitle: 'नेपाल द्वैमासिक (अङ्क २५६) — DoIB Official Current Affairs Bimonthly',
+    sourcePath:
+      'https://giwmscdnone.gov.np/media/pdf_upload/Nepal%20Bimonthly_%20256_Final%20For%20Web_nutxxqx.pdf',
+  },
+];
+
+/**
  * Deduplicated master question bank across all PSC subjects, topics, subtopics, and difficulties.
  */
 export const ALL_QUIZ_QUESTIONS: QuizQuestion[] = [
@@ -4126,6 +4938,7 @@ export const ALL_QUIZ_QUESTIONS: QuizQuestion[] = [
   ...LAWS_AND_CONSTITUTION_QUESTIONS,
   ...PSC_AND_PLANNING_QUESTIONS,
   ...COMPREHENSIVE_EXTRA_QUESTIONS,
+  ...CURRENT_AFFAIRS_QUESTIONS,
 ];
 
 export const QUIZ_DECKS: QuizDeck[] = [
@@ -4167,6 +4980,14 @@ export const QUIZ_DECKS: QuizDeck[] = [
       COMPREHENSIVE_EXTRA_QUESTIONS[6], // PSC-INT-407
       COMPREHENSIVE_EXTRA_QUESTIONS[8], // PSC-INT-409
     ],
+  },
+  {
+    id: 'current-affairs',
+    title: 'Current Affairs & Samasamayik (समसामयिक)',
+    subtitle: '16 Questions · 16-Minute Reverse Countdown',
+    description:
+      'High-yield daily, weekly, and monthly Lok Sewa Current Affairs MCQs covering Economic Survey, Federal Budget, NRB Monetary Policy, 16th Plan, LDC 2026 Graduation, NLSS-IV Poverty, OAG 63rd & CIAA 35th Reports, COP29, and Foreign Diplomacy.',
+    questions: CURRENT_AFFAIRS_QUESTIONS,
   },
   {
     id: 'language-and-writing',

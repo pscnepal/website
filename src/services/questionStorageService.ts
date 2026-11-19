@@ -6,6 +6,7 @@ import {
 import { WRITTEN_QUESTIONS } from '../data/writtenQuestionsData';
 import { auth } from '../lib/firebase';
 import type {
+  BulkImportSummary,
   CloudQuizQuestionOverride,
   CloudWrittenQuestionOverride,
   QuizDeck,
@@ -19,6 +20,7 @@ import {
   upsertWrittenQuestionInFirestore,
 } from './cloudSyncService';
 import { SITE_CONFIG } from '../data/siteConfig';
+import { offlineDbService } from './offlineDbService';
 import { toast } from './toastService';
 import { formatUserFriendlyError } from '../utils/errorHelpers';
 
@@ -165,6 +167,13 @@ export const questionStorageService = {
           s.includes('iq')
         );
       }
+      if (deckId === 'current-affairs') {
+        return (
+          s.includes('current affair') ||
+          s.includes('samasamayik') ||
+          s.includes('contemporary')
+        );
+      }
       return deckId === 'comprehensive-mock';
     };
 
@@ -188,6 +197,7 @@ export const questionStorageService = {
   saveQuizQuestions(questions: QuizQuestion[]): void {
     const cleaned = questions.map(sanitizeQuizQuestionLanguage);
     safeWrite(QUIZ_STORAGE_KEY, cleaned);
+    void offlineDbService.putStudyBank('quiz_questions', cleaned);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
         new CustomEvent(QUESTION_EVENTS.QUIZ_CHANGED, { detail: cleaned })
@@ -354,11 +364,13 @@ export const questionStorageService = {
 
   resetQuizQuestionsToDefault(): void {
     pendingQuizMutations.clear();
+    const defaults = ALL_QUIZ_QUESTIONS.map(sanitizeQuizQuestionLanguage);
+    void offlineDbService.putStudyBank('quiz_questions', defaults);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(QUIZ_STORAGE_KEY);
       window.dispatchEvent(
         new CustomEvent(QUESTION_EVENTS.QUIZ_CHANGED, {
-          detail: ALL_QUIZ_QUESTIONS,
+          detail: defaults,
         })
       );
     }
@@ -386,6 +398,72 @@ export const questionStorageService = {
     return Boolean(window.localStorage.getItem(QUIZ_STORAGE_KEY));
   },
 
+  async importQuizQuestions(
+    imported: QuizQuestion[]
+  ): Promise<BulkImportSummary> {
+    if (imported.length === 0) {
+      return { created: 0, updated: 0, cloudSynced: 0, cloudFailed: 0 };
+    }
+
+    const current = this.loadQuizQuestions();
+    const existingById = new Map(current.map((q) => [q.id, q]));
+    const sanitizedIncoming = imported.map(sanitizeQuizQuestionLanguage);
+
+    let created = 0;
+    let updated = 0;
+    const incomingNew: QuizQuestion[] = [];
+    const incomingUpdates = new Map<string, QuizQuestion>();
+
+    for (const item of sanitizedIncoming) {
+      if (existingById.has(item.id)) {
+        updated++;
+        incomingUpdates.set(item.id, item);
+      } else {
+        created++;
+        incomingNew.push(item);
+      }
+    }
+
+    const mergedExisting = current.map((q) => incomingUpdates.get(q.id) ?? q);
+    const merged = [...incomingNew, ...mergedExisting];
+    this.saveQuizQuestions(merged);
+
+    let cloudSynced = 0;
+    let cloudFailed = 0;
+    const isAdmin = isAuthenticatedAdmin();
+
+    if (isAdmin) {
+      for (const item of sanitizedIncoming) {
+        pendingQuizMutations.add(item.id);
+      }
+
+      const CHUNK_SIZE = 5;
+      for (let i = 0; i < sanitizedIncoming.length; i += CHUNK_SIZE) {
+        const chunk = sanitizedIncoming.slice(i, i + CHUNK_SIZE);
+        await Promise.all(
+          chunk.map(async (item) => {
+            try {
+              await upsertQuizQuestionInFirestore(item, false);
+              cloudSynced++;
+            } catch {
+              cloudFailed++;
+            } finally {
+              pendingQuizMutations.delete(item.id);
+            }
+          })
+        );
+      }
+    }
+
+    return {
+      created,
+      updated,
+      cloudSynced,
+      cloudFailed,
+      cloudSkipped: !isAdmin,
+    };
+  },
+
   // ==========================================
   // Written Questions CRUD & Cloud Sync
   // ==========================================
@@ -404,6 +482,7 @@ export const questionStorageService = {
 
   saveWrittenQuestions(questions: WrittenQuestion[]): void {
     safeWrite(WRITTEN_STORAGE_KEY, questions);
+    void offlineDbService.putStudyBank('written_questions', questions);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
         new CustomEvent(QUESTION_EVENTS.WRITTEN_CHANGED, { detail: questions })
@@ -568,11 +647,13 @@ export const questionStorageService = {
 
   resetWrittenQuestionsToDefault(): void {
     pendingWrittenMutations.clear();
+    const defaults = [...WRITTEN_QUESTIONS];
+    void offlineDbService.putStudyBank('written_questions', defaults);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(WRITTEN_STORAGE_KEY);
       window.dispatchEvent(
         new CustomEvent(QUESTION_EVENTS.WRITTEN_CHANGED, {
-          detail: WRITTEN_QUESTIONS,
+          detail: defaults,
         })
       );
     }
@@ -598,5 +679,70 @@ export const questionStorageService = {
   hasCustomWrittenQuestions(): boolean {
     if (typeof window === 'undefined') return false;
     return Boolean(window.localStorage.getItem(WRITTEN_STORAGE_KEY));
+  },
+
+  async importWrittenQuestions(
+    imported: WrittenQuestion[]
+  ): Promise<BulkImportSummary> {
+    if (imported.length === 0) {
+      return { created: 0, updated: 0, cloudSynced: 0, cloudFailed: 0 };
+    }
+
+    const current = this.loadWrittenQuestions();
+    const existingById = new Map(current.map((q) => [q.id, q]));
+
+    let created = 0;
+    let updated = 0;
+    const incomingNew: WrittenQuestion[] = [];
+    const incomingUpdates = new Map<string, WrittenQuestion>();
+
+    for (const item of imported) {
+      if (existingById.has(item.id)) {
+        updated++;
+        incomingUpdates.set(item.id, item);
+      } else {
+        created++;
+        incomingNew.push(item);
+      }
+    }
+
+    const mergedExisting = current.map((q) => incomingUpdates.get(q.id) ?? q);
+    const merged = [...incomingNew, ...mergedExisting];
+    this.saveWrittenQuestions(merged);
+
+    let cloudSynced = 0;
+    let cloudFailed = 0;
+    const isAdmin = isAuthenticatedAdmin();
+
+    if (isAdmin) {
+      for (const item of imported) {
+        pendingWrittenMutations.add(item.id);
+      }
+
+      const CHUNK_SIZE = 5;
+      for (let i = 0; i < imported.length; i += CHUNK_SIZE) {
+        const chunk = imported.slice(i, i + CHUNK_SIZE);
+        await Promise.all(
+          chunk.map(async (item) => {
+            try {
+              await upsertWrittenQuestionInFirestore(item, false);
+              cloudSynced++;
+            } catch {
+              cloudFailed++;
+            } finally {
+              pendingWrittenMutations.delete(item.id);
+            }
+          })
+        );
+      }
+    }
+
+    return {
+      created,
+      updated,
+      cloudSynced,
+      cloudFailed,
+      cloudSkipped: !isAdmin,
+    };
   },
 };

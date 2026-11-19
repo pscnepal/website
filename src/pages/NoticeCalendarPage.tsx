@@ -12,7 +12,6 @@ import {
   FileCheck,
   Info,
   MapPin,
-  Printer,
   Search,
   Sparkles,
   Timer,
@@ -163,16 +162,6 @@ export function NoticeCalendarPage() {
 
               {/* Action Buttons in Hero */}
               <div className="flex flex-wrap sm:flex-nowrap md:flex-col gap-2.5 shrink-0">
-                <ActionButton
-                  icon={Printer}
-                  label="Print Schedule"
-                  title="Print clean annual calendar reference sheet"
-                  color="blue"
-                  variant="solid"
-                  size="md"
-                  onClick={() => window.print()}
-                  className="w-full justify-center"
-                />
                 <ActionButton
                   icon={BookOpen}
                   label="Exam Hall Simulator"

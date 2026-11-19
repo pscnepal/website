@@ -6,11 +6,13 @@ import {
   Download,
   Edit3,
   Eye,
+  FileSpreadsheet,
   FileText,
   Flag,
   Plus,
   RotateCcw,
   Trash2,
+  Upload,
   X,
   XCircle,
 } from 'lucide-react';
@@ -38,11 +40,17 @@ import {
   type TableFilterDef,
 } from '../common/SharedDataTable';
 import { QuizQuestionFormModal } from './QuizQuestionFormModal';
+import { QuestionCsvImportModal } from './QuestionCsvImportModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 import { useDashboardSearch } from './DashboardLayout';
 import { toast } from '../../services/toastService';
 import { copyWithToast } from '../../utils/clipboardHelpers';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
+import {
+  downloadQuizCsvTemplate,
+  downloadQuizQuestionsCsv,
+  parseQuizQuestionsCsv,
+} from '../../utils/questionCsvHelpers';
 
 export function QuizQuestionBankTab() {
   const dispatch = useAppDispatch();
@@ -58,11 +66,17 @@ export function QuizQuestionBankTab() {
   const [testSelectedOption, setTestSelectedOption] = useState<QuizOptionKey | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // CRUD State
+  // CRUD & CSV Import State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [questionToEdit, setQuestionToEdit] = useState<QuizQuestion | null>(null);
   const [questionToDelete, setQuestionToDelete] = useState<QuizQuestion | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
+  const existingIds = useMemo(
+    () => new Set(questions.map((q) => q.id)),
+    [questions]
+  );
 
   const userFlagCounts = useMemo<Record<string, number>>(() => {
     const counts: Record<string, number> = {};
@@ -211,6 +225,27 @@ export function QuizQuestionBankTab() {
     } catch (err) {
       toast.error(
         formatUserFriendlyError(err, 'Failed to export MCQ bank JSON.')
+      );
+    }
+  };
+
+  const handleExportCsv = (onlyFiltered = false) => {
+    const target = onlyFiltered ? filteredQuestions : questions;
+    if (target.length === 0) {
+      toast.info('No MCQ questions available to export.');
+      return;
+    }
+    try {
+      const filename = onlyFiltered
+        ? 'psc-objective-mcq-filtered.csv'
+        : 'psc-objective-mcq-question-bank.csv';
+      downloadQuizQuestionsCsv(target, filename);
+      toast.success(
+        `Exported ${target.length} MCQ question${target.length === 1 ? '' : 's'} as CSV.`
+      );
+    } catch (err) {
+      toast.error(
+        formatUserFriendlyError(err, 'Failed to export MCQ bank CSV.')
       );
     }
   };
@@ -527,7 +562,7 @@ export function QuizQuestionBankTab() {
         isFiltered={isFiltered}
         onResetFilters={handleResetFilters}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <ActionButton
               label="Add MCQ"
               title="Create a new objective MCQ question"
@@ -540,15 +575,82 @@ export function QuizQuestionBankTab() {
                 setIsFormModalOpen(true);
               }}
             />
+            <ActionButton
+              label="Import CSV"
+              title="Bulk import or update objective MCQs from a CSV spreadsheet"
+              icon={Upload}
+              color="zinc"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsImportModalOpen(true)}
+            />
+            <ActionButton
+              label={
+                isFiltered
+                  ? `Export CSV (${filteredQuestions.length})`
+                  : 'Export CSV'
+              }
+              title={
+                isFiltered
+                  ? `Export ${filteredQuestions.length} filtered MCQ questions as full round-trip CSV`
+                  : `Export all ${questions.length} MCQ questions as full round-trip CSV`
+              }
+              icon={Download}
+              color="zinc"
+              variant="outline"
+              size="sm"
+              disabled={filteredQuestions.length === 0}
+              onClick={() => handleExportCsv(isFiltered)}
+            />
             <SharedActionMenu
               items={[
+                {
+                  id: 'import-csv',
+                  label: 'Import Questions (CSV)',
+                  description: 'Upload spreadsheet to add or update MCQs',
+                  icon: Upload,
+                  color: 'blue',
+                  onClick: () => setIsImportModalOpen(true),
+                },
+                {
+                  id: 'export-csv-all',
+                  label: `Export All MCQs (CSV · ${questions.length})`,
+                  description: 'Full bilingual CSV with options & rationale',
+                  icon: FileSpreadsheet,
+                  color: 'emerald',
+                  onClick: () => handleExportCsv(false),
+                },
+                ...(isFiltered
+                  ? [
+                      {
+                        id: 'export-csv-filtered',
+                        label: `Export Filtered View (CSV · ${filteredQuestions.length})`,
+                        description: 'Download only current search/filter rows',
+                        icon: Download,
+                        color: 'zinc' as const,
+                        onClick: () => handleExportCsv(true),
+                      },
+                    ]
+                  : []),
+                {
+                  id: 'download-csv-template',
+                  label: 'Download CSV Import Template',
+                  description: 'Sample spreadsheet with exact column headers',
+                  icon: FileText,
+                  color: 'zinc',
+                  onClick: () => {
+                    downloadQuizCsvTemplate();
+                    toast.success('Downloaded MCQ CSV import template.');
+                  },
+                },
                 {
                   id: 'export-json',
                   label: 'Export Question Bank (JSON)',
                   description: 'Download JSON backup of all questions',
                   icon: Download,
-                  color: 'emerald',
+                  color: 'zinc',
                   onClick: handleExportJson,
+                  divider: true,
                 },
                 {
                   id: 'reset-default',
@@ -565,11 +667,11 @@ export function QuizQuestionBankTab() {
               color="zinc"
               variant="outline"
               size="sm"
+              width="w-72"
             />
           </div>
         }
-        enableCsvExport={true}
-        csvFilename="psc-objective-mcq-question-bank.csv"
+        enableCsvExport={false}
         pagination={true}
         defaultPageSize={15}
         pageSizeOptions={[10, 15, 25, 50]}
@@ -817,6 +919,24 @@ export function QuizQuestionBankTab() {
           setQuestionToEdit(null);
         }}
         onSave={handleSaveQuestion}
+      />
+
+      {/* CSV Import Modal */}
+      <QuestionCsvImportModal<QuizQuestion>
+        isOpen={isImportModalOpen}
+        kind="quiz"
+        existingIds={existingIds}
+        onClose={() => setIsImportModalOpen(false)}
+        onDownloadTemplate={() => {
+          downloadQuizCsvTemplate();
+          toast.success('Downloaded MCQ CSV import template.');
+        }}
+        onParseCsv={parseQuizQuestionsCsv}
+        onConfirmImport={async (items) => {
+          const summary = await questionStorageService.importQuizQuestions(items);
+          setQuestions(questionStorageService.loadQuizQuestions());
+          return summary;
+        }}
       />
 
       {/* Delete Confirmation Dialog */}

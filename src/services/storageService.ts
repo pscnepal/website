@@ -30,6 +30,10 @@ import {
   deleteFlaggedQuestionInFirestore,
   upsertFlaggedQuestionInFirestore,
 } from './cloudSyncService';
+import {
+  offlineDbService,
+  type ProgressStoreKey,
+} from './offlineDbService';
 import { toast } from './toastService';
 import {
   formatUserFriendlyError,
@@ -124,6 +128,24 @@ function safeReadJson<T>(key: string, fallback: T): T {
   }
 }
 
+const KEY_TO_IDB_KEY: Partial<Record<string, ProgressStoreKey>> = {
+  [KEYS.SETTINGS]: 'settings',
+  [KEYS.RECENT_BOOKS]: 'recent_books',
+  [KEYS.READING_PROGRESS]: 'reading_progress',
+  [KEYS.READING_STATS]: 'reading_stats',
+  [KEYS.QUIZ_STATE]: 'quiz_state',
+  [KEYS.WRITTEN_STATE]: 'written_state',
+  [KEYS.PSC_PREP_STATE]: 'psc_prep_state',
+  [KEYS.CONTACT_INQUIRIES]: 'contact_inquiries',
+  [KEYS.REACTIONS]: 'reactions',
+  [KEYS.FLAGGED_QUESTIONS]: 'flagged_questions',
+  [KEYS.FLASHCARD_PROGRESS]: 'flashcard_progress',
+  [KEYS.PYQ_BOOKMARKS]: 'pyq_bookmarks',
+  [KEYS.AFFAIR_BOOKMARKS]: 'affair_bookmarks',
+  [KEYS.EXAM_CHECKLIST]: 'exam_checklist',
+  [KEYS.WRITTEN_EVALUATIONS]: 'written_evaluations',
+};
+
 function safeWriteJson<T>(key: string, value: T): void {
   if (typeof window === 'undefined') return;
   try {
@@ -131,10 +153,15 @@ function safeWriteJson<T>(key: string, value: T): void {
   } catch (err) {
     if (err instanceof DOMException && err.name === 'QuotaExceededError') {
       toast.warning(
-        'Browser storage is full. Export a backup or clear old drafts to keep saving locally.',
-        { id: 'local-storage-quota', title: 'Storage Limit Reached' }
+        'Browser storage is full. Progress is still cached in IndexedDB.',
+        { id: 'local-storage-quota', title: 'Local Storage Limit Reached' }
       );
     }
+  }
+
+  const idbKey = KEY_TO_IDB_KEY[key];
+  if (idbKey) {
+    void offlineDbService.putProgressRecord(idbKey, value);
   }
 }
 
@@ -368,6 +395,7 @@ export const storageService = {
     } catch {
       // Ignore private-mode storage errors
     }
+    void offlineDbService.deleteProgressRecord('contact_inquiries');
   },
 
   loadFlashcardProgress(): Record<string, FlashcardProgress> {

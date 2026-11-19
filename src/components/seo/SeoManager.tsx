@@ -595,9 +595,9 @@ function resolveRouteSeo(
     normalizedPath === '/samasamayik' ||
     normalizedPath === '/affairs'
   ) {
-    const title = `Lok Sewa Current Affairs (समसामयिक) 2081/82 | ${BRAND_NAME}`;
+    const title = `Lok Sewa Current Affairs (समसामयिक) Daily, Weekly & Monthly | ${BRAND_NAME}`;
     const description = clampText(
-      `Study ${CURRENT_AFFAIRS_ITEMS.length}+ curated Nepal Lok Sewa current affairs, 16th Plan targets, federal budget 2081/82 highlights, and monthly samasamayik compendiums.`,
+      `Study ${CURRENT_AFFAIRS_ITEMS.length} Daily, Weekly & Monthly Nepal Lok Sewa current affairs with a dedicated MCQ quiz deck, Paper III written Q&As, and verified .gov.np reading PDFs.`,
       158
     );
     const canonicalPath = '/current-affairs';
@@ -899,6 +899,35 @@ function resolveRouteSeo(
             name: title,
             description,
             url: `${origin}/features`,
+          },
+        ],
+      },
+    };
+  }
+
+  // 9b. Public Leaderboard (/leaderboard)
+  if (normalizedPath === '/leaderboard') {
+    const title = `Public Aspirants Study Leaderboard | ${BRAND_NAME}`;
+    const description =
+      'Compare verified Reading, Written Practice, and Quiz & OMR progress across Nepal Lok Sewa Aayog aspirants on the public PSC Nepal leaderboard.';
+    return {
+      title,
+      description,
+      canonicalPath: '/leaderboard',
+      robots: 'index, follow, max-image-preview:large',
+      ogType: 'website',
+      jsonLd: {
+        '@context': 'https://schema.org',
+        '@graph': [
+          buildBreadcrumbList(origin, [
+            { name: 'Home', path: '/' },
+            { name: 'Leaderboard', path: '/leaderboard' },
+          ]),
+          {
+            '@type': 'WebPage',
+            name: title,
+            description,
+            url: `${origin}/leaderboard`,
           },
         ],
       },

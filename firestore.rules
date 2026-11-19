@@ -1331,5 +1331,118 @@ service cloud.firestore {
         ]);
       allow delete: if isAdmin() && isValidId(materialId);
     }
+
+    // Entity Validation Blueprint: LeaderboardEntry (Zero-PII Public Study Summary)
+    function isValidLeaderboardEntry(data, userId) {
+      return data.keys().hasAll([
+        'userId',
+        'displayName',
+        'targetCadre',
+        'isPublic',
+        'booksReadCount',
+        'totalPagesRead',
+        'readingMinutes',
+        'writtenPracticedCount',
+        'writtenMasteredCount',
+        'writtenEvaluationsCount',
+        'writtenWordsCount',
+        'quizAttemptsCount',
+        'omrSimulationsCount',
+        'quizQuestionsSolved',
+        'quizAvgAccuracy',
+        'quizTotalNetScore',
+        'totalScore',
+        'createdAt',
+        'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'userId',
+          'displayName',
+          'photoURL',
+          'targetCadre',
+          'isPublic',
+          'booksReadCount',
+          'totalPagesRead',
+          'readingMinutes',
+          'writtenPracticedCount',
+          'writtenMasteredCount',
+          'writtenEvaluationsCount',
+          'writtenWordsCount',
+          'quizAttemptsCount',
+          'omrSimulationsCount',
+          'quizQuestionsSolved',
+          'quizAvgAccuracy',
+          'quizTotalNetScore',
+          'totalScore',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.userId)
+        && data.userId == userId
+        && data.userId == request.auth.uid
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 120
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 512))
+        && data.targetCadre in ['section-officer', 'nayab-subba', 'kharidar']
+        && data.isPublic is bool
+        && data.booksReadCount is number && data.booksReadCount >= 0 && data.booksReadCount <= 1000
+        && data.totalPagesRead is number && data.totalPagesRead >= 0 && data.totalPagesRead <= 500000
+        && data.readingMinutes is number && data.readingMinutes >= 0 && data.readingMinutes <= 500000
+        && data.writtenPracticedCount is number && data.writtenPracticedCount >= 0 && data.writtenPracticedCount <= 1000
+        && data.writtenMasteredCount is number && data.writtenMasteredCount >= 0 && data.writtenMasteredCount <= 1000
+        && data.writtenEvaluationsCount is number && data.writtenEvaluationsCount >= 0 && data.writtenEvaluationsCount <= 500
+        && data.writtenWordsCount is number && data.writtenWordsCount >= 0 && data.writtenWordsCount <= 5000000
+        && data.quizAttemptsCount is number && data.quizAttemptsCount >= 0 && data.quizAttemptsCount <= 1000
+        && data.omrSimulationsCount is number && data.omrSimulationsCount >= 0 && data.omrSimulationsCount <= 1000
+        && data.quizQuestionsSolved is number && data.quizQuestionsSolved >= 0 && data.quizQuestionsSolved <= 100000
+        && data.quizAvgAccuracy is number && data.quizAvgAccuracy >= 0 && data.quizAvgAccuracy <= 100
+        && data.quizTotalNetScore is number && data.quizTotalNetScore >= -5000 && data.quizTotalNetScore <= 50000
+        && data.totalScore is number && data.totalScore >= 0 && data.totalScore <= 10000000
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Public Zero-PII Aspirant Study Leaderboard
+    match /leaderboard/{userId} {
+      allow get: if isValidId(userId)
+        && (existing().isPublic == true || isOwner(userId) || isAdmin());
+      allow list: if existing().isPublic == true;
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isActiveAccount(userId);
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidLeaderboardEntry(incoming(), userId)
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'photoURL',
+          'targetCadre',
+          'isPublic',
+          'booksReadCount',
+          'totalPagesRead',
+          'readingMinutes',
+          'writtenPracticedCount',
+          'writtenMasteredCount',
+          'writtenEvaluationsCount',
+          'writtenWordsCount',
+          'quizAttemptsCount',
+          'omrSimulationsCount',
+          'quizQuestionsSolved',
+          'quizAvgAccuracy',
+          'quizTotalNetScore',
+          'totalScore',
+          'updatedAt'
+        ])
+        && isActiveAccount(userId);
+      allow delete: if (isOwner(userId) && isValidId(userId) && isActiveAccount(userId))
+        || (isAdmin() && isValidId(userId) && userId != request.auth.uid);
+    }
   }
 }

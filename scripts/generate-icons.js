@@ -55,10 +55,12 @@ async function generateAllIcons() {
     { name: 'icon.png', size: 512 },
     { name: 'icon-512.png', size: 512 },
     { name: 'icon-512x512.png', size: 512 },
+    { name: 'pwa-512x512.png', size: 512 },
     { name: 'icon-384.png', size: 384 },
     { name: 'icon-256.png', size: 256 },
     { name: 'icon-192.png', size: 192 },
     { name: 'icon-192x192.png', size: 192 },
+    { name: 'pwa-192x192.png', size: 192 },
     { name: 'icon-128.png', size: 128 },
     { name: 'icon-128x128.png', size: 128 },
     { name: 'icon-96.png', size: 96 },
@@ -82,6 +84,30 @@ async function generateAllIcons() {
     console.log(`✓ Created public/${target.name} (${target.size}x${target.size})`);
   }
 
+  // Generate dedicated padded maskable icon (512x512) with >=14% safe-zone margin
+  // on full-bleed constitutional royal blue (#003893) background
+  const maskableInnerSize = 368; // ~72% inner emblem leaves ~14% safe padding on each side
+  const maskableEmblem = await sharp(svgBuffer, { density: 300 })
+    .resize(maskableInnerSize, maskableInnerSize, {
+      fit: 'contain',
+      background: { r: 0, g: 56, b: 147, alpha: 0 },
+    })
+    .png()
+    .toBuffer();
+
+  await sharp({
+    create: {
+      width: 512,
+      height: 512,
+      channels: 4,
+      background: { r: 0, g: 56, b: 147, alpha: 1 },
+    },
+  })
+    .composite([{ input: maskableEmblem, gravity: 'center' }])
+    .png({ compressionLevel: 9 })
+    .toFile(path.join(PUBLIC_DIR, 'pwa-maskable-512x512.png'));
+  console.log('✓ Created public/pwa-maskable-512x512.png (512x512 padded maskable)');
+
   // Generate multi-size favicon.ico combining 16x16, 32x32, 48x48
   const icoTmp16 = path.join('/tmp', 'psc-ico-16.png');
   const icoTmp32 = path.join('/tmp', 'psc-ico-32.png');
@@ -104,38 +130,36 @@ async function generateAllIcons() {
     // Ignore cleanup
   }
 
-  // Generate PWA manifest.json & site.webmanifest
+  // Generate compliant PWA manifest.json & site.webmanifest
   const manifest = {
+    id: '/',
     name: 'PSC Nepal — Lok Sewa Preparation Hub',
     short_name: 'PSC Nepal',
     description:
       'Prepare for Nepal Lok Sewa Aayog exams with official syllabi, OMR & written simulations, timed MCQs, bilingual answers, and PDF flipbooks.',
     start_url: '/',
+    scope: '/',
     display: 'standalone',
     background_color: '#060f22',
     theme_color: '#003893',
     icons: [
       {
-        src: '/icon-192.png',
+        src: '/pwa-192x192.png',
         sizes: '192x192',
         type: 'image/png',
-        purpose: 'any maskable',
+        purpose: 'any',
       },
       {
-        src: '/icon-512.png',
+        src: '/pwa-512x512.png',
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'any maskable',
+        purpose: 'any',
       },
       {
-        src: '/icon-128.png',
-        sizes: '128x128',
-        type: 'image/png',
-      },
-      {
-        src: '/icon.png',
+        src: '/pwa-maskable-512x512.png',
         sizes: '512x512',
         type: 'image/png',
+        purpose: 'maskable',
       },
     ],
   };

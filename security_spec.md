@@ -22,6 +22,10 @@
    - Publicly readable aggregate non-PII counters (`get` validates `isValidId(itemId)`; `list` enforces `existing().itemType in ['question', 'material']`).
    - Writes (`create`/`update`) require a verified active user (`isActiveSignedInUser()`) AND atomic synchronization with `/users/$(request.auth.uid)/itemReactions/$(itemId)` verified via `existsAfter(...)`.
    - Enforces bounded step deltas (`likesCount` and `dislikesCount` delta in `[-1, +1]`, non-decreasing `viewsCount` delta `<= 100` per commit), preventing arbitrary counter inflation, and forbids deletion.
+7. **Public Aspirant Leaderboard (`/leaderboard/{userId}`)**:
+   - Strict PII Isolation: Contains zero email/phone/adminNotes; stores only public `displayName`, optional `photoURL`, `targetCadre`, `isPublic`, and bounded numeric study counters (`booksReadCount`, `totalPagesRead`, `readingMinutes`, `writtenPracticedCount`, `writtenMasteredCount`, `writtenEvaluationsCount`, `writtenWordsCount`, `quizAttemptsCount`, `omrSimulationsCount`, `quizQuestionsSolved`, `quizAvgAccuracy`, `quizTotalNetScore`, `totalScore`).
+   - Public reads (`get` allows `isPublic == true || isOwner || isAdmin`; `list` strictly requires `existing().isPublic == true` so private/opted-out records are never exposed).
+   - Writes restricted to verified active owner (`isOwner(userId) && isActiveAccount(userId)`) with strict schema/type/range allowlist, immutable `userId`/`createdAt`, and server timestamps (`updatedAt == request.time`). Delete allowed to active owner or non-self admin cleanup.
 
 ## 2. Adversarial "Dirty Dozen" Payloads (Expected: PERMISSION_DENIED)
 1. **Unauthenticated Write**: Writing `/users/uid123/flaggedQuestions/PSC-GEO-101` or `/itemStats/PSC-GEO-101` with `request.auth == null`.

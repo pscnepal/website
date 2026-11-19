@@ -16,7 +16,6 @@ import {
   Minimize2,
   PenLine,
   Play,
-  Printer,
   RefreshCw,
   Scale,
   Sparkles,
@@ -414,16 +413,6 @@ export function WrittenEvaluatorPage() {
                   variant="solid"
                   size="md"
                   to="/written"
-                  className="w-full justify-center"
-                />
-                <ActionButton
-                  icon={Printer}
-                  label="Print Marks Card"
-                  title="Print clean evaluation scorecard"
-                  color="zinc"
-                  variant="outline"
-                  size="md"
-                  onClick={() => window.print()}
                   className="w-full justify-center"
                 />
               </div>
@@ -975,15 +964,6 @@ export function WrittenEvaluatorPage() {
                       variant="outline"
                       size="sm"
                       onClick={handleExportMarkdown}
-                    />
-                    <ActionButton
-                      icon={Printer}
-                      label="Print Scorecard"
-                      title="Print evaluation card"
-                      color="blue"
-                      variant="solid"
-                      size="sm"
-                      onClick={() => window.print()}
                     />
                   </div>
                 </div>

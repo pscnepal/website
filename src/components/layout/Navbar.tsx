@@ -9,6 +9,7 @@ import {
   MOBILE_NAV_ITEMS,
   SITE_CONFIG,
 } from '../../data/siteConfig';
+import { PWAInstallButton } from '../pwa/PWAInstallButton';
 
 export function Navbar() {
   const location = useLocation();
@@ -246,6 +247,8 @@ export function Navbar() {
                 </button>
               ))}
 
+            <PWAInstallButton variant="navbar" />
+
             <Link
               to="/simulate"
               className="hidden md:inline-flex items-center justify-center h-9 px-3.5 text-xs font-medium rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 shadow-2xs transition-colors whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
@@ -337,6 +340,8 @@ export function Navbar() {
                 ))}
 
                 <div className="mt-2 pt-3 border-t border-zinc-200/80 dark:border-zinc-800/80 space-y-2.5">
+                  <PWAInstallButton variant="mobile" />
+
                   <Link
                     to="/simulate"
                     onClick={closeMobileMenu}

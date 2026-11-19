@@ -1421,4 +1421,79 @@ export const READING_MATERIAL_CATEGORIES: ReadingMaterialCategory[] = [
       },
     ],
   },
+  {
+    id: 'current-affairs-samasamayik',
+    name: 'Current Affairs & Official Briefings (समसामयिक)',
+    subtitle: 'Cabinet Decisions, DoIB Nepal Bimonthly, NPC Proactive Reports & Directives',
+    description:
+      'Live-verified official Government of Nepal contemporary briefings and decision digests for daily, weekly, and monthly Samasamayik preparation: DoIB Nepal Bimonthly Issue #256, Council of Ministers 2083 BS Cabinet Decisions, NPC Q1 Proactive Disclosure, PDNA Summary, and OPMCM Public Procurement Labour Procedure 2083.',
+    items: [
+      {
+        id: 'ca-doib-nepal-bimonthly-256',
+        title: 'नेपाल द्वैमासिक (अङ्क २५६) — DoIB Official Current Affairs Bimonthly',
+        authority: 'Department of Information and Broadcasting (सूचना तथा प्रसारण विभाग)',
+        codeOrEdition: 'Issue #256 · Official Bimonthly Digest',
+        pages: 64,
+        path: 'https://giwmscdnone.gov.np/media/pdf_upload/Nepal%20Bimonthly_%20256_Final%20For%20Web_nutxxqx.pdf',
+        externalSourceUrl: 'https://doib.gov.np/',
+        description:
+          'Official Government of Nepal current affairs periodical published by DoIB covering national development milestones, diplomatic briefings, cultural heritage, and administrative reforms.',
+      },
+      {
+        id: 'ca-cabinet-decisions-2083-asoj',
+        title: '२०८३ असोज महिनाको मन्त्रिपरिषद् बैठकका निर्णयहरू — Cabinet Decisions (Asoj 2083)',
+        authority: 'Ministry of Communication & IT / Council of Ministers',
+        codeOrEdition: 'Asoj 2083 BS · Monthly Cabinet Digest',
+        pages: 28,
+        path: 'https://giwmscdnone.gov.np/media/pdf_upload/2083%20%E0%A4%85%E0%A4%B8%E0%A5%8B%E0%A4%9C%20%E0%A4%AE%E0%A4%B9%E0%A4%BF%E0%A4%A8%E0%A4%BE%E0%A4%95%E0%A5%8B%20%E0%A4%AE%E0%A4%A8%E0%A5%8D%E0%A4%A4%E0%A5%8D%E0%A4%B0%E0%A4%BF%E0%A4%AA%E0%A4%B0%E0%A4%BF%E0%A4%B7%E0%A4%A6%E0%A5%8D%20%E0%A4%AC%E0%A5%88%E0%A4%A0%E0%A4%95%E0%A4%95%E0%A4%BE%20%E0%A4%A8%E0%A4%BF%E0%A4%B0%E0%A5%8D%E0%A4%A3%E0%A4%AF%E0%A4%B9%E0%A4%B0%E0%A5%81_mrxonxh.pdf',
+        externalSourceUrl: 'https://mocit.gov.np/',
+        description:
+          'Consolidated Council of Ministers resolutions for Asoj 2083 covering bilateral MOUs, administrative appointments, policy directives, and public infrastructure approvals.',
+      },
+      {
+        id: 'ca-cabinet-decisions-2083-bhadra',
+        title: '२०८३ भाद्र महिनाको मन्त्रिपरिषद् बैठकका निर्णयहरू — Cabinet Decisions (Bhadra 2083)',
+        authority: 'Office of the Prime Minister and Council of Ministers (OPMCM)',
+        codeOrEdition: 'Bhadra 2083 BS · Monthly Cabinet Digest',
+        pages: 24,
+        path: 'https://giwmscdnone.gov.np/media/pdf_upload/Bhadra%20CABINET%202083_kmninpp.pdf',
+        externalSourceUrl: 'https://opmcm.gov.np/',
+        description:
+          'Official OPMCM compilation of Federal Cabinet decisions for Bhadra 2083 BS across governance, economic regulation, and international cooperation.',
+      },
+      {
+        id: 'ca-npc-proactive-disclosure-2083',
+        title: 'राष्ट्रिय योजना आयोग स्वतः प्रकाशन (श्रावण–असोज २०८३) — NPC Q1 Progress',
+        authority: 'National Planning Commission (राष्ट्रिय योजना आयोग)',
+        codeOrEdition: 'FY 2083/84 Q1 · RTI Sec. 5(3) Release',
+        pages: 32,
+        path: 'https://giwmscdnone.gov.np/media/pdf_upload/%E0%A4%B8%E0%A5%8D%E0%A4%B5%E0%A4%A4%E0%A4%83%20%E0%A4%AA%E0%A5%8D%E0%A4%B0%E0%A4%95%E0%A4%BE%E0%A4%B6%E0%A4%A8%20%E0%A4%B6%E0%A5%8D%E0%A4%B0%E0%A4%BE%E0%A4%B5%E0%A4%A3%20%E0%A4%A6%E0%A5%87%E0%A4%96%E0%A4%BF%20%E0%A4%85%E0%A4%B8%E0%A5%8B%E0%A4%9C%20%E0%A5%A8%E0%A5%A6%E0%A5%AE%E0%A5%A9%20Final_bhfrwlv.pdf',
+        externalSourceUrl: 'https://npc.gov.np/',
+        description:
+          'Quarterly proactive publication under RTI Act Sec. 5(3) detailing 16th Plan monitoring milestones, budget execution, and NPC policy decisions for Shrawan–Asoj 2083.',
+      },
+      {
+        id: 'ca-opmcm-procurement-labour-2083',
+        title: 'सार्वजनिक खरिदमा आबद्ध श्रमिकको पारिश्रमिक तथा सामाजिक सुरक्षा कार्यविधि, २०८३',
+        authority: 'Office of the Prime Minister and Council of Ministers (OPMCM)',
+        codeOrEdition: 'Procedure 2083 · Labour & Procurement',
+        pages: 16,
+        path: 'https://giwmscdnone.gov.np/media/pdf_upload/1.%E0%A4%B8%E0%A4%BE%E0%A4%B0%E0%A5%8D%E0%A4%B5%E0%A4%9C%E0%A4%A8%E0%A4%BF%E0%A4%95%20%E0%A4%96%E0%A4%B0%E0%A4%BF%E0%A4%A6%E0%A4%AE%E0%A4%BE%20%E0%A4%86%E0%A4%AC%E0%A4%A6%E0%A5%8D%E0%A4%A7%20%E0%A4%B6%E0%A5%8D%E0%A4%B0%E0%A4%AE%E0%A4%BF%E0%A4%95%E0%A4%95%E0%A5%8B%20%E0%A4%AA%E0%A4%BE%E0%A4%B0%E0%A4%BF%E0%A4%B6%E0%A5%8D%E0%A4%B0%E0%A4%AE%E0%A4%BF%E0%A4%95%20%E0%A4%A4%E0%A4%A5%E0%A4%BE%20%E0%A4%B8%E0%A4%BE%E0%A4%AE%E0%A4%BE%E0%A4%9C%E0%A4%BF%E0%A4%95%20%E0%A4%B8%E0%A5%81%E0%A4%B0%E0%A4%95%E0%A5%8D%E0%A4%B7%E0%A4%BE%20%E0%A4%B8%E0%A4%AE%E0%A5%8D%E0%A4%AC%E0%A4%A8%E0%A5%8D%E0%A4%A7%E0%A5%80%20%E0%A4%95%E0%A4%BE%E0%A4%B0%E0%A5%8D%E0%A4%AF%E0%A4%B5%E0%A4%BF%E0%A4%A7%E0%A4%BF%2C%20%E0%A5%A8%E0%A5%A6%E0%A5%AE%E0%A5%A9_j1gm0vt.pdf',
+        externalSourceUrl: 'https://opmcm.gov.np/',
+        description:
+          '2083 BS governance directive mandating fair minimum wages, formal banking payments, and Social Security Fund (SSF) protection for workers engaged in public procurement contracts.',
+      },
+      {
+        id: 'ca-npc-pdna-summary',
+        title: 'Post-Disaster Needs Assessment (PDNA) Executive Summary & Reconstruction Brief',
+        authority: 'National Planning Commission (राष्ट्रिय योजना आयोग)',
+        codeOrEdition: 'Official Disaster Recovery Brief',
+        pages: 18,
+        path: 'https://giwmscdnone.gov.np/media/pdf_upload/PDNA%20Summary%20Report%20Press%20Release-1_4ldruuv.pdf',
+        externalSourceUrl: 'https://npc.gov.np/',
+        description:
+          'Verified NPC post-disaster economic loss estimation, sectoral damage breakdown, and Build-Back-Better reconstruction financing priorities for Paper III Disaster Governance.',
+      },
+    ],
+  },
 ];
