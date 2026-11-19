@@ -78,14 +78,14 @@ export function AboutPage() {
       <Navbar />
 
       <PageTransition>
-        <main className="flex-1">
+        <main className="flex-1 min-w-0 w-full">
           {/* Hero Banner Section */}
           <section className="relative overflow-hidden border-b border-zinc-200/90 dark:border-zinc-800/90 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xs py-12 sm:py-16">
             <div
               aria-hidden="true"
               className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/40 via-transparent to-transparent dark:from-blue-950/20"
             />
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 space-y-6">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
               {/* Breadcrumb Navigation */}
               <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                 <Link to="/" className="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
@@ -113,7 +113,7 @@ export function AboutPage() {
           </section>
 
           {/* Main Content Body */}
-          <article className="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-16">
+          <article className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-16 min-w-0">
             {/* Mission & Vision Grid */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {ABOUT_MISSION_VISION.map((card) => {
@@ -198,9 +198,9 @@ export function AboutPage() {
                   return (
                     <div
                       key={cadre.cadreId}
-                      className="p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3"
+                      className="p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 min-w-0"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
                         <span
                           className={`text-xs font-bold uppercase tracking-wider font-mono ${tone.label}`}
                         >
@@ -274,14 +274,14 @@ export function AboutPage() {
                 <div className="pt-1">
                   <a
                     href={`mailto:${ABOUT_CONTACT_CTA.email}`}
-                    className="font-mono text-xs sm:text-sm font-semibold text-blue-700 dark:text-blue-300 hover:underline"
+                    className="font-mono text-xs sm:text-sm font-semibold text-blue-700 dark:text-blue-300 hover:underline break-all"
                   >
                     {ABOUT_CONTACT_CTA.email}
                   </a>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <Link
                   to={ABOUT_CONTACT_CTA.primaryCtaTo}
                   className="inline-flex items-center justify-center min-h-10 px-4 rounded-xl bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white text-xs font-semibold transition-colors shadow-2xs"

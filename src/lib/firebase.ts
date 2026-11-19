@@ -1,7 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import {
+  disableNetwork,
   doc,
+  enableNetwork,
   getDocFromServer,
   getFirestore,
   initializeFirestore,
@@ -27,6 +29,7 @@ function createFirestoreInstance(): Firestore {
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager(),
         }),
+        experimentalForceLongPolling: true,
       },
       firebaseConfig.firestoreDatabaseId
     );
@@ -36,6 +39,7 @@ function createFirestoreInstance(): Firestore {
         app,
         {
           localCache: memoryLocalCache(),
+          experimentalForceLongPolling: true,
         },
         firebaseConfig.firestoreDatabaseId
       );
@@ -122,9 +126,15 @@ export function handleFirestoreError(
   throw new Error(serialized);
 }
 
+let hasVerifiedConnection = false;
+
 async function testConnection() {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return;
+  }
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
+    hasVerifiedConnection = true;
   } catch (error) {
     if (isFirestoreOfflineError(error)) {
       console.warn('Firestore initial connection check: client is offline.');
@@ -132,8 +142,33 @@ async function testConnection() {
         'Cloud database appears offline. Local progress will still be saved on this device.',
         { id: 'firebase-offline', title: 'Cloud Sync Unavailable' }
       );
+    } else {
+      hasVerifiedConnection = true;
     }
   }
 }
 
-void testConnection();
+if (typeof window !== 'undefined') {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    void disableNetwork(db).catch(() => undefined);
+  } else {
+    void testConnection();
+  }
+
+  window.addEventListener('offline', () => {
+    void disableNetwork(db).catch(() => undefined);
+  });
+
+  window.addEventListener('online', () => {
+    void enableNetwork(db)
+      .then(() => {
+        if (!hasVerifiedConnection) {
+          return testConnection();
+        }
+        return undefined;
+      })
+      .catch(() => undefined);
+  });
+} else {
+  void testConnection();
+}

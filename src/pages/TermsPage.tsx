@@ -14,8 +14,8 @@ export function TermsPage() {
       <Navbar />
 
       <PageTransition>
-        <main className="flex-1">
-          <article className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12">
+        <main className="flex-1 min-w-0 w-full">
+          <article className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-12 min-w-0">
             {/* Header */}
             <header className="space-y-4 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-8">
               <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -85,7 +85,7 @@ export function TermsPage() {
             </header>
 
             {/* Terms Sections */}
-            <div className="space-y-10 text-fluid-body text-zinc-700 dark:text-zinc-300">
+            <div className="space-y-10 text-fluid-body text-zinc-700 dark:text-zinc-300 min-w-0 break-words">
               <section id="terms-purpose" className="space-y-3 scroll-mt-24">
                 <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
                   {sections.purpose.heading}
@@ -214,9 +214,9 @@ export function TermsPage() {
                   </Link>
                   {sections.disclaimer.trail}
                 </p>
-                <div className="inline-flex items-center gap-2 text-xs font-mono text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2">
+                <div className="flex sm:inline-flex max-w-full flex-wrap items-center gap-2 text-xs font-mono text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 min-w-0">
                   <Scale className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                  <span>
+                  <span className="min-w-0 break-all sm:break-normal">
                     Legal &amp; Errata Correspondence: {SITE_CONFIG.supportEmail}
                   </span>
                 </div>

@@ -39,9 +39,6 @@ import type {
 import { formatUserFriendlyError } from '../utils/errorHelpers';
 import {
   buildLeaderboardStatsPayload,
-  computeQuizCategoryScore,
-  computeReadingCategoryScore,
-  computeWrittenCategoryScore,
   formatReadingDurationShort,
   sortLeaderboardEntries,
 } from '../utils/leaderboardHelpers';
@@ -59,8 +56,8 @@ const CATEGORY_TABS: ReadonlyArray<{
 }> = [
   {
     id: 'overall',
-    label: 'Overall Rank',
-    shortDesc: 'Combined Reading + Written + Quiz XP',
+    label: 'Overall Activity',
+    shortDesc: 'Combined Reading, Written Practice & Quiz volume',
   },
   {
     id: 'reading',
@@ -139,19 +136,9 @@ function formatPrimaryMetricValue(
     };
   }
   return {
-    value: entry.totalScore.toLocaleString(),
-    unit: 'Study XP',
+    value: `${entry.totalPagesRead.toLocaleString()} pgs · ${entry.writtenPracticedCount} drafts · ${entry.quizQuestionsSolved.toLocaleString()} Qs`,
+    unit: '',
   };
-}
-
-function getCategorySortPoints(
-  entry: LeaderboardEntry,
-  category: LeaderboardCategory
-): number {
-  if (category === 'reading') return computeReadingCategoryScore(entry);
-  if (category === 'written') return computeWrittenCategoryScore(entry);
-  if (category === 'quiz') return computeQuizCategoryScore(entry);
-  return entry.totalScore;
 }
 
 export function LeaderboardPage() {
@@ -448,7 +435,7 @@ export function LeaderboardPage() {
                   className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                 >
                   <HelpCircle className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" />
-                  <span>Scoring Formula</span>
+                  <span>Ranking Criteria</span>
                   {showScoringGuide ? (
                     <ChevronUp className="w-3.5 h-3.5 text-zinc-400" />
                   ) : (
@@ -470,25 +457,25 @@ export function LeaderboardPage() {
               </div>
             </div>
 
-            {/* Expandable Transparent Scoring Guide */}
+            {/* Expandable Transparent Ranking Criteria Guide */}
             {showScoringGuide && (
               <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 sm:p-6 space-y-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="font-serif text-base font-semibold text-zinc-950 dark:text-zinc-50">
-                      How Study XP &amp; Category Rankings Work
+                      How Category Rankings Work
                     </h2>
                     <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                      All public rankings are computed automatically from
-                      verified activity counters. Private account identifiers
-                      such as emails and phone numbers are never stored or
-                      exposed on the leaderboard.
+                      All public rankings are ordered automatically from
+                      verified study activity counters. Private account
+                      identifiers such as emails and phone numbers are never
+                      stored or exposed on the leaderboard.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowScoringGuide(false)}
-                    aria-label="Close scoring guide"
+                    aria-label="Close ranking criteria"
                     className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
                     <X className="w-4 h-4" />
@@ -501,7 +488,7 @@ export function LeaderboardPage() {
                       01. Reading Activity
                     </p>
                     <p className="text-zinc-600 dark:text-zinc-400 font-mono tabular-nums">
-                      +2 XP / min · +1 XP / page · +10 XP / book
+                      Reading minutes · Pages read · Books opened
                     </p>
                     <p className="text-zinc-500 dark:text-zinc-400">
                       Tracked automatically while turning pages and studying
@@ -514,11 +501,10 @@ export function LeaderboardPage() {
                       02. Written Practice
                     </p>
                     <p className="text-zinc-600 dark:text-zinc-400 font-mono tabular-nums">
-                      +20 XP / practiced · +30 XP / mastered · +25 XP / eval ·
-                      +1 XP / 50 words
+                      Practiced · Mastered · Rubric evals · Words drafted
                     </p>
                     <p className="text-zinc-500 dark:text-zinc-400">
-                      Rewards drafting Paper II–IV analytical answers, mastering
+                      Measures drafting Paper II–IV analytical answers, mastering
                       rubric checklists, and logging Answer Evaluator reviews.
                     </p>
                   </div>
@@ -528,11 +514,10 @@ export function LeaderboardPage() {
                       03. Quiz &amp; OMR Hall
                     </p>
                     <p className="text-zinc-600 dark:text-zinc-400 font-mono tabular-nums">
-                      +15 XP / quiz · +30 XP / hall · +1 XP / Q · +2 XP / net
-                      mark
+                      Quizzes · OMR halls · Questions solved · Net marks
                     </p>
                     <p className="text-zinc-500 dark:text-zinc-400">
-                      Rewards timed MCQ drills, Daily Current Affairs quizzes,
+                      Measures timed MCQ drills, Daily Current Affairs quizzes,
                       and full OMR exam hall simulations.
                     </p>
                   </div>
@@ -586,9 +571,6 @@ export function LeaderboardPage() {
                             Quiz: {displaySelfSummary.quizQuestionsSolved.toLocaleString()}{' '}
                             Qs ({displaySelfSummary.quizAvgAccuracy}% acc · Net{' '}
                             {displaySelfSummary.quizTotalNetScore.toFixed(1)})
-                          </span>
-                          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                            {displaySelfSummary.totalScore.toLocaleString()} XP
                           </span>
                         </div>
                       </div>
@@ -655,8 +637,7 @@ export function LeaderboardPage() {
                         {localComputedStats.totalPagesRead.toLocaleString()} pgs ·{' '}
                         {localComputedStats.writtenPracticedCount} written ·{' '}
                         {localComputedStats.quizQuestionsSolved.toLocaleString()}{' '}
-                        MCQs ({localComputedStats.totalScore.toLocaleString()}{' '}
-                        XP)
+                        MCQs
                       </p>
                     </div>
 
@@ -916,7 +897,10 @@ export function LeaderboardPage() {
                                 {entry.displayName}
                               </h3>
                               <p className="font-mono tabular-nums text-xs text-zinc-500 dark:text-zinc-400">
-                                {primaryMetric.value} {primaryMetric.unit}
+                                {primaryMetric.value}
+                                {primaryMetric.unit
+                                  ? ` ${primaryMetric.unit}`
+                                  : ''}
                               </p>
                             </div>
                           </div>
@@ -977,17 +961,32 @@ export function LeaderboardPage() {
                         <tr className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-950/60 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
                           <th className="py-3 px-4 w-16">Rank</th>
                           <th className="py-3 px-4">Aspirant</th>
-                          <th className="py-3 px-4">Reading</th>
-                          <th className="py-3 px-4">Written Practice</th>
-                          <th className="py-3 px-4">Quiz &amp; OMR</th>
-                          <th className="py-3 px-4 text-right">
-                            {activeCategory === 'overall'
-                              ? 'Study XP'
-                              : `${
-                                  CATEGORY_TABS.find(
-                                    (t) => t.id === activeCategory
-                                  )?.label
-                                } Score`}
+                          <th
+                            className={`py-3 px-4 ${
+                              activeCategory === 'reading'
+                                ? 'text-blue-700 dark:text-blue-400'
+                                : ''
+                            }`}
+                          >
+                            Reading
+                          </th>
+                          <th
+                            className={`py-3 px-4 ${
+                              activeCategory === 'written'
+                                ? 'text-blue-700 dark:text-blue-400'
+                                : ''
+                            }`}
+                          >
+                            Written Practice
+                          </th>
+                          <th
+                            className={`py-3 px-4 ${
+                              activeCategory === 'quiz'
+                                ? 'text-blue-700 dark:text-blue-400'
+                                : ''
+                            }`}
+                          >
+                            Quiz &amp; OMR
                           </th>
                         </tr>
                       </thead>
@@ -996,10 +995,6 @@ export function LeaderboardPage() {
                           const rank = idx + 1;
                           const isSelf = Boolean(
                             user && entry.userId === user.uid
-                          );
-                          const sortScore = getCategorySortPoints(
-                            entry,
-                            activeCategory
                           );
 
                           return (
@@ -1069,16 +1064,6 @@ export function LeaderboardPage() {
                                   {entry.quizTotalNetScore.toFixed(1)}
                                 </p>
                               </td>
-                              <td className="py-3.5 px-4 text-right font-mono tabular-nums">
-                                <p className="font-semibold text-zinc-950 dark:text-zinc-50">
-                                  {sortScore.toLocaleString()} XP
-                                </p>
-                                {activeCategory !== 'overall' && (
-                                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                                    Total {entry.totalScore.toLocaleString()}
-                                  </p>
-                                )}
-                              </td>
                             </tr>
                           );
                         })}
@@ -1091,10 +1076,6 @@ export function LeaderboardPage() {
                     {rankedFilteredEntries.map((entry, idx) => {
                       const rank = idx + 1;
                       const isSelf = Boolean(user && entry.userId === user.uid);
-                      const sortScore = getCategorySortPoints(
-                        entry,
-                        activeCategory
-                      );
 
                       return (
                         <div
@@ -1122,12 +1103,6 @@ export function LeaderboardPage() {
                                   {CADRE_SHORT_LABELS[entry.targetCadre]}
                                 </p>
                               </div>
-                            </div>
-
-                            <div className="text-right font-mono tabular-nums shrink-0">
-                              <p className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-                                {sortScore.toLocaleString()} XP
-                              </p>
                             </div>
                           </div>
 

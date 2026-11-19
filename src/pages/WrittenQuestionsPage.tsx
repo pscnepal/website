@@ -6,8 +6,6 @@ import {
   BookOpen,
   Check,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   Clock,
   Copy,
   Eye,
@@ -283,7 +281,8 @@ export function WrittenQuestionsPage() {
   const [paperFilter, setPaperFilter] = useState<string>('all');
   const [marksFilter, setMarksFilter] = useState<MarksFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+  const [modalQuestionId, setModalQuestionId] = useState<string | null>(null);
+  const modalBodyRef = useRef<HTMLDivElement | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
   const [pendingTimedQuestion, setPendingTimedQuestion] =
@@ -496,16 +495,41 @@ export function WrittenQuestionsPage() {
     });
   };
 
-  const toggleExpandCard = (id: string) => {
-    const nextExpanded = !expandedIds[id];
-    setExpandedIds((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-    if (nextExpanded) {
-      dispatch(recordView({ itemId: id, itemType: 'question' }));
-    }
+  const handleOpenAnswerDialog = (id: string) => {
+    setModalQuestionId(id);
+    modalBodyRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+    dispatch(recordView({ itemId: id, itemType: 'question' }));
   };
+
+  const modalQuestion = useMemo(
+    () =>
+      modalQuestionId
+        ? allWrittenQuestions.find((q) => q.id === modalQuestionId) ?? null
+        : null,
+    [modalQuestionId, allWrittenQuestions]
+  );
+
+  const modalFilteredIndex = useMemo(() => {
+    if (!modalQuestionId) return -1;
+    return filteredQuestions.findIndex((q) => q.id === modalQuestionId);
+  }, [modalQuestionId, filteredQuestions]);
+
+  useEffect(() => {
+    if (!modalQuestion) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setModalQuestionId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [modalQuestion]);
 
   const renderLanguageSegmentedControl = (layoutGroupId: string) => (
     <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 shrink-0">
@@ -1420,14 +1444,26 @@ export function WrittenQuestionsPage() {
               {filteredQuestions.map((q, index) => {
                 const rec = records[q.id];
                 const status: WrittenMasteryStatus = rec?.status ?? 'unseen';
-                const isExpanded = Boolean(expandedIds[q.id]);
-                const checkedIndices = rec?.checkedRubricIndices ?? [];
                 const hasDraft = Boolean(rec?.draftAnswer.trim());
 
                 return (
                   <article
                     key={q.id}
-                    className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 sm:p-6 transition-colors"
+                    onClick={(e) => {
+                      const target = e.target as HTMLElement | null;
+                      if (
+                        target?.closest(
+                          'a, button, input, textarea, select, [role="button"]'
+                        )
+                      ) {
+                        return;
+                      }
+                      if (window.getSelection()?.toString()) {
+                        return;
+                      }
+                      handleOpenAnswerDialog(q.id);
+                    }}
+                    className="rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 p-4 sm:p-6 transition-colors cursor-pointer"
                   >
                     {/* Unboxed Metadata Row (Zero-Pill Discipline) */}
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
@@ -1543,21 +1579,11 @@ export function WrittenQuestionsPage() {
 
                         <button
                           type="button"
-                          onClick={() => toggleExpandCard(q.id)}
-                          aria-expanded={isExpanded}
+                          onClick={() => handleOpenAnswerDialog(q.id)}
                           className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                         >
-                          {isExpanded ? (
-                            <>
-                              <ChevronUp className="w-3.5 h-3.5" />
-                              <span>Hide Model Answer</span>
-                            </>
-                          ) : (
-                            <>
-                              <ChevronDown className="w-3.5 h-3.5" />
-                              <span>Read Model Answer (EN / ने)</span>
-                            </>
-                          )}
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Read Model Answer (EN / ने)</span>
                         </button>
                       </div>
 
@@ -1579,123 +1605,6 @@ export function WrittenQuestionsPage() {
                         </button>
                       </div>
                     </div>
-
-                    {/* Inline Expandable Model Answer & Rubric (Separated cleanly via border-t, no nested card) */}
-                    {isExpanded && (
-                      <div className="mt-6 pt-6 border-t border-zinc-200/80 dark:border-zinc-800/80 space-y-6">
-                        <StructuredModelAnswer
-                          question={q}
-                          languageMode={preferredLanguage}
-                        />
-
-                        {/* Inline Rubric & Mastery Footer */}
-                        <div className="pt-5 border-t border-zinc-100 dark:border-zinc-800/80 space-y-3">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                              Examiner Checklist ·{' '}
-                              <span className="font-mono tabular-nums">
-                                {checkedIndices.length}/{q.rubric.length}
-                              </span>{' '}
-                              checked
-                            </p>
-
-                            <div className="flex flex-wrap items-center gap-2">
-                              <ActionButton
-                                label="स्व-मूल्याङ्कन (Grade)"
-                                icon={Scale}
-                                title="Practice with 1.8 min/mark timer and score on official rubric"
-                                color="blue"
-                                variant="outline"
-                                size="xs"
-                                to={`/evaluator?q=${q.id}`}
-                              />
-
-                              <button
-                                type="button"
-                                onClick={() => handleCopyAnswer(q)}
-                                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                              >
-                                {copiedId === q.id ? (
-                                  <>
-                                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                                    <span>Copied</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Copy className="w-3.5 h-3.5" />
-                                    <span>Copy Answer</span>
-                                  </>
-                                )}
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  dispatch(
-                                    setWrittenQuestionStatus({
-                                      questionId: q.id,
-                                      status:
-                                        status === 'mastered'
-                                          ? 'practicing'
-                                          : 'mastered',
-                                    })
-                                  )
-                                }
-                                className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                                  status === 'mastered'
-                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                    : 'border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                }`}
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>
-                                  {status === 'mastered'
-                                    ? 'Mastered'
-                                    : 'Mark Mastered'}
-                                </span>
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            {q.rubric.map((rub, rIdx) => {
-                              const isChecked = checkedIndices.includes(rIdx);
-                              return (
-                                <label
-                                  key={`${rIdx}-${rub.en}`}
-                                  className="flex items-start gap-2.5 text-fluid-option text-zinc-700 dark:text-zinc-300 cursor-pointer break-words"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={isChecked}
-                                    onChange={() =>
-                                      dispatch(
-                                        toggleWrittenRubricPoint({
-                                          questionId: q.id,
-                                          rubricIndex: rIdx,
-                                        })
-                                      )
-                                    }
-                                    className="mt-0.5 h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-600 cursor-pointer shrink-0"
-                                  />
-                                  <span className="min-w-0">
-                                    {preferredLanguage === 'ne' ? (
-                                      <span lang="ne">{rub.ne}</span>
-                                    ) : preferredLanguage === 'en' ? (
-                                      rub.en
-                                    ) : (
-                                      <>
-                                        {rub.en} / <span lang="ne">{rub.ne}</span>
-                                      </>
-                                    )}
-                                  </span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </article>
                 );
               })}
@@ -1726,6 +1635,427 @@ export function WrittenQuestionsPage() {
 
         <Footer />
       </PageTransition>
+
+      {/* Model Answer & Question Details Dialog */}
+      <AnimatePresence>
+        {modalQuestion && (() => {
+          const rec = records[modalQuestion.id];
+          const status: WrittenMasteryStatus = rec?.status ?? 'unseen';
+          const checkedIndices = rec?.checkedRubricIndices ?? [];
+          const hasDraft = Boolean(rec?.draftAnswer.trim());
+          const displayNumber =
+            modalFilteredIndex >= 0
+              ? modalFilteredIndex + 1
+              : allWrittenQuestions.findIndex(
+                  (q) => q.id === modalQuestion.id
+                ) + 1;
+          const prevModalQuestion =
+            modalFilteredIndex > 0
+              ? filteredQuestions[modalFilteredIndex - 1]
+              : null;
+          const nextModalQuestion =
+            modalFilteredIndex >= 0 &&
+            modalFilteredIndex < filteredQuestions.length - 1
+              ? filteredQuestions[modalFilteredIndex + 1]
+              : null;
+
+          return (
+            <div
+              key={`written-dialog-${modalQuestion.id}`}
+              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 lg:p-6"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="written-modal-title"
+            >
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
+                onClick={() => setModalQuestionId(null)}
+                className="fixed inset-0 bg-zinc-950/60 dark:bg-black/75 backdrop-blur-xs"
+                aria-hidden="true"
+              />
+
+              <motion.div
+                initial={
+                  shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }
+                }
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={
+                  shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }
+                }
+                transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
+                className="relative z-10 w-full max-w-5xl max-h-[92dvh] sm:max-h-[90dvh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden"
+              >
+                {/* Compact Sticky Top Chrome (single-line so mobile gets maximum scroll space) */}
+                <div className="px-4 sm:px-6 h-12 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-950/70 flex items-center justify-between gap-3 shrink-0">
+                  <div className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300 font-mono tabular-nums min-w-0 truncate">
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+                      {String(displayNumber).padStart(2, '0')} ·{' '}
+                      {modalQuestion.id}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span>{modalQuestion.marks}M</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{modalQuestion.recommendedMinutes}:00</span>
+                    {status === 'mastered' && (
+                      <>
+                        <span aria-hidden="true" className="hidden sm:inline">
+                          ·
+                        </span>
+                        <span className="hidden sm:inline-flex items-center gap-1 font-sans font-medium text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Mastered</span>
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setModalQuestionId(null)}
+                    aria-label="Close model answer dialog"
+                    className="p-1.5 -mr-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Scrollable Dialog Body: Full Metadata + Title + Question + Actions + Model Answer + Rubric */}
+                <div
+                  ref={modalBodyRef}
+                  className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6"
+                >
+                  {/* Full Pre-Expand Metadata & Bilingual Title Header */}
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500 dark:text-zinc-400 font-mono tabular-nums">
+                      <span className="font-sans font-medium text-zinc-700 dark:text-zinc-300">
+                        {modalQuestion.paper}
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span className="font-sans">{modalQuestion.subject}</span>
+                      {modalQuestion.postTarget && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className="font-sans">
+                            {modalQuestion.postTarget}
+                          </span>
+                        </>
+                      )}
+                      <span aria-hidden="true">·</span>
+                      <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+                        {modalQuestion.marks} Marks (
+                        {modalQuestion.en.marksAllocation})
+                      </span>
+                      <span aria-hidden="true">·</span>
+                      <span>{modalQuestion.recommendedMinutes}:00 limit</span>
+                      {hasDraft && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className="font-sans text-blue-700 dark:text-blue-400">
+                            Draft saved
+                          </span>
+                        </>
+                      )}
+                      {status === 'mastered' && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className="inline-flex items-center gap-1 font-sans font-medium text-emerald-700 dark:text-emerald-400">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Mastered</span>
+                          </span>
+                        </>
+                      )}
+                      {status === 'practicing' && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className="font-sans font-medium text-amber-700 dark:text-amber-400">
+                            Practicing
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <h2
+                          id="written-modal-title"
+                          className="font-serif text-lg sm:text-xl font-semibold text-zinc-950 dark:text-zinc-50"
+                        >
+                          {preferredLanguage === 'ne'
+                            ? modalQuestion.ne.title
+                            : modalQuestion.en.title}
+                        </h2>
+                        {preferredLanguage === 'bilingual' && (
+                          <p
+                            lang="ne"
+                            className="mt-0.5 text-sm font-medium text-zinc-500 dark:text-zinc-400"
+                          >
+                            {modalQuestion.ne.title}
+                          </p>
+                        )}
+                      </div>
+
+                      {renderLanguageSegmentedControl('written-modal-lang-pill')}
+                    </div>
+                  </div>
+                  {/* Question Prompt */}
+                  <div className="rounded-xl bg-zinc-50 dark:bg-zinc-950/70 border border-zinc-200/80 dark:border-zinc-800/80 p-4 sm:p-5">
+                    {preferredLanguage === 'bilingual' ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:divide-x lg:divide-zinc-200/80 dark:lg:divide-zinc-800/80">
+                        <div className="space-y-1.5 lg:pr-6">
+                          <p className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                            English Question ·{' '}
+                            {modalQuestion.en.marksAllocation}
+                          </p>
+                          <p className="text-fluid-body font-medium text-zinc-900 dark:text-zinc-100">
+                            {modalQuestion.en.question}
+                          </p>
+                        </div>
+                        <div lang="ne" className="space-y-1.5 lg:pl-6">
+                          <p className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                            नेपाली प्रश्न · {modalQuestion.ne.marksAllocation}
+                          </p>
+                          <p className="text-fluid-body font-medium text-zinc-900 dark:text-zinc-100">
+                            {modalQuestion.ne.question}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        lang={preferredLanguage === 'ne' ? 'ne' : 'en'}
+                        className="space-y-1.5"
+                      >
+                        <p className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                          {preferredLanguage === 'ne'
+                            ? `नेपाली प्रश्न · ${modalQuestion.ne.marksAllocation}`
+                            : `Exam Question · ${modalQuestion.en.marksAllocation}`}
+                        </p>
+                        <p className="text-fluid-body font-medium text-zinc-900 dark:text-zinc-100">
+                          {preferredLanguage === 'ne'
+                            ? modalQuestion.ne.question
+                            : modalQuestion.en.question}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Pre-expand & Quick Study Action Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-zinc-100 dark:border-zinc-800/80">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {user ? (
+                        <Link
+                          to={`/written/${modalQuestion.id}`}
+                          onClick={() => setModalQuestionId(null)}
+                          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 text-xs font-medium transition-colors whitespace-nowrap shrink-0"
+                        >
+                          <PenLine className="w-3.5 h-3.5" />
+                          <span>
+                            Write Timed Answer (
+                            {modalQuestion.recommendedMinutes}:00)
+                          </span>
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const target = modalQuestion;
+                            setModalQuestionId(null);
+                            setPendingTimedQuestion(target);
+                          }}
+                          className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-crimson-700 text-white hover:bg-crimson-800 dark:bg-crimson-600 dark:text-white dark:hover:bg-crimson-500 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                        >
+                          <PenLine className="w-3.5 h-3.5" />
+                          <span>
+                            Write Timed Answer (
+                            {modalQuestion.recommendedMinutes}:00)
+                          </span>
+                        </button>
+                      )}
+
+                      <ActionButton
+                        label="स्व-मूल्याङ्कन (Grade)"
+                        icon={Scale}
+                        title="Practice with 1.8 min/mark timer and score on official rubric"
+                        color="blue"
+                        variant="outline"
+                        size="xs"
+                        to={`/evaluator?q=${modalQuestion.id}`}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyAnswer(modalQuestion)}
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                      >
+                        {copiedId === modalQuestion.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Copy Answer</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          dispatch(
+                            setWrittenQuestionStatus({
+                              questionId: modalQuestion.id,
+                              status:
+                                status === 'mastered'
+                                  ? 'practicing'
+                                  : 'mastered',
+                            })
+                          )
+                        }
+                        className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                          status === 'mastered'
+                            ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                            : 'border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>
+                          {status === 'mastered'
+                            ? 'Mastered'
+                            : 'Mark Mastered'}
+                        </span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                      <ReactionButtons
+                        itemId={modalQuestion.id}
+                        itemType="question"
+                        size="sm"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const target = modalQuestion;
+                          setModalQuestionId(null);
+                          handleOpenSourcePdf(target, '/written');
+                        }}
+                        className="inline-flex items-center gap-1 font-medium text-zinc-600 hover:text-blue-700 dark:text-zinc-400 dark:hover:text-blue-400 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        <span>
+                          {modalQuestion.sourceTitle
+                            ? `Source: ${modalQuestion.sourceTitle}`
+                            : 'Source PDF'}
+                        </span>
+                        <ArrowUpRight className="w-3 h-3 opacity-70" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Structured Model Answer */}
+                  <StructuredModelAnswer
+                    question={modalQuestion}
+                    languageMode={preferredLanguage}
+                  />
+
+                  {/* Examiner Checklist */}
+                  <div className="pt-5 border-t border-zinc-200/80 dark:border-zinc-800/80 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                        Examiner Checklist ·{' '}
+                        <span className="font-mono tabular-nums">
+                          {checkedIndices.length}/{modalQuestion.rubric.length}
+                        </span>{' '}
+                        checked
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      {modalQuestion.rubric.map((rub, rIdx) => {
+                        const isChecked = checkedIndices.includes(rIdx);
+                        return (
+                          <label
+                            key={`${rIdx}-${rub.en}`}
+                            className="flex items-start gap-2.5 text-fluid-option text-zinc-700 dark:text-zinc-300 cursor-pointer break-words"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() =>
+                                dispatch(
+                                  toggleWrittenRubricPoint({
+                                    questionId: modalQuestion.id,
+                                    rubricIndex: rIdx,
+                                  })
+                                )
+                              }
+                              className="mt-0.5 h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-blue-600 focus:ring-blue-600 cursor-pointer shrink-0"
+                            />
+                            <span className="min-w-0">
+                              {preferredLanguage === 'ne' ? (
+                                <span lang="ne">{rub.ne}</span>
+                              ) : preferredLanguage === 'en' ? (
+                                rub.en
+                              ) : (
+                                <>
+                                  {rub.en} / <span lang="ne">{rub.ne}</span>
+                                </>
+                              )}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sticky Dialog Footer with Prev / Next Navigation */}
+                <div className="px-4 sm:px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/60 flex items-center justify-between gap-3 shrink-0">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={!prevModalQuestion}
+                      onClick={() =>
+                        prevModalQuestion &&
+                        handleOpenAnswerDialog(prevModalQuestion.id)
+                      }
+                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>Previous</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!nextModalQuestion}
+                      onClick={() =>
+                        nextModalQuestion &&
+                        handleOpenAnswerDialog(nextModalQuestion.id)
+                      }
+                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+                    >
+                      <span>Next</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setModalQuestionId(null)}
+                    className="inline-flex items-center justify-center h-8 px-4 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
+      </AnimatePresence>
 
       <AnimatePresence>
         {pendingTimedQuestion && !user && (

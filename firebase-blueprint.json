@@ -1104,7 +1104,7 @@
         },
         "totalScore": {
           "type": "number",
-          "description": "Deterministic composite study XP combining reading, written, and quiz engagement."
+          "description": "Deterministic composite study activity metric combining reading, written, and quiz engagement."
         },
         "createdAt": {
           "type": "string",

@@ -124,6 +124,8 @@ export function isFirestoreOfflineError(error: unknown): boolean {
     lower.includes('the client is offline') ||
     lower.includes('client is offline') ||
     lower.includes('failed to get document because the client is offline') ||
+    lower.includes('could not reach cloud firestore backend') ||
+    lower.includes("backend didn't respond") ||
     lower.includes('network-request-failed') ||
     lower.includes('failed to fetch')
   );
