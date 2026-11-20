@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   BookOpen,
   Database,
   Flag,
   HelpCircle,
   LayoutDashboard,
+  LogOut,
   MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
@@ -55,7 +55,8 @@ export function DashboardSidebar({
   onCloseMobile,
 }: DashboardSidebarProps) {
   const location = useLocation();
-  const { user, isDashboardAdmin } = useAuth();
+  const { user, isDashboardAdmin, signOutUser } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { users: dbUsers, isLoading: isUsersLoading } = useDashboardUsers();
   const { data: adminInquiries = [], isLoading: isInquiriesLoading } =
     useGetAdminContactInquiriesQuery(undefined, {
@@ -147,8 +148,14 @@ export function DashboardSidebar({
 
   const sidebarContent = (
     <div className="h-full flex flex-col justify-between overflow-y-auto scrollbar-none select-none">
-      {/* Top Brand / Insignia */}
-      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+      {/* Top Brand / Insignia & Sidebar Toggle */}
+      <div
+        className={`border-b border-zinc-200 dark:border-zinc-800 flex items-center ${
+          isCollapsed && !isMobileOpen
+            ? 'flex-col gap-2 py-3 px-2 justify-center'
+            : 'p-4 justify-between'
+        }`}
+      >
         <Link
           to="/dashboard"
           onClick={onCloseMobile}
@@ -169,7 +176,7 @@ export function DashboardSidebar({
           )}
         </Link>
 
-        {/* Mobile Close Button */}
+        {/* Mobile Close Button or Desktop Collapse Toggle */}
         {isMobileOpen ? (
           <button
             type="button"
@@ -180,13 +187,12 @@ export function DashboardSidebar({
             <X className="w-5 h-5" />
           </button>
         ) : (
-          /* Desktop Collapse Button */
           <button
             type="button"
             onClick={onToggleCollapse}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={isCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'}
-            className="hidden lg:flex p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
+            className="hidden lg:flex p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0 cursor-pointer"
           >
             {isCollapsed ? (
               <PanelLeftOpen className="w-4 h-4" />
@@ -263,7 +269,7 @@ export function DashboardSidebar({
         </div>
       </div>
 
-      {/* Bottom Profile & Return to Public Portal */}
+      {/* Bottom Profile & Log Out */}
       <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 space-y-2 bg-zinc-50/50 dark:bg-zinc-900/50">
         {/* Authenticated Admin Card */}
         {(!isCollapsed || isMobileOpen) ? (
@@ -316,19 +322,31 @@ export function DashboardSidebar({
           </div>
         )}
 
-        {/* Back to Public Website Link */}
-        <Link
-          to="/"
-          title="Return to Public Website Homepage"
-          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 transition-colors ${
+        {/* Log Out Button */}
+        <button
+          type="button"
+          disabled={isLoggingOut}
+          onClick={() => {
+            if (isLoggingOut) return;
+            setIsLoggingOut(true);
+            onCloseMobile();
+            void signOutUser().finally(() => {
+              setIsLoggingOut(false);
+            });
+          }}
+          title="Log out of administrator session"
+          aria-label="Log Out"
+          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-crimson-700 dark:hover:text-crimson-400 hover:bg-crimson-50/70 dark:hover:bg-crimson-950/30 border border-transparent hover:border-crimson-200/80 dark:hover:border-crimson-900/50 transition-colors disabled:opacity-60 cursor-pointer ${
             isCollapsed && !isMobileOpen ? 'justify-center' : ''
           }`}
         >
-          <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+          <LogOut className="w-3.5 h-3.5 shrink-0" />
           {(!isCollapsed || isMobileOpen) && (
-            <span className="truncate">Exit to Public Website</span>
+            <span className="truncate">
+              {isLoggingOut ? 'Logging out...' : 'Log Out'}
+            </span>
           )}
-        </Link>
+        </button>
       </div>
     </div>
   );

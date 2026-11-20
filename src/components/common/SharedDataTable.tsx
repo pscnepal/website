@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
@@ -61,6 +61,7 @@ export function SharedDataTable<T>({
   className = '',
 }: SharedDataTableProps<T>) {
   // Internal search state fallback if not controlled externally
+  const searchInputId = useId();
   const [internalSearch, setInternalSearch] = useState('');
   const activeSearch = searchQuery !== undefined ? searchQuery : internalSearch;
   const handleSearchChange = onSearchChange || setInternalSearch;
@@ -253,78 +254,90 @@ export function SharedDataTable<T>({
       )}
 
       {/* 2. Search & Filters Bar */}
-      <div className="p-3 sm:p-4 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="p-3 sm:p-4 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 flex flex-col lg:flex-row lg:items-end justify-between gap-3">
         {/* Search input */}
-        <div className="relative flex-1 min-w-[220px] max-w-lg">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
-          <input
-            type="text"
-            value={activeSearch}
-            onChange={(e) => {
-              handleSearchChange(e.target.value);
-              setCurrentPage(0);
-            }}
-            placeholder={searchPlaceholder}
-            className="w-full h-9 pl-9 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none transition-colors"
-          />
-          {activeSearch && (
-            <button
-              type="button"
-              onClick={() => {
-                handleSearchChange('');
+        <div className="flex-1 min-w-[220px] max-w-lg">
+          {(filters.length > 0 || customFilters) && (
+            <label
+              htmlFor={searchInputId}
+              className="block text-[11px] font-medium text-zinc-600 dark:text-zinc-400 mb-1"
+            >
+              Search
+            </label>
+          )}
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
+            <input
+              id={searchInputId}
+              type="text"
+              value={activeSearch}
+              onChange={(e) => {
+                handleSearchChange(e.target.value);
                 setCurrentPage(0);
               }}
-              aria-label="Clear search query"
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
+              placeholder={searchPlaceholder}
+              className="w-full h-8 sm:h-9 pl-9 pr-8 rounded-lg bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none transition-colors"
+            />
+            {activeSearch && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleSearchChange('');
+                  setCurrentPage(0);
+                }}
+                aria-label="Clear search query"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Dynamic Filters & Reset Button */}
-        <div className="flex flex-wrap items-center gap-2">
-          {filters.map((filter) => (
-            <div key={filter.id} className="flex items-center gap-1.5 text-xs">
-              {filter.label && (
-                <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hidden sm:inline">
-                  {filter.label}:
-                </span>
-              )}
-              <SharedSearchSelect
-                value={filter.value}
-                onChange={(newVal) => {
-                  filter.onChange(newVal);
+        {(filters.length > 0 || customFilters || (hasActiveFiltersOrSearch && onResetFilters)) && (
+          <div className="flex flex-wrap items-end gap-2.5 sm:gap-3">
+            {filters.map((filter) => (
+              <div
+                key={filter.id}
+                className="min-w-[140px] flex-1 sm:flex-none"
+              >
+                <SharedSearchSelect
+                  label={filter.label}
+                  value={filter.value}
+                  onChange={(newVal) => {
+                    filter.onChange(newVal);
+                    setCurrentPage(0);
+                  }}
+                  options={filter.options}
+                  ariaLabel={filter.ariaLabel || filter.label || filter.id}
+                  size="sm"
+                  popoverWidth="w-56"
+                  className={filter.width || 'w-full sm:min-w-[160px]'}
+                />
+              </div>
+            ))}
+
+            {customFilters}
+
+            {/* Reset Filters Button */}
+            {hasActiveFiltersOrSearch && onResetFilters && (
+              <button
+                type="button"
+                onClick={() => {
+                  onResetFilters();
+                  handleSearchChange('');
                   setCurrentPage(0);
                 }}
-                options={filter.options}
-                ariaLabel={filter.ariaLabel || filter.label || filter.id}
-                size="sm"
-                popoverWidth="w-56"
-                className={filter.width || 'min-w-[140px] sm:min-w-[160px]'}
-              />
-            </div>
-          ))}
-
-          {customFilters}
-
-          {/* Reset Filters Button */}
-          {hasActiveFiltersOrSearch && onResetFilters && (
-            <button
-              type="button"
-              onClick={() => {
-                onResetFilters();
-                handleSearchChange('');
-                setCurrentPage(0);
-              }}
-              title="Reset all search queries and filters to defaults"
-              className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 transition-colors"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Clear</span>
-            </button>
-          )}
-        </div>
+                title="Reset all search queries and filters to defaults"
+                className="inline-flex items-center gap-1.5 h-8 sm:h-9 px-2.5 rounded-lg text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 transition-colors shrink-0"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Clear</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 3. Table Content or Empty State */}

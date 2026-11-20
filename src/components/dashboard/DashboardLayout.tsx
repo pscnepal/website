@@ -132,8 +132,6 @@ export function DashboardLayout({
             {/* Dedicated Dashboard Header */}
             <DashboardHeader
               activeTab={activeTab}
-              isSidebarCollapsed={isCollapsed}
-              onToggleSidebar={toggleCollapse}
               onOpenMobileSidebar={() => setIsMobileOpen(true)}
               searchQuery={effectiveSearchQuery}
               onSearchChange={effectiveOnSearchChange}

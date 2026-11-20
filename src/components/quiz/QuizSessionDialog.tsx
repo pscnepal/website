@@ -58,6 +58,7 @@ import {
 } from '../../context/AuthContext';
 import { QuizAuthGate } from '../auth/QuizAuthGate';
 import { toast } from '../../services/toastService';
+import { trackAnalyticsEvent } from '../../services/analyticsService';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
 import { FlagReasonModal } from '../common/FlagReasonModal';
 
@@ -450,6 +451,14 @@ function QuizDialogInner({
       };
 
       dispatch(recordQuizAttempt(attemptRecord));
+      trackAnalyticsEvent('quiz_completed', {
+        deck_id: deck.id,
+        mode,
+        total_questions: totalQuestions,
+        accuracy_percent: accuracyPercent,
+        net_score: pscNetScore,
+        timed_out: didTimeOut,
+      });
       if (user) {
         void saveQuizAttemptToFirestore(user, attemptRecord).catch((err) => {
           console.error('Failed to persist quiz attempt to Firestore:', err);

@@ -51,6 +51,7 @@ import {
 } from '../../context/AuthContext';
 import { QuizAuthGate } from '../auth/QuizAuthGate';
 import { toast } from '../../services/toastService';
+import { trackAnalyticsEvent } from '../../services/analyticsService';
 import { formatUserFriendlyError } from '../../utils/errorHelpers';
 import { FlagReasonModal } from '../common/FlagReasonModal';
 import type {
@@ -342,6 +343,14 @@ function OmrHallDialogInner({
           completedAt,
         })
       );
+      trackAnalyticsEvent('simulation_submitted', {
+        preset_id: preset.id,
+        cadre_id: preset.cadreId,
+        simulation_type: 'omr-hall',
+        percentage,
+        passed,
+        timed_out: didTimeOut,
+      });
 
       const attemptRecord = {
         id: `att-sim-${Date.now()}`,
@@ -2107,6 +2116,14 @@ function WrittenHallDialogInner({
         completedAt: new Date().toISOString(),
       })
     );
+    trackAnalyticsEvent('simulation_submitted', {
+      preset_id: preset.id,
+      cadre_id: preset.cadreId,
+      simulation_type: 'written-hall',
+      percentage: selfEvaluation.percentage,
+      passed: selfEvaluation.passed,
+      timed_out: false,
+    });
 
     setRunSaved(true);
   };

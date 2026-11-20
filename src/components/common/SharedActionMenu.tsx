@@ -79,6 +79,7 @@ export function SharedActionMenu({
   className = '',
   triggerClassName = '',
   menuClassName = '',
+  hideLabelOnMobile = false,
 }: SharedActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState<{
@@ -209,6 +210,7 @@ export function SharedActionMenu({
         size={size}
         disabled={disabled || items.length === 0}
         active={isOpen}
+        hideLabelOnMobile={hideLabelOnMobile}
         aria-haspopup="true"
         aria-expanded={isOpen}
         className={`${triggerClassName} ${isOpen ? 'ring-2 ring-blue-500/50' : ''}`}

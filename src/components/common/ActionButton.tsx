@@ -116,6 +116,13 @@ const ICON_ONLY_SIZE_MAP: Record<ActionButtonSize, string> = {
   lg: 'w-10 h-10 p-0 rounded-xl',
 };
 
+const RESPONSIVE_ICON_ONLY_MAP: Record<ActionButtonSize, string> = {
+  xs: 'w-6 h-6 p-0 rounded-md sm:w-auto sm:px-2 sm:text-[11px] sm:gap-1',
+  sm: 'w-7 h-7 p-0 rounded-md sm:w-auto sm:px-2.5 sm:text-xs sm:gap-1.5',
+  md: 'w-8 h-8 p-0 rounded-lg sm:w-auto sm:px-3 sm:text-xs md:text-[13px] sm:gap-1.5',
+  lg: 'w-10 h-10 p-0 rounded-xl sm:w-auto sm:px-4 sm:text-sm sm:gap-2',
+};
+
 export const ActionButton = forwardRef<
   HTMLButtonElement | HTMLAnchorElement,
   ActionButtonProps
@@ -140,11 +147,13 @@ export const ActionButton = forwardRef<
       className = '',
       type = 'button',
       active,
+      hideLabelOnMobile = false,
       ...rest
     },
     ref
   ) => {
     const isIconOnly = !label && Boolean(Icon);
+    const isMobileIconOnly = hideLabelOnMobile && Boolean(Icon) && Boolean(label);
     const sizeConfig = SIZE_MAP[size];
 
     const baseClasses =
@@ -153,7 +162,9 @@ export const ActionButton = forwardRef<
     const colorClasses = COLOR_MAP[color][variant];
     const dimensionClasses = isIconOnly
       ? ICON_ONLY_SIZE_MAP[size]
-      : sizeConfig.btn;
+      : isMobileIconOnly
+        ? RESPONSIVE_ICON_ONLY_MAP[size]
+        : sizeConfig.btn;
     const activeClasses = active
       ? 'ring-2 ring-blue-500/40 dark:ring-blue-400/40'
       : '';
@@ -165,7 +176,11 @@ export const ActionButton = forwardRef<
         {Icon && iconPosition === 'left' && (
           <Icon className={`${sizeConfig.icon} shrink-0`} />
         )}
-        {label && <span>{label}</span>}
+        {label && (
+          <span className={isMobileIconOnly ? 'hidden sm:inline' : undefined}>
+            {label}
+          </span>
+        )}
         {Icon && iconPosition === 'right' && (
           <Icon className={`${sizeConfig.icon} shrink-0`} />
         )}
@@ -174,7 +189,8 @@ export const ActionButton = forwardRef<
 
     const commonProps = {
       title,
-      'aria-label': ariaLabel || title,
+      'aria-label':
+        ariaLabel || title || (typeof label === 'string' ? label : undefined),
       'aria-pressed': typeof active === 'boolean' ? active : undefined,
       className: fullClassName,
       ...rest,

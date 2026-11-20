@@ -54,6 +54,7 @@ import {
 } from '../services/questionStorageService';
 import type { WrittenEvaluationRecord } from '../services/storageService';
 import { toast } from '../services/toastService';
+import { trackAnalyticsEvent } from '../services/analyticsService';
 import { copyWithToast } from '../utils/clipboardHelpers';
 import { formatUserFriendlyError } from '../utils/errorHelpers';
 
@@ -241,6 +242,11 @@ export function WrittenEvaluatorPage() {
     };
 
     dispatch(addWrittenEvaluation(record));
+    trackAnalyticsEvent('written_evaluation_saved', {
+      question_id: selectedQuestion.id,
+      marks: selectedQuestion.marks,
+      total_score: totalScore,
+    });
     toast.success('Evaluation scorecard saved & synced to your history.');
     setStage('report');
   };

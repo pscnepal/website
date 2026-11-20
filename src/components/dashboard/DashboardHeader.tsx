@@ -10,8 +10,6 @@ import {
   MessageSquare,
   Minimize2,
   Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
   PenLine,
   Search,
   Sparkles,
@@ -47,8 +45,6 @@ const QUICK_ACTION_ICONS: Record<
 
 export function DashboardHeader({
   activeTab: propActiveTab,
-  isSidebarCollapsed,
-  onToggleSidebar,
   onOpenMobileSidebar,
   searchQuery = '',
   onSearchChange = () => {},
@@ -85,25 +81,6 @@ export function DashboardHeader({
           className="p-2 -ml-2 rounded-lg text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors lg:hidden shrink-0"
         >
           <Menu className="w-5 h-5" />
-        </button>
-
-        {/* Desktop collapse toggle */}
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label={
-            isSidebarCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'
-          }
-          title={
-            isSidebarCollapsed ? 'Expand sidebar (⌘B)' : 'Collapse sidebar (⌘B)'
-          }
-          className="hidden lg:flex p-1.5 -ml-1 rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0"
-        >
-          {isSidebarCollapsed ? (
-            <PanelLeftOpen className="w-4 h-4" />
-          ) : (
-            <PanelLeftClose className="w-4 h-4" />
-          )}
         </button>
 
         {/* Breadcrumb & Section Name */}
@@ -158,6 +135,8 @@ export function DashboardHeader({
         {/* Quick Launch Action Menu */}
         <SharedActionMenu
           label="Quick Actions"
+          title="Quick Actions"
+          hideLabelOnMobile
           icon={Sparkles}
           color="blue"
           variant="subtle"

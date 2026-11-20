@@ -57,6 +57,8 @@ export interface ActionButtonProps {
   className?: string;
   /** Active toggle state (for pressed toggles) */
   active?: boolean;
+  /** Hide text label on small screens (< sm) so only the icon renders */
+  hideLabelOnMobile?: boolean;
   /** HTML button type */
   type?: 'button' | 'submit' | 'reset';
 }
@@ -150,6 +152,8 @@ export interface SharedActionMenuProps {
   triggerClassName?: string;
   /** Custom menu dropdown class */
   menuClassName?: string;
+  /** Hide trigger label on small screens (< sm) so only the icon renders */
+  hideLabelOnMobile?: boolean;
 }
 
 export interface SearchSelectOption {

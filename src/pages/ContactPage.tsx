@@ -33,6 +33,7 @@ import {
   isFirestoreOfflineError,
 } from '../utils/errorHelpers';
 import { toast } from '../services/toastService';
+import { trackAnalyticsEvent } from '../services/analyticsService';
 import {
   CONTACT_CATEGORY_OPTIONS,
   CONTACT_DIRECT_DESK,
@@ -192,6 +193,10 @@ export function ContactPage() {
           userId: user.uid,
           inquiry: record,
         }).unwrap();
+        trackAnalyticsEvent('contact_inquiry_submitted', {
+          category,
+          synced_cloud: true,
+        });
         setLastSubmitted(created);
         toast.success(
           `Ticket ${created.ticketCode} submitted to the editorial desk.`
@@ -225,6 +230,10 @@ export function ContactPage() {
     const updated = [record, ...localInquiries].slice(0, 25);
     setLocalInquiries(updated);
     storageService.saveContactInquiries(updated);
+    trackAnalyticsEvent('contact_inquiry_submitted', {
+      category,
+      synced_cloud: false,
+    });
     setLastSubmitted(record);
     toast.success(
       `Support note ${record.ticketCode} prepared. Sign in to sync & track editorial replies.`

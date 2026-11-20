@@ -78,6 +78,7 @@ import {
   reportFirestoreSnapshotError,
 } from '../lib/firebase';
 import { pscApi } from '../app/api/pscApi';
+import { trackAnalyticsEvent } from '../services/analyticsService';
 import {
   clearEnsuredProfileCache,
   clearLeaderboardVisibilityCache,
@@ -1358,6 +1359,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const credential = await signInWithPopup(auth, googleProvider);
       setUser(credential.user);
+      trackAnalyticsEvent('login', { method: 'google' });
       const name =
         credential.user.displayName || credential.user.email || 'your account';
       toast.success(`Signed in as ${name}.`, {

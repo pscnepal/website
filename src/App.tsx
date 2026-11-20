@@ -13,6 +13,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { useAppSelector } from './app/hooks';
+import { GoogleAnalyticsTracker } from './components/analytics/GoogleAnalyticsTracker';
 import { PscChatbot } from './components/chat/PscChatbot';
 import {
   ErrorBoundary,
@@ -190,6 +191,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <SeoManager />
+      <GoogleAnalyticsTracker />
       <ScrollManager />
       <GlobalErrorListener />
       <LayoutGroup>

@@ -74,8 +74,6 @@ export interface DashboardLayoutProps {
 
 export interface DashboardHeaderProps {
   activeTab?: DashboardTab;
-  isSidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
   onOpenMobileSidebar: () => void;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
