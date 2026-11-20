@@ -10,6 +10,7 @@ declare global {
   }
 }
 
+const DEFAULT_MEASUREMENT_ID = 'G-3KX8FV0K22';
 const GTAG_SCRIPT_ID = 'psc-nepal-gtag-script';
 const PLACEHOLDER_IDS = new Set(['G-XXXXXXXXXX', 'G-0000000000']);
 const VALID_GA_ID_REGEX = /^(G|GT)-[A-Z0-9]+$/i;
@@ -28,7 +29,7 @@ function resolveMeasurementId(): string | null {
       ? firebaseConfig.measurementId.trim()
       : undefined;
 
-  const candidate = envId || configId || '';
+  const candidate = envId || configId || DEFAULT_MEASUREMENT_ID;
   if (
     !candidate ||
     PLACEHOLDER_IDS.has(candidate.toUpperCase()) ||
@@ -38,6 +39,16 @@ function resolveMeasurementId(): string | null {
   }
 
   return candidate;
+}
+
+function hasExistingJsInit(dataLayer: unknown[]): boolean {
+  return dataLayer.some(
+    (entry) =>
+      entry != null &&
+      typeof entry === 'object' &&
+      0 in entry &&
+      (entry as Record<number, unknown>)[0] === 'js'
+  );
 }
 
 function ensureGtagBootstrap(measurementId: string): void {
@@ -51,7 +62,9 @@ function ensureGtagBootstrap(measurementId: string): void {
   }
 
   if (!isConfigured) {
-    window.gtag('js', new Date());
+    if (!hasExistingJsInit(window.dataLayer)) {
+      window.gtag('js', new Date());
+    }
     window.gtag('config', measurementId, {
       send_page_view: false,
       anonymize_ip: true,
@@ -62,7 +75,12 @@ function ensureGtagBootstrap(measurementId: string): void {
 
 function injectGtagScript(measurementId: string): void {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  if (document.getElementById(GTAG_SCRIPT_ID)) return;
+  if (
+    document.getElementById(GTAG_SCRIPT_ID) ||
+    document.querySelector('script[src*="googletagmanager.com/"]')
+  ) {
+    return;
+  }
 
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     if (!onlineRetryRegistered) {
@@ -82,7 +100,7 @@ function injectGtagScript(measurementId: string): void {
   const script = document.createElement('script');
   script.id = GTAG_SCRIPT_ID;
   script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(
+  script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(
     measurementId
   )}`;
   document.head.appendChild(script);
