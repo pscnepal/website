@@ -30,15 +30,6 @@ export function parseFirestoreErrorPayload(
   return null;
 }
 
-export function isFirestoreQuotaError(error: unknown): boolean {
-  const raw = extractRawErrorMessage(error).toLowerCase();
-  return (
-    raw.includes('quota exceeded') ||
-    raw.includes('free daily read units') ||
-    raw.includes('resource-exhausted')
-  );
-}
-
 export function extractRawErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;

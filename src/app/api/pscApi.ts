@@ -12,18 +12,10 @@ import {
   fetchUserCloudReactions,
   fetchUserContactInquiries,
   fetchUserFlaggedQuestions,
-  fetchUserSimulationRuns,
-  fetchUserWrittenEvaluations,
-  resetAllMaterialOverridesInFirestore,
-  resetAllQuizOverridesInFirestore,
-  resetAllWrittenOverridesInFirestore,
   syncReactionAndStatsToFirestore,
   updateAdminUserDetails,
   updateAdminUserStatus,
   updateContactInquiryAdminInFirestore,
-  upsertQuizQuestionInFirestore,
-  upsertReadingMaterialInFirestore,
-  upsertWrittenQuestionInFirestore,
 } from '../../services/cloudSyncService';
 import type {
   CloudItemStatsEntry,
@@ -37,12 +29,7 @@ import type {
   ContactInquiryRecord,
   FlaggedQuestionRecord,
   InquiryStatus,
-  QuizQuestion,
-  SimulationRunRecord,
   UpdateAdminUserDetailsInput,
-  UpsertMaterialPayload,
-  WrittenEvaluationRecord,
-  WrittenQuestion,
 } from '../../types';
 import { appBaseQuery } from './baseQuery';
 
@@ -59,8 +46,6 @@ export const pscApi = createApi({
     'UserReactions',
     'ContactInquiries',
     'AdminInquiries',
-    'WrittenEvaluations',
-    'SimulationRuns',
     'AdminUsers',
     'RemoteAsset',
   ],
@@ -177,27 +162,6 @@ export const pscApi = createApi({
       invalidatesTags: ['UserReactions', 'ItemStats'],
     }),
 
-    getUserWrittenEvaluations: builder.query<
-      WrittenEvaluationRecord[],
-      string
-    >({
-      query: (userId) => ({
-        kind: 'firestore',
-        operation: 'fetchUserWrittenEvaluations',
-        run: () => fetchUserWrittenEvaluations(userId),
-      }),
-      providesTags: ['WrittenEvaluations'],
-    }),
-
-    getUserSimulationRuns: builder.query<SimulationRunRecord[], string>({
-      query: (userId) => ({
-        kind: 'firestore',
-        operation: 'fetchUserSimulationRuns',
-        run: () => fetchUserSimulationRuns(userId),
-      }),
-      providesTags: ['SimulationRuns'],
-    }),
-
     // -----------------------------------------------------------------------
     // Contact & Errata Inquiries (User & Admin)
     // -----------------------------------------------------------------------
@@ -310,118 +274,18 @@ export const pscApi = createApi({
       }),
       invalidatesTags: ['AdminUsers'],
     }),
-
-    // -----------------------------------------------------------------------
-    // Super Admin Content Bank Mutations (MCQ, Written, Materials)
-    // -----------------------------------------------------------------------
-    upsertQuizQuestion: builder.mutation<
-      null,
-      { question: QuizQuestion; isDeleted?: boolean }
-    >({
-      query: ({ question, isDeleted = false }) => ({
-        kind: 'firestore',
-        operation: 'upsertQuizQuestionInFirestore',
-        run: async () => {
-          await upsertQuizQuestionInFirestore(question, isDeleted);
-          return null;
-        },
-      }),
-      invalidatesTags: ['QuizBank'],
-    }),
-
-    resetQuizBankOverrides: builder.mutation<null, void>({
-      query: () => ({
-        kind: 'firestore',
-        operation: 'resetAllQuizOverridesInFirestore',
-        run: async () => {
-          await resetAllQuizOverridesInFirestore();
-          return null;
-        },
-      }),
-      invalidatesTags: ['QuizBank'],
-    }),
-
-    upsertWrittenQuestion: builder.mutation<
-      null,
-      { question: WrittenQuestion; isDeleted?: boolean }
-    >({
-      query: ({ question, isDeleted = false }) => ({
-        kind: 'firestore',
-        operation: 'upsertWrittenQuestionInFirestore',
-        run: async () => {
-          await upsertWrittenQuestionInFirestore(question, isDeleted);
-          return null;
-        },
-      }),
-      invalidatesTags: ['WrittenBank'],
-    }),
-
-    resetWrittenBankOverrides: builder.mutation<null, void>({
-      query: () => ({
-        kind: 'firestore',
-        operation: 'resetAllWrittenOverridesInFirestore',
-        run: async () => {
-          await resetAllWrittenOverridesInFirestore();
-          return null;
-        },
-      }),
-      invalidatesTags: ['WrittenBank'],
-    }),
-
-    upsertReadingMaterial: builder.mutation<
-      null,
-      { payload: UpsertMaterialPayload; isDeleted?: boolean }
-    >({
-      query: ({ payload, isDeleted = false }) => ({
-        kind: 'firestore',
-        operation: 'upsertReadingMaterialInFirestore',
-        run: async () => {
-          await upsertReadingMaterialInFirestore(payload, isDeleted);
-          return null;
-        },
-      }),
-      invalidatesTags: ['Materials'],
-    }),
-
-    resetMaterialOverrides: builder.mutation<null, void>({
-      query: () => ({
-        kind: 'firestore',
-        operation: 'resetAllMaterialOverridesInFirestore',
-        run: async () => {
-          await resetAllMaterialOverridesInFirestore();
-          return null;
-        },
-      }),
-      invalidatesTags: ['Materials'],
-    }),
   }),
 });
 
 export const {
   useLazyFetchBinaryAssetQuery,
-  useGetCloudItemStatsQuery,
-  useGetCloudQuizBankQuery,
-  useGetCloudWrittenBankQuery,
-  useGetCloudMaterialsQuery,
-  useGetUserFlaggedQuestionsQuery,
-  useGetUserCloudReactionsQuery,
-  useSyncReactionAndStatsMutation,
-  useGetUserWrittenEvaluationsQuery,
-  useGetUserSimulationRunsQuery,
   useGetUserContactInquiriesQuery,
   useCreateContactInquiryMutation,
   useGetAdminContactInquiriesQuery,
   useUpdateAdminInquiryMutation,
   useDeleteContactInquiryMutation,
-  useGetAdminUsersDirectoryQuery,
   useLazyGetAdminUsersDirectoryQuery,
   useUpdateAdminUserStatusMutation,
   useUpdateAdminUserDetailsMutation,
   useDeleteAdminUserMutation,
-  useUpsertQuizQuestionMutation,
-  useResetQuizBankOverridesMutation,
-  useUpsertWrittenQuestionMutation,
-  useResetWrittenBankOverridesMutation,
-  useUpsertReadingMaterialMutation,
-  useResetMaterialOverridesMutation,
 } = pscApi;

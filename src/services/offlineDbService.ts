@@ -89,7 +89,7 @@ function emitOfflineCacheChanged(): void {
   }
 }
 
-export function openOfflineDb(): Promise<IDBDatabase | null> {
+function openOfflineDb(): Promise<IDBDatabase | null> {
   if (!isIndexedDbAvailable()) {
     return Promise.resolve(null);
   }
@@ -205,13 +205,6 @@ export const offlineDbService = {
     }
   },
 
-  async hasPdfCached(idOrUrl: string): Promise<boolean> {
-    const byId = await this.getPdfRecordById(idOrUrl);
-    if (byId) return true;
-    const byUrl = await this.getPdfRecordByUrl(idOrUrl);
-    return Boolean(byUrl);
-  },
-
   async listCachedPdfSummaries(): Promise<OfflinePdfSummaryItem[]> {
     const db = await openOfflineDb();
     if (!db) return [];
@@ -292,17 +285,6 @@ export const offlineDbService = {
     }
   },
 
-  async deleteStudyBank(key: StudyBankKey): Promise<void> {
-    const db = await openOfflineDb();
-    if (!db) return;
-    try {
-      const tx = db.transaction(STORE_STUDY_BANKS, 'readwrite');
-      await wrapRequest(tx.objectStore(STORE_STUDY_BANKS).delete(key));
-    } catch {
-      // Ignore
-    }
-  },
-
   // ==========================================================================
   // User Progress Snapshot Mirror (Survives localStorage eviction / quota)
   // ==========================================================================
@@ -365,17 +347,6 @@ export const offlineDbService = {
     try {
       const tx = db.transaction(STORE_USER_PROGRESS, 'readwrite');
       await wrapRequest(tx.objectStore(STORE_USER_PROGRESS).delete(key));
-    } catch {
-      // Ignore
-    }
-  },
-
-  async clearAllProgressRecords(): Promise<void> {
-    const db = await openOfflineDb();
-    if (!db) return;
-    try {
-      const tx = db.transaction(STORE_USER_PROGRESS, 'readwrite');
-      await wrapRequest(tx.objectStore(STORE_USER_PROGRESS).clear());
     } catch {
       // Ignore
     }

@@ -587,52 +587,6 @@ export const storageService = {
     }
   },
 
-  toggleFlaggedQuestion(
-    questionId: string,
-    meta?: Partial<FlaggedQuestionRecord>
-  ): boolean {
-    const current = this.loadFlaggedQuestions();
-    const isAlreadyFlagged = Boolean(current[questionId]);
-    const uid = getVerifiedUid();
-
-    if (isAlreadyFlagged) {
-      delete current[questionId];
-      this.saveFlaggedQuestions(current);
-      if (uid) {
-        void deleteFlaggedQuestionInFirestore(uid, questionId).catch((err) => {
-          handleFlagSyncError(
-            'Failed to remove flagged question from Firestore',
-            err,
-            'Flag removed locally, but cloud sync failed.'
-          );
-        });
-      }
-      return false;
-    } else {
-      const record: FlaggedQuestionRecord = {
-        questionId,
-        flaggedAt: new Date().toISOString(),
-        source: meta?.source || 'quiz',
-        deckTitle: meta?.deckTitle,
-        cadreId: meta?.cadreId,
-        reason: (meta?.reason ?? '').trim().slice(0, 500),
-        note: meta?.note || '',
-      };
-      current[questionId] = record;
-      this.saveFlaggedQuestions(current);
-      if (uid) {
-        void upsertFlaggedQuestionInFirestore(uid, record).catch((err) => {
-          handleFlagSyncError(
-            'Failed to sync flagged question to Firestore',
-            err,
-            'Question flagged locally, but cloud sync failed.'
-          );
-        });
-      }
-      return true;
-    }
-  },
-
   flagQuestionWithReason(
     questionId: string,
     meta: Omit<FlaggedQuestionRecord, 'questionId' | 'flaggedAt'> & {
@@ -678,54 +632,6 @@ export const storageService = {
             'Could not remove flagged question from cloud.'
           );
         });
-      }
-    }
-  },
-
-  updateFlaggedQuestionNote(questionId: string, note: string): void {
-    const current = this.loadFlaggedQuestions();
-    if (current[questionId]) {
-      current[questionId].note = note;
-      this.saveFlaggedQuestions(current);
-      const uid = getVerifiedUid();
-      if (uid) {
-        void upsertFlaggedQuestionInFirestore(uid, current[questionId]).catch(
-          (err) => {
-            handleFlagSyncError(
-              'Failed to update flagged question note in Firestore',
-              err,
-              'Note saved locally, but cloud sync failed.'
-            );
-          }
-        );
-      }
-    }
-  },
-
-  updateFlaggedQuestionDetails(
-    questionId: string,
-    updates: { reason?: string; note?: string }
-  ): void {
-    const current = this.loadFlaggedQuestions();
-    if (current[questionId]) {
-      if (typeof updates.reason === 'string') {
-        current[questionId].reason = updates.reason.trim().slice(0, 500);
-      }
-      if (typeof updates.note === 'string') {
-        current[questionId].note = updates.note.slice(0, 1000);
-      }
-      this.saveFlaggedQuestions(current);
-      const uid = getVerifiedUid();
-      if (uid) {
-        void upsertFlaggedQuestionInFirestore(uid, current[questionId]).catch(
-          (err) => {
-            handleFlagSyncError(
-              'Failed to update flagged question details in Firestore',
-              err,
-              'Changes saved locally, but cloud sync failed.'
-            );
-          }
-        );
       }
     }
   },

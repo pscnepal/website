@@ -52,27 +52,11 @@ async function generateAllIcons() {
 
   // List of required icon sizes and filenames
   const iconTargets = [
-    { name: 'icon.png', size: 512 },
-    { name: 'icon-512.png', size: 512 },
-    { name: 'icon-512x512.png', size: 512 },
     { name: 'pwa-512x512.png', size: 512 },
-    { name: 'icon-384.png', size: 384 },
-    { name: 'icon-256.png', size: 256 },
-    { name: 'icon-192.png', size: 192 },
-    { name: 'icon-192x192.png', size: 192 },
     { name: 'pwa-192x192.png', size: 192 },
-    { name: 'icon-128.png', size: 128 },
-    { name: 'icon-128x128.png', size: 128 },
-    { name: 'icon-96.png', size: 96 },
-    { name: 'icon-72.png', size: 72 },
-    { name: 'icon-48.png', size: 48 },
-    { name: 'icon-32.png', size: 32 },
-    { name: 'icon-16.png', size: 16 },
     { name: 'apple-touch-icon.png', size: 180 },
-    { name: 'apple-touch-icon-180x180.png', size: 180 },
     { name: 'favicon-16x16.png', size: 16 },
     { name: 'favicon-32x32.png', size: 32 },
-    { name: 'favicon-48x48.png', size: 48 },
   ];
 
   for (const target of iconTargets) {
@@ -130,7 +114,7 @@ async function generateAllIcons() {
     // Ignore cleanup
   }
 
-  // Generate compliant PWA manifest.json & site.webmanifest
+  // Generate compliant PWA site.webmanifest
   const manifest = {
     id: '/',
     name: 'PSC Nepal — Lok Sewa Preparation Hub',
@@ -165,16 +149,11 @@ async function generateAllIcons() {
   };
 
   fs.writeFileSync(
-    path.join(PUBLIC_DIR, 'manifest.json'),
-    JSON.stringify(manifest, null, 2),
-    'utf-8'
-  );
-  fs.writeFileSync(
     path.join(PUBLIC_DIR, 'site.webmanifest'),
     JSON.stringify(manifest, null, 2),
     'utf-8'
   );
-  console.log('✓ Created public/manifest.json and public/site.webmanifest');
+  console.log('✓ Created public/site.webmanifest');
   console.log('All icons generated successfully!');
 }
 

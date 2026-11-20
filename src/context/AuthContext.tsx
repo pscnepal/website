@@ -1167,9 +1167,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (auth.currentUser?.uid !== firebaseUser.uid) return;
           await createWrittenEvaluationInFirestore(firebaseUser.uid, ev);
         }
-        if (localOnlyEvals.length > 0) {
-          dispatch(pscApi.util.invalidateTags(['WrittenEvaluations']));
-        }
 
         // 7. Sync Exam Hall Simulation Runs
         const cloudSimRuns = await fetchUserSimulationRuns(firebaseUser.uid);
@@ -1184,9 +1181,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         for (const run of localOnlyRuns) {
           if (auth.currentUser?.uid !== firebaseUser.uid) return;
           await createSimulationRunInFirestore(firebaseUser.uid, run);
-        }
-        if (localOnlyRuns.length > 0) {
-          dispatch(pscApi.util.invalidateTags(['SimulationRuns']));
         }
 
         // 8. Sync Contact & Errata Inquiries

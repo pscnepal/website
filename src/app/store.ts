@@ -550,85 +550,65 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
     // 10. Written Evaluator Scorecards
     if (action.type === 'workspace/addWrittenEvaluation' && 'payload' in action) {
       const record = action.payload as WrittenEvaluationRecord;
-      void createWrittenEvaluationInFirestore(uid, record)
-        .then(() => {
-          storeApi.dispatch(pscApi.util.invalidateTags(['WrittenEvaluations']));
-        })
-        .catch((err) => {
-          handleMiddlewareSyncError(
-            'Cloud written evaluation sync failed',
-            err,
-            'cloud-written-eval-err',
-            'Evaluation scorecard saved locally, but cloud sync failed.'
-          );
-        });
+      void createWrittenEvaluationInFirestore(uid, record).catch((err) => {
+        handleMiddlewareSyncError(
+          'Cloud written evaluation sync failed',
+          err,
+          'cloud-written-eval-err',
+          'Evaluation scorecard saved locally, but cloud sync failed.'
+        );
+      });
       return result;
     }
 
     if (action.type === 'workspace/deleteWrittenEvaluation' && 'payload' in action) {
       const evalId = action.payload as string;
-      void deleteWrittenEvaluationInFirestore(uid, evalId)
-        .then(() => {
-          storeApi.dispatch(pscApi.util.invalidateTags(['WrittenEvaluations']));
-        })
-        .catch((err) => {
-          handleMiddlewareSyncError(
-            'Cloud written evaluation delete failed',
-            err,
-            'cloud-written-eval-del-err',
-            'Deleted locally, but failed to remove cloud scorecard.'
-          );
-        });
+      void deleteWrittenEvaluationInFirestore(uid, evalId).catch((err) => {
+        handleMiddlewareSyncError(
+          'Cloud written evaluation delete failed',
+          err,
+          'cloud-written-eval-del-err',
+          'Deleted locally, but failed to remove cloud scorecard.'
+        );
+      });
       return result;
     }
 
     if (action.type === 'workspace/clearWrittenEvaluations') {
-      void clearUserWrittenEvaluationsInFirestore(uid)
-        .then(() => {
-          storeApi.dispatch(pscApi.util.invalidateTags(['WrittenEvaluations']));
-        })
-        .catch((err) => {
-          handleMiddlewareSyncError(
-            'Failed to clear cloud written evaluations',
-            err,
-            'cloud-written-eval-clear-err',
-            'Cleared locally, but failed to clear cloud scorecards.'
-          );
-        });
+      void clearUserWrittenEvaluationsInFirestore(uid).catch((err) => {
+        handleMiddlewareSyncError(
+          'Failed to clear cloud written evaluations',
+          err,
+          'cloud-written-eval-clear-err',
+          'Cleared locally, but failed to clear cloud scorecards.'
+        );
+      });
       return result;
     }
 
     // 11. Exam Hall Simulation Runs
     if (action.type === 'psc/recordSimulationRun' && 'payload' in action) {
       const run = action.payload as SimulationRunRecord;
-      void createSimulationRunInFirestore(uid, run)
-        .then(() => {
-          storeApi.dispatch(pscApi.util.invalidateTags(['SimulationRuns']));
-        })
-        .catch((err) => {
-          handleMiddlewareSyncError(
-            'Cloud simulation run sync failed',
-            err,
-            'cloud-sim-run-err',
-            'Simulation result saved locally, but cloud sync failed.'
-          );
-        });
+      void createSimulationRunInFirestore(uid, run).catch((err) => {
+        handleMiddlewareSyncError(
+          'Cloud simulation run sync failed',
+          err,
+          'cloud-sim-run-err',
+          'Simulation result saved locally, but cloud sync failed.'
+        );
+      });
       return result;
     }
 
     if (action.type === 'psc/clearSimulationHistory') {
-      void clearUserSimulationRunsInFirestore(uid)
-        .then(() => {
-          storeApi.dispatch(pscApi.util.invalidateTags(['SimulationRuns']));
-        })
-        .catch((err) => {
-          handleMiddlewareSyncError(
-            'Failed to clear cloud simulation history',
-            err,
-            'cloud-sim-clear-err',
-            'Cleared locally, but failed to clear cloud simulation history.'
-          );
-        });
+      void clearUserSimulationRunsInFirestore(uid).catch((err) => {
+        handleMiddlewareSyncError(
+          'Failed to clear cloud simulation history',
+          err,
+          'cloud-sim-clear-err',
+          'Cleared locally, but failed to clear cloud simulation history.'
+        );
+      });
       return result;
     }
 

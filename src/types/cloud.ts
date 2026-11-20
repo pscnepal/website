@@ -2,7 +2,6 @@ import type { FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query/reac
 import type { User } from 'firebase/auth';
 import type {
   FlashcardProgress,
-  QuestionOutcome,
   QuizPlayMode,
   QuizQuestion,
   WrittenLanguageMode,
@@ -256,5 +255,3 @@ export interface LeaderboardEntry {
 }
 
 export type LeaderboardCategory = 'overall' | 'reading' | 'written' | 'quiz';
-
-export type CloudQuizOutcomeMap = Record<string, QuestionOutcome>;

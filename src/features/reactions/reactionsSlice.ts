@@ -196,11 +196,6 @@ export const {
   hydrateLocalReactions,
 } = reactionsSlice.actions;
 
-export const selectUserReaction = (
-  state: RootState,
-  itemId: string
-): ReactionType | undefined => state.reactions.userReactions[itemId];
-
 export const selectItemReactionData = (
   state: RootState,
   itemId: string,

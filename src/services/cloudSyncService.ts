@@ -3273,10 +3273,6 @@ export function clearLeaderboardVisibilityCache(userId?: string): void {
   }
 }
 
-export function getCachedLeaderboardVisibility(userId: string): boolean | undefined {
-  return leaderboardVisibilityCache.get(userId);
-}
-
 function parseLeaderboardDoc(
   docId: string,
   d: Record<string, unknown>
