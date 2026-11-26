@@ -307,7 +307,8 @@ export const storageService = {
     const targetCadreId =
       saved.targetCadreId === 'section-officer' ||
       saved.targetCadreId === 'nayab-subba' ||
-      saved.targetCadreId === 'kharidar'
+      saved.targetCadreId === 'kharidar' ||
+      saved.targetCadreId === 'ntc-computer-engineer-7'
         ? saved.targetCadreId
         : 'section-officer';
 

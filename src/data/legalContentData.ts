@@ -20,9 +20,9 @@ export const PRIVACY_POLICY_CONTENT = {
       detail: 'Signed-in study history is isolated per verified Google account using Firestore Security Rules.',
     },
     {
-      label: 'Advertising & Trackers',
-      value: 'None',
-      detail: 'Zero third-party ad networks, behavioral tracking pixels, or cross-site marketing cookies.',
+      label: 'Analytics & Ads',
+      value: 'Google Tags',
+      detail: 'Aggregate traffic measurement via Google Analytics and policy-compliant Google AdSense / Ads support when enabled.',
     },
   ],
   tableOfContents: [
@@ -67,7 +67,7 @@ export const PRIVACY_POLICY_CONTENT = {
         {
           title: 'Candidate Profile Fields',
           detail:
-            'You may optionally configure your target PSC cadre (e.g., Section Officer, Nayab Subba, Kharidar), preferred exam track, and study preferences inside your profile.',
+            'You may optionally configure your target PSC/NTC cadre (e.g., Section Officer, Nayab Subba, Kharidar, NTC Computer Engineer Level 7), preferred exam track, and study preferences inside your profile.',
         },
       ],
     },
@@ -114,8 +114,8 @@ export const PRIVACY_POLICY_CONTENT = {
         'Curated statutory PDFs hosted on PSC Nepal are served directly from the application origin. PSC Nepal also loads web typography (Fraunces, Plus Jakarta Sans, Noto Sans Devanagari, and JetBrains Mono) via Google Fonts for clear English and Devanagari rendering.',
     },
     cookiesAnalytics: {
-      heading: '6. Cookies, Analytics, Web Audio & Zero Tracking',
-      body: 'PSC Nepal does not set advertising cookies, third-party analytics trackers, session replay scripts, or cross-site behavioral profiling beacons. Essential browser storage is used strictly for authentication session persistence (Firebase Auth) and your local study preferences. Page-turn sound effects in the flipbook reader are synthesized completely offline via the browser’s Web Audio API.',
+      heading: '6. Cookies, Google Analytics, Advertising & Web Audio',
+      body: 'PSC Nepal uses Google Analytics (GA4) to measure aggregate page views and study feature usage without transmitting personal exam drafts or account passwords. When Google AdSense or Google Ads is enabled, Google and third-party vendors may use cookies to serve ads based on prior visits to this or other websites; users can manage or opt out of personalized advertising via Google Ad Settings (adssettings.google.com) and review how Google uses information from partner sites at policies.google.com/technologies/partner-sites. Essential browser storage remains strictly for Firebase Authentication session persistence and your local study preferences, while page-turn sound effects in the flipbook reader are synthesized completely offline via the Web Audio API.',
     },
     retentionAndRights: {
       heading: '7. Data Retention, Portable Exports & Deletion Controls',
@@ -217,7 +217,7 @@ export const PRIVACY_STORAGE_KEY_DESCRIPTIONS = [
   {
     keyName: `${STORAGE_KEYS.FLAGGED_QUESTIONS} / ${STORAGE_KEYS.REACTIONS}`,
     purpose:
-      'Stores your personal question errata flags, helpful/like reactions, and local view telemetry counts.',
+      'Stores your personal question errata flags and cloud-synced helpful/like reaction and view records.',
     countType: 'flagsReactions' as const,
   },
   {

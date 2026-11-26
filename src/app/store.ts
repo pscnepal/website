@@ -11,6 +11,7 @@ import pscReducer from '../features/psc/pscSlice';
 import quizReducer from '../features/quiz/quizSlice';
 import reactionsReducer, {
   applyItemSyncAck,
+  reconcileUserCloudReactions,
   setCloudItemStats,
 } from '../features/reactions/reactionsSlice';
 import { resolveReactionItemType } from '../features/reactions/reactionUtils';
@@ -29,6 +30,7 @@ import {
   createWrittenEvaluationInFirestore,
   deleteWrittenEvaluationInFirestore,
   fetchAllCloudItemStats,
+  fetchUserCloudReactions,
   syncReactionAndStatsToFirestore,
   updateUserTargetCadreInFirestore,
   upsertLeaderboardEntryInFirestore,
@@ -301,14 +303,31 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
               storeApi.dispatch(applyItemSyncAck(ack));
             }
           })
-          .catch((err) => {
-            handleMiddlewareSyncError(
-              'Cloud reaction sync failed',
-              err,
-              'cloud-reaction-sync-err',
-              'Your rating was saved locally, but cloud sync failed.'
-            );
-          });
+            .catch((err) => {
+              handleMiddlewareSyncError(
+                'Cloud reaction sync failed',
+                err,
+                'cloud-reaction-sync-err',
+                'Could not save your rating to the cloud database.'
+              );
+              if (!isFirestoreOfflineError(err)) {
+                void Promise.all([
+                  fetchUserCloudReactions(uid),
+                  fetchAllCloudItemStats(),
+                ])
+                  .then(([userReactions, stats]) => {
+                    if (auth.currentUser?.uid === uid) {
+                      storeApi.dispatch(
+                        reconcileUserCloudReactions(userReactions)
+                      );
+                      storeApi.dispatch(setCloudItemStats(stats));
+                    }
+                  })
+                  .catch(() => {
+                    // Already notified user via handleMiddlewareSyncError
+                  });
+              }
+            });
       } else if (isViewMutation) {
         scheduleDebouncedTask(timerKey, 1200, uid, () => {
           const state = storeApi.getState();
@@ -338,6 +357,23 @@ const cloudSyncMiddleware: Middleware<Record<string, never>, RootState> =
                 'cloud-view-sync-err',
                 'Could not sync view count to cloud.'
               );
+              if (!isFirestoreOfflineError(err)) {
+                void Promise.all([
+                  fetchUserCloudReactions(uid),
+                  fetchAllCloudItemStats(),
+                ])
+                  .then(([userReactions, stats]) => {
+                    if (auth.currentUser?.uid === uid) {
+                      storeApi.dispatch(
+                        reconcileUserCloudReactions(userReactions)
+                      );
+                      storeApi.dispatch(setCloudItemStats(stats));
+                    }
+                  })
+                  .catch(() => {
+                    // Already notified user via handleMiddlewareSyncError
+                  });
+              }
             });
         });
       }

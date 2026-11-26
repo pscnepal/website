@@ -364,11 +364,12 @@ export function WrittenEvaluatorPage() {
   };
 
   return (
-    <PageTransition>
-      <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <Navbar />
+    <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <Navbar />
 
-        <main className="flex-1 pt-20 pb-16 px-4 sm:px-6 max-w-6xl mx-auto w-full">
+      <PageTransition>
+        <main className="flex-1">
+          <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
             <ol className="flex items-center gap-1.5 flex-wrap">
@@ -377,13 +378,13 @@ export function WrittenEvaluatorPage() {
                   Home
                 </Link>
               </li>
-              <li>/</li>
+              <li aria-hidden="true">/</li>
               <li>
                 <Link to="/written" className="hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                   Written Q&amp;A
                 </Link>
               </li>
-              <li>/</li>
+              <li aria-hidden="true">/</li>
               <li className="text-zinc-800 dark:text-zinc-200 font-medium">
                 {EVALUATOR_HERO_CONTENT.breadcrumbLabel}
               </li>
@@ -397,11 +398,11 @@ export function WrittenEvaluatorPage() {
 
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-crimson-500/20 text-crimson-300 border border-crimson-400/30 text-xs font-medium mb-3">
-                  <Scale className="w-3.5 h-3.5 text-crimson-400" />
+                <div className="flex items-center gap-2 text-xs font-mono font-medium text-crimson-300 mb-3">
+                  <Scale className="w-3.5 h-3.5 text-crimson-400 shrink-0" />
                   <span>{EVALUATOR_HERO_CONTENT.badge}</span>
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
+                <h1 className="font-serif text-fluid-h1 font-bold tracking-tight text-white [text-wrap:balance] mb-2">
                   {EVALUATOR_HERO_CONTENT.headlineNe}
                 </h1>
                 <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
@@ -1114,7 +1115,7 @@ export function WrittenEvaluatorPage() {
                   <FileText className="w-5 h-5 text-blue-600" />
                   <span>विगतका मूल्याङ्कन अभिलेखहरू (Saved Evaluated Attempts)</span>
                 </h3>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   Total {evalHistory.length} evaluated attempts saved in your attempt log.
                 </p>
               </div>
@@ -1156,7 +1157,7 @@ export function WrittenEvaluatorPage() {
                             {rec.marks}M
                           </span>
                         </div>
-                        <div className="text-[11px] text-zinc-500 flex items-center gap-2 flex-wrap">
+                        <div className="text-[11px] text-zinc-500 dark:text-zinc-400 flex items-center gap-2 flex-wrap">
                           <span>{rec.date}</span>
                           <span>·</span>
                           <span>{rec.wordCount} words</span>
@@ -1204,55 +1205,56 @@ export function WrittenEvaluatorPage() {
               </div>
             )}
           </div>
+          </section>
         </main>
 
         <Footer />
+      </PageTransition>
 
-        <ConfirmDialog
-          isOpen={isClearDraftConfirmOpen}
-          title="Clear Current Answer Draft?"
-          description="के तपाईं हाल लेखिएको मस्यौदा खाली गर्न चाहनुहुन्छ? Any unsaved text in the current editor will be cleared."
-          confirmLabel="Clear Draft"
-          confirmColor="crimson"
-          onConfirm={confirmClearDraft}
-          onClose={() => setIsClearDraftConfirmOpen(false)}
-        />
+      <ConfirmDialog
+        isOpen={isClearDraftConfirmOpen}
+        title="Clear Current Answer Draft?"
+        description="के तपाईं हाल लेखिएको मस्यौदा खाली गर्न चाहनुहुन्छ? Any unsaved text in the current editor will be cleared."
+        confirmLabel="Clear Draft"
+        confirmColor="crimson"
+        onConfirm={confirmClearDraft}
+        onClose={() => setIsClearDraftConfirmOpen(false)}
+      />
 
-        <ConfirmDialog
-          isOpen={isClearHistoryConfirmOpen}
-          title="Delete All Evaluation History?"
-          description="के तपाईं सबै मूल्याङ्कन अभिलेखहरू मेटाउन चाहनुहुन्छ? This will permanently remove all saved rubric scorecards from your workspace and synced account."
-          confirmLabel="Delete History"
-          confirmColor="crimson"
-          onConfirm={confirmClearAllHistory}
-          onClose={() => setIsClearHistoryConfirmOpen(false)}
-        />
+      <ConfirmDialog
+        isOpen={isClearHistoryConfirmOpen}
+        title="Delete All Evaluation History?"
+        description="के तपाईं सबै मूल्याङ्कन अभिलेखहरू मेटाउन चाहनुहुन्छ? This will permanently remove all saved rubric scorecards from your workspace and synced account."
+        confirmLabel="Delete History"
+        confirmColor="crimson"
+        onConfirm={confirmClearAllHistory}
+        onClose={() => setIsClearHistoryConfirmOpen(false)}
+      />
 
-        <AnimatePresence>
-          {showAuthGate && selectedQuestion && (
-            <div
-              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 lg:p-6"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="quiz-dialog-title"
-            >
-              <QuizAuthGate
-                title={selectedQuestion.en.title}
-                subtitle={`${selectedQuestion.paper} · ${selectedQuestion.subject}`}
-                metaItems={[
-                  selectedQuestion.id,
-                  `${selectedQuestion.marks} Marks`,
-                  `${selectedQuestion.recommendedMinutes} Min Limit`,
-                ]}
-                description={EVALUATOR_AUTH_GATE_CONTENT.description}
-                benefits={[...EVALUATOR_AUTH_GATE_CONTENT.benefits]}
-                actionLabel={EVALUATOR_AUTH_GATE_CONTENT.actionLabel}
-                onClose={() => setShowAuthGate(false)}
-              />
-            </div>
-          )}
-        </AnimatePresence>
-      </div>
-    </PageTransition>
+      <AnimatePresence>
+        {showAuthGate && selectedQuestion && (
+          <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 lg:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quiz-dialog-title"
+          >
+            <QuizAuthGate
+              title={selectedQuestion.en.title}
+              subtitle={`${selectedQuestion.paper} · ${selectedQuestion.subject}`}
+              metaItems={[
+                selectedQuestion.id,
+                `${selectedQuestion.marks} Marks`,
+                `${selectedQuestion.recommendedMinutes} Min Limit`,
+              ]}
+              description={EVALUATOR_AUTH_GATE_CONTENT.description}
+              benefits={[...EVALUATOR_AUTH_GATE_CONTENT.benefits]}
+              actionLabel={EVALUATOR_AUTH_GATE_CONTENT.actionLabel}
+              onClose={() => setShowAuthGate(false)}
+            />
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

@@ -55,18 +55,16 @@ In Nepal Lok Sewa Aayog (लोक सेवा आयोग) Phase I Objective 
 }
 
 function handleSyllabusComparison(): string {
-  return `### Comprehensive Comparison: Section Officer, Nayab Subba & Kharidar
+  return `### Comprehensive Comparison: Section Officer, Nayab Subba, Kharidar & NTC Computer Engineer (Level 7)
 
-| Metric / Feature | [Section Officer (शाखा अधिकृत)](/syllabus/section-officer) | [Nayab Subba (नायब सुब्बा)](/syllabus/nayab-subba) | [Kharidar (खरिदार)](/syllabus/kharidar) |
-|---|---|---|---|
-| **Gazetted Level** | Gazetted Class III (राजपत्राङ्कित तृतीय) | Non-Gazetted 1st Class (राजपत्र अनङ्कित प्रथम) | Non-Gazetted 2nd Class (राजपत्र अनङ्कित द्वितीय) |
-| **Minimum Academic Eligibility** | Bachelor's Degree (स्नातक तह) | Higher Secondary / 10+2 (प्रवीणता प्रमाण पत्र / १२ कक्षा) | SLC / SEE with GPA ≥ 1.6 or equivalent |
-| **Phase I Screening** | 100 Marks (50 MCQs × 2M: GK 60M + IQ 40M) | 100 Marks (50 MCQs × 2M: GK 60M + General Aptitude 40M) | 100 Marks (50 MCQs × 2M: GK 60M + Basic Aptitude 40M) |
-| **Phase I Duration** | 90 Minutes (1.5 Hours) | 45 Minutes | 45 Minutes |
-| **Phase I Pass Gate** | **45% (45 Marks)** | **40% (40 Marks)** | **40% (40 Marks)** |
-| **Phase I Marks in Final Merit?** | **No** (Screening filter only) | **Yes, 50% carried forward** (50M max) | **Yes, 50% carried forward** (50M max) |
-| **Phase II Written Papers** | Paper II: Governance (100M)<br/>Paper III: Contemporary (100M)<br/>Paper IV: Service-Specific (100M) | Paper II: Contemporary & Public Mgmt (100M)<br/>Paper III: Service-Specific Subject (100M) | Paper II: Office Mgmt & Governance (100M)<br/>Paper III: Job-Oriented Knowledge (100M) |
-| **Phase III / Stage III** | Extra Paper (Foreign Service 100M) + Skill Test (10M) + Group Discussion (10M) + Viva (40M) | Computer Skill Test (10M) + Interview (40M) | Computer Skill Test (10M) + Interview (30M) |
+| Metric / Feature | [Section Officer (शाखा अधिकृत)](/syllabus/section-officer) | [Nayab Subba (नायब सुब्बा)](/syllabus/nayab-subba) | [Kharidar (खरिदार)](/syllabus/kharidar) | [NTC Comp. Eng. (L7)](/syllabus/ntc-computer-engineer-7) |
+|---|---|---|---|---|
+| **Classification** | Gazetted Class III | Non-Gazetted 1st Class | Non-Gazetted 2nd Class | Officer Level 7 · Technical (NTC) |
+| **Eligibility** | Bachelor's Degree | 10+2 / Higher Secondary | SEE / SLC (GPA ≥ 2.0) | BE / B.Tech in Comp./CSE/IT + NEC Reg. |
+| **Phase I / Paper I** | 100M (100 MCQs × 1M: GK 50 + Aptitude 30 + Eng 20) | 100M (50 MCQs × 2M: GK 60M + GMAT 40M) | 100M (50 MCQs × 2M: GK 60M + BOST 40M) | 100M (30 MCQs×1M + 10×4M + 3×10M General) |
+| **Pass Gate & Negative** | **45%** (-20%, qualifying only) | **45%** (-20%, qualifying only) | **45%** (-20%, qualifying only) | **40%** in each paper (-20% on MCQs) |
+| **Main / Technical Papers** | Papers II, III & IV (300M Total) | Paper II & Paper III (200M Total) | Paper II & Paper III (200M Total) | Paper II: Specialized Computer Eng. (100M) |
+| **Final Stage** | IT Skill (10M) + Group (10M) + Viva (40M) | Computer Skill (10M) + Viva (30M) | Computer Skill (10M) + Viva (30M) | Oral Interview (30M) · **Total Merit: 230M** |
 
 - Explore all papers, chapters, and topic briefs in the [Official Syllabus Explorer](/syllabus).`;
 }
@@ -81,10 +79,11 @@ PSC Nepal features three distinct, realistic simulation halls designed to replic
 - **Strict Countdown Timer**: Timed down to the second with automated auto-submission.
 - **Official Scoring**: Instant score breakdown with \`-20%\` negative marking and official Pass/Fail screening qualification determination.
 - **Available Presets**:
-  - [Section Officer Phase I Master OMR](/simulate?mode=omr-hall&preset=so-phase1-omr&launch=1) (50 MCQs, 90 mins, 45% pass gate)
-  - [Nayab Subba Phase I Speed Drill](/simulate?mode=omr-hall&preset=nasu-phase1-omr&launch=1) (50 MCQs, 45 mins, 40% pass gate)
-  - [Kharidar Phase I Foundation OMR](/simulate?mode=omr-hall&preset=kh-phase1-omr&launch=1) (50 MCQs, 45 mins, 40% pass gate)
-  - [Phase I 15-Minute Sprint](/simulate?mode=omr-hall&preset=mini-omr-sprint&launch=1) (15 MCQs, quick tune-up)
+  - [Section Officer Phase I Master OMR](/simulate?mode=omr-hall&preset=so-phase1-omr&launch=1) (30-Q Master Hall, -20% negative, 45% pass gate)
+  - [Nayab Subba Phase I Speed Drill](/simulate?mode=omr-hall&preset=nasu-phase1-omr&launch=1) (25 MCQs × 2M, 45% pass gate)
+  - [Kharidar Phase I Foundation OMR](/simulate?mode=omr-hall&preset=kharidar-phase1-omr&launch=1) (25 MCQs × 2M, 45% pass gate)
+  - [NTC Computer Engineer Level 7 OMR](/simulate?mode=omr-hall&preset=ntc-l7-omr&launch=1) (30 Technical MCQs × 1M, -20% negative, 40% pass gate)
+  - [Phase I 15-Minute Sprint](/simulate?mode=omr-hall&preset=rapid-15-omr&launch=1) (15 MCQs, quick tune-up)
 
 #### 2. [Phase II Timed Written Paper Hall](/simulate?mode=written-hall)
 - **Bilingual Prompts**: Toggle between English and नेपाली instructions and model rubrics.
@@ -92,10 +91,10 @@ PSC Nepal features three distinct, realistic simulation halls designed to replic
 - **In-App Answer Editor & Word Counter**: Type or draft answers with real-time word counting.
 - **Self-Scoring Examiner Rubric**: Verify key required points and self-evaluate with Full Credit (100%), Partial Credit (55%), or Missed (0%).
 - **Available Presets**:
-  - [Section Officer Paper II Governance Hall](/simulate?mode=written-hall&preset=so-paper2-hall&launch=1)
-  - [Nayab Subba Paper II Public Management](/simulate?mode=written-hall&preset=nasu-paper2-hall&launch=1)
-  - [Kharidar Paper II Office Administration](/simulate?mode=written-hall&preset=kh-paper2-hall&launch=1)
-  - [Governance & Contemporary Case Study Sprint](/simulate?mode=written-hall&preset=governance-case-sprint&launch=1)
+  - [Section Officer Paper II Governance Hall](/simulate?mode=written-hall&preset=written-paper-2&launch=1)
+  - [Nayab Subba Office Operations & Federalism](/simulate?mode=written-hall&preset=written-office-nasu&launch=1)
+  - [NTC Computer Engineer Technical Subjective Sitting](/simulate?mode=written-hall&preset=written-ntc-l7&launch=1)
+  - [Service Delivery & Case Study Sitting](/simulate?mode=written-hall&preset=written-paper-4&launch=1)
 
 #### 3. [Merit & Negative-Marking Strategy Lab](/simulate?mode=merit-lab)
 - Calculate statistically expected net scores under different risk appetites (confident answers, 50/50 educated guesses, and blind guesses).
@@ -160,7 +159,9 @@ function handleCandidateProgress(clientContext?: ClientStudyContext): string {
       ? 'Section Officer (शाखा अधिकृत)'
       : targetCadreId === 'nayab-subba'
         ? 'Nayab Subba (नायब सुब्बा)'
-        : 'Kharidar (खरिदार)';
+        : targetCadreId === 'ntc-computer-engineer-7'
+          ? 'NTC Computer Engineer (Level 7)'
+          : 'Kharidar (खरिदार)';
 
   return `### Your Active Study Dashboard Summary
 
@@ -445,6 +446,28 @@ View all topics and checklists on the [Nayab Subba Syllabus Explorer](/syllabus/
 View all topics and checklists on the [Kharidar Syllabus Explorer](/syllabus/kharidar).`;
   }
 
+  if (
+    /\bntc\b|telecom|नेपाल टेलिकम|computer engineer|कम्प्युटर इन्जिनियर/i.test(
+      query
+    )
+  ) {
+    const ntcCadre = PSC_CADRE_SYLLABI.find(
+      (c) => c.id === 'ntc-computer-engineer-7'
+    )!;
+    return `### Nepal Telecom · Computer Engineer (Level 7 Technical)
+
+- **Classification**: ${ntcCadre.rankClassification} | **Eligibility**: ${ntcCadre.eligibilitySummary}
+- **Passing Rule**: Minimum **40/100** in Paper I and **40/100** in Paper II separately · **-20%** negative marking per wrong MCQ · Non-programmable calculators permitted.
+- **Total Merit**: **230 Marks** = Paper I (100M) + Paper II (100M) + Oral Interview (30M).
+
+#### Examination Structure:
+1. **Paper I (General Module — 100M · 2 Hrs)**: 30 MCQs × 1M + 10 Short × 4M + 3 Long × 10M. Covers Engineering Math/Stat, Applied Mechanics & Thermodynamics, Electricity/Electronics, ICT (64M) + Project Mgmt, Engineering Economics, Management & Telecom/ETA/PPA Acts (36M).
+2. **Paper II (Specialized Computer Engineering — 100M · 2 Hrs)**: 30 MCQs × 1M + 10 Short × 4M + 3 Long × 10M across **16 Core Domains** (Electronics, DSP, Digital Systems, Comp. Architecture, Advanced Architecture, VLSI, Computer Communications, AI, Distributed Systems, Data Structures, OS, Software Engineering, Databases, Internet Programming, Client-Server & Network Security).
+3. **Final Stage**: Oral Interview Board (30 Marks).
+
+Explore the full checklist on the [NTC Level 7 Syllabus Explorer](/syllabus/ntc-computer-engineer-7) or launch the [NTC Computer Engineer Quiz Deck](/quiz/ntc-computer-engineering).`;
+  }
+
   // 4. Constitution of Nepal (संविधान) specific inquiry
   if (/constitution|संविधान|2072|मौलिक हक|directive principles/i.test(query)) {
     const relatedWritten = liveWrittenQuestions.find((w) =>
@@ -585,6 +608,7 @@ Mark this topic complete in the [${cadre.shortTitle} Syllabus Checklist](/syllab
    - [शाखा अधिकृत (Section Officer) पाठ्यक्रम](/syllabus/section-officer)
    - [नायब सुब्बा (Nayab Subba) पाठ्यक्रम](/syllabus/nayab-subba)
    - [खरिदार (Kharidar) पाठ्यक्रम](/syllabus/kharidar)
+   - [नेपाल टेलिकम कम्प्युटर इन्जिनियर (तह ७)](/syllabus/ntc-computer-engineer-7)
 2. **वस्तुगत प्रश्नोत्तर (MCQs)**:
    - -२०% माइनस मार्किङ र समय सीमासहित अभ्यास गर्न [वस्तुगत प्रश्न बैंक](/quiz) मा जानुहोस्।
 3. **विषयगत नमुना उत्तर (Written Model Answers)**:
@@ -603,8 +627,9 @@ I'm ready to help you navigate all study materials, syllabi, questions, and exam
 
 1. **Official Syllabi & Negative Marking**:
    - [Section Officer Syllabus](/syllabus/section-officer) (Pass gate: 45%, -20% negative marking)
-   - [Nayab Subba Syllabus](/syllabus/nayab-subba) (Pass gate: 40%, 50% carried forward)
-   - [Kharidar Syllabus](/syllabus/kharidar) (Pass gate: 40%, 50% carried forward)
+   - [Nayab Subba Syllabus](/syllabus/nayab-subba) (Pass gate: 45%, -20% negative marking)
+   - [Kharidar Syllabus](/syllabus/kharidar) (Pass gate: 45%, -20% negative marking)
+   - [NTC Computer Engineer Level 7](/syllabus/ntc-computer-engineer-7) (Paper I 100M + Paper II 100M + Viva 30M = 230M)
 2. **Objective MCQ Question Bank**:
    - Over 110+ verified MCQs with detailed statutory explanations in the [MCQ Quiz Arena](/quiz).
 3. **Subjective Written Model Answers**:

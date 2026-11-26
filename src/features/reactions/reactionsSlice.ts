@@ -18,6 +18,7 @@ export type {
 const initialReactions = storageService.loadReactions();
 
 const initialState: ReactionsState = {
+  isCloudSyncActive: false,
   userReactions: initialReactions.userReactions ?? {},
   itemViews: initialReactions.itemViews ?? {},
   itemTypes: {},
@@ -30,10 +31,14 @@ export const reactionsSlice = createSlice({
   name: 'reactions',
   initialState,
   reducers: {
+    setCloudReactionSyncActive: (state, action: PayloadAction<boolean>) => {
+      state.isCloudSyncActive = action.payload;
+    },
     recordView: (
       state,
       action: PayloadAction<{ itemId: string; itemType?: ReactionItemType }>
     ) => {
+      if (!state.isCloudSyncActive) return;
       const { itemId, itemType } = action.payload;
       if (itemType) {
         state.itemTypes[itemId] = itemType;
@@ -44,6 +49,7 @@ export const reactionsSlice = createSlice({
       state,
       action: PayloadAction<{ itemId: string; itemType?: ReactionItemType }>
     ) => {
+      if (!state.isCloudSyncActive) return;
       const { itemId, itemType } = action.payload;
       if (itemType) {
         state.itemTypes[itemId] = itemType;
@@ -59,6 +65,7 @@ export const reactionsSlice = createSlice({
       state,
       action: PayloadAction<{ itemId: string; itemType?: ReactionItemType }>
     ) => {
+      if (!state.isCloudSyncActive) return;
       const { itemId, itemType } = action.payload;
       if (itemType) {
         state.itemTypes[itemId] = itemType;
@@ -78,6 +85,7 @@ export const reactionsSlice = createSlice({
         itemType?: ReactionItemType;
       }>
     ) => {
+      if (!state.isCloudSyncActive) return;
       const { itemId, reaction, itemType } = action.payload;
       if (itemType) {
         state.itemTypes[itemId] = itemType;
@@ -119,6 +127,19 @@ export const reactionsSlice = createSlice({
           state.itemViews[id] = remoteViews;
         }
       }
+    },
+    reconcileUserCloudReactions: (
+      state,
+      action: PayloadAction<{
+        userReactions: Record<string, ReactionType>;
+        itemViews: Record<string, number>;
+      }>
+    ) => {
+      const { userReactions, itemViews } = action.payload;
+      state.userReactions = { ...userReactions };
+      state.itemViews = { ...itemViews };
+      state.syncedUserReactions = { ...userReactions };
+      state.syncedItemViews = { ...itemViews };
     },
     applyItemSyncAck: (
       state,
@@ -183,12 +204,14 @@ export const reactionsSlice = createSlice({
 });
 
 export const {
+  setCloudReactionSyncActive,
   recordView,
   toggleLike,
   toggleDislike,
   setReaction,
   setCloudItemStats,
   hydrateUserCloudReactions,
+  reconcileUserCloudReactions,
   applyItemSyncAck,
   resetCloudReactionSyncState,
   resetLocalUserReactions,
@@ -206,10 +229,20 @@ export const selectItemReactionData = (
   views: number;
   userReaction: ReactionType | null;
 } => {
+  const cloud = state.reactions.cloudStats?.[itemId];
+
+  if (!state.reactions.isCloudSyncActive) {
+    return {
+      likes: Math.max(0, cloud?.likes ?? 0),
+      dislikes: Math.max(0, cloud?.dislikes ?? 0),
+      views: Math.max(0, cloud?.views ?? 0),
+      userReaction: null,
+    };
+  }
+
   const userReaction = state.reactions.userReactions[itemId] ?? null;
   const userAddedViews = state.reactions.itemViews?.[itemId] ?? 0;
 
-  const cloud = state.reactions.cloudStats?.[itemId];
   const syncedReaction = state.reactions.syncedUserReactions?.[itemId] ?? null;
   const syncedViews = state.reactions.syncedItemViews?.[itemId] ?? 0;
 

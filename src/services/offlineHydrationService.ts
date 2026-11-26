@@ -54,15 +54,12 @@ export async function initializeOfflineStorageHydration(
 
   try {
     // 1. Hydrate or seed Study Banks (MCQs, Written Q&A, Materials Catalog, Current Affairs)
-    const [storedQuizBank, storedWrittenBank, storedMaterialsBank, storedAffairs] =
+    const [storedQuizBank, storedWrittenBank, storedMaterialsBank] =
       await Promise.all([
         offlineDbService.getStudyBank<QuizQuestion[]>('quiz_questions'),
         offlineDbService.getStudyBank<WrittenQuestion[]>('written_questions'),
         offlineDbService.getStudyBank<ReadingMaterialCategory[]>(
           'material_categories'
-        ),
-        offlineDbService.getStudyBank<typeof CURRENT_AFFAIRS_ITEMS>(
-          'current_affairs'
         ),
       ]);
 
@@ -108,9 +105,7 @@ export async function initializeOfflineStorageHydration(
       );
     }
 
-    if (!storedAffairs) {
-      void offlineDbService.putStudyBank('current_affairs', CURRENT_AFFAIRS_ITEMS);
-    }
+    void offlineDbService.putStudyBank('current_affairs', CURRENT_AFFAIRS_ITEMS);
 
     // 2. Reconcile User Progress Snapshot between localStorage and IndexedDB
     const idbProgress = await offlineDbService.getAllProgressRecords();

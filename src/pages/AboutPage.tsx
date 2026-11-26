@@ -37,7 +37,6 @@ const PILLAR_ICON_TONE: Record<AboutPlatformPillar['tone'], string> = {
   purple:
     'bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-400',
   amber: 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400',
-  teal: 'bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-400',
 };
 
 const PILLAR_LINK_TONE: Record<AboutPlatformPillar['tone'], string> = {
@@ -46,7 +45,6 @@ const PILLAR_LINK_TONE: Record<AboutPlatformPillar['tone'], string> = {
   emerald: 'text-emerald-700 dark:text-emerald-400',
   purple: 'text-purple-700 dark:text-purple-400',
   amber: 'text-amber-700 dark:text-amber-400',
-  teal: 'text-teal-700 dark:text-teal-400',
 };
 
 const CADRE_TONE_CLASSES: Record<
@@ -70,6 +68,12 @@ const CADRE_TONE_CLASSES: Record<
       'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200',
     link: 'text-emerald-700 dark:text-emerald-400',
   },
+  purple: {
+    label: 'text-purple-700 dark:text-purple-400',
+    badge:
+      'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-200',
+    link: 'text-purple-700 dark:text-purple-400',
+  },
 };
 
 export function AboutPage() {
@@ -80,7 +84,7 @@ export function AboutPage() {
       <PageTransition>
         <main className="flex-1 min-w-0 w-full">
           {/* Hero Banner Section */}
-          <section className="relative overflow-hidden border-b border-zinc-200/90 dark:border-zinc-800/90 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xs py-12 sm:py-16">
+          <section className="relative overflow-hidden border-b border-zinc-200/90 dark:border-zinc-800/90 bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xs py-10 sm:py-16">
             <div
               aria-hidden="true"
               className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100/40 via-transparent to-transparent dark:from-blue-950/20"
@@ -96,12 +100,12 @@ export function AboutPage() {
               </nav>
 
               <div className="space-y-4 max-w-3xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-900/60 bg-blue-50/80 dark:bg-blue-950/50 text-xs font-semibold text-blue-800 dark:text-blue-300">
-                  <GraduationCap className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" />
+                <div className="flex items-center gap-2 text-xs font-mono font-semibold text-blue-700 dark:text-blue-400">
+                  <GraduationCap className="w-3.5 h-3.5 shrink-0" />
                   <span>{ABOUT_HERO_CONTENT.badge}</span>
                 </div>
 
-                <h1 className="font-serif text-fluid-h1 font-bold tracking-tight text-zinc-950 dark:text-zinc-50">
+                <h1 className="font-serif text-fluid-h1 font-bold tracking-tight text-zinc-950 dark:text-zinc-50 [text-wrap:balance]">
                   {ABOUT_HERO_CONTENT.headline}
                 </h1>
 
@@ -113,7 +117,7 @@ export function AboutPage() {
           </section>
 
           {/* Main Content Body */}
-          <article className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 space-y-16 min-w-0">
+          <article className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-16 min-w-0">
             {/* Mission & Vision Grid */}
             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {ABOUT_MISSION_VISION.map((card) => {
@@ -192,7 +196,7 @@ export function AboutPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {ABOUT_CADRE_SUMMARIES.map((cadre) => {
                   const tone = CADRE_TONE_CLASSES[cadre.tone];
                   return (

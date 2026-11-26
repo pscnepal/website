@@ -191,7 +191,9 @@ export function buildLeaderboardStatsPayload(
   const safeName = (source.displayName || 'PSC Aspirant').trim().slice(0, 120) || 'PSC Aspirant';
   const safePhoto = source.photoURL?.trim().slice(0, 512);
   const safeCadre: PscCadreId =
-    source.targetCadre === 'nayab-subba' || source.targetCadre === 'kharidar'
+    source.targetCadre === 'nayab-subba' ||
+    source.targetCadre === 'kharidar' ||
+    source.targetCadre === 'ntc-computer-engineer-7'
       ? source.targetCadre
       : 'section-officer';
 

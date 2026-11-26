@@ -13,7 +13,7 @@ export const CALENDAR_HERO_CONTENT = {
   badge: `आधिकारिक पदपूर्ति कार्यतालिका ${SITE_CONFIG.academicSessionYear}`,
   headlineNe: 'लोक सेवा आयोग परीक्षा तथा विज्ञापन कार्यतालिका',
   description:
-    'Official Nepal PSC annual recruitment timeline, application deadlines, examination routines, hall venue notices, and OMR guidelines for Section Officer, Nayab Subba, and Kharidar.',
+    'Official Nepal PSC & NTC annual recruitment timeline, application deadlines, examination routines, hall venue notices, and OMR guidelines for Section Officer, Nayab Subba, Kharidar, and NTC Computer Engineer (Level 7).',
 } as const;
 
 export const EXAM_HALL_MANDATORY_ITEMS: ReadonlyArray<HallRuleItem> = [
@@ -54,7 +54,7 @@ export const EXAM_HALL_PROHIBITED_ITEMS: ReadonlyArray<HallRuleItem> = [
     id: 'calculator',
     titleNe: 'क्यालकुलेटर (Calculators):',
     detailNe:
-      'सामान्य ज्ञान, बौद्धिक परीक्षण (IQ) तथा प्रथम चरणका कुनै पनि वस्तुगत परीक्षामा क्यालकुलेटर निषेध गरिएको छ।',
+      'अप्राविधिक सामान्य ज्ञान/IQ र प्रथम चरणका वस्तुगत परीक्षामा क्यालकुलेटर निषेध छ (प्राविधिक इन्जिनियरिङ/NTC पत्रमा Non-Programmable क्यालकुलेटर मात्र अनुमति छ)।',
   },
   {
     id: 'notes',

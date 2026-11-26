@@ -21,7 +21,7 @@ export function Footer() {
 
   return (
     <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 mt-16">
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 space-y-8 text-sm text-zinc-500 dark:text-zinc-400">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
           {/* Brand & Theme Switcher */}
           <div className="md:col-span-5 space-y-3">

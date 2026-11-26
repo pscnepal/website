@@ -9,6 +9,7 @@ import {
   toggleLike,
 } from '../../features/reactions/reactionsSlice';
 import { formatCompactCount } from '../../features/reactions/reactionUtils';
+import { toast } from '../../services/toastService';
 import type { ReactionButtonsProps } from '../../types/common';
 
 export type { ReactionButtonsProps };
@@ -16,7 +17,6 @@ export type { ReactionButtonsProps };
 export function ReactionButtons({
   itemId,
   itemType = 'question',
-  baseCounts,
   size = 'sm',
   showLabels = false,
   showViews = true,
@@ -24,33 +24,58 @@ export function ReactionButtons({
   className = '',
 }: ReactionButtonsProps) {
   const dispatch = useAppDispatch();
-  const { isDashboardAdmin } = useAuth();
+  const { user, isDashboardAdmin, signInWithGoogle } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
   const rawReactionData = useAppSelector((state) =>
     selectItemReactionData(state, itemId, itemType)
   );
 
-  const likes = rawReactionData.likes + (baseCounts?.likes ?? 0);
-  const dislikes = rawReactionData.dislikes + (baseCounts?.dislikes ?? 0);
-  const views = rawReactionData.views + (baseCounts?.views ?? 0);
+  const likes = rawReactionData.likes;
+  const dislikes = rawReactionData.dislikes;
+  const views = rawReactionData.views;
   const userReaction = rawReactionData.userReaction;
 
   const isCountOnly = Boolean(readOnly || isDashboardAdmin);
   const isLiked = !isCountOnly && userReaction === 'like';
   const isDisliked = !isCountOnly && userReaction === 'dislike';
 
+  const ensureAuthenticatedForReaction = (): boolean => {
+    if (!user) {
+      toast.info(
+        'Sign in with Google to submit ratings saved to the database.',
+        {
+          id: 'reaction-auth-required',
+          action: {
+            label: 'Sign in',
+            onClick: () => {
+              void signInWithGoogle();
+            },
+          },
+        }
+      );
+      return false;
+    }
+    if (!user.emailVerified) {
+      toast.info('Please verify your email to submit likes or dislikes.', {
+        id: 'reaction-auth-required',
+      });
+      return false;
+    }
+    return true;
+  };
+
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (isCountOnly) return;
+    if (isCountOnly || !ensureAuthenticatedForReaction()) return;
     dispatch(toggleLike({ itemId, itemType }));
   };
 
   const handleDislike = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (isCountOnly) return;
+    if (isCountOnly || !ensureAuthenticatedForReaction()) return;
     dispatch(toggleDislike({ itemId, itemType }));
   };
 
@@ -127,7 +152,7 @@ export function ReactionButtons({
             title={`${dislikes.toLocaleString()} total dislikes`}
             className={`inline-flex items-center gap-1.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 select-none font-medium ${paddingClass} ${textSizeClass}`}
           >
-            <ThumbsDown className={`${iconSizeClass} text-rose-600/80 dark:text-rose-400/80`} />
+            <ThumbsDown className={`${iconSizeClass} text-crimson-600/80 dark:text-crimson-400/80`} />
             <span className="font-mono tabular-nums leading-none">
               {formatCompactCount(dislikes)}
             </span>
@@ -177,14 +202,14 @@ export function ReactionButtons({
             transition={motionTransition}
             className={`inline-flex items-center gap-1.5 rounded-lg border transition-all cursor-pointer select-none font-medium ${paddingClass} ${textSizeClass} ${
               isDisliked
-                ? 'border-rose-300 dark:border-rose-700/80 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 font-semibold shadow-2xs'
+                ? 'border-crimson-300 dark:border-crimson-700/80 bg-crimson-50 dark:bg-crimson-950/50 text-crimson-700 dark:text-crimson-300 font-semibold shadow-2xs'
                 : 'border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60'
             } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600`}
           >
             <ThumbsDown
               className={`${iconSizeClass} transition-transform ${
                 isDisliked
-                  ? 'fill-rose-600 dark:fill-rose-400 text-rose-600 dark:text-rose-400'
+                  ? 'fill-crimson-600 dark:fill-crimson-400 text-crimson-600 dark:text-crimson-400'
                   : 'text-zinc-500 dark:text-zinc-400'
               }`}
             />

@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { GoogleAdUnit } from '../components/ads/GoogleAdUnit';
 import { ActionButton } from '../components/common/ActionButton';
 import { ReactionButtons } from '../components/common/ReactionButtons';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
@@ -109,11 +110,12 @@ export function PyqArchivePage() {
   const bookmarkCount = Object.values(bookmarkedIds).filter(Boolean).length;
 
   return (
-    <PageTransition>
-      <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <Navbar />
+    <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <Navbar />
 
-        <main className="flex-1 pt-20 pb-16 px-4 sm:px-6 max-w-6xl mx-auto w-full">
+      <PageTransition>
+        <main className="flex-1">
+          <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
             <ol className="flex items-center gap-1.5 flex-wrap">
@@ -122,7 +124,7 @@ export function PyqArchivePage() {
                   Home
                 </Link>
               </li>
-              <li>/</li>
+              <li aria-hidden="true">/</li>
               <li className="text-zinc-800 dark:text-zinc-200 font-medium">
                 Past Years Questions &amp; Frequency Analysis (विगतका प्रश्नहरू)
               </li>
@@ -136,11 +138,11 @@ export function PyqArchivePage() {
 
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-medium mb-3">
-                  <History className="w-3.5 h-3.5 text-blue-400" />
+                <div className="flex items-center gap-2 text-xs font-mono font-medium text-blue-300 mb-3">
+                  <History className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                   <span>विगतका वास्तविक परीक्षा प्रश्नहरू (२०७५–२०८० BS)</span>
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
+                <h1 className="font-serif text-fluid-h1 font-bold tracking-tight text-white [text-wrap:balance] mb-2">
                   विगतका प्रश्न सङ्ग्रह तथा पुनरावृत्ति विश्लेषण
                 </h1>
                 <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
@@ -208,7 +210,7 @@ export function PyqArchivePage() {
             >
               <History className="w-4 h-4" />
               <span>Questions Archive (विगतका प्रश्नहरू)</span>
-              <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+              <span className="ml-1 text-xs font-mono tabular-nums px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
                 {PYQ_QUESTION_ENTRIES.length}
               </span>
             </button>
@@ -224,7 +226,7 @@ export function PyqArchivePage() {
             >
               <BarChart3 className="w-4 h-4" />
               <span>Frequency Trend Heatmap (पुनरावृत्ति म्याप)</span>
-              <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
+              <span className="ml-1 text-xs font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
                 High Yield
               </span>
             </button>
@@ -295,6 +297,7 @@ export function PyqArchivePage() {
                       { id: 'section-officer', label: 'Section Officer (अधिकृत)' },
                       { id: 'nayab-subba', label: 'Nayab Subba (ना.सु.)' },
                       { id: 'kharidar', label: 'Kharidar (खरिदार)' },
+                      { id: 'ntc-computer-engineer-7', label: 'NTC Comp. Eng. (L7)' },
                     ].map((cadre) => (
                       <button
                         key={cadre.id}
@@ -651,10 +654,12 @@ export function PyqArchivePage() {
               </div>
             </div>
           )}
+          <GoogleAdUnit variant="horizontal" className="pt-4" />
+          </section>
         </main>
 
         <Footer />
-      </div>
-    </PageTransition>
+      </PageTransition>
+    </div>
   );
 }

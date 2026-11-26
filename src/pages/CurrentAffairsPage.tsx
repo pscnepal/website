@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { GoogleAdUnit } from '../components/ads/GoogleAdUnit';
 import { ActionButton } from '../components/common/ActionButton';
 import { ReactionButtons } from '../components/common/ReactionButtons';
 import { Footer } from '../components/layout/Footer';
@@ -68,7 +69,12 @@ import { createBookIdFromUrl, resolveSampleUrl } from '../utils/urlHelpers';
 
 type CurrentAffairsWorkspaceTab = 'feed' | 'quiz' | 'written' | 'materials';
 type CadenceFilter = 'all' | CurrentAffairCadence;
-type CadreFilter = 'all' | 'section-officer' | 'nayab-subba' | 'kharidar';
+type CadreFilter =
+  | 'all'
+  | 'section-officer'
+  | 'nayab-subba'
+  | 'kharidar'
+  | 'ntc-computer-engineer-7';
 type PracticeLangMode = 'bilingual' | 'en' | 'ne';
 type MaterialGroupFilter = 'all' | 'briefings' | 'economy' | 'oversight';
 
@@ -611,11 +617,12 @@ export function CurrentAffairsPage() {
   };
 
   return (
-    <PageTransition>
-      <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <Navbar />
+    <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <Navbar />
 
-        <main className="flex-1 pt-20 pb-16 px-4 sm:px-6 max-w-6xl mx-auto w-full">
+      <PageTransition>
+        <main className="flex-1">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
           {/* Breadcrumb Header */}
           <nav
             aria-label="Breadcrumb"
@@ -638,7 +645,7 @@ export function CurrentAffairsPage() {
           </nav>
 
           {/* Editorial Hero Banner */}
-          <section className="rounded-2xl bg-gradient-to-br from-blue-950 via-slate-900 to-zinc-950 text-white p-6 sm:p-8 mb-6 border border-blue-900/50 shadow-xl">
+          <section className="rounded-2xl bg-gradient-to-br from-blue-950 via-zinc-900 to-zinc-950 text-white p-6 sm:p-8 mb-6 border border-blue-900/50 shadow-xl">
             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
               <div className="max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-blue-300 mb-3">
@@ -648,7 +655,7 @@ export function CurrentAffairsPage() {
                   <span aria-hidden="true">·</span>
                   <span>Daily · Weekly · Monthly Samasamayik Desk</span>
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white [text-wrap:balance] mb-2.5">
+                <h1 className="font-serif text-fluid-h1 font-bold tracking-tight text-white [text-wrap:balance] mb-2.5">
                   समसामयिक विषयवस्तु तथा घटनाक्रम
                 </h1>
                 <p className="text-blue-100/90 text-sm sm:text-base leading-relaxed max-w-2xl">
@@ -1003,6 +1010,10 @@ export function CurrentAffairsPage() {
                         },
                         { id: 'nayab-subba', label: 'Nayab Subba (ना.सु.)' },
                         { id: 'kharidar', label: 'Kharidar (खरिदार)' },
+                        {
+                          id: 'ntc-computer-engineer-7',
+                          label: 'NTC Comp. Eng. (L7)',
+                        },
                       ] as const
                     ).map((cadre) => (
                       <button
@@ -1257,11 +1268,6 @@ export function CurrentAffairsPage() {
                               itemId={item.id}
                               itemType="affair"
                               size="xs"
-                              baseCounts={{
-                                views: item.views,
-                                likes: item.likes,
-                                dislikes: item.dislikes,
-                              }}
                             />
 
                             <div className="flex items-center gap-2">
@@ -2154,7 +2160,13 @@ export function CurrentAffairsPage() {
               />
             </div>
           </div>
+
+          <GoogleAdUnit variant="horizontal" className="pt-6" />
+          </div>
         </main>
+
+        <Footer />
+      </PageTransition>
 
         {/* Compiled Daily / Weekly / Monthly Digest Modal */}
         {isDigestModalOpen && (
@@ -2288,9 +2300,6 @@ export function CurrentAffairsPage() {
             </div>
           </div>
         )}
-
-        <Footer />
-      </div>
-    </PageTransition>
+    </div>
   );
 }

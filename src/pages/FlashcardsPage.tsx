@@ -157,11 +157,12 @@ export function FlashcardsPage() {
   const overallMasteryPct = Math.round((masteredCount / totalCardsCount) * 100);
 
   return (
-    <PageTransition>
-      <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-        <Navbar />
+    <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <Navbar />
 
-        <main className="flex-1 pt-20 pb-16 px-4 sm:px-6 max-w-6xl mx-auto w-full">
+      <PageTransition>
+        <main className="flex-1">
+          <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
           {/* Breadcrumb */}
           <nav aria-label="Breadcrumb" className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
             <ol className="flex items-center gap-1.5 flex-wrap">
@@ -170,7 +171,7 @@ export function FlashcardsPage() {
                   Home
                 </Link>
               </li>
-              <li>/</li>
+              <li aria-hidden="true">/</li>
               <li className="text-zinc-800 dark:text-zinc-200 font-medium">
                 Flashcard Studio (स्मरण कार्ड - Leitner System)
               </li>
@@ -178,17 +179,17 @@ export function FlashcardsPage() {
           </nav>
 
           {/* Hero Banner with Leitner Box Progress */}
-          <div className="relative rounded-2xl bg-gradient-to-br from-indigo-950 via-zinc-900 to-zinc-950 text-white p-6 sm:p-8 mb-8 overflow-hidden border border-indigo-900/40 shadow-xl">
-            <div className="absolute -right-12 -bottom-12 w-80 h-80 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative rounded-2xl bg-gradient-to-br from-blue-950 via-zinc-900 to-zinc-950 text-white p-6 sm:p-8 mb-8 overflow-hidden border border-blue-900/40 shadow-xl">
+            <div className="absolute -right-12 -bottom-12 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute right-28 -top-16 w-64 h-64 bg-crimson-600/15 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 text-xs font-medium mb-3">
-                  <Brain className="w-3.5 h-3.5 text-indigo-400" />
+                <div className="flex items-center gap-2 text-xs font-mono font-medium text-blue-300 mb-3">
+                  <Brain className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                   <span>Leitner Spaced Repetition (स्मरण विधि)</span>
                 </div>
-                <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
+                <h1 className="font-serif text-fluid-h1 font-bold tracking-tight text-white [text-wrap:balance] mb-2">
                   लोक सेवा स्मरण कार्ड स्टुडियो (Flashcards)
                 </h1>
                 <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
@@ -243,14 +244,14 @@ export function FlashcardsPage() {
             </div>
           </div>
 
-          {/* Deck Selector Pills */}
+          {/* Deck Selector Bar */}
           <div className="bg-white dark:bg-zinc-900 rounded-xl p-4 sm:p-5 border border-zinc-200 dark:border-zinc-800 shadow-xs mb-8 space-y-4">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-zinc-500 uppercase tracking-wider">Select Deck:</span>
+              <span className="font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Select Deck:</span>
               <button
                 type="button"
                 onClick={handleResetProgress}
-                className="text-xs text-zinc-500 hover:text-crimson-600 dark:hover:text-crimson-400 flex items-center gap-1"
+                className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-crimson-600 dark:hover:text-crimson-400 flex items-center gap-1 transition-colors"
               >
                 <RotateCw className="w-3 h-3" />
                 Reset Deck Progress
@@ -261,7 +262,7 @@ export function FlashcardsPage() {
               <button
                 type="button"
                 onClick={() => setSelectedDeckId('all')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                   selectedDeckId === 'all'
                     ? 'bg-blue-700 text-white dark:bg-blue-600'
                     : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -274,7 +275,7 @@ export function FlashcardsPage() {
                   key={d.id}
                   type="button"
                   onClick={() => setSelectedDeckId(d.id)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
                     selectedDeckId === d.id
                       ? 'bg-blue-700 text-white dark:bg-blue-600'
                       : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
@@ -288,7 +289,7 @@ export function FlashcardsPage() {
             {/* Filter by Box Level & Search */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-xs">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-semibold text-zinc-500 mr-1">Filter Retention:</span>
+                <span className="font-semibold text-zinc-500 dark:text-zinc-400 mr-1">Filter Retention:</span>
                 {[
                   { id: 'all', label: 'All Cards' },
                   { id: 1, label: 'Box 1: Hard / New' },
@@ -299,7 +300,7 @@ export function FlashcardsPage() {
                     key={lvl.id}
                     type="button"
                     onClick={() => setFilterBoxLevel(lvl.id as any)}
-                    className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                       filterBoxLevel === lvl.id
                         ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
                         : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
@@ -311,7 +312,7 @@ export function FlashcardsPage() {
               </div>
 
               {/* Search */}
-              <div className="relative min-w-[220px]">
+              <div className="relative w-full sm:w-auto sm:min-w-[220px]">
                 <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <label htmlFor={searchInputId} className="sr-only">
                   Search Flashcards
@@ -322,13 +323,14 @@ export function FlashcardsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search cards..."
-                  className="w-full pl-8 pr-7 py-1 text-xs bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-md text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  className="w-full pl-8 pr-7 py-1 text-xs bg-zinc-50 dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-md text-zinc-900 dark:text-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -603,20 +605,21 @@ export function FlashcardsPage() {
               </div>
             </div>
           )}
+          </section>
         </main>
 
         <Footer />
+      </PageTransition>
 
-        <ConfirmDialog
-          isOpen={isResetConfirmOpen}
-          title="Reset Deck Leitner Progress?"
-          description="के तपाईं यस डेकको स्मरण प्रगति रिसेट गर्न चाहनुहुन्छ? All box mastery progress for the currently filtered cards will return to Box 1."
-          confirmLabel="Reset Progress"
-          confirmColor="crimson"
-          onConfirm={confirmResetProgress}
-          onClose={() => setIsResetConfirmOpen(false)}
-        />
-      </div>
-    </PageTransition>
+      <ConfirmDialog
+        isOpen={isResetConfirmOpen}
+        title="Reset Deck Leitner Progress?"
+        description="के तपाईं यस डेकको स्मरण प्रगति रिसेट गर्न चाहनुहुन्छ? All box mastery progress for the currently filtered cards will return to Box 1."
+        confirmLabel="Reset Progress"
+        confirmColor="crimson"
+        onConfirm={confirmResetProgress}
+        onClose={() => setIsResetConfirmOpen(false)}
+      />
+    </div>
   );
 }

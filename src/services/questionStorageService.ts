@@ -119,21 +119,53 @@ function safeWrite<T>(key: string, value: T): void {
   }
 }
 
+let cachedQuizQuestions: QuizQuestion[] | null = null;
+let cachedHydratedDecks: { source: QuizQuestion[]; decks: QuizDeck[] } | null = null;
+let cachedWrittenQuestions: WrittenQuestion[] | null = null;
+
+function invalidateQuizCache(): void {
+  cachedQuizQuestions = null;
+  cachedHydratedDecks = null;
+}
+
+function invalidateWrittenCache(): void {
+  cachedWrittenQuestions = null;
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (!event.key || event.key === QUIZ_STORAGE_KEY) {
+      invalidateQuizCache();
+    }
+    if (!event.key || event.key === WRITTEN_STORAGE_KEY) {
+      invalidateWrittenCache();
+    }
+  });
+}
+
 export const questionStorageService = {
   // ==========================================
   // MCQ (Quiz) Questions CRUD & Cloud Sync
   // ==========================================
 
   loadQuizQuestions(): QuizQuestion[] {
+    if (cachedQuizQuestions !== null) {
+      return cachedQuizQuestions;
+    }
     const custom = safeRead<QuizQuestion[]>(QUIZ_STORAGE_KEY);
     if (custom !== null) {
-      return hydrateQuizSeedBilingualFields(custom);
+      cachedQuizQuestions = hydrateQuizSeedBilingualFields(custom);
+      return cachedQuizQuestions;
     }
-    return ALL_QUIZ_QUESTIONS.map(sanitizeQuizQuestionLanguage);
+    cachedQuizQuestions = ALL_QUIZ_QUESTIONS.map(sanitizeQuizQuestionLanguage);
+    return cachedQuizQuestions;
   },
 
   hydrateQuizDecks(questions?: QuizQuestion[]): QuizDeck[] {
     const liveQuestions = questions ?? this.loadQuizQuestions();
+    if (cachedHydratedDecks && cachedHydratedDecks.source === liveQuestions) {
+      return cachedHydratedDecks.decks;
+    }
     const byId = new Map(liveQuestions.map((q) => [q.id, q]));
     const customAdditions = liveQuestions.filter((q) => !SEED_QUIZ_BY_ID.has(q.id));
 
@@ -174,10 +206,18 @@ export const questionStorageService = {
           s.includes('contemporary')
         );
       }
+      if (deckId === 'ntc-computer-engineering') {
+        return (
+          s.includes('computer') ||
+          s.includes('telecom') ||
+          s.includes('engineering') ||
+          s.includes('network')
+        );
+      }
       return deckId === 'comprehensive-mock';
     };
 
-    return QUIZ_DECKS.map((deck) => {
+    const decks = QUIZ_DECKS.map((deck) => {
       const seedMatched = deck.questions
         .map((q) => byId.get(q.id))
         .filter((q): q is QuizQuestion => Boolean(q));
@@ -192,10 +232,14 @@ export const questionStorageService = {
         questions: merged,
       };
     });
+    cachedHydratedDecks = { source: liveQuestions, decks };
+    return decks;
   },
 
   saveQuizQuestions(questions: QuizQuestion[]): void {
     const cleaned = questions.map(sanitizeQuizQuestionLanguage);
+    cachedQuizQuestions = cleaned;
+    cachedHydratedDecks = null;
     safeWrite(QUIZ_STORAGE_KEY, cleaned);
     void offlineDbService.putStudyBank('quiz_questions', cleaned);
     if (typeof window !== 'undefined') {
@@ -214,9 +258,10 @@ export const questionStorageService = {
       }
       if (typeof window !== 'undefined' && window.localStorage.getItem(QUIZ_STORAGE_KEY)) {
         window.localStorage.removeItem(QUIZ_STORAGE_KEY);
+        invalidateQuizCache();
         window.dispatchEvent(
           new CustomEvent(QUESTION_EVENTS.QUIZ_CHANGED, {
-            detail: ALL_QUIZ_QUESTIONS.map(sanitizeQuizQuestionLanguage),
+            detail: this.loadQuizQuestions(),
           })
         );
       }
@@ -365,6 +410,8 @@ export const questionStorageService = {
   resetQuizQuestionsToDefault(): void {
     pendingQuizMutations.clear();
     const defaults = ALL_QUIZ_QUESTIONS.map(sanitizeQuizQuestionLanguage);
+    cachedQuizQuestions = defaults;
+    cachedHydratedDecks = null;
     void offlineDbService.putStudyBank('quiz_questions', defaults);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(QUIZ_STORAGE_KEY);
@@ -469,11 +516,16 @@ export const questionStorageService = {
   // ==========================================
 
   loadWrittenQuestions(): WrittenQuestion[] {
+    if (cachedWrittenQuestions !== null) {
+      return cachedWrittenQuestions;
+    }
     const custom = safeRead<WrittenQuestion[]>(WRITTEN_STORAGE_KEY);
     if (custom !== null) {
-      return custom;
+      cachedWrittenQuestions = custom;
+      return cachedWrittenQuestions;
     }
-    return [...WRITTEN_QUESTIONS];
+    cachedWrittenQuestions = [...WRITTEN_QUESTIONS];
+    return cachedWrittenQuestions;
   },
 
   getWrittenQuestionById(questionId: string): WrittenQuestion | undefined {
@@ -481,6 +533,7 @@ export const questionStorageService = {
   },
 
   saveWrittenQuestions(questions: WrittenQuestion[]): void {
+    cachedWrittenQuestions = questions;
     safeWrite(WRITTEN_STORAGE_KEY, questions);
     void offlineDbService.putStudyBank('written_questions', questions);
     if (typeof window !== 'undefined') {
@@ -499,9 +552,10 @@ export const questionStorageService = {
       }
       if (typeof window !== 'undefined' && window.localStorage.getItem(WRITTEN_STORAGE_KEY)) {
         window.localStorage.removeItem(WRITTEN_STORAGE_KEY);
+        invalidateWrittenCache();
         window.dispatchEvent(
           new CustomEvent(QUESTION_EVENTS.WRITTEN_CHANGED, {
-            detail: [...WRITTEN_QUESTIONS],
+            detail: this.loadWrittenQuestions(),
           })
         );
       }
@@ -648,6 +702,7 @@ export const questionStorageService = {
   resetWrittenQuestionsToDefault(): void {
     pendingWrittenMutations.clear();
     const defaults = [...WRITTEN_QUESTIONS];
+    cachedWrittenQuestions = defaults;
     void offlineDbService.putStudyBank('written_questions', defaults);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(WRITTEN_STORAGE_KEY);

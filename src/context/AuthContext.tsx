@@ -55,6 +55,7 @@ import {
   resetCloudReactionSyncState,
   resetLocalUserReactions,
   setCloudItemStats,
+  setCloudReactionSyncActive,
 } from '../features/reactions/reactionsSlice';
 import { resolveReactionItemType } from '../features/reactions/reactionUtils';
 import { hydrateSettings } from '../features/settings/settingsSlice';
@@ -78,6 +79,7 @@ import {
   reportFirestoreSnapshotError,
 } from '../lib/firebase';
 import { pscApi } from '../app/api/pscApi';
+import { useGoogleAdsConversion } from '../hooks/useGoogleAdsConversion';
 import { trackAnalyticsEvent } from '../services/analyticsService';
 import {
   clearEnsuredProfileCache,
@@ -478,6 +480,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const syncingUidRef = useRef<string | null>(null);
   const hadAuthenticatedSessionRef = useRef(false);
   const needsPublicCloudReloadRef = useRef(false);
+  const { trackSignupConversion } = useGoogleAdsConversion();
 
   const loadPublicCloudData = useCallback(
     async (isCancelled?: () => boolean) => {
@@ -607,7 +610,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [loadPublicCloudData]);
 
-  // Real-time community itemStats, question banks, and reading materials listeners when user is authenticated
+  // Real-time public community itemStats listener for all visitors
+  useEffect(() => {
+    if (!isAuthReady) return;
+    const unsubscribeStats = subscribeToCloudItemStats(
+      (stats) => {
+        dispatch(setCloudItemStats(stats));
+      },
+      (err) => {
+        if (isFirestoreOfflineError(err)) {
+          console.warn('Community stats live sync paused while offline.');
+          return;
+        }
+        console.error('Community stats live sync error:', err);
+        toast.error(
+          formatUserFriendlyError(
+            err,
+            'Live community ratings sync was interrupted.'
+          ),
+          { id: 'cloud-stats-sub-err' }
+        );
+      }
+    );
+    return () => {
+      unsubscribeStats();
+    };
+  }, [isAuthReady, dispatch]);
+
+  // Real-time question banks and reading materials listeners when user is authenticated
   useEffect(() => {
     if (!isAuthReady || !user) return;
     const handleLiveSyncError = (
@@ -628,19 +658,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.error(formatUserFriendlyError(err, fallbackMsg), { id: toastId });
     };
 
-    const unsubscribeStats = subscribeToCloudItemStats(
-      (stats) => {
-        dispatch(setCloudItemStats(stats));
-      },
-      (err) => {
-        handleLiveSyncError(
-          'Community stats live sync error',
-          err,
-          'cloud-stats-sub-err',
-          'Live community ratings sync was interrupted.'
-        );
-      }
-    );
     const unsubscribeQuizBank = subscribeToCloudQuizOverrides(
       (overrides) => {
         questionStorageService.applyCloudQuizOverrides(overrides);
@@ -681,7 +698,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
     return () => {
-      unsubscribeStats();
       unsubscribeQuizBank();
       unsubscribeWrittenBank();
       unsubscribeMaterials();
@@ -797,6 +813,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           resetAllLocalAccountData(previousCloudUid);
         }
         storageService.setLastCloudUid(firebaseUser.uid);
+        dispatch(setCloudReactionSyncActive(true));
 
         // 1. Sync Quiz & OMR Attempts
         const remoteAttempts = await fetchUserQuizAttempts(firebaseUser.uid);
@@ -1308,6 +1325,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hadAuthenticatedSessionRef.current = false;
         syncedUidRef.current = null;
         syncingUidRef.current = null;
+        dispatch(setCloudReactionSyncActive(false));
 
         if (wasAuthenticatedSession || previousCloudUid) {
           // Reset RTK Query state cleanly instead of invalidateTags so user/admin queries
@@ -1322,10 +1340,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           clearEnsuredProfileCache();
           clearLeaderboardVisibilityCache();
           dispatch(resetCloudReactionSyncState());
+          dispatch(resetLocalUserReactions());
         }
         return;
       }
 
+      dispatch(setCloudReactionSyncActive(Boolean(firebaseUser.emailVerified)));
       hadAuthenticatedSessionRef.current = true;
       void syncAuthenticatedUser(firebaseUser);
     });
@@ -1360,6 +1380,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const credential = await signInWithPopup(auth, googleProvider);
       setUser(credential.user);
       trackAnalyticsEvent('login', { method: 'google' });
+      trackSignupConversion({ transactionId: credential.user.uid });
       const name =
         credential.user.displayName || credential.user.email || 'your account';
       toast.success(`Signed in as ${name}.`, {
@@ -1378,7 +1399,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsSigningIn(false);
     }
-  }, []);
+  }, [trackSignupConversion]);
 
   const signOutUser = useCallback(async (): Promise<void> => {
     setAuthError(null);

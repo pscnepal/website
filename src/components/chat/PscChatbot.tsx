@@ -63,7 +63,15 @@ function loadSavedMessages(): ChatMessage[] {
   }
 }
 
-export function PscChatbot() {
+export interface PscChatbotProps {
+  defaultOpen?: boolean;
+  initialPrompt?: string;
+}
+
+export function PscChatbot({
+  defaultOpen = false,
+  initialPrompt,
+}: PscChatbotProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
@@ -122,7 +130,7 @@ export function PscChatbot() {
     recentBooksCount,
   ]);
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(Boolean(defaultOpen));
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(loadSavedMessages);
   const [inputValue, setInputValue] = useState('');
@@ -282,6 +290,19 @@ export function PscChatbot() {
     },
     [clientContext, clearTypingTimer, isGenerating]
   );
+
+  const initialPromptHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (initialPromptHandledRef.current) return;
+    const trimmed = initialPrompt?.trim();
+    if (!trimmed) return;
+    initialPromptHandledRef.current = true;
+    const id = window.setTimeout(() => {
+      void sendPrompt(trimmed);
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [initialPrompt, sendPrompt]);
 
   // Listen for global open-chat custom events (e.g. Navbar button) and Escape key
   useEffect(() => {

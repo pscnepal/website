@@ -17,28 +17,28 @@ export const BookCoverVector: FC<BookCoverVectorProps> = ({
   // Palette schemes for authoritative administrative bindings
   const colorConfigs = {
     navy: {
-      bgGradient: 'from-slate-900 via-indigo-950 to-slate-950',
-      spineColor: 'bg-indigo-950/80',
+      bgGradient: 'from-blue-950 via-zinc-900 to-zinc-950',
+      spineColor: 'bg-blue-950/80',
       accentColor: '#F59E0B', // Amber gold
       badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-400/40',
       sealStroke: '#FBBF24',
     },
     crimson: {
-      bgGradient: 'from-rose-950 via-red-950 to-zinc-950',
-      spineColor: 'bg-red-950/80',
+      bgGradient: 'from-crimson-950 via-red-950 to-zinc-950',
+      spineColor: 'bg-crimson-950/80',
       accentColor: '#FBBF24',
-      badgeBg: 'bg-rose-500/20 text-rose-300 border-rose-400/40',
+      badgeBg: 'bg-crimson-500/20 text-crimson-300 border-crimson-400/40',
       sealStroke: '#FBBF24',
     },
     emerald: {
-      bgGradient: 'from-emerald-950 via-teal-950 to-zinc-950',
+      bgGradient: 'from-emerald-950 via-zinc-900 to-zinc-950',
       spineColor: 'bg-emerald-950/80',
       accentColor: '#34D399',
       badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40',
       sealStroke: '#34D399',
     },
     amber: {
-      bgGradient: 'from-amber-950 via-stone-900 to-zinc-950',
+      bgGradient: 'from-amber-950 via-zinc-900 to-zinc-950',
       spineColor: 'bg-amber-950/80',
       accentColor: '#F59E0B',
       badgeBg: 'bg-amber-500/20 text-amber-300 border-amber-400/40',

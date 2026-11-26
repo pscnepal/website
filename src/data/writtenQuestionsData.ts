@@ -1,6 +1,7 @@
 import { PAPER_2_QUESTIONS } from './written/paper2Questions';
 import { PAPER_3_QUESTIONS } from './written/paper3Questions';
 import { PAPER_4_QUESTIONS } from './written/paper4Questions';
+import { NTC_TECH_QUESTIONS } from './written/ntcTechQuestions';
 import { WRITTEN_PAPERS, type WrittenQuestion } from './written/types';
 
 export type {
@@ -19,6 +20,7 @@ export const WRITTEN_QUESTIONS: WrittenQuestion[] = [
   ...PAPER_2_QUESTIONS,
   ...PAPER_3_QUESTIONS,
   ...PAPER_4_QUESTIONS,
+  ...NTC_TECH_QUESTIONS,
 ];
 
 export function getWrittenQuestionById(

@@ -159,16 +159,40 @@ function resolveCategoryMeta(
   };
 }
 
+let cachedCategories: ReadingMaterialCategory[] | null = null;
+let cachedFlatMaterials: FlatReadingMaterial[] | null = null;
+
+function invalidateMaterialCache(): void {
+  cachedCategories = null;
+  cachedFlatMaterials = null;
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (!event.key || event.key === MATERIALS_STORAGE_KEY) {
+      invalidateMaterialCache();
+    }
+  });
+}
+
 export const materialStorageService = {
   loadMaterialCategories(): ReadingMaterialCategory[] {
+    if (cachedCategories !== null) {
+      return cachedCategories;
+    }
     const custom = safeReadCategories();
     if (custom !== null) {
-      return custom;
+      cachedCategories = custom;
+      return cachedCategories;
     }
-    return cloneSeedCategories();
+    cachedCategories = cloneSeedCategories();
+    return cachedCategories;
   },
 
   loadAllMaterialsFlat(): FlatReadingMaterial[] {
+    if (cachedFlatMaterials !== null) {
+      return cachedFlatMaterials;
+    }
     const categories = this.loadMaterialCategories();
     const list: FlatReadingMaterial[] = [];
     for (const cat of categories) {
@@ -180,7 +204,8 @@ export const materialStorageService = {
         });
       }
     }
-    return list;
+    cachedFlatMaterials = list;
+    return cachedFlatMaterials;
   },
 
   findMaterialById(materialId: string): FlatReadingMaterial | undefined {
@@ -201,6 +226,8 @@ export const materialStorageService = {
   },
 
   saveMaterialCategories(categories: ReadingMaterialCategory[]): void {
+    cachedCategories = categories;
+    cachedFlatMaterials = null;
     safeWriteCategories(categories);
     void offlineDbService.putStudyBank('material_categories', categories);
     if (typeof window !== 'undefined') {
@@ -222,9 +249,10 @@ export const materialStorageService = {
         window.localStorage.getItem(MATERIALS_STORAGE_KEY)
       ) {
         window.localStorage.removeItem(MATERIALS_STORAGE_KEY);
+        invalidateMaterialCache();
         window.dispatchEvent(
           new CustomEvent(MATERIAL_EVENTS.CHANGED, {
-            detail: cloneSeedCategories(),
+            detail: this.loadMaterialCategories(),
           })
         );
       }
@@ -607,6 +635,8 @@ export const materialStorageService = {
   resetMaterialsToDefault(): void {
     pendingMaterialMutations.clear();
     const defaults = cloneSeedCategories();
+    cachedCategories = defaults;
+    cachedFlatMaterials = null;
     void offlineDbService.putStudyBank('material_categories', defaults);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(MATERIALS_STORAGE_KEY);

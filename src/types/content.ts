@@ -35,9 +35,6 @@ export interface CurrentAffairItem {
   summaryNe: string;
   keyFacts: string[];
   examTip: string;
-  likes: number;
-  dislikes: number;
-  views: number;
   pinned?: boolean;
   source: string;
   linkedQuizIds?: string[];
@@ -256,7 +253,7 @@ export interface AboutPlatformPillar {
   linkLabel: string;
   to: string;
   icon: LucideIcon;
-  tone: 'blue' | 'crimson' | 'emerald' | 'purple' | 'amber' | 'teal';
+  tone: 'blue' | 'crimson' | 'emerald' | 'purple' | 'amber';
 }
 
 export interface AboutCadreSummary {
@@ -266,7 +263,7 @@ export interface AboutCadreSummary {
   heading: string;
   description: string;
   ctaLabel: string;
-  tone: 'blue' | 'crimson' | 'emerald';
+  tone: 'blue' | 'crimson' | 'emerald' | 'purple';
 }
 
 export interface ContactCategoryOption {

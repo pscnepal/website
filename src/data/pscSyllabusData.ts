@@ -9,6 +9,7 @@ import {
   SECTION_OFFICER_PHASE_3,
 } from './syllabus/sectionOfficerStage1And3.ts';
 import { SECTION_OFFICER_PHASE_2 } from './syllabus/sectionOfficerStage2Service.ts';
+import { NTC_COMPUTER_ENGINEER_7_SYLLABUS } from './syllabus/ntcComputerEngineerSyllabus.ts';
 import type {
   CadreSyllabusStats,
   PscCadreSyllabus,
@@ -139,10 +140,13 @@ export const NAYAB_SUBBA_SYLLABUS: PscCadreSyllabus = {
   phases: [NAYAB_SUBBA_PHASE_1, NAYAB_SUBBA_PHASE_2, NAYAB_SUBBA_PHASE_3],
 };
 
+export { NTC_COMPUTER_ENGINEER_7_SYLLABUS };
+
 export const PSC_CADRE_SYLLABI: PscCadreSyllabus[] = [
   SECTION_OFFICER_SYLLABUS,
   NAYAB_SUBBA_SYLLABUS,
   KHARIDAR_SYLLABUS,
+  NTC_COMPUTER_ENGINEER_7_SYLLABUS,
 ];
 
 export const ALL_SYLLABUS_UNITS: PscSyllabusUnit[] = PSC_CADRE_SYLLABI.flatMap(

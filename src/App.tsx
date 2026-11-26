@@ -3,8 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useRef } from 'react';
-import { LayoutGroup, useReducedMotion } from 'motion/react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  type ComponentType,
+  type LazyExoticComponent,
+} from 'react';
+import { LayoutGroup, MotionConfig, useReducedMotion } from 'motion/react';
 import {
   BrowserRouter,
   Navigate,
@@ -14,47 +21,117 @@ import {
 } from 'react-router-dom';
 import { useAppSelector } from './app/hooks';
 import { GoogleAnalyticsTracker } from './components/analytics/GoogleAnalyticsTracker';
-import { PscChatbot } from './components/chat/PscChatbot';
+import { DeferredPscChatbot } from './components/chat/DeferredPscChatbot';
 import {
   ErrorBoundary,
   GlobalErrorListener,
 } from './components/common/ErrorBoundary';
+import { RouteFallback } from './components/common/RouteFallback';
 import { ToastViewport } from './components/common/ToastViewport';
-import { DashboardLayout } from './components/dashboard/DashboardLayout';
 import { ScrollToTopButton } from './components/layout/ScrollToTopButton';
 import { OfflineIndicator } from './components/pwa/OfflineIndicator';
 import { SeoManager } from './components/seo/SeoManager';
-import { AboutPage } from './pages/AboutPage';
-import { ContactPage } from './pages/ContactPage';
-import { CurrentAffairsPage } from './pages/CurrentAffairsPage';
-import { DashboardDataPage } from './pages/dashboard/DashboardDataPage';
-import { DashboardFlaggedPage } from './pages/dashboard/DashboardFlaggedPage';
-import { DashboardInquiriesPage } from './pages/dashboard/DashboardInquiriesPage';
-import { DashboardMaterialsPage } from './pages/dashboard/DashboardMaterialsPage';
-import { DashboardOverviewPage } from './pages/dashboard/DashboardOverviewPage';
-import { DashboardQuizBankPage } from './pages/dashboard/DashboardQuizBankPage';
-import { DashboardUsersPage } from './pages/dashboard/DashboardUsersPage';
-import { DashboardWrittenBankPage } from './pages/dashboard/DashboardWrittenBankPage';
-import { FeaturesPage } from './pages/FeaturesPage';
-import { FlashcardsPage } from './pages/FlashcardsPage';
 import { HomePage } from './pages/HomePage';
-import { LeaderboardPage } from './pages/LeaderboardPage';
-import { LibraryPage } from './pages/LibraryPage';
-import { MaterialsPage } from './pages/MaterialsPage';
-import { NotFoundPage } from './pages/NotFoundPage';
-import { NoticeCalendarPage } from './pages/NoticeCalendarPage';
-import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
-import { ProgressPage } from './pages/ProgressPage';
-import { PyqArchivePage } from './pages/PyqArchivePage';
-import { QuizPage } from './pages/QuizPage';
-import { ReaderPage } from './pages/ReaderPage';
-import { SimulationPage } from './pages/SimulationPage';
-import { SyllabusPage } from './pages/SyllabusPage';
-import { TermsPage } from './pages/TermsPage';
-import { WrittenEvaluatorPage } from './pages/WrittenEvaluatorPage';
-import { WrittenQuestionsPage } from './pages/WrittenQuestionsPage';
-import { revokeAllLocalPdfFiles } from './services/pdfService';
+import { revokeAllLocalPdfFiles } from './services/pdfLocalCacheService';
 import type { OptionalParamRouteEntry, RouteEntry } from './types/common';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function lazyNamed<TModule, K extends keyof TModule>(
+  importer: () => Promise<TModule>,
+  exportName: K
+): LazyExoticComponent<ComponentType<any>> {
+  return lazy(() =>
+    importer().then((mod) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      default: mod[exportName] as ComponentType<any>,
+    }))
+  );
+}
+
+const DashboardLayout = lazyNamed(
+  () => import('./components/dashboard/DashboardLayout'),
+  'DashboardLayout'
+);
+const DashboardOverviewPage = lazyNamed(
+  () => import('./pages/dashboard/DashboardOverviewPage'),
+  'DashboardOverviewPage'
+);
+const DashboardQuizBankPage = lazyNamed(
+  () => import('./pages/dashboard/DashboardQuizBankPage'),
+  'DashboardQuizBankPage'
+);
+const DashboardFlaggedPage = lazyNamed(
+  () => import('./pages/dashboard/DashboardFlaggedPage'),
+  'DashboardFlaggedPage'
+);
+const DashboardWrittenBankPage = lazyNamed(
+  () => import('./pages/dashboard/DashboardWrittenBankPage'),
+  'DashboardWrittenBankPage'
+);
+const DashboardMaterialsPage = lazyNamed(
+  () => import('./pages/dashboard/DashboardMaterialsPage'),
+  'DashboardMaterialsPage'
+);
+const DashboardUsersPage = lazyNamed(
+  () => import('./pages/dashboard/DashboardUsersPage'),
+  'DashboardUsersPage'
+);
+const DashboardInquiriesPage = lazyNamed(
+  () => import('./pages/dashboard/DashboardInquiriesPage'),
+  'DashboardInquiriesPage'
+);
+const DashboardDataPage = lazyNamed(
+  () => import('./pages/dashboard/DashboardDataPage'),
+  'DashboardDataPage'
+);
+
+const SyllabusPage = lazyNamed(() => import('./pages/SyllabusPage'), 'SyllabusPage');
+const MaterialsPage = lazyNamed(() => import('./pages/MaterialsPage'), 'MaterialsPage');
+const QuizPage = lazyNamed(() => import('./pages/QuizPage'), 'QuizPage');
+const WrittenQuestionsPage = lazyNamed(
+  () => import('./pages/WrittenQuestionsPage'),
+  'WrittenQuestionsPage'
+);
+const SimulationPage = lazyNamed(
+  () => import('./pages/SimulationPage'),
+  'SimulationPage'
+);
+const WrittenEvaluatorPage = lazyNamed(
+  () => import('./pages/WrittenEvaluatorPage'),
+  'WrittenEvaluatorPage'
+);
+const CurrentAffairsPage = lazyNamed(
+  () => import('./pages/CurrentAffairsPage'),
+  'CurrentAffairsPage'
+);
+const NoticeCalendarPage = lazyNamed(
+  () => import('./pages/NoticeCalendarPage'),
+  'NoticeCalendarPage'
+);
+const PyqArchivePage = lazyNamed(
+  () => import('./pages/PyqArchivePage'),
+  'PyqArchivePage'
+);
+const FlashcardsPage = lazyNamed(
+  () => import('./pages/FlashcardsPage'),
+  'FlashcardsPage'
+);
+const LeaderboardPage = lazyNamed(
+  () => import('./pages/LeaderboardPage'),
+  'LeaderboardPage'
+);
+const ProgressPage = lazyNamed(() => import('./pages/ProgressPage'), 'ProgressPage');
+const LibraryPage = lazyNamed(() => import('./pages/LibraryPage'), 'LibraryPage');
+const FeaturesPage = lazyNamed(() => import('./pages/FeaturesPage'), 'FeaturesPage');
+const ReaderPage = lazyNamed(() => import('./pages/ReaderPage'), 'ReaderPage');
+const AboutPage = lazyNamed(() => import('./pages/AboutPage'), 'AboutPage');
+const ContactPage = lazyNamed(() => import('./pages/ContactPage'), 'ContactPage');
+const PrivacyPolicyPage = lazyNamed(
+  () => import('./pages/PrivacyPolicyPage'),
+  'PrivacyPolicyPage'
+);
+const TermsPage = lazyNamed(() => import('./pages/TermsPage'), 'TermsPage');
+const NotFoundPage = lazyNamed(() => import('./pages/NotFoundPage'), 'NotFoundPage');
 
 const DASHBOARD_CHILD_ROUTES: ReadonlyArray<RouteEntry> = [
   { path: 'quiz-bank', element: <DashboardQuizBankPage /> },
@@ -189,61 +266,65 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <SeoManager />
-      <GoogleAnalyticsTracker />
-      <ScrollManager />
-      <GlobalErrorListener />
-      <LayoutGroup>
-        <ErrorBoundary>
-          <Routes>
-            {/* Dedicated Dashboard Section */}
-            <Route path="/dashboard" element={<DashboardLayout />}>
-              <Route index element={<DashboardOverviewPage />} />
-              {DASHBOARD_CHILD_ROUTES.map(({ path, element }) => (
-                <Route key={path} path={path} element={element} />
-              ))}
-              {DASHBOARD_REDIRECTS.map(([from, to]) => (
-                <Route
-                  key={from}
-                  path={from}
-                  element={<Navigate to={to} replace />}
-                />
-              ))}
-            </Route>
+    <MotionConfig reducedMotion="user">
+      <BrowserRouter>
+        <SeoManager />
+        <GoogleAnalyticsTracker />
+        <ScrollManager />
+        <GlobalErrorListener />
+        <LayoutGroup>
+          <ErrorBoundary>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                {/* Dedicated Dashboard Section */}
+                <Route path="/dashboard" element={<DashboardLayout />}>
+                  <Route index element={<DashboardOverviewPage />} />
+                  {DASHBOARD_CHILD_ROUTES.map(({ path, element }) => (
+                    <Route key={path} path={path} element={element} />
+                  ))}
+                  {DASHBOARD_REDIRECTS.map(([from, to]) => (
+                    <Route
+                      key={from}
+                      path={from}
+                      element={<Navigate to={to} replace />}
+                    />
+                  ))}
+                </Route>
 
-            {/* Primary Public & Study Routes */}
-            {PUBLIC_PAGE_ROUTES.map(({ path, element }) => (
-              <Route key={path} path={path} element={element} />
-            ))}
+                {/* Primary Public & Study Routes */}
+                {PUBLIC_PAGE_ROUTES.map(({ path, element }) => (
+                  <Route key={path} path={path} element={element} />
+                ))}
 
-            {/* Parameterized Study Routes */}
-            {OPTIONAL_PARAM_ROUTES.flatMap(({ basePath, param, element }) => [
-              <Route key={basePath} path={basePath} element={element} />,
-              <Route
-                key={`${basePath}/:${param}`}
-                path={`${basePath}/:${param}`}
-                element={element}
-              />,
-            ])}
+                {/* Parameterized Study Routes */}
+                {OPTIONAL_PARAM_ROUTES.flatMap(({ basePath, param, element }) => [
+                  <Route key={basePath} path={basePath} element={element} />,
+                  <Route
+                    key={`${basePath}/:${param}`}
+                    path={`${basePath}/:${param}`}
+                    element={element}
+                  />,
+                ])}
 
-            {/* Legacy & Alias Redirects */}
-            {LEGACY_REDIRECT_ROUTES.map(([from, to]) => (
-              <Route
-                key={from}
-                path={from}
-                element={<Navigate to={to} replace />}
-              />
-            ))}
+                {/* Legacy & Alias Redirects */}
+                {LEGACY_REDIRECT_ROUTES.map(([from, to]) => (
+                  <Route
+                    key={from}
+                    path={from}
+                    element={<Navigate to={to} replace />}
+                  />
+                ))}
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </ErrorBoundary>
-      </LayoutGroup>
-      <ScrollToTopButton />
-      <OfflineIndicator />
-      <PscChatbot />
-      <ToastViewport />
-    </BrowserRouter>
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </LayoutGroup>
+        <ScrollToTopButton />
+        <OfflineIndicator />
+        <DeferredPscChatbot />
+        <ToastViewport />
+      </BrowserRouter>
+    </MotionConfig>
   );
 }

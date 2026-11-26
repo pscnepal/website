@@ -21,6 +21,7 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { GoogleAdUnit } from '../components/ads/GoogleAdUnit';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
@@ -458,7 +459,7 @@ export function SyllabusPage() {
 
       <PageTransition>
         <main className="flex-1">
-          <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-10">
+          <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-10">
           {/* Breadcrumb & Unified PSC Switcher */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -555,7 +556,7 @@ export function SyllabusPage() {
             <div
               role="tablist"
               aria-label="Select PSC examination cadre"
-              className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2"
             >
               {PSC_CADRE_SYLLABI.map((cadre) => {
                 const isSelected = cadre.id === activeCadre.id;
@@ -1702,6 +1703,8 @@ export function SyllabusPage() {
           )}
             </motion.div>
           </AnimatePresence>
+
+          <GoogleAdUnit variant="horizontal" className="pt-2" />
           </section>
         </main>
 

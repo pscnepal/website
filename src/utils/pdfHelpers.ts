@@ -144,7 +144,9 @@ export function classifyPdfError(err: unknown): PdfErrorInfo {
   if (
     name === 'UnknownErrorException' ||
     name === 'TypeError' ||
-    /failed to fetch|networkerror|cors|load failed/i.test(message)
+    name === 'ProxyUnavailableError' ||
+    (name === 'UnexpectedResponseException' && (!status || status === 0 || status >= 500)) ||
+    /failed to fetch|networkerror|cors|load failed|unexpected server response \(0\)/i.test(message)
   ) {
     return {
       code: 'CORS_OR_NETWORK',

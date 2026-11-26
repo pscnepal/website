@@ -89,7 +89,8 @@ export type QuizReviewFilter =
 export type WrittenPaperCode =
   | 'Paper II: Governance Systems'
   | 'Paper III: Contemporary Issues & Development'
-  | 'Paper IV: Service Delivery & Case Analysis';
+  | 'Paper IV: Service Delivery & Case Analysis'
+  | 'NTC Paper II: Computer Engineering';
 
 export type WrittenQuestionMarks = 5 | 10;
 

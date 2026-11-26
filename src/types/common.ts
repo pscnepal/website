@@ -391,7 +391,6 @@ export interface FlagReasonModalProps {
 export interface ReactionButtonsProps {
   itemId: string;
   itemType?: ReactionItemType;
-  baseCounts?: { views?: number; likes?: number; dislikes?: number };
   size?: 'xs' | 'sm' | 'md';
   showLabels?: boolean;
   showViews?: boolean;

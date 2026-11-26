@@ -922,7 +922,8 @@ async function buildDirectoryEntriesFromDocs(
       const targetCadre: CloudUserTargetCadre | '' =
         data.targetCadre === 'section-officer' ||
         data.targetCadre === 'nayab-subba' ||
-        data.targetCadre === 'kharidar'
+        data.targetCadre === 'kharidar' ||
+        data.targetCadre === 'ntc-computer-engineer-7'
           ? data.targetCadre
           : '';
 
@@ -2266,7 +2267,9 @@ export async function fetchUserWorkspaceBundle(
           ? d.preferredWrittenLanguage
           : 'bilingual',
       targetCadreId:
-        d.targetCadreId === 'nayab-subba' || d.targetCadreId === 'kharidar'
+        d.targetCadreId === 'nayab-subba' ||
+        d.targetCadreId === 'kharidar' ||
+        d.targetCadreId === 'ntc-computer-engineer-7'
           ? d.targetCadreId
           : 'section-officer',
     };
@@ -2407,7 +2410,9 @@ export async function upsertWorkspacePreferencesInFirestore(
           ? prefs.preferredWrittenLanguage
           : 'bilingual',
       targetCadreId:
-        prefs.targetCadreId === 'nayab-subba' || prefs.targetCadreId === 'kharidar'
+        prefs.targetCadreId === 'nayab-subba' ||
+        prefs.targetCadreId === 'kharidar' ||
+        prefs.targetCadreId === 'ntc-computer-engineer-7'
           ? prefs.targetCadreId
           : 'section-officer',
       updatedAt: serverTimestamp(),
@@ -2924,7 +2929,9 @@ export async function fetchUserSimulationRuns(
       .map((docSnap) => {
         const d = docSnap.data();
         const cadreId: PscCadreId =
-          d.cadreId === 'nayab-subba' || d.cadreId === 'kharidar'
+          d.cadreId === 'nayab-subba' ||
+          d.cadreId === 'kharidar' ||
+          d.cadreId === 'ntc-computer-engineer-7'
             ? d.cadreId
             : 'section-officer';
         const bookletKey =
@@ -2998,7 +3005,9 @@ export async function createSimulationRunInFirestore(
         presetId: String(run.presetId || 'preset').slice(0, 128),
         presetTitle: String(run.presetTitle || 'PSC Simulation').slice(0, 220),
         cadreId:
-          run.cadreId === 'nayab-subba' || run.cadreId === 'kharidar'
+          run.cadreId === 'nayab-subba' ||
+          run.cadreId === 'kharidar' ||
+          run.cadreId === 'ntc-computer-engineer-7'
             ? run.cadreId
             : 'section-officer',
         simulationType:
@@ -3278,7 +3287,9 @@ function parseLeaderboardDoc(
   d: Record<string, unknown>
 ): LeaderboardEntry {
   const targetCadre: PscCadreId =
-    d.targetCadre === 'nayab-subba' || d.targetCadre === 'kharidar'
+    d.targetCadre === 'nayab-subba' ||
+    d.targetCadre === 'kharidar' ||
+    d.targetCadre === 'ntc-computer-engineer-7'
       ? d.targetCadre
       : 'section-officer';
 
@@ -3398,7 +3409,9 @@ export async function upsertLeaderboardEntryInFirestore(
       'PSC Aspirant';
     const safePhoto = payload.photoURL?.trim().slice(0, 512) || '';
     const safeCadre: PscCadreId =
-      payload.targetCadre === 'nayab-subba' || payload.targetCadre === 'kharidar'
+      payload.targetCadre === 'nayab-subba' ||
+      payload.targetCadre === 'kharidar' ||
+      payload.targetCadre === 'ntc-computer-engineer-7'
         ? payload.targetCadre
         : 'section-officer';
 

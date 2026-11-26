@@ -1,4 +1,8 @@
-export type PscCadreId = 'section-officer' | 'nayab-subba' | 'kharidar';
+export type PscCadreId =
+  | 'section-officer'
+  | 'nayab-subba'
+  | 'kharidar'
+  | 'ntc-computer-engineer-7';
 
 export type PscExamFormat =
   | 'Objective MCQ (OMR)'

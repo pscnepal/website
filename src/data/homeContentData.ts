@@ -7,8 +7,8 @@ import type {
 export type { HomeFaqItem, HomePillarDefinition, StudyTrackItem };
 
 export const HOME_HERO_CONTENT = {
-  headline: 'Your central command hub for Lok Sewa PSC preparation.',
-  lead: 'Track official Section Officer, Nayab Subba, and Kharidar syllabi unit by unit, read statutes in two-page flipbooks, drill Paper I MCQs, write bilingual Papers II–IV answers (English & नेपाली), and sit timed OMR hall simulations with -20% negative marking.',
+  headline: 'Your central command hub for Lok Sewa PSC & NTC preparation.',
+  lead: 'Track official Section Officer, Nayab Subba, Kharidar, and Nepal Telecom (NTC) Computer Engineer Level 7 syllabi unit by unit, read statutes in two-page flipbooks, drill MCQs, write bilingual answers (English & नेपाली), and sit timed OMR hall simulations with -20% negative marking.',
   affairsButtonLabel: 'समसामयिक (Affairs)',
   dashboardButtonLabel: 'Dashboard & Banks',
 } as const;
@@ -36,9 +36,9 @@ export const HOME_PILLAR_ITEMS: ReadonlyArray<HomePillarDefinition> = [
     id: 'syllabus',
     order: '01',
     to: '/syllabus',
-    title: 'Official PSC Syllabus',
+    title: 'Official PSC & NTC Syllabi',
     description:
-      'Inspect exact Stage I–III weightages and attached original Lok Sewa Aayog PDFs for Section Officer, Nayab Subba, and Kharidar.',
+      'Inspect exact stage weightages and reference PDFs for Section Officer, Nayab Subba, Kharidar, and NTC Computer Engineer (Level 7).',
   },
   {
     id: 'materials',
@@ -135,7 +135,7 @@ export const PAIRED_STUDY_TRACKS: ReadonlyArray<StudyTrackItem> = [
     code: 'Track 03',
     title: 'Official PSC Syllabi, Case Study & Hall Simulation',
     summary:
-      'Inspect original Lok Sewa Aayog syllabus PDFs for Section Officer, Nayab Subba & Kharidar, sit a 30-question OMR screening hall exam, and solve Paper IV case studies.',
+      'Inspect original Lok Sewa Aayog & NTC Level 7 syllabus PDFs, sit a 30-question OMR screening hall exam, and solve Paper IV administrative case studies.',
     syllabusHref: '/syllabus/section-officer',
     readHref: '/materials/official-psc-syllabi',
     readLabel: '22 Official PSC PDFs',
@@ -175,11 +175,11 @@ export const HOME_FAQ_HEADER = {
 export const HOME_FAQS: ReadonlyArray<HomeFaqItem> = [
   {
     id: 'faq-syllabi-coverage',
-    question: 'Which Nepal Lok Sewa Aayog syllabi are covered on PSC Nepal?',
+    question: 'Which Nepal Lok Sewa Aayog and telecom syllabi are covered on PSC Nepal?',
     answerLead:
-      'PSC Nepal covers the official Public Service Commission (Lok Sewa Aayog) non-technical curricula for Gazetted Class III Section Officer, Non-Gazetted Class I Nayab Subba, and Non-Gazetted Class II Kharidar.',
+      'PSC Nepal covers official Public Service Commission (Lok Sewa Aayog) non-technical curricula alongside Nepal Telecom (NTC) technical engineering recruitment.',
     getPlainAnswer: ({ totalSyllabusUnits }) =>
-      `PSC Nepal covers the official Public Service Commission (Lok Sewa Aayog) non-technical curricula for Gazetted Class III Section Officer, Non-Gazetted Class I Nayab Subba, and Non-Gazetted Class II Kharidar across ${totalSyllabusUnits} structured syllabus units with attached original PSC PDFs.`,
+      `PSC Nepal covers official syllabi for Gazetted Class III Section Officer, Non-Gazetted Class I Nayab Subba, Non-Gazetted Class II Kharidar, and Nepal Telecom (NTC) Computer Engineer Level 7 across ${totalSyllabusUnits} structured syllabus units with reference PDFs.`,
   },
   {
     id: 'faq-omr-scoring',

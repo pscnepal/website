@@ -832,6 +832,9 @@ function normalizeWrittenPaper(raw: string): WrittenPaperCode | null {
   if (lower.startsWith('paper iv:') || lower === 'paper iv' || lower === 'paper 4') {
     return 'Paper IV: Service Delivery & Case Analysis';
   }
+  if (lower.startsWith('ntc') || lower.includes('computer engineering')) {
+    return 'NTC Paper II: Computer Engineering';
+  }
   return null;
 }
 

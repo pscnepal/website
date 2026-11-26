@@ -37,6 +37,27 @@ function pwaNoHmrDevPlugin(): Plugin {
     name: 'pwa-no-hmr-dev-compat',
     apply: 'serve',
     enforce: 'post',
+    transform(code, id) {
+      if (process.env.DISABLE_HMR !== 'true') {
+        return null;
+      }
+      const normalized = id.replace(/\\/g, '/');
+      if (normalized.endsWith('vite/dist/client/client.mjs')) {
+        const patched = code
+          .replace(
+            'transport.connect(createHMRHandler(handleMessage));',
+            '/* HMR WebSocket disabled when DISABLE_HMR=true */'
+          )
+          .replace(
+            'ws.send(JSON.stringify(data));',
+            'if (ws && ws.readyState === 1) ws.send(JSON.stringify(data));'
+          );
+        if (patched !== code) {
+          return { code: patched, map: null };
+        }
+      }
+      return null;
+    },
     transformIndexHtml: {
       order: 'post',
       handler(html) {
@@ -111,7 +132,8 @@ export default defineConfig(() => {
         },
         workbox: {
           maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,mjs}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
+          globIgnores: ['**/pdf.worker*'],
           navigateFallback: 'index.html',
           navigateFallbackDenylist: [/^\/api\//, /^\/__\//, /^\/materials\/.*\.pdf$/i],
           runtimeCaching: [
@@ -172,6 +194,20 @@ export default defineConfig(() => {
               },
             },
             {
+              urlPattern: /\/assets\/pdf\.worker.*\.mjs$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'psc-pdf-worker-cache',
+                expiration: {
+                  maxEntries: 4,
+                  maxAgeSeconds: 60 * 60 * 24 * 365,
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+            {
               urlPattern: /\/(?:images|assets)\/.*\.(?:png|jpg|jpeg|webp|svg)$/i,
               handler: 'StaleWhileRevalidate',
               options: {
@@ -213,6 +249,68 @@ export default defineConfig(() => {
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+    },
+    build: {
+      chunkSizeWarningLimit: 600,
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            minSize: 15000,
+            groups: [
+              {
+                name: 'vendor-react',
+                test: /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|@reduxjs[\\/]toolkit|react-redux|immer|reselect)[\\/]/,
+                priority: 30,
+              },
+              {
+                name: 'vendor-firestore',
+                test: /[\\/]node_modules[\\/](@firebase[\\/]firestore|firebase[\\/]firestore)[\\/]/,
+                priority: 28,
+              },
+              {
+                name: 'vendor-firebase',
+                test: /[\\/]node_modules[\\/](firebase|@firebase)[\\/]/,
+                priority: 25,
+              },
+              {
+                name: 'vendor-motion',
+                test: /[\\/]node_modules[\\/](motion|framer-motion)[\\/]/,
+                priority: 20,
+              },
+              {
+                name: 'vendor-pdf',
+                test: /[\\/]node_modules[\\/](pdfjs-dist|page-flip)[\\/]/,
+                priority: 20,
+              },
+              {
+                name: 'vendor-icons',
+                test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+                priority: 15,
+              },
+              {
+                name: 'data-syllabus',
+                test: /[\\/]src[\\/]data[\\/](pscSyllabusData\.ts|syllabus[\\/])/,
+                priority: 12,
+              },
+              {
+                name: 'data-quiz',
+                test: /[\\/]src[\\/]data[\\/](quizData\.ts|quiz[\\/])/,
+                priority: 12,
+              },
+              {
+                name: 'data-written',
+                test: /[\\/]src[\\/]data[\\/](writtenQuestionsData\.ts|written[\\/])/,
+                priority: 12,
+              },
+              {
+                name: 'data-materials',
+                test: /[\\/]src[\\/]data[\\/]readingMaterials\.ts/,
+                priority: 12,
+              },
+            ],
+          },
+        },
+      },
     },
     preview: {
       host: '0.0.0.0',

@@ -93,6 +93,20 @@ export const PYQ_RECURRING_TOPIC_STATS: PyqRecurringTopic[] = [
     rankerTipNe: 'तटस्थता (Neutrality) र प्रतिबद्धता (Commitment) बीचको फरक स्पष्ट पारी संविधान र लोककल्याणकारी राज्यप्रतिको प्रतिबद्धता तर दलप्रतिको तटस्थताको सिद्धान्त व्याख्या गर्नुहोस्।',
     suggestedStatutes: ['निजामती सेवा ऐन, २०४९', 'संघीय निजामती सेवा विधेयक'],
   },
+  {
+    id: 'rec-ntc-telecom-security',
+    topicNameNe: 'कोर राउटिङ (OSPF/BGP/MPLS), वितरित DBMS र टेलिकम सुरक्षा',
+    topicNameEn: 'Carrier IP Routing, Distributed ACID Databases & PKI/Telecom Governance',
+    cadreFocus: ['ntc-computer-engineer-7'],
+    frequencyScore: 9,
+    recurrencePercentage: 90,
+    trend: 'rising',
+    corePapers: ['NTC Paper I (Acts/ICT)', 'NTC Paper II (Computer Engineering)'],
+    whyItRepeatsNe: 'नेपाल टेलिकमको कोर नेटवर्क उच्च उपलब्धता, प्रिपेड बिलिङ डेटाबेस कन्सिस्टेन्सी र दूरसञ्चार/विद्युतीय कारोबार ऐनको पालना प्राविधिक अधिकृत तह ७ को अनिवार्य दक्षता हो।',
+    whyItRepeatsEn: 'Core carrier IP routing resilience, distributed billing ACID transactions, and statutory cyber/procurement governance define NTC Level 7 engineering roles.',
+    rankerTipNe: 'सैद्धान्तिक परिभाषासँगै CIDR सबनेटिङ, Strict 2PL/CAP तुलना वा दूरसञ्चार ऐन २०५३ / विद्युतीय कारोबार ऐन २०६३ का दफा र नेटवर्क आर्किटेक्चर चित्र स्पष्ट प्रस्तुत गर्नुहोस्।',
+    suggestedStatutes: ['दूरसञ्चार ऐन, २०५३', 'विद्युतीय कारोबार ऐन, २०६३', 'सार्वजनिक खरिद ऐन, २०६३'],
+  },
 ];
 
 export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
@@ -394,5 +408,63 @@ export const PYQ_QUESTION_ENTRIES: PyqQuestion[] = [
       'Exclusive Powers & Act (5 marks): Schedule 8 (22 exclusive powers), local revenue, primary health, and basic education.',
       'Service Delivery Impediments (5 marks): Human capital shortages, weak internal revenue generation, fiscal accountability lapses.',
     ],
+  },
+  {
+    id: 'pyq-ntc-2080-01',
+    yearBS: '२०८०',
+    cadre: 'ntc-computer-engineer-7',
+    cadreLabelNe: 'एनटीसी कम्प्युटर इन्जिनियर (तह ७)',
+    cadreLabelEn: 'NTC Comp. Eng. (L7)',
+    paper: 'Paper II',
+    paperNameNe: 'द्वितीय पत्र: विशिष्टीकृत कम्प्युटर इन्जिनियरिङ',
+    paperNameEn: 'Paper II: Specialized Computer Engineering',
+    marks: 10,
+    questionType: 'subjective-long',
+    questionNe:
+      'दूरसञ्चार क्यारियर नेटवर्कमा OSPF र BGP बीचको भिन्नता स्पष्ट पार्दै MPLS र PKI/TLS 1.3 सुरक्षाले कोर बिलिङ डेटा कसरी सुरक्षित गर्दछ, विश्लेषण गर्नुहोस्। (४+६=१०)',
+    questionEn:
+      'Differentiate between OSPF and BGP in carrier networks and analyze how MPLS traffic separation combined with PKI/TLS 1.3 secures core telecom billing traffic. (4+6=10)',
+    topicCategory: 'governance',
+    topicCategoryLabelNe: 'नेटवर्क तथा साइबर सुरक्षा',
+    topicCategoryLabelEn: 'Networks & Security',
+    recurringFrequencyBadge: 'Tested 7+ Times',
+    outlineHintsNe: [
+      'OSPF vs BGP (4 marks): Link-state IGP vs Path-vector EGP; Area 0/BFD fast reroute vs AS_PATH peering policy.',
+      'MPLS & Zero-Trust (6 marks): L3VPN VRF isolation, SR-MPLS protection, mTLS 1.3 & X.509 certificate authentication.',
+    ],
+    outlineHintsEn: [
+      'OSPF vs BGP (4 marks): Intra-AS SPF metric & sub-50ms recovery vs Inter-AS policy path attributes.',
+      'MPLS & TLS 1.3 Security (6 marks): VRF traffic isolation, AES-256-GCM encryption, and DDoS/SIEM defense.',
+    ],
+    linkedWrittenQuestionId: 'PSC-WR-501',
+  },
+  {
+    id: 'pyq-ntc-2079-01',
+    yearBS: '२०७९',
+    cadre: 'ntc-computer-engineer-7',
+    cadreLabelNe: 'एनटीसी कम्प्युटर इन्जिनियर (तह ७)',
+    cadreLabelEn: 'NTC Comp. Eng. (L7)',
+    paper: 'Paper II',
+    paperNameNe: 'द्वितीय पत्र: विशिष्टीकृत कम्प्युटर इन्जिनियरिङ',
+    paperNameEn: 'Paper II: Specialized Computer Engineering',
+    marks: 10,
+    questionType: 'subjective-long',
+    questionNe:
+      'उद्यम RDBMS मा ACID गुण र Strict 2PL व्याख्या गर्दै वास्तविक–समय टेलिकम चार्जिङ प्रणालीमा CAP प्रमेयका चुनौती कसरी सन्तुलन गरिन्छ, चर्चा गर्नुहोस्। (५+५=१०)',
+    questionEn:
+      'Explain ACID properties and Strict Two-Phase Locking in enterprise RDBMS, and evaluate how distributed telecom charging systems balance CAP theorem trade-offs. (5+5=10)',
+    topicCategory: 'constitution-law',
+    topicCategoryLabelNe: 'डेटाबेस तथा वितरित प्रणाली',
+    topicCategoryLabelEn: 'DBMS & Distributed Systems',
+    recurringFrequencyBadge: 'Tested 5+ Times',
+    outlineHintsNe: [
+      'ACID र Strict 2PL (5 marks): ARIES WAL recovery, exclusive lock release at commit/abort, Wait-For Graph deadlock handling.',
+      'CAP सन्तुलन (5 marks): MSISDN sharding, CP linearizability for prepaid balance vs AP availability for CDR logs.',
+    ],
+    outlineHintsEn: [
+      'ACID & Strict 2PL (5 marks): Write-Ahead Logging durability, cascading-abort prevention, and deadlock resolution.',
+      'CAP Trade-offs (5 marks): Partition-aware CP wallet state alongside high-throughput AP CDR streaming.',
+    ],
+    linkedWrittenQuestionId: 'PSC-WR-502',
   },
 ];

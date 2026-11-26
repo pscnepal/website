@@ -234,7 +234,9 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
                     ? 'Section Officer'
                     : targetCadreId === 'nayab-subba'
                       ? 'Nayab Subba'
-                      : 'Kharidar'}
+                      : targetCadreId === 'ntc-computer-engineer-7'
+                        ? 'NTC Comp. Eng. (L7)'
+                        : 'Kharidar'}
                 </span>
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">
                   Candidate Dossier
@@ -417,7 +419,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
                         className="w-7 h-7 rounded-full object-cover shrink-0 border border-zinc-200 dark:border-zinc-700"
                       />
                     ) : (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-[10px] shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-blue-900 text-white flex items-center justify-center font-bold text-[10px] shrink-0">
                         {dbUser.displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -483,7 +485,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <div className="p-4 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="font-mono font-semibold text-blue-800 dark:text-blue-400">
@@ -547,7 +549,7 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
               Kharidar (खरिदार)
             </h4>
             <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              Paper I General Knowledge &amp; Basic Science &rarr; Paper II Office Management, Mathematics &amp; Nepali/English.
+              Paper I General Knowledge &amp; BOST &rarr; Paper II Office Management, Governance &amp; Job-Oriented Knowledge.
             </p>
             <div className="pt-1 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
               <span>Pass: 40% per paper</span>
@@ -555,6 +557,32 @@ export function DashboardOverviewTab({ onSwitchTab }: DashboardOverviewTabProps)
                 to="/syllabus/kharidar"
                 label="Blueprint →"
                 title="View Kharidar curriculum & exam architecture blueprint"
+                color="blue"
+                variant="ghost"
+                size="xs"
+              />
+            </div>
+          </div>
+
+          <div className="p-4 rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-mono font-semibold text-purple-800 dark:text-purple-400">
+                NTC Officer · Level 7
+              </span>
+              <span className="font-mono text-zinc-500">2 Papers + Viva · 230M</span>
+            </div>
+            <h4 className="font-serif font-bold text-zinc-900 dark:text-zinc-100 text-sm">
+              NTC Computer Engineer (तह ७)
+            </h4>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Paper I General &amp; Telecom Acts (100M) + Paper II 16 Computer Eng. Domains (100M) + 30M Interview.
+            </p>
+            <div className="pt-1 flex items-center justify-between text-[11px] text-zinc-500 font-mono">
+              <span>Pass: 40/100 each paper</span>
+              <ActionButton
+                to="/syllabus/ntc-computer-engineer-7"
+                label="Blueprint →"
+                title="View NTC Computer Engineer Level 7 curriculum blueprint"
                 color="blue"
                 variant="ghost"
                 size="xs"

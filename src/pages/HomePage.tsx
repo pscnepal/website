@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../app/hooks';
+import { GoogleAdUnit } from '../components/ads/GoogleAdUnit';
 import { ActionButton } from '../components/common/ActionButton';
 import { SharedTable } from '../components/common/SharedTable';
 import { PdfUpload } from '../components/home/PdfUpload';
@@ -25,6 +26,7 @@ import { Navbar } from '../components/layout/Navbar';
 import { PageTransition } from '../components/layout/PageTransition';
 import { useAuth } from '../context/AuthContext';
 import singhaDurbarImg from '../assets/images/nepal_singha_durbar_1793889770945.jpg';
+import singhaDurbarWebp from '../assets/images/nepal_singha_durbar_1793889770945.webp';
 import {
   ALL_SYLLABUS_UNITS,
   getCadreSyllabusById,
@@ -329,7 +331,7 @@ export function HomePage() {
                 <div
                   role="group"
                   aria-label="Target PSC cadre"
-                  className="grid grid-cols-3 gap-1.5 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 text-xs"
+                  className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 text-xs"
                 >
                   {PSC_CADRE_SYLLABI.map((cadre) => {
                     const isSelected = cadre.id === activeCadre.id;
@@ -398,16 +400,22 @@ export function HomePage() {
           {/* Architectural Heritage & Civil Service Anchor Banner */}
           <div className="relative rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-950 text-white shadow-sm">
             <div className="relative h-48 sm:h-64 lg:h-72 w-full overflow-hidden">
-              <img
-                src={singhaDurbarImg || HOME_HERITAGE_BANNER.fallbackImagePath}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src =
-                    HOME_HERITAGE_BANNER.fallbackImagePath;
-                }}
-                alt={HOME_HERITAGE_BANNER.imageAlt}
-                className="w-full h-full object-cover object-center filter brightness-[0.88] hover:scale-105 transition-transform duration-700 ease-out"
-                loading="lazy"
-              />
+              <picture className="w-full h-full block">
+                <source srcSet={singhaDurbarWebp} type="image/webp" />
+                <img
+                  src={singhaDurbarImg || HOME_HERITAGE_BANNER.fallbackImagePath}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src =
+                      HOME_HERITAGE_BANNER.fallbackImagePath;
+                  }}
+                  alt={HOME_HERITAGE_BANNER.imageAlt}
+                  width={1280}
+                  height={714}
+                  className="w-full h-full object-cover object-center filter brightness-[0.88] hover:scale-105 transition-transform duration-700 ease-out"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
               <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
 
               <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-7 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -417,7 +425,7 @@ export function HomePage() {
                     <span aria-hidden="true">·</span>
                     <span>{HOME_HERITAGE_BANNER.elevationLabel}</span>
                   </div>
-                  <h3 className="font-serif text-lg sm:text-2xl font-bold text-white tracking-tight">
+                  <h3 className="font-serif text-fluid-h2 font-bold text-white tracking-tight">
                     {HOME_HERITAGE_BANNER.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
@@ -521,14 +529,17 @@ export function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {HOME_PILLAR_ITEMS.map((pillar) => {
+              const currentAffairsMcqCount =
+                hydratedDecks.find((deck) => deck.id === 'current-affairs')
+                  ?.questions.length ?? 16;
               const badgeById: Record<string, string> = {
-                syllabus: `3 cadres · ${totalSyllabusUnits} units`,
+                syllabus: `${PSC_CADRE_SYLLABI.length} cadres · ${totalSyllabusUnits} units`,
                 materials: `${totalCatalogCount} curated PDFs`,
                 quiz: `${hydratedDecks.length} decks · ${totalQuizQuestions} MCQs`,
                 written: `${totalWrittenQuestions} long Q&As · EN/नेपाली`,
                 simulate: 'OMR Sheet · Written Hall · Merit Lab',
                 progress: 'Mastery & study analytics',
-                'current-affairs': 'Daily · Weekly · Monthly · 16 MCQs · Written Q&As · PDFs',
+                'current-affairs': `Daily · Weekly · Monthly · ${currentAffairsMcqCount} MCQs · Written Q&As · PDFs`,
               };
 
               if (pillar.spanWide) {
@@ -874,7 +885,7 @@ export function HomePage() {
         </section>
 
         {/* PDF Flipbook Reader Intake & Personal Shelf Section */}
-        <section className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800/80 space-y-6">
+        <section className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-12 border-t border-zinc-200/80 dark:border-zinc-800/80 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <div>
               <h2 className="font-serif text-fluid-h2 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
@@ -1013,11 +1024,11 @@ export function HomePage() {
           <div className="max-w-2xl">
             <h2
               id="psc-nepal-faq-heading"
-              className="font-serif text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50"
+              className="font-serif text-fluid-h2 font-semibold tracking-tight text-zinc-950 dark:text-zinc-50"
             >
               {HOME_FAQ_HEADER.title}
             </h2>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-fluid-body text-zinc-600 dark:text-zinc-400">
               {HOME_FAQ_HEADER.subtitle}
             </p>
           </div>
@@ -1041,6 +1052,10 @@ export function HomePage() {
             ))}
           </div>
         </section>
+
+        <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-2">
+          <GoogleAdUnit variant="horizontal" />
+        </div>
         </main>
 
         <Footer />

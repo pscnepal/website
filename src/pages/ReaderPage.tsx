@@ -57,6 +57,9 @@ import { clampZoom, ZOOM_STEP } from '../utils/pdfHelpers';
 import {
   createBookIdFromUrl,
   deriveTitleFromSource,
+  getLocalFallbackPdfUrl,
+  getProxyPdfUrl,
+  isExternalHttpUrl,
   resolveSampleUrl,
   SAMPLE_EDITIONS,
   validatePdfUrl,
@@ -403,6 +406,18 @@ export function ReaderPage() {
     const rawName =
       resolvedSource.book.fileName ||
       `${resolvedSource.book.title.replace(/[^a-z0-9-_]+/gi, '_')}.pdf`;
+    const downloadFileName = rawName.endsWith('.pdf') ? rawName : `${rawName}.pdf`;
+
+    const triggerBlobDownload = (blob: Blob) => {
+      const tempUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = tempUrl;
+      link.download = downloadFileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(tempUrl), 2000);
+    };
 
     try {
       if (
@@ -411,7 +426,7 @@ export function ReaderPage() {
       ) {
         const link = document.createElement('a');
         link.href = resolvedSource.url;
-        link.download = rawName.endsWith('.pdf') ? rawName : `${rawName}.pdf`;
+        link.download = downloadFileName;
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -420,16 +435,32 @@ export function ReaderPage() {
 
       // Attempt CORS blob download via RTK fetchBaseQuery first so browser honors filename
       const blob = await fetchBinaryAsset(resolvedSource.url).unwrap();
-      const tempUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = tempUrl;
-      link.download = rawName.endsWith('.pdf') ? rawName : `${rawName}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(tempUrl), 2000);
+      triggerBlobDownload(blob);
+      return;
     } catch {
-      // Fallback: anchor link navigation when server forbids programmatic blob download
+      // Try same-origin PDF proxy or local bundled fallback if direct CORS fetch failed
+      if (isExternalHttpUrl(resolvedSource.url)) {
+        const fallbackUrls = [
+          getProxyPdfUrl(resolvedSource.url),
+          getLocalFallbackPdfUrl(resolvedSource.url),
+        ].filter((u): u is string => Boolean(u));
+
+        for (const fallbackUrl of fallbackUrls) {
+          try {
+            const response = await fetch(fallbackUrl, { credentials: 'same-origin' });
+            const contentType = (response.headers.get('content-type') || '').toLowerCase();
+            if (response.ok && !contentType.includes('text/html')) {
+              const blob = await response.blob();
+              triggerBlobDownload(blob);
+              return;
+            }
+          } catch {
+            // Try next fallback
+          }
+        }
+      }
+
+      // Final fallback: anchor link navigation when programmatic blob download is unavailable
       const fallbackLink = document.createElement('a');
       fallbackLink.href = resolvedSource.url;
       fallbackLink.target = '_blank';

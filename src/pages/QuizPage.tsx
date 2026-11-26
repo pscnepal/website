@@ -24,11 +24,16 @@ import {
   formatReverseClock,
   QuizSessionDialog,
 } from '../components/quiz/QuizSessionDialog';
+import { QuizTaxonomyExplorer } from '../components/quiz/QuizTaxonomyExplorer';
 import { SharedSearchSelect } from '../components/common/SharedSearchSelect';
 import {
   getDeckTotalMarks,
   getQuizDeadlineSeconds,
 } from '../data/quizData';
+import {
+  filterQuestionsByTheme,
+  findQuizThemeById,
+} from '../data/quizTaxonomy';
 import { materialStorageService } from '../services/materialStorageService';
 import {
   clearQuizHistory,
@@ -178,6 +183,29 @@ export function QuizPage() {
     navigate(qs ? `/quiz/custom?${qs}` : '/quiz/custom');
   };
 
+  const handleStartThemeQuiz = (themeId: string) => {
+    navigate(`/quiz/custom?theme=${encodeURIComponent(themeId)}`);
+  };
+
+  const handleStartSubjectQuiz = (subject: string) => {
+    const params = new URLSearchParams({ subject });
+    navigate(`/quiz/custom?${params.toString()}`);
+  };
+
+  const handleStartTopicQuiz = (subject: string, topic: string) => {
+    const params = new URLSearchParams({ subject, topic });
+    navigate(`/quiz/custom?${params.toString()}`);
+  };
+
+  const handleStartSubtopicQuiz = (
+    subject: string,
+    topic: string,
+    subtopic: string
+  ) => {
+    const params = new URLSearchParams({ subject, topic, subtopic });
+    navigate(`/quiz/custom?${params.toString()}`);
+  };
+
   const weakQuestionIdSet = useMemo(() => {
     const latestOutcomeByQ: Record<string, string> = {};
     // attempts[0] is newest; iterate oldest -> newest so newest outcome wins
@@ -271,6 +299,23 @@ export function QuizPage() {
             'Targeted revision quiz containing high-priority questions flagged during your study sessions.',
           questions,
         };
+      }
+
+      const qTheme = searchParams.get('theme');
+      if (qTheme) {
+        const themeDef = findQuizThemeById(qTheme);
+        if (themeDef) {
+          const questions = filterQuestionsByTheme(allQuestions, themeDef.id);
+          if (questions.length === 0) return null;
+
+          return {
+            id: `custom-theme-${themeDef.id}`,
+            title: themeDef.titleEn,
+            subtitle: `${questions.length} Questions · ${questions.length}-Minute Reverse Countdown`,
+            description: themeDef.description,
+            questions,
+          };
+        }
       }
 
       const qSubject = searchParams.get('subject') ?? 'All';
@@ -710,6 +755,15 @@ export function QuizPage() {
             </div>
           </div>
 
+          {/* Interactive Subject / Topic / Subtopic & PSC Theme Explorer */}
+          <QuizTaxonomyExplorer
+            questions={allQuestions}
+            onStartThemeQuiz={handleStartThemeQuiz}
+            onStartSubjectQuiz={handleStartSubjectQuiz}
+            onStartTopicQuiz={handleStartTopicQuiz}
+            onStartSubtopicQuiz={handleStartSubtopicQuiz}
+          />
+
           {/* Curated Quiz Decks Grid */}
           <div className="space-y-4">
             <h2 className="font-serif text-fluid-h2 font-semibold text-zinc-950 dark:text-zinc-50">
@@ -902,6 +956,12 @@ export function QuizPage() {
                   const isCuratedDeck = hydratedQuizDecks.some(
                     (d) => d.id === attempt.deckId
                   );
+                  const replayThemeId = attempt.deckId.startsWith('custom-theme-')
+                    ? attempt.deckId.replace('custom-theme-', '')
+                    : null;
+                  const canReplay =
+                    isCuratedDeck ||
+                    Boolean(replayThemeId && findQuizThemeById(replayThemeId));
                   return (
                     <div
                       key={attempt.id}
@@ -940,10 +1000,14 @@ export function QuizPage() {
                         </div>
                       </div>
 
-                      {isCuratedDeck && (
+                      {canReplay && (
                         <button
                           type="button"
-                          onClick={() => handleOpenQuizDialog(attempt.deckId)}
+                          onClick={() =>
+                            replayThemeId
+                              ? handleStartThemeQuiz(replayThemeId)
+                              : handleOpenQuizDialog(attempt.deckId)
+                          }
                           className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-700 hover:text-blue-700 dark:text-zinc-300 dark:hover:text-blue-400 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                         >
                           <span>Practice Again</span>

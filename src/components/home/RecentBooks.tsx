@@ -22,7 +22,7 @@ import {
   getLocalPdfSessionEntry,
   registerLocalPdfFile,
   restoreLocalPdfFromIndexedDB,
-} from '../../services/pdfService';
+} from '../../services/pdfLocalCacheService';
 import type { RecentBookEntry, RecentBooksProps } from '../../types/pdf';
 import {
   formatBytes,

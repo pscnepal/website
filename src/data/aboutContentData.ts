@@ -42,7 +42,7 @@ export const ABOUT_MISSION_VISION: ReadonlyArray<AboutMissionCard> = [
 ];
 
 export const ABOUT_PILLARS_HEADER = {
-  title: 'The Five Pillars of PSC Nepal',
+  title: 'The Six Pillars of PSC Nepal',
   subtitle:
     'Every feature on PSC Nepal is built around the verified statutory requirements and question formats published by the Public Service Commission of Nepal.',
 } as const;
@@ -52,7 +52,7 @@ export const ABOUT_PLATFORM_PILLARS: ReadonlyArray<AboutPlatformPillar> = [
     id: 'syllabi',
     title: 'Official Syllabus Checklists',
     description:
-      'Exhaustive phase, paper, unit, and chapter checklists for Section Officer (शाखा अधिकृत), Nayab Subba (नायब सुब्बा), and Kharidar (खरिदार) with interactive completion checkmarks and marks allocations.',
+      'Exhaustive phase, paper, unit, and chapter checklists for Section Officer (शाखा अधिकृत), Nayab Subba (नायब सुब्बा), Kharidar (खरिदार), and NTC Computer Engineer (Level 7) with interactive completion checkmarks and marks allocations.',
     linkLabel: 'Explore Syllabi →',
     to: '/syllabus',
     icon: Layers,
@@ -102,18 +102,18 @@ export const ABOUT_PLATFORM_PILLARS: ReadonlyArray<AboutPlatformPillar> = [
     id: 'privacy',
     title: 'Account Sync & Privacy',
     description:
-      'Keep your syllabus progress, quiz history, and bookmarks synced across devices with your account, with zero third-party ad tracking.',
+      'Keep your syllabus progress, quiz history, and bookmarks synced across devices with your account, while local PDFs stay strictly inside your browser.',
     linkLabel: 'Privacy Policy →',
     to: '/privacy',
     icon: Lock,
-    tone: 'teal',
+    tone: 'blue',
   },
 ];
 
 export const ABOUT_CADRES_HEADER = {
-  title: 'Target Cadres & Civil Service Levels',
+  title: 'Target Cadres & Service Levels',
   subtitle:
-    "Comprehensive coverage of the three premier open-competition entry levels in Nepal's civil service:",
+    "Comprehensive coverage of Nepal's premier open-competition civil service and public telecom engineering ranks:",
 } as const;
 
 export const ABOUT_CADRE_SUMMARIES: ReadonlyArray<AboutCadreSummary> = [
@@ -133,7 +133,7 @@ export const ABOUT_CADRE_SUMMARIES: ReadonlyArray<AboutCadreSummary> = [
     educationBadge: '10+2 / Higher Sec',
     heading: 'Nayab Subba (नायब सुब्बा)',
     description:
-      'Key administrative supervision rank across General Administration, Accounts, and Revenue. 100M Phase I (40% pass gate, 50% carried forward), 2 written papers (200M), and Computer Skill Test + Interview.',
+      'Key administrative supervision rank across General Administration, Accounts, and Revenue. 100M Phase I (45% pass gate, qualifying), 2 written papers (200M), and Computer Skill Test + Interview.',
     ctaLabel: 'Na. Su. Blueprint & PDF →',
     tone: 'crimson',
   },
@@ -143,9 +143,19 @@ export const ABOUT_CADRE_SUMMARIES: ReadonlyArray<AboutCadreSummary> = [
     educationBadge: 'SEE / SLC',
     heading: 'Kharidar (खरिदार)',
     description:
-      'Foundation civil service operational rank. 100M Phase I Basic Aptitude (40% pass gate, 50% carried forward), 2 written office administration papers (200M), and Computer Skill Test + Interview.',
+      'Foundation civil service operational rank. 100M Phase I Basic Aptitude (45% pass gate, qualifying), 2 written office administration papers (200M), and Computer Skill Test + Interview.',
     ctaLabel: 'Kharidar Blueprint & PDF →',
     tone: 'emerald',
+  },
+  {
+    cadreId: 'ntc-computer-engineer-7',
+    levelBadge: 'Officer Level 7 · Technical',
+    educationBadge: 'BE / B.Tech (NEC)',
+    heading: 'NTC Computer Engineer (Level 7)',
+    description:
+      'Nepal Telecom technical officer track. Paper I General (100M, Pass 40) + Paper II Specialized Computer Engineering across 16 core domains (100M, Pass 40) + 30M Interview (230M merit).',
+    ctaLabel: 'NTC Level 7 Blueprint →',
+    tone: 'purple',
   },
 ];
 

@@ -92,6 +92,7 @@ export function SimulationPage() {
     }
     if (targetCadreId === 'nayab-subba') return 'nasu-phase1-omr';
     if (targetCadreId === 'kharidar') return 'kharidar-phase1-omr';
+    if (targetCadreId === 'ntc-computer-engineer-7') return 'ntc-l7-omr';
     return 'so-phase1-omr';
   }, [presetParam, targetCadreId]);
 
@@ -99,8 +100,10 @@ export function SimulationPage() {
     if (WRITTEN_PRESETS.some((p) => p.id === presetParam)) {
       return presetParam;
     }
+    if (targetCadreId === 'ntc-computer-engineer-7') return 'written-ntc-l7';
+    if (targetCadreId === 'nayab-subba') return 'written-office-nasu';
     return WRITTEN_PRESETS[0].id;
-  }, [presetParam]);
+  }, [presetParam, targetCadreId]);
 
   const [selectedOmrPresetId, setSelectedOmrPresetId] =
     useState<string>(defaultOmrPresetId);
@@ -195,19 +198,33 @@ export function SimulationPage() {
   // ---------------- MERIT & NEGATIVE-MARKING STRATEGY LAB STATE ----------------
   const [labCadre, setLabCadre] = useState<PscCadreId>(targetCadreId);
   const [confidentCount, setConfidentCount] = useState<number>(
-    targetCadreId === 'section-officer' ? 56 : 28
+    targetCadreId === 'section-officer'
+      ? 56
+      : targetCadreId === 'ntc-computer-engineer-7'
+        ? 18
+        : 28
   );
   const [educatedGuesses, setEducatedGuesses] = useState<number>(
-    targetCadreId === 'section-officer' ? 18 : 10
+    targetCadreId === 'section-officer'
+      ? 18
+      : targetCadreId === 'ntc-computer-engineer-7'
+        ? 6
+        : 10
   );
-  const [blindGuesses, setBlindGuesses] = useState<number>(4);
+  const [blindGuesses, setBlindGuesses] = useState<number>(
+    targetCadreId === 'ntc-computer-engineer-7' ? 2 : 4
+  );
   const [paper2Score, setPaper2Score] = useState<number>(58);
   const [paper3Score, setPaper3Score] = useState<number>(61);
   const [paper4Score, setPaper4Score] = useState<number>(59);
   const [practicalScore, setPracticalScore] = useState<number>(8);
   const [groupTestScore, setGroupTestScore] = useState<number>(7);
   const [interviewScore, setInterviewScore] = useState<number>(
-    targetCadreId === 'section-officer' ? 26 : 21
+    targetCadreId === 'section-officer'
+      ? 26
+      : targetCadreId === 'ntc-computer-engineer-7'
+        ? 20
+        : 21
   );
 
   const handleSelectLabCadre = (next: PscCadreId) => {
@@ -218,6 +235,11 @@ export function SimulationPage() {
       setBlindGuesses(4);
       setGroupTestScore(7);
       setInterviewScore(26);
+    } else if (next === 'ntc-computer-engineer-7') {
+      setConfidentCount(18);
+      setEducatedGuesses(6);
+      setBlindGuesses(2);
+      setInterviewScore(20);
     } else {
       setConfidentCount(28);
       setEducatedGuesses(10);
@@ -227,9 +249,14 @@ export function SimulationPage() {
   };
 
   const meritSimulation = useMemo(() => {
-    const totalQuestions = labCadre === 'section-officer' ? 100 : 50;
-    const marksPerQ = labCadre === 'section-officer' ? 1 : 2;
+    const isNtc = labCadre === 'ntc-computer-engineer-7';
+    const totalQuestions = labCadre === 'section-officer' ? 100 : isNtc ? 30 : 50;
+    const marksPerQ = labCadre === 'section-officer' || isNtc ? 1 : 2;
     const penaltyPerWrong = marksPerQ * 0.2;
+    const omrSectionMax = totalQuestions * marksPerQ;
+    const omrPassPercent = isNtc ? 40 : 45;
+    const omrPassCutoff =
+      Math.round(((omrSectionMax * omrPassPercent) / 100) * 10) / 10;
 
     const safeConfident = Math.min(totalQuestions, confidentCount);
     const remainingAfterConf = Math.max(0, totalQuestions - safeConfident);
@@ -249,6 +276,7 @@ export function SimulationPage() {
     const expGross = expCorrect * marksPerQ;
     const expPenalty = expWrong * penaltyPerWrong;
     const expNet = Math.max(0, Math.round((expGross - expPenalty) * 100) / 100);
+    const omrBarPct = Math.min(100, (expNet / omrSectionMax) * 100);
 
     const floorCorrect =
       safeConfident * 0.88 + safeEducated * 0.35 + safeBlind * 0.1;
@@ -267,11 +295,12 @@ export function SimulationPage() {
         : paper2Score + paper3Score;
     const writtenMax = labCadre === 'section-officer' ? 300 : 200;
 
+    const practicalBonus = isNtc ? 0 : practicalScore;
     const groupBonus = labCadre === 'section-officer' ? groupTestScore : 0;
     const interviewMax = labCadre === 'section-officer' ? 40 : 30;
     const clampedInterview = Math.min(interviewMax, interviewScore);
-    const phase3Total = practicalScore + groupBonus + clampedInterview;
-    const phase3Max = labCadre === 'section-officer' ? 60 : 40;
+    const phase3Total = practicalBonus + groupBonus + clampedInterview;
+    const phase3Max = labCadre === 'section-officer' ? 60 : isNtc ? 30 : 40;
 
     const finalMeritTotal = writtenTotal + phase3Total;
     const finalMeritMax = writtenMax + phase3Max;
@@ -284,9 +313,14 @@ export function SimulationPage() {
       (labCadre !== 'section-officer' || paper4Score >= 40);
 
     return {
+      isNtc,
       totalQuestions,
       marksPerQ,
       penaltyPerWrong,
+      omrSectionMax,
+      omrPassPercent,
+      omrPassCutoff,
+      omrBarPct,
       safeConfident,
       safeEducated,
       safeBlind,
@@ -295,7 +329,7 @@ export function SimulationPage() {
       expPenalty: Math.round(expPenalty * 100) / 100,
       expNet,
       floorNet,
-      phase1Clears: expNet >= 45,
+      phase1Clears: expNet >= omrPassCutoff,
       writtenAllPass,
       writtenTotal,
       writtenMax,
@@ -331,7 +365,7 @@ export function SimulationPage() {
 
       <PageTransition>
         <main className="flex-1">
-          <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-10">
+          <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-10">
             {/* Top Breadcrumb & Unified PSC Format Switcher */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
@@ -764,6 +798,7 @@ export function SimulationPage() {
                         { id: 'section-officer', label: 'Section Officer' },
                         { id: 'nayab-subba', label: 'Nayab Subba' },
                         { id: 'kharidar', label: 'Kharidar' },
+                        { id: 'ntc-computer-engineer-7', label: 'NTC Comp. Eng. (L7)' },
                       ] as const
                     ).map((c) => (
                       <button
@@ -786,7 +821,9 @@ export function SimulationPage() {
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="font-semibold text-zinc-900 dark:text-zinc-100">
-                      Phase I · OMR Screening Gate (Pass Cutoff: 45.0 / 100)
+                      {meritSimulation.isNtc
+                        ? `Paper Section · OMR MCQ Component (Pass Cutoff: ${meritSimulation.omrPassCutoff.toFixed(1)} / ${meritSimulation.omrSectionMax})`
+                        : `Phase I · OMR Screening Gate (Pass Cutoff: ${meritSimulation.omrPassCutoff.toFixed(1)} / ${meritSimulation.omrSectionMax})`}
                     </span>
                     <span
                       className={`font-semibold ${
@@ -796,8 +833,8 @@ export function SimulationPage() {
                       }`}
                     >
                       {meritSimulation.phase1Clears
-                        ? 'Clears 45% Screening Gate'
-                        : 'Below 45% Screening Gate'}
+                        ? `Clears ${meritSimulation.omrPassPercent}% Screening Gate`
+                        : `Below ${meritSimulation.omrPassPercent}% Screening Gate`}
                     </span>
                   </div>
 
@@ -825,13 +862,13 @@ export function SimulationPage() {
                       <p className="mt-0.5 text-fluid-kpi font-semibold text-emerald-700 dark:text-emerald-400">
                         {meritSimulation.expNet.toFixed(1)}
                         <span className="text-xs font-normal text-zinc-400">
-                          /100
+                          /{meritSimulation.omrSectionMax}
                         </span>
                       </p>
                     </div>
                   </div>
 
-                  {/* Comparative Bar with 45% Marker */}
+                  {/* Comparative Bar with Pass Cutoff Marker */}
                   <div className="space-y-1.5">
                     <div className="relative h-3 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                       <div
@@ -841,21 +878,25 @@ export function SimulationPage() {
                             : 'bg-red-600 dark:bg-red-400'
                         }`}
                         style={{
-                          width: `${Math.min(100, meritSimulation.expNet)}%`,
+                          width: `${meritSimulation.omrBarPct}%`,
                         }}
                       />
                       <div
                         aria-hidden="true"
-                        className="absolute top-0 bottom-0 left-[45%] w-0.5 bg-zinc-950 dark:bg-white"
+                        className={`absolute top-0 bottom-0 w-0.5 bg-zinc-950 dark:bg-white ${
+                          meritSimulation.isNtc ? 'left-[40%]' : 'left-[45%]'
+                        }`}
                       />
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono tabular-nums text-zinc-500 dark:text-zinc-400">
                       <span>0</span>
-                      <span>45.0 Cutoff</span>
+                      <span>
+                        {meritSimulation.omrPassCutoff.toFixed(1)} Cutoff
+                      </span>
                       <span>
                         Floor: {meritSimulation.floorNet.toFixed(1)}
                       </span>
-                      <span>100</span>
+                      <span>{meritSimulation.omrSectionMax}</span>
                     </div>
                   </div>
 
@@ -871,7 +912,8 @@ export function SimulationPage() {
                     <span className="font-mono font-semibold">
                       +{meritSimulation.evBlindPerQ.toFixed(2)}M
                     </span>{' '}
-                    with high downside risk near the 45-mark cutoff.
+                    with high downside risk near the{' '}
+                    {meritSimulation.omrPassCutoff.toFixed(0)}-mark cutoff.
                   </p>
                 </div>
 
@@ -879,7 +921,9 @@ export function SimulationPage() {
                 <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-100">
-                      Final Selection Merit Aggregate (Phase II + Final Stage)
+                      {meritSimulation.isNtc
+                        ? 'Final Selection Merit Aggregate (Paper I + Paper II + Interview)'
+                        : 'Final Selection Merit Aggregate (Phase II + Final Stage)'}
                     </h3>
                     <span className="font-mono tabular-nums text-sm font-semibold text-zinc-950 dark:text-zinc-50">
                       {meritSimulation.finalMeritTotal} /{' '}
@@ -893,7 +937,9 @@ export function SimulationPage() {
                     <div className="py-2.5 space-y-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-sans font-medium text-zinc-800 dark:text-zinc-200">
-                          Phase II Written Papers
+                          {meritSimulation.isNtc
+                            ? 'Paper I + II Combined Written'
+                            : 'Phase II Written Papers'}
                         </span>
                         <span className="font-mono tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
                           {meritSimulation.writtenTotal} /{' '}
@@ -901,7 +947,9 @@ export function SimulationPage() {
                         </span>
                       </div>
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Main written papers (0% Stage I Carryover)
+                        {meritSimulation.isNtc
+                          ? 'Paper I General (100M) + Paper II Comp. Eng. (100M)'
+                          : 'Main written papers (0% Stage I Carryover)'}
                       </p>
                     </div>
 
@@ -916,11 +964,9 @@ export function SimulationPage() {
                         </span>
                       </div>
                       <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-                        Computer
-                        {labCadre === 'section-officer'
-                          ? ', Group Test'
-                          : ''}{' '}
-                        &amp; Oral Interview
+                        {meritSimulation.isNtc
+                          ? 'Oral Interview Only (30M)'
+                          : `Computer${labCadre === 'section-officer' ? ', Group Test' : ''} & Oral Interview`}
                       </p>
                     </div>
 
@@ -931,7 +977,7 @@ export function SimulationPage() {
                         </span>
                         <span className="font-sans font-semibold text-xs text-zinc-900 dark:text-zinc-100 text-right">
                           {!meritSimulation.phase1Clears
-                            ? 'Filtered at Phase I (<45%)'
+                            ? `Below ${meritSimulation.omrPassPercent}% OMR Gate`
                             : !meritSimulation.writtenAllPass
                               ? 'Below 40M Written Minimum'
                               : meritSimulation.finalMeritPct >= 66
@@ -955,16 +1001,19 @@ export function SimulationPage() {
                       data={[
                         {
                           id: 'written-total',
-                          label:
-                            'Phase II Main Written Papers Total (0% Stage I Carryover)',
+                          label: meritSimulation.isNtc
+                            ? 'Paper I General (100M) + Paper II Specialized Comp. Eng. (100M)'
+                            : 'Phase II Main Written Papers Total (0% Stage I Carryover)',
                           value: `${meritSimulation.writtenTotal} / ${meritSimulation.writtenMax}`,
                           isText: false,
                         },
                         {
                           id: 'final-stage',
-                          label: `Final Stage Computer${
-                            labCadre === 'section-officer' ? ', Group Test' : ''
-                          } & Oral Interview`,
+                          label: meritSimulation.isNtc
+                            ? 'Final Stage Oral Interview Only (No IT Skill / Group Test)'
+                            : `Final Stage Computer${
+                                labCadre === 'section-officer' ? ', Group Test' : ''
+                              } & Oral Interview`,
                           value: `${meritSimulation.phase3Total} / ${meritSimulation.phase3Max}`,
                           isText: false,
                         },
@@ -972,7 +1021,7 @@ export function SimulationPage() {
                           id: 'standing',
                           label: 'Competitive Standing Assessment',
                           value: !meritSimulation.phase1Clears
-                            ? 'Filtered at Phase I (<45%)'
+                            ? `Below ${meritSimulation.omrPassPercent}% OMR Gate`
                             : !meritSimulation.writtenAllPass
                               ? 'Below 40M Written Paper Minimum'
                               : meritSimulation.finalMeritPct >= 66
@@ -1111,7 +1160,9 @@ export function SimulationPage() {
                           htmlFor="slider-p2"
                           className="font-sans font-medium text-zinc-700 dark:text-zinc-300"
                         >
-                          Paper II Written Score
+                          {meritSimulation.isNtc
+                            ? 'Paper I General Module Score'
+                            : 'Paper II Written Score'}
                         </label>
                         <span>{paper2Score} / 100 Marks</span>
                       </div>
@@ -1132,7 +1183,9 @@ export function SimulationPage() {
                           htmlFor="slider-p3"
                           className="font-sans font-medium text-zinc-700 dark:text-zinc-300"
                         >
-                          Paper III Written Score
+                          {meritSimulation.isNtc
+                            ? 'Paper II Specialized Comp. Eng. Score'
+                            : 'Paper III Written Score'}
                         </label>
                         <span>{paper3Score} / 100 Marks</span>
                       </div>
@@ -1172,28 +1225,30 @@ export function SimulationPage() {
                       </div>
                     )}
 
-                    <div className="space-y-1">
-                      <div className="flex justify-between font-mono tabular-nums">
-                        <label
-                          htmlFor="slider-prac"
-                          className="font-sans font-medium text-zinc-700 dark:text-zinc-300"
-                        >
-                          IT / Computer Skill Test Score
-                        </label>
-                        <span>{practicalScore} / 10 Marks</span>
+                    {!meritSimulation.isNtc && (
+                      <div className="space-y-1">
+                        <div className="flex justify-between font-mono tabular-nums">
+                          <label
+                            htmlFor="slider-prac"
+                            className="font-sans font-medium text-zinc-700 dark:text-zinc-300"
+                          >
+                            IT / Computer Skill Test Score
+                          </label>
+                          <span>{practicalScore} / 10 Marks</span>
+                        </div>
+                        <input
+                          id="slider-prac"
+                          type="range"
+                          min={4}
+                          max={10}
+                          value={practicalScore}
+                          onChange={(e) =>
+                            setPracticalScore(Number(e.target.value))
+                          }
+                          className="w-full accent-crimson-700 dark:accent-crimson-500"
+                        />
                       </div>
-                      <input
-                        id="slider-prac"
-                        type="range"
-                        min={4}
-                        max={10}
-                        value={practicalScore}
-                        onChange={(e) =>
-                          setPracticalScore(Number(e.target.value))
-                        }
-                        className="w-full accent-crimson-700 dark:accent-crimson-500"
-                      />
-                    </div>
+                    )}
 
                     {labCadre === 'section-officer' && (
                       <div className="space-y-1">

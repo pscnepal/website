@@ -37,7 +37,7 @@ import {
 import {
   cachePdfFromUrl,
   cacheStudyPackPdfs,
-} from '../../services/pdfService';
+} from '../../services/pdfLocalCacheService';
 import {
   QUESTION_EVENTS,
   questionStorageService,
@@ -48,6 +48,7 @@ import { createBookIdFromUrl, resolveSampleUrl } from '../../utils/urlHelpers';
 import { ReactionButtons } from '../common/ReactionButtons';
 import { BookCoverVector } from '../vectors/BookCoverVector';
 import studyParichayaDeskImg from '../../assets/images/study_parichaya_desk_1793889771100.jpg';
+import studyParichayaDeskWebp from '../../assets/images/study_parichaya_desk_1793889771100.webp';
 import { copyWithToast } from '../../utils/clipboardHelpers';
 
 export function BrowseMaterials() {
@@ -663,15 +664,21 @@ export function BrowseMaterials() {
               {selectedCategory.id === 'nepal-parichaya' && (
                 <div className="relative rounded-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm flex flex-col sm:flex-row items-stretch">
                   <div className="sm:w-2/5 relative h-48 sm:h-auto min-h-[160px] overflow-hidden">
-                    <img
-                      src={studyParichayaDeskImg || '/images/study_parichaya_desk_1793889771100.jpg'}
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = '/images/study_parichaya_desk_1793889771100.jpg';
-                      }}
-                      alt="Official Nepal Parichaya Compendiums on Study Desk"
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
+                    <picture className="w-full h-full block">
+                      <source srcSet={studyParichayaDeskWebp} type="image/webp" />
+                      <img
+                        src={studyParichayaDeskImg || '/images/study_parichaya_desk_1793889771100.jpg'}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/images/study_parichaya_desk_1793889771100.jpg';
+                        }}
+                        alt="Official Nepal Parichaya Compendiums on Study Desk"
+                        width={1080}
+                        height={806}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </picture>
                     <div className="absolute inset-0 bg-gradient-to-t sm:bg-gradient-to-r from-black/60 via-transparent to-transparent sm:from-transparent" />
                   </div>
                   <div className="sm:w-3/5 p-5 sm:p-6 flex flex-col justify-between space-y-3">

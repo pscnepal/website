@@ -117,7 +117,7 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     category: 'economy',
     categoryLabelEn: 'Economy & Budget',
     categoryLabelNe: 'आर्थिक तथा बजेट',
-    cadreRelevance: ['section-officer', 'nayab-subba', 'kharidar'],
+    cadreRelevance: ['section-officer', 'nayab-subba', 'kharidar', 'ntc-computer-engineer-7'],
     paperRelevance: 'Paper I (Economic GK), Paper III (Fiscal & Monetary Policy)',
     summaryEn:
       'Nepal Rastra Bank’s FY 2083/84 Monetary Policy calibrates the Interest Rate Corridor, Cash Reserve Ratio (CRR), and Statutory Liquidity Ratio (SLR) to safeguard price and external reserve stability while steering credit toward agriculture, energy, SMEs, and IT exports.',
@@ -131,9 +131,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Always distinguish Fiscal Policy (Ministry of Finance — taxes & public spending) from Monetary Policy (NRB — policy rate corridor, CRR, SLR, OMO) in Paper III answers.',
-    likes: 184,
-    dislikes: 2,
-    views: 2140,
     pinned: true,
     source: 'Nepal Rastra Bank (नेपाल राष्ट्र बैंक — Monetary Policy 2083/84)',
     linkedQuizIds: ['PSC-CA-502', 'PSC-CA-510'],
@@ -167,9 +164,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Combine Article 241/294, Audit Act 2075 (5 audit criteria), and Fiscal Accountability Act 2076 (35-day Beruju duty) for maximum Paper II/III marks.',
-    likes: 162,
-    dislikes: 1,
-    views: 1920,
     pinned: true,
     source: 'Office of the Auditor General (महालेखापरीक्षकको कार्यालय)',
     linkedQuizIds: ['PSC-CA-503'],
@@ -203,9 +197,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Essential for Section Officer Paper III: Always cite the Nov 24, 2026 date, the 2 criteria passed (HAI + EVI), EU EBA 3-year grace period, and GSP+ 27 conventions.',
-    likes: 198,
-    dislikes: 3,
-    views: 2450,
     pinned: true,
     source: 'National Planning Commission & Ministry of Foreign Affairs',
     linkedQuizIds: ['PSC-CA-504', 'PSC-CA-515'],
@@ -225,7 +216,7 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     category: 'governance',
     categoryLabelEn: 'Governance & Laws',
     categoryLabelNe: 'सुशासन तथा कानुन',
-    cadreRelevance: ['section-officer', 'nayab-subba', 'kharidar'],
+    cadreRelevance: ['section-officer', 'nayab-subba', 'kharidar', 'ntc-computer-engineer-7'],
     paperRelevance: 'Paper I (Governance GK), Paper II (Procurement & Social Protection)',
     summaryEn:
       'The Office of the Prime Minister and Council of Ministers issued the 2083 BS procedure requiring contractors on public procurement works to pay statutory minimum wages digitally and enroll labourers into the Contribution-Based Social Security Fund (SSF).',
@@ -238,9 +229,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Cite this 2083 OPMCM procedure as a concrete recent reform when writing answers on Labour Act, Social Security (Art. 43), or Public Procurement.',
-    likes: 118,
-    dislikes: 1,
-    views: 1380,
     pinned: false,
     source: 'Office of the Prime Minister and Council of Ministers (OPMCM)',
     linkedQuizIds: ['PSC-CA-505'],
@@ -273,9 +261,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Frequent Paper I & II question: Rank Primary, Secondary, and Tertiary GDP shares and explain why industrial manufacturing share remains sluggish.',
-    likes: 145,
-    dislikes: 2,
-    views: 1790,
     pinned: false,
     source: 'National Statistics Office (NSO / राष्ट्रिय तथ्याङ्क कार्यालय)',
     linkedQuizIds: ['PSC-CA-506', 'PSC-CA-507'],
@@ -308,9 +293,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Remember Section 5(3) (quarterly proactive publication) and 15-day information supply deadline (24 hours if life/liberty threatened) for RTI MCQs.',
-    likes: 109,
-    dislikes: 1,
-    views: 1210,
     pinned: false,
     source: 'MoCIT, OPMCM & National Planning Commission',
     linkedQuizIds: ['PSC-CA-508'],
@@ -352,9 +334,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'In both English and Nepali Paper III essays on fiscal policy, distinguish Appropriation Act vs Economic Act and cite LMBIS/TSA PFM reforms.',
-    likes: 234,
-    dislikes: 3,
-    views: 3040,
     pinned: true,
     source: 'Ministry of Finance, Government of Nepal (अर्थ मन्त्रालय)',
     linkedQuizIds: ['PSC-CA-509', 'PSC-CA-510'],
@@ -388,9 +367,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Section 50 of the Corruption Prevention Act 2059 (60-day property disclosure) and CIAA’s 3-pronged strategy (Curative, Preventive, Promotional) are evergreen exam winners.',
-    likes: 205,
-    dislikes: 2,
-    views: 2670,
     pinned: false,
     source: 'CIAA Nepal (अख्तियार दुरुपयोग अनुसन्धान आयोग)',
     linkedQuizIds: ['PSC-CA-511'],
@@ -424,9 +400,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Memorize 20.27% monetary poverty, NPR 72,908 line, and 17.4% MPI—these exact numbers elevate both Objective GK scores and Written answers.',
-    likes: 251,
-    dislikes: 3,
-    views: 3320,
     pinned: true,
     source: 'National Statistics Office (NSO — NLSS-IV Report)',
     linkedQuizIds: ['PSC-CA-512'],
@@ -460,9 +433,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Verify official data exclusively against DoIB Nepal Parichaya 14th Edition (2083 BS) or NSO reports rather than unverified social-media notes.',
-    likes: 189,
-    dislikes: 1,
-    views: 2540,
     pinned: false,
     source: 'Department of Information and Broadcasting (DoIB)',
     linkedQuizIds: ['PSC-CA-513'],
@@ -496,9 +466,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Mention the Monitoring and Evaluation Act, 2080 alongside MTEF and National Project Bank when answering Paper III planning & implementation-gap questions.',
-    likes: 156,
-    dislikes: 2,
-    views: 1980,
     pinned: false,
     source: 'National Planning Commission (NPC / राष्ट्रिय योजना आयोग)',
     linkedQuizIds: ['PSC-CA-501', 'PSC-CA-514'],
@@ -532,9 +499,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Always anchor Foreign Policy answers in Constitution Article 50(4) / 51(m) and Nepal Foreign Policy 2077 White Paper.',
-    likes: 171,
-    dislikes: 1,
-    views: 2230,
     pinned: false,
     source: 'Ministry of Foreign Affairs & Institute of Foreign Affairs (IFA)',
     linkedQuizIds: ['PSC-CA-514', 'PSC-CA-515'],
@@ -558,7 +522,7 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     category: 'economy',
     categoryLabelEn: 'Economy & Budget',
     categoryLabelNe: 'आर्थिक तथा बजेट',
-    cadreRelevance: ['section-officer', 'nayab-subba', 'kharidar'],
+    cadreRelevance: ['section-officer', 'nayab-subba', 'kharidar', 'ntc-computer-engineer-7'],
     paperRelevance: 'Paper I (GK), Paper II (Economic Planning), Paper III (Development)',
     summaryEn:
       'National Planning Commission (NPC) finalized the 16th Periodic Plan anchored around "Good Governance, Social Justice, and Prosperity" (सुशासन, सामाजिक न्याय र समृद्धि). The plan sets economic growth, human capital development, and structural transformations as central targets.',
@@ -573,9 +537,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'High probability in Section Officer Paper II long questions: "Explain the vision, goals, and structural transformation pillars of the 16th Plan."',
-    likes: 342,
-    dislikes: 4,
-    views: 4890,
     pinned: true,
     source: 'National Planning Commission (NPC) / राष्ट्रिय योजना आयोग',
     linkedQuizIds: ['PSC-CA-501'],
@@ -611,9 +572,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Essential for Na.Su. & Section Officer: Compare Capital vs Financial Management expenditure trends and discuss causes of declining capital absorption.',
-    likes: 289,
-    dislikes: 6,
-    views: 4120,
     pinned: false,
     source: 'Ministry of Finance, Government of Nepal (अर्थ मन्त्रालय)',
     linkedQuizIds: ['PSC-CA-509', 'PSC-CA-510'],
@@ -648,9 +606,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Frequently framed in Section Officer Paper III on "Sub-regional energy integration: opportunities, bottlenecks, and geopolitical significance for Nepal."',
-    likes: 412,
-    dislikes: 2,
-    views: 5240,
     pinned: false,
     source: 'Nepal Electricity Authority (NEA) & Ministry of Energy',
     linkedQuizIds: ['PSC-CA-515'],
@@ -685,9 +640,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Mandatory topic for Section Officer & Na.Su. Paper II: "Evaluate the major structural transitions proposed in the Federal Civil Service Bill."',
-    likes: 512,
-    dislikes: 11,
-    views: 6410,
     pinned: true,
     source: 'Parliament Secretariat & Ministry of Federal Affairs and General Administration',
     linkedQuizIds: ['PSC-CA-508'],
@@ -722,9 +674,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Very common in written exams: "Analyze the reasons behind Nepal\'s stagnant CPI score and suggest statutory & structural remedies for integrity."',
-    likes: 275,
-    dislikes: 5,
-    views: 3880,
     pinned: false,
     source: 'Transparency International / ट्रान्सपरेन्सी इन्टरनेसनल नेपाल',
     linkedQuizIds: ['PSC-CA-511'],
@@ -760,9 +709,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Crucial for Kharidar & Na.Su. Paper I: Remember the exact length (70.977 km), key tunnel names, and starting/ending points.',
-    likes: 318,
-    dislikes: 3,
-    views: 4560,
     pinned: false,
     source: 'Nepali Army Fast Track Project Directorate',
     linkedQuizIds: ['PSC-CA-513'],
@@ -796,9 +742,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Virtually guaranteed question in Paper I objective GK across all three tiers (Section Officer, Na.Su., Kharidar).',
-    likes: 395,
-    dislikes: 1,
-    views: 5930,
     pinned: false,
     source: 'Madan Puraskar Guthi (मदन पुरस्कार गुठी)',
     linkedQuizIds: ['PSC-CA-516'],
@@ -832,9 +775,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Watch out for captaincy, runner-up nation, and previous participation year (2014 Bangladesh) in objective MCQs.',
-    likes: 460,
-    dislikes: 7,
-    views: 6180,
     pinned: false,
     source: 'Cricket Association of Nepal (CAN) & Ministry of Youth and Sports',
     linkedQuizIds: ['PSC-CA-516'],
@@ -868,9 +808,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Crucial for Section Officer Paper III written questions on "Climate Diplomacy, Mountain Ecology Vulnerability, and Nepal\'s Net-Zero 2045 commitments."',
-    likes: 312,
-    dislikes: 2,
-    views: 4320,
     pinned: false,
     source: 'Ministry of Forests and Environment (वन तथा वातावरण मन्त्रालय)',
     linkedQuizIds: ['PSC-CA-514'],
@@ -907,9 +844,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'High statistical citation value for both Paper I MCQs and Paper II essays on demographic dividend and migration.',
-    likes: 421,
-    dislikes: 3,
-    views: 5740,
     pinned: true,
     source: 'National Statistics Office (NSO) / राष्ट्रिय तथ्याङ्क कार्यालय',
     linkedQuizIds: ['PSC-CA-506'],
@@ -929,8 +863,8 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     category: 'governance',
     categoryLabelEn: 'Governance & Laws',
     categoryLabelNe: 'सुशासन तथा कानुन',
-    cadreRelevance: ['section-officer', 'nayab-subba', 'kharidar'],
-    paperRelevance: 'Paper I (GK / IT), Paper II (E-Governance & Public Service Delivery)',
+    cadreRelevance: ['section-officer', 'nayab-subba', 'kharidar', 'ntc-computer-engineer-7'],
+    paperRelevance: 'Paper I (GK / ICT), NTC Paper I–II (E-Governance & Digital Nepal)',
     summaryEn:
       'Ministry of Communication and Information Technology updated the Digital Nepal Framework, integrating police clearance, land ownership records (Mero Kitta), driving license QR verifications, and public health records into the unified Nagarik App platform.',
     summaryNe:
@@ -942,14 +876,11 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
       'Paperless Government: Target to eliminate physical document submissions across 90% of basic federal public services by 2085 BS',
     ],
     examTip:
-      'Direct relevance for Paper II: "Evaluate the role of e-governance and the Nagarik App in reducing bureaucratic delays and promoting administrative transparency."',
-    likes: 298,
-    dislikes: 4,
-    views: 3990,
+      'Direct relevance for Paper II & NTC Level 7: "Evaluate the role of e-governance, PKI under ETA 2063, and Nagarik App in reducing bureaucratic delays."',
     pinned: false,
     source: 'Ministry of Communication and Information Technology (सञ्चार तथा सूचना प्रविधि मन्त्रालय)',
-    linkedQuizIds: ['PSC-CA-508'],
-    linkedWrittenIds: ['PSC-WR-319'],
+    linkedQuizIds: ['PSC-CA-508', 'NTC-L7-002'],
+    linkedWrittenIds: ['PSC-WR-319', 'PSC-WR-503'],
     linkedMaterialIds: ['law-eta-2063', 'ca-doib-nepal-bimonthly-256'],
   },
   {
@@ -980,9 +911,6 @@ export const CURRENT_AFFAIRS_ITEMS: CurrentAffairItem[] = [
     ],
     examTip:
       'Frequently asked in Section Officer Paper III: "Discuss the economic and commercial implications of Nepal\'s LDC graduation in 2026 and outline transitional safeguards."',
-    likes: 382,
-    dislikes: 3,
-    views: 5120,
     pinned: false,
     source: 'United Nations CDP & National Planning Commission (NPC)',
     linkedQuizIds: ['PSC-CA-504'],

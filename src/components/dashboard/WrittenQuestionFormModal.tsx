@@ -121,6 +121,7 @@ export function WrittenQuestionFormModal({
         'Section Officer / Nayab Subba / Kharidar',
         'Nayab Subba / Kharidar / Section Officer',
         'Section Officer (Gazetted III)',
+        'NTC Computer Engineer (Level 7)',
         ...liveBank.map((q) => q.postTarget).filter(Boolean),
       ])
     );

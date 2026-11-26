@@ -1,3 +1,4 @@
+import { GoogleAdUnit } from '../components/ads/GoogleAdUnit';
 import { BrowseMaterials } from '../components/home/BrowseMaterials';
 import { Footer } from '../components/layout/Footer';
 import { Navbar } from '../components/layout/Navbar';
@@ -10,6 +11,9 @@ export function MaterialsPage() {
       <PageTransition>
         <main className="flex-1">
           <BrowseMaterials />
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-4">
+            <GoogleAdUnit variant="horizontal" />
+          </div>
         </main>
         <Footer />
       </PageTransition>

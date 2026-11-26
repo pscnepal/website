@@ -5,6 +5,7 @@ import type {
   QuizOptionKey,
   QuizQuestion,
 } from '../types/assessment';
+import { NTC_TECH_QUESTIONS } from './quiz/ntcTechQuizQuestions';
 
 export type {
   QuizDeck,
@@ -4939,6 +4940,7 @@ export const ALL_QUIZ_QUESTIONS: QuizQuestion[] = [
   ...PSC_AND_PLANNING_QUESTIONS,
   ...COMPREHENSIVE_EXTRA_QUESTIONS,
   ...CURRENT_AFFAIRS_QUESTIONS,
+  ...NTC_TECH_QUESTIONS,
 ];
 
 export const QUIZ_DECKS: QuizDeck[] = [
@@ -5020,5 +5022,13 @@ export const QUIZ_DECKS: QuizDeck[] = [
     description:
       'Practice Section Officer, Nayab Subba, and Kharidar exam rules, -20% negative marking math, Sixteenth Periodic Plan & LDC graduation priorities, Darta-Chalani, and verbal/quantitative IQ.',
     questions: PSC_AND_PLANNING_QUESTIONS,
+  },
+  {
+    id: 'ntc-computer-engineering',
+    title: 'NTC Computer Engineer (Level 7)',
+    subtitle: '15 Questions · 15-Minute Reverse Countdown',
+    description:
+      'Practice Nepal Telecom Level 7 General & Specialized Computer Engineering MCQs covering Telecom Act 2053, ETA 2063, Networking, Algorithms, OS, DBMS, Architecture, DSP, VLSI, Cryptography, and AI.',
+    questions: NTC_TECH_QUESTIONS,
   },
 ];

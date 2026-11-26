@@ -2,6 +2,10 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
+  initGoogleAdSense,
+  initGoogleAdsTag,
+} from '../../services/adsService';
+import {
   initGoogleAnalytics,
   setAnalyticsUser,
   trackPageView,
@@ -13,6 +17,8 @@ export function GoogleAnalyticsTracker() {
 
   useEffect(() => {
     initGoogleAnalytics();
+    initGoogleAdSense();
+    initGoogleAdsTag();
   }, []);
 
   useEffect(() => {

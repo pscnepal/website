@@ -79,6 +79,8 @@ export interface ReactionsState {
   syncedUserReactions: Record<string, ReactionType>;
   /** View counts already committed to Firestore for current user (prevents double-counting) */
   syncedItemViews: Record<string, number>;
+  /** True only when a verified signed-in user session is actively synced to Firestore */
+  isCloudSyncActive: boolean;
 }
 
 // ============================================================================

@@ -14,4 +14,5 @@ export const WRITTEN_PAPERS: readonly WrittenPaperCode[] = [
   'Paper II: Governance Systems',
   'Paper III: Contemporary Issues & Development',
   'Paper IV: Service Delivery & Case Analysis',
+  'NTC Paper II: Computer Engineering',
 ] as const;

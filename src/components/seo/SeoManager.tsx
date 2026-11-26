@@ -102,13 +102,11 @@ function resolveRouteSeo(
       ? pathname.slice(0, -1)
       : pathname;
   const searchParams = new URLSearchParams(search);
-  const liveQuizQuestions = questionStorageService.loadQuizQuestions();
-  const liveWrittenQuestions = questionStorageService.loadWrittenQuestions();
-  const liveQuizDecks =
-    questionStorageService.hydrateQuizDecks(liveQuizQuestions);
 
   // 1. Home Hub (/)
   if (normalizedPath === '/') {
+    const totalWrittenQuestions =
+      questionStorageService.loadWrittenQuestions().length;
     return {
       title: DEFAULT_TITLE,
       description: DEFAULT_DESCRIPTION,
@@ -137,7 +135,7 @@ function resolveRouteSeo(
                 '@type': 'Answer',
                 text: faq.getPlainAnswer({
                   totalSyllabusUnits: ALL_SYLLABUS_UNITS.length,
-                  totalWrittenQuestions: liveWrittenQuestions.length,
+                  totalWrittenQuestions,
                 }),
               },
             })),
@@ -272,9 +270,9 @@ function resolveRouteSeo(
       };
     }
 
-    const title = `Official Lok Sewa Syllabus & Checklist | ${BRAND_NAME}`;
+    const title = `Official Lok Sewa & NTC Syllabus | ${BRAND_NAME}`;
     const description =
-      'Explore detailed Nepal PSC syllabi for Section Officer, Nayab Subba, and Kharidar with chapter briefs, topic checklists, and official Lok Sewa PDFs.';
+      'Explore detailed Nepal PSC & NTC syllabi for Section Officer, Nayab Subba, Kharidar, and NTC Computer Engineer (Level 7) with chapter briefs, topic checklists, and PDFs.';
     return {
       title,
       description,
@@ -430,12 +428,15 @@ function resolveRouteSeo(
 
   // 5. Objective Quiz Hub (/quiz & /quiz/:deckId)
   if (normalizedPath === '/quiz' || normalizedPath.startsWith('/quiz/')) {
+    const liveQuizQuestions = questionStorageService.loadQuizQuestions();
     const deckSlug = normalizedPath.startsWith('/quiz/')
       ? decodeURIComponent(normalizedPath.slice('/quiz/'.length))
       : null;
     const matchedDeck =
       deckSlug && deckSlug !== 'custom'
-        ? liveQuizDecks.find((d) => d.id === deckSlug) ?? null
+        ? questionStorageService
+            .hydrateQuizDecks(liveQuizQuestions)
+            .find((d) => d.id === deckSlug) ?? null
         : null;
 
     if (matchedDeck) {
@@ -511,7 +512,7 @@ function resolveRouteSeo(
       ? decodeURIComponent(normalizedPath.slice('/written/'.length))
       : null;
     const matchedQuestion = qSlug
-      ? liveWrittenQuestions.find((q) => q.id === qSlug)
+      ? questionStorageService.getWrittenQuestionById(qSlug)
       : undefined;
 
     if (matchedQuestion) {

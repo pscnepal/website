@@ -3,7 +3,7 @@ import { Upload, AlertCircle, FileUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '../../app/hooks';
 import { setCurrentBook } from '../../features/library/librarySlice';
-import { registerLocalPdfFile } from '../../services/pdfService';
+import { registerLocalPdfFile } from '../../services/pdfLocalCacheService';
 import type { PdfUploadProps } from '../../types/pdf';
 
 export function PdfUpload({ compact = false }: PdfUploadProps) {

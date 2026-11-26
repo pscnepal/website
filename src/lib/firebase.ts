@@ -152,7 +152,9 @@ if (typeof window !== 'undefined') {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     void disableNetwork(db).catch(() => undefined);
   } else {
-    void testConnection();
+    window.setTimeout(() => {
+      void testConnection();
+    }, 600);
   }
 
   window.addEventListener('offline', () => {

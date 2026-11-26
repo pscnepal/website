@@ -256,3 +256,73 @@ export function resolveSampleUrl(path: string): string {
   if (typeof window === 'undefined') return trimmed;
   return `${window.location.origin}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
 }
+
+const LOCAL_BUNDLED_FALLBACK_MAP: Record<string, string> = {
+  'https://psc.gov.np/site_uploads/course/202512091112156938040f1c8f0.pdf':
+    '/materials/official-psc/psc-official-section-officer-phase1.pdf',
+  'https://psc.gov.np/site_uploads/course/202512091043336937fd55e8f3c1.pdf':
+    '/materials/official-psc/psc-official-section-officer-phase2.pdf',
+  'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f6.pdf':
+    '/materials/official-psc/psc-official-nayab-subba-phase1.pdf',
+  'https://psc.gov.np/site_uploads/course/2024072511021066a230b2d30f61.pdf':
+    '/materials/official-psc/psc-official-nayab-subba-phase2.pdf',
+  'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca.pdf':
+    '/materials/official-psc/psc-official-kharidar-phase1.pdf',
+  'https://psc.gov.np/site_uploads/course/2024072511005966a2306b5a7ca1.pdf':
+    '/materials/official-psc/psc-official-kharidar-phase2.pdf',
+};
+
+const KNOWN_CORS_RESTRICTED_HOSTS = [
+  'psc.gov.np',
+  'nrb.org.np',
+  'oag.gov.np',
+  'nsonepal.gov.np',
+  'cbs.gov.np',
+  'lawcommission.gov.np',
+  'mof.gov.np',
+  'npc.gov.np',
+  'opmcm.gov.np',
+  'ciaa.gov.np',
+  'mofa.gov.np',
+  'mocit.gov.np',
+  'ird.gov.np',
+  'doib.gov.np',
+];
+
+export function isExternalHttpUrl(rawUrl: string): boolean {
+  if (!rawUrl) return false;
+  const trimmed = rawUrl.trim();
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    return false;
+  }
+  if (typeof window === 'undefined') return true;
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.origin !== window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+export function getProxyPdfUrl(externalUrl: string): string {
+  return `/api/pdf-proxy?url=${encodeURIComponent(externalUrl)}`;
+}
+
+export function getLocalFallbackPdfUrl(url: string): string | null {
+  const mapped = LOCAL_BUNDLED_FALLBACK_MAP[url.trim()];
+  if (!mapped) return null;
+  if (typeof window === 'undefined') return mapped;
+  return `${window.location.origin}${mapped}`;
+}
+
+export function shouldPreferProxyForUrl(rawUrl: string): boolean {
+  if (!isExternalHttpUrl(rawUrl)) return false;
+  try {
+    const hostname = new URL(rawUrl).hostname.toLowerCase();
+    return KNOWN_CORS_RESTRICTED_HOSTS.some(
+      (host) => hostname === host || hostname.endsWith(`.${host}`)
+    );
+  } catch {
+    return false;
+  }
+}

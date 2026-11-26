@@ -7,207 +7,123 @@ import type {
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import type { LoadPdfOptions, LocalPdfSessionEntry } from '../types/pdf';
 import {
-  createBookIdFromLocalFile,
-  createBookIdFromUrl,
-  deriveTitleFromSource,
-} from '../utils/urlHelpers';
-import { offlineDbService } from './offlineDbService';
+  cachePdfFromUrl,
+  cacheStudyPackPdfs,
+  containsPdfHeader,
+  getLocalPdfSessionEntry,
+  getOfflinePdfBytes,
+  registerLocalPdfFile,
+  restoreLocalPdfFromIndexedDB,
+  revokeAllLocalPdfFiles,
+} from './pdfLocalCacheService';
 
 export type { LoadPdfOptions, LocalPdfSessionEntry };
+export {
+  cachePdfFromUrl,
+  cacheStudyPackPdfs,
+  getLocalPdfSessionEntry,
+  getOfflinePdfBytes,
+  registerLocalPdfFile,
+  restoreLocalPdfFromIndexedDB,
+  revokeAllLocalPdfFiles,
+};
 
 // Configure PDF.js worker once for the entire client session
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
-const localFileRegistry = new Map<string, LocalPdfSessionEntry>();
-
-/**
- * Registers a user-uploaded PDF File in session memory using an Object URL
- * AND persists its ArrayBuffer in IndexedDB so it stays readable offline across reloads.
- */
-export function registerLocalPdfFile(file: File): LocalPdfSessionEntry {
-  const id = createBookIdFromLocalFile(file.name, file.size);
-  const existing = localFileRegistry.get(id);
-  if (existing) {
-    URL.revokeObjectURL(existing.objectUrl);
+function createNamedStatusError(
+  name: string,
+  message: string,
+  status?: number
+): Error & { status?: number } {
+  const error = new Error(message) as Error & { status?: number };
+  error.name = name;
+  if (typeof status === 'number') {
+    error.status = status;
   }
-
-  const objectUrl = URL.createObjectURL(file);
-  const entry: LocalPdfSessionEntry = {
-    id,
-    objectUrl,
-    fileName: file.name,
-    fileSize: file.size,
-    title: deriveTitleFromSource(file.name),
-  };
-
-  localFileRegistry.set(id, entry);
-
-  // Persist binary to IndexedDB asynchronously (never blocks synchronous upload UX)
-  void file
-    .arrayBuffer()
-    .then((buffer) =>
-      offlineDbService.savePdfRecord({
-        id,
-        title: entry.title,
-        sourceType: 'local',
-        fileName: file.name,
-        fileSize: file.size,
-        data: buffer,
-        savedAt: new Date().toISOString(),
-      })
-    )
-    .catch(() => {
-      // Ignore IndexedDB quota / private mode failures
-    });
-
-  return entry;
-}
-
-export function getLocalPdfSessionEntry(id: string): LocalPdfSessionEntry | undefined {
-  return localFileRegistry.get(id);
+  return error;
 }
 
 /**
- * Restores a previously uploaded local PDF from IndexedDB after page reload or PWA restart.
+ * Fetches a PDF document (typically via same-origin `/api/pdf-proxy`) with streaming
+ * progress updates and strict `%PDF-` signature validation.
  */
-export async function restoreLocalPdfFromIndexedDB(
-  id: string
-): Promise<LocalPdfSessionEntry | null> {
-  const existing = localFileRegistry.get(id);
-  if (existing) {
-    return existing;
-  }
+export async function fetchPdfBytesWithProgress(
+  fetchUrl: string,
+  onProgress?: (loaded: number, total: number) => void,
+  signal?: AbortSignal
+): Promise<Uint8Array> {
+  const response = await fetch(fetchUrl, {
+    credentials: 'same-origin',
+    signal,
+  });
 
-  const record = await offlineDbService.getPdfRecordById(id);
-  if (!record || !record.data) {
-    return null;
-  }
-
-  const blob = new Blob([record.data], { type: 'application/pdf' });
-  const objectUrl = URL.createObjectURL(blob);
-  const entry: LocalPdfSessionEntry = {
-    id: record.id,
-    objectUrl,
-    fileName: record.fileName || `${record.title}.pdf`,
-    fileSize: record.fileSize || record.data.byteLength,
-    title: record.title,
-  };
-  localFileRegistry.set(id, entry);
-  return entry;
-}
-
-export function revokeAllLocalPdfFiles(): void {
-  for (const entry of localFileRegistry.values()) {
-    URL.revokeObjectURL(entry.objectUrl);
-  }
-  localFileRegistry.clear();
-}
-
-/**
- * Fetches a PDF URL and stores its binary payload in IndexedDB for true offline access.
- */
-export async function cachePdfFromUrl(
-  url: string,
-  meta?: { id?: string; title?: string }
-): Promise<{ id: string; fileSize: number } | null> {
-  if (typeof window === 'undefined' || !url || url.startsWith('blob:')) {
-    return null;
-  }
-
-  const id = meta?.id?.trim() || createBookIdFromUrl(url);
-  const existing = await offlineDbService.getPdfRecordById(id);
-  if (existing && existing.data?.byteLength > 0) {
-    return { id: existing.id, fileSize: existing.fileSize };
-  }
-
-  try {
-    const response = await fetch(url, { credentials: 'same-origin' });
-    if (!response.ok) {
-      return null;
+  if (!response.ok) {
+    if (response.status === 404 || response.status === 401 || response.status === 403) {
+      throw createNamedStatusError(
+        response.status === 404 ? 'MissingPDFException' : 'UnexpectedResponseException',
+        `Remote server responded with HTTP ${response.status}.`,
+        response.status
+      );
     }
-
-    const contentType = response.headers.get('content-type') || '';
-    const buffer = await response.arrayBuffer();
-    if (buffer.byteLength < 16) {
-      return null;
-    }
-
-    // Verify PDF signature (%PDF-) so SPA HTML fallback pages are never mistakenly cached
-    const header = new TextDecoder('ascii').decode(buffer.slice(0, 5));
-    if (!header.startsWith('%PDF-') && !contentType.includes('pdf')) {
-      return null;
-    }
-
-    const saved = await offlineDbService.savePdfRecord({
-      id,
-      title: meta?.title?.trim() || deriveTitleFromSource(url),
-      sourceType: 'url',
-      url,
-      fileSize: buffer.byteLength,
-      data: buffer,
-      savedAt: new Date().toISOString(),
-    });
-
-    return saved ? { id, fileSize: buffer.byteLength } : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function cacheStudyPackPdfs(
-  items: Array<{ url: string; id?: string; title: string }>,
-  onProgress?: (completed: number, total: number) => void
-): Promise<{ cached: number; skippedOrFailed: number }> {
-  let completed = 0;
-  let cached = 0;
-  let skippedOrFailed = 0;
-  const total = items.length;
-  const CONCURRENCY = 3;
-
-  for (let i = 0; i < total; i += CONCURRENCY) {
-    const batch = items.slice(i, i + CONCURRENCY);
-    await Promise.all(
-      batch.map(async (item) => {
-        const res = await cachePdfFromUrl(item.url, {
-          id: item.id,
-          title: item.title,
-        });
-        if (res) {
-          cached++;
-        } else {
-          skippedOrFailed++;
-        }
-        completed++;
-        onProgress?.(completed, total);
-      })
+    throw createNamedStatusError(
+      'ProxyUnavailableError',
+      `Failed to fetch PDF (${response.status}).`,
+      response.status
     );
   }
 
-  return { cached, skippedOrFailed };
-}
-
-/**
- * Returns a fresh cloned Uint8Array copy of an offline-cached PDF for PDF.js worker safety.
- */
-export async function getOfflinePdfBytes(
-  urlOrId: string
-): Promise<Uint8Array | null> {
-  if (!urlOrId) return null;
-
-  const candidateId = urlOrId.startsWith('http') || urlOrId.startsWith('/')
-    ? createBookIdFromUrl(urlOrId)
-    : urlOrId;
-
-  let record = await offlineDbService.getPdfRecordById(candidateId);
-  if (!record && (urlOrId.startsWith('http') || urlOrId.startsWith('/'))) {
-    record = await offlineDbService.getPdfRecordByUrl(urlOrId);
+  const contentType = (response.headers.get('content-type') || '').toLowerCase();
+  if (contentType.includes('text/html') || contentType.includes('application/json')) {
+    throw createNamedStatusError(
+      'ProxyUnavailableError',
+      'PDF proxy endpoint did not return a PDF stream.'
+    );
   }
 
-  if (!record || !record.data) {
-    return null;
+  const totalBytes = Number(response.headers.get('content-length')) || 0;
+  if (!response.body) {
+    const buffer = new Uint8Array(await response.arrayBuffer());
+    if (!containsPdfHeader(buffer)) {
+      throw createNamedStatusError('InvalidPDFException', 'Invalid PDF header.');
+    }
+    onProgress?.(buffer.byteLength, buffer.byteLength);
+    return buffer;
   }
 
-  return new Uint8Array(record.data.slice(0));
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let loaded = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value || value.byteLength === 0) continue;
+
+    if (chunks.length === 0 && !containsPdfHeader(value) && !contentType.includes('pdf')) {
+      await reader.cancel().catch(() => {});
+      throw createNamedStatusError('InvalidPDFException', 'The target file is not a valid PDF.');
+    }
+
+    chunks.push(value);
+    loaded += value.byteLength;
+    if (totalBytes > 0) {
+      onProgress?.(loaded, totalBytes);
+    }
+  }
+
+  const merged = new Uint8Array(loaded);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  if (!containsPdfHeader(merged)) {
+    throw createNamedStatusError('InvalidPDFException', 'Invalid PDF structure.');
+  }
+
+  return merged;
 }
 
 export function createPdfLoadingTask({

@@ -105,7 +105,8 @@ const pscSlice = createSlice({
       if (
         action.payload.targetCadreId === 'section-officer' ||
         action.payload.targetCadreId === 'nayab-subba' ||
-        action.payload.targetCadreId === 'kharidar'
+        action.payload.targetCadreId === 'kharidar' ||
+        action.payload.targetCadreId === 'ntc-computer-engineer-7'
       ) {
         state.targetCadreId = action.payload.targetCadreId;
       }

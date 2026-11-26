@@ -33,6 +33,7 @@ import {
   isFirestoreOfflineError,
 } from '../utils/errorHelpers';
 import { toast } from '../services/toastService';
+import { useGoogleAdsConversion } from '../hooks/useGoogleAdsConversion';
 import { trackAnalyticsEvent } from '../services/analyticsService';
 import {
   CONTACT_CATEGORY_OPTIONS,
@@ -71,6 +72,7 @@ const STATUS_BADGE: Record<
 
 export function ContactPage() {
   const { user, signInWithGoogle } = useAuth();
+  const { trackInquiryConversion } = useGoogleAdsConversion();
   const canSyncCloud = Boolean(user && user.emailVerified);
 
   const [name, setName] = useState(() => user?.displayName || '');
@@ -197,6 +199,7 @@ export function ContactPage() {
           category,
           synced_cloud: true,
         });
+        trackInquiryConversion({ transactionId: created.ticketCode });
         setLastSubmitted(created);
         toast.success(
           `Ticket ${created.ticketCode} submitted to the editorial desk.`
@@ -234,6 +237,7 @@ export function ContactPage() {
       category,
       synced_cloud: false,
     });
+    trackInquiryConversion({ transactionId: record.ticketCode });
     setLastSubmitted(record);
     toast.success(
       `Support note ${record.ticketCode} prepared. Sign in to sync & track editorial replies.`

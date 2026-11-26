@@ -47,6 +47,7 @@ const CADRE_SHORT_LABELS: Record<PscCadreId, string> = {
   'section-officer': 'Section Officer',
   'nayab-subba': 'Nayab Subba',
   kharidar: 'Kharidar',
+  'ntc-computer-engineer-7': 'NTC Comp. Eng. (L7)',
 };
 
 const CATEGORY_TABS: ReadonlyArray<{

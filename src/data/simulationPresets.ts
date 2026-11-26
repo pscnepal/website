@@ -57,6 +57,21 @@ function pickBalancedQuestions(count: number, offset: number): QuizQuestion[] {
   return selected;
 }
 
+function pickNtcQuestions(count: number): QuizQuestion[] {
+  const pool = questionStorageService.loadQuizQuestions();
+  const ntcFirst = pool.filter(
+    (q) =>
+      q.subject.toLowerCase().includes('computer') ||
+      q.subject.toLowerCase().includes('telecom') ||
+      q.post.toLowerCase().includes('telecom') ||
+      q.id.startsWith('NTC-')
+  );
+  const rest = pickBalancedQuestions(count, 3).filter(
+    (q) => !ntcFirst.some((n) => n.id === q.id)
+  );
+  return [...ntcFirst, ...rest].slice(0, count);
+}
+
 export const OMR_PRESETS: readonly OmrPreset[] = [
   {
     id: 'so-phase1-omr',
@@ -102,6 +117,21 @@ export const OMR_PRESETS: readonly OmrPreset[] = [
     blueprintSummary:
       'Scaled 50-Mark Sitting (25 MCQs × 2 Marks) covering Nepal GK, Civic Rules, Nepali Writing & BOST Aptitude · -0.40M wrong · 45% Pass Gate',
     selectQuestions: () => pickBalancedQuestions(25, 4),
+  },
+  {
+    id: 'ntc-l7-omr',
+    cadreId: 'ntc-computer-engineer-7',
+    cadreLabel: 'NTC Computer Engineer · Level 7',
+    title: 'NTC Level 7 Technical & General MCQ Hall',
+    nepaliTitle: 'नेपाल टेलिकम तह ७ · कम्प्युटर इन्जिनियरिङ वस्तुगत OMR परीक्षा',
+    questionCount: 30,
+    marksPerQuestion: 1,
+    negativeRate: 0.2,
+    passPercent: 40,
+    allocatedSeconds: 27 * 60,
+    blueprintSummary:
+      'Official NTC 30-MCQ Paper Section (1.00M correct · -0.20M wrong · 40% Paper Pass Gate) covering Algorithms, OS, DBMS, Networks, Architecture, DSP, VLSI, Security & Telecom Acts',
+    selectQuestions: () => pickNtcQuestions(30),
   },
   {
     id: 'rapid-15-omr',
@@ -164,5 +194,16 @@ export const WRITTEN_PRESETS: readonly WrittenHallPreset[] = [
     questionIds: ['PSC-WR-402', 'PSC-WR-202'],
     description:
       'Practices Darta-Chalani & Record Digitization (5 Marks) alongside Federal Inter-Governmental Relations (10 Marks).',
+  },
+  {
+    id: 'written-ntc-l7',
+    cadreId: 'ntc-computer-engineer-7',
+    paperCode: 'NTC Paper II (Technical)',
+    title: 'NTC Computer Engineer Technical Subjective Sitting (25 Marks)',
+    nepaliTitle: 'नेपाल टेलिकम तह ७ · कम्प्युटर इन्जिनियरिङ लिखित अभ्यास (२५ अङ्क)',
+    allocatedSeconds: 45 * 60,
+    questionIds: ['PSC-WR-503', 'PSC-WR-501', 'PSC-WR-502'],
+    description:
+      'Focused 45-minute technical writing hall covering Carrier OSPF/BGP/MPLS Security (10M), Distributed RDBMS/CAP Billing (10M), and ETA 2063 / Procurement Compliance (5M).',
   },
 ];

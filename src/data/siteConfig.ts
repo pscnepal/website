@@ -17,7 +17,8 @@ export const SITE_CONFIG = {
   brandNepaliName: 'लोक सेवा आयोग (Lok Sewa Aayog)',
   workspaceLabel: 'Unified Study & Exam Workspace',
   commandConsoleLabel: 'Command Dashboard',
-  tagline: 'Section Officer · Nayab Subba · Kharidar Preparation',
+  tagline:
+    'Section Officer · Nayab Subba · Kharidar · NTC Computer Engineer (L7)',
   footerDescription:
     'Central Nepal PSC (Lok Sewa) preparation workspace combining official curricula, two-page PDF study volumes, timed MCQ drills, bilingual written Q&A (EN/नेपाली), and OMR exam hall simulations.',
   copyrightSubtitle: 'Independent Lok Sewa study & exam preparation platform.',
@@ -182,7 +183,7 @@ export const DASHBOARD_NAV_MODULES: ReadonlyArray<DashboardModuleConfig> = [
     quickActionLabel: 'Materials Inventory',
     category: 'Official Archives',
     title: 'Study Materials & Parichaya Archives',
-    subtitle: '13 editions of Nepal Parichaya, Constitution & core statutes',
+    subtitle: '19 volumes of Nepal Parichaya, Constitution & core statutes',
     description: 'Parichaya editions, Constitution & statutes',
     quickDescription: 'Official reference documents & PDFs',
     seoTitle: `Lok Sewa Materials & Syllabus Inventory | ${SITE_CONFIG.brandName}`,
@@ -203,7 +204,7 @@ export const DASHBOARD_NAV_MODULES: ReadonlyArray<DashboardModuleConfig> = [
     quickDescription: 'Directory & candidate dossiers',
     seoTitle: `Aspirants Community & Study Cohort | ${SITE_CONFIG.brandName}`,
     seoDescription:
-      'Connect with fellow Nepal Lok Sewa aspirants across all 7 provinces preparing for Section Officer, Nayab Subba, and Kharidar public examinations.',
+      'Connect with fellow Nepal Lok Sewa and public enterprise aspirants across all 7 provinces preparing for Section Officer, Nayab Subba, Kharidar, and NTC Computer Engineer (Level 7) examinations.',
     seoBreadcrumb: 'Aspirants Cohort',
     color: 'purple',
     dividerBefore: true,
@@ -236,7 +237,7 @@ export const DASHBOARD_NAV_MODULES: ReadonlyArray<DashboardModuleConfig> = [
     quickDescription: 'Export study state & statistics',
     seoTitle: `Study Data Backup & Sync Hub | ${SITE_CONFIG.brandName}`,
     seoDescription:
-      'Export, import, and backup your Lok Sewa mock exam scores, written answer submissions, and syllabus checklist progress safely in JSON format.',
+      'Export, import, and back up your Lok Sewa mock exam scores, written answer submissions, and syllabus checklist progress safely in JSON format.',
     seoBreadcrumb: 'Data Backup & Sync',
     color: 'zinc',
   },

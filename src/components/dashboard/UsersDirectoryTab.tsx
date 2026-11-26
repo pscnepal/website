@@ -77,6 +77,7 @@ function formatCadreLabel(cadre: CloudUserTargetCadre | ''): string {
   if (cadre === 'section-officer') return 'Section Officer';
   if (cadre === 'nayab-subba') return 'Nayab Subba';
   if (cadre === 'kharidar') return 'Kharidar';
+  if (cadre === 'ntc-computer-engineer-7') return 'NTC Comp. Eng. (L7)';
   return 'Not specified';
 }
 
@@ -128,12 +129,12 @@ function UserAvatar({
     <div
       className={`${dims} rounded-full ${
         user.status === 'banned'
-          ? 'bg-gradient-to-tr from-red-600 to-rose-700'
+          ? 'bg-gradient-to-tr from-crimson-700 to-crimson-900'
           : user.status === 'disabled'
-            ? 'bg-gradient-to-tr from-amber-500 to-orange-600'
+            ? 'bg-gradient-to-tr from-amber-500 to-amber-700'
             : user.role === 'admin'
-              ? 'bg-gradient-to-tr from-blue-600 to-crimson-600'
-              : 'bg-gradient-to-tr from-blue-600 to-indigo-700'
+              ? 'bg-gradient-to-tr from-blue-700 to-crimson-600'
+              : 'bg-gradient-to-tr from-blue-600 to-blue-900'
       } text-white flex items-center justify-center font-bold shrink-0 shadow-2xs`}
     >
       {user.displayName.charAt(0).toUpperCase()}
@@ -1604,6 +1605,10 @@ export function UsersDirectoryTab() {
                       { value: 'section-officer', label: 'Section Officer' },
                       { value: 'nayab-subba', label: 'Nayab Subba' },
                       { value: 'kharidar', label: 'Kharidar' },
+                      {
+                        value: 'ntc-computer-engineer-7',
+                        label: 'NTC Computer Engineer (Level 7)',
+                      },
                     ]}
                     enableSearch={false}
                     size="sm"

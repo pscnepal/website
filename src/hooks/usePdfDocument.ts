@@ -4,6 +4,7 @@ import {
   cachePdfFromUrl,
   createPdfLoadingTask,
   extractPdfMetadata,
+  fetchPdfBytesWithProgress,
   getOfflinePdfBytes,
   isRenderingCancelledError,
 } from '../services/pdfService';
@@ -14,8 +15,34 @@ import type {
   UsePdfDocumentResult,
 } from '../types/pdf';
 import { classifyPdfError } from '../utils/pdfHelpers';
+import {
+  getLocalFallbackPdfUrl,
+  getProxyPdfUrl,
+  isExternalHttpUrl,
+  shouldPreferProxyForUrl,
+} from '../utils/urlHelpers';
 
 export type { UsePdfDocumentParams, UsePdfDocumentResult };
+
+function isCorsOrProxyRecoverableError(err: unknown): boolean {
+  const errObj = err as { name?: string; message?: string; status?: number };
+  const name = errObj?.name ?? '';
+  const status = errObj?.status;
+  if (
+    name === 'PasswordException' ||
+    name === 'AbortException' ||
+    isRenderingCancelledError(err)
+  ) {
+    return false;
+  }
+  if (status === 401 || status === 403 || status === 404) {
+    return false;
+  }
+  if (name === 'InvalidPDFException') {
+    return false;
+  }
+  return true;
+}
 
 export function usePdfDocument({
   url,
@@ -50,6 +77,7 @@ export function usePdfDocument({
     let isCancelled = false;
     let activeLoadingTask: PDFDocumentLoadingTask | null = null;
     let loadedDocument: PDFDocumentProxy | null = null;
+    const proxyAbortController = new AbortController();
 
     setIsLoading(true);
     setProgressPercent(null);
@@ -124,6 +152,45 @@ export function usePdfDocument({
       }
     };
 
+    const loadDirectFromUrl = async (targetUrl: string): Promise<PDFDocumentProxy> => {
+      const task = createPdfLoadingTask({
+        url: targetUrl,
+        password,
+        onProgress: (loaded, total) => {
+          if (isCancelled) return;
+          if (total > 0) {
+            const pct = Math.min(99, Math.round((loaded / total) * 100));
+            setProgressPercent(pct);
+          }
+        },
+      });
+      activeLoadingTask = task;
+      return task.promise;
+    };
+
+    const loadViaProxy = async (targetUrl: string): Promise<PDFDocumentProxy> => {
+      const bytes = await fetchPdfBytesWithProgress(
+        getProxyPdfUrl(targetUrl),
+        (loaded, total) => {
+          if (isCancelled) return;
+          if (total > 0) {
+            const pct = Math.min(99, Math.round((loaded / total) * 100));
+            setProgressPercent(pct);
+          }
+        },
+        proxyAbortController.signal
+      );
+      if (isCancelled) {
+        throw new Error('Cancelled');
+      }
+      const task = createPdfLoadingTask({
+        data: bytes,
+        password,
+      });
+      activeLoadingTask = task;
+      return task.promise;
+    };
+
     const loadDocument = async () => {
       const isOffline =
         typeof navigator !== 'undefined' && navigator.onLine === false;
@@ -143,31 +210,69 @@ export function usePdfDocument({
         return;
       }
 
+      const external = isExternalHttpUrl(url);
+      const localFallbackUrl = external ? getLocalFallbackPdfUrl(url) : null;
+
       try {
-        const networkTask = createPdfLoadingTask({
-          url,
-          password,
-          onProgress: (loaded, total) => {
-            if (isCancelled) return;
-            if (total > 0) {
-              const pct = Math.min(99, Math.round((loaded / total) * 100));
-              setProgressPercent(pct);
+        let doc: PDFDocumentProxy;
+
+        if (external && shouldPreferProxyForUrl(url)) {
+          try {
+            doc = await loadViaProxy(url);
+          } catch (proxyErr: unknown) {
+            if (isCancelled || isRenderingCancelledError(proxyErr)) return;
+            const proxyErrName = (proxyErr as { name?: string })?.name;
+            if (proxyErrName === 'AbortError' || proxyErrName === 'AbortException') return;
+            if (proxyErrName === 'PasswordException') throw proxyErr;
+
+            if (localFallbackUrl) {
+              doc = await loadDirectFromUrl(localFallbackUrl);
+            } else if (isCorsOrProxyRecoverableError(proxyErr)) {
+              doc = await loadDirectFromUrl(url);
+            } else {
+              throw proxyErr;
             }
-          },
-        });
-        activeLoadingTask = networkTask;
-        const doc = await networkTask.promise;
+          }
+        } else if (external) {
+          try {
+            doc = await loadDirectFromUrl(url);
+          } catch (directErr: unknown) {
+            if (isCancelled || isRenderingCancelledError(directErr)) return;
+            const directName = (directErr as { name?: string })?.name;
+            if (directName === 'AbortException') return;
+
+            if (isCorsOrProxyRecoverableError(directErr)) {
+              try {
+                doc = await loadViaProxy(url);
+              } catch (proxyErr: unknown) {
+                if (isCancelled || isRenderingCancelledError(proxyErr)) return;
+                const proxyName = (proxyErr as { name?: string })?.name;
+                if (proxyName === 'AbortError' || proxyName === 'AbortException') return;
+                if (proxyName === 'PasswordException') throw proxyErr;
+                if (localFallbackUrl) {
+                  doc = await loadDirectFromUrl(localFallbackUrl);
+                } else {
+                  throw directErr;
+                }
+              }
+            } else if (localFallbackUrl) {
+              doc = await loadDirectFromUrl(localFallbackUrl);
+            } else {
+              throw directErr;
+            }
+          }
+        } else {
+          doc = await loadDirectFromUrl(url);
+        }
+
         await finalizeDocument(doc, false);
       } catch (networkErr: unknown) {
         if (isCancelled || isRenderingCancelledError(networkErr)) return;
         const name = (networkErr as { name?: string })?.name;
-        if (name === 'AbortException') return;
+        if (name === 'AbortException' || name === 'AbortError') return;
 
         // Do not swallow password prompts with cached copy if same password applies; otherwise try cached fallback
-        if (
-          name !== 'PasswordException' &&
-          cachedBytes
-        ) {
+        if (name !== 'PasswordException' && cachedBytes) {
           const fallbackTask = createPdfLoadingTask({
             data: cachedBytes,
             password,
@@ -185,7 +290,7 @@ export function usePdfDocument({
     loadDocument().catch((err: unknown) => {
       if (isCancelled || isRenderingCancelledError(err)) return;
       const name = (err as { name?: string })?.name;
-      if (name === 'AbortException') return;
+      if (name === 'AbortException' || name === 'AbortError') return;
 
       setError(classifyPdfError(err));
       setIsLoading(false);
@@ -193,6 +298,7 @@ export function usePdfDocument({
 
     return () => {
       isCancelled = true;
+      proxyAbortController.abort();
       if (loadedDocument) {
         loadedDocument.cleanup().catch(() => {
           // Ignore document cleanup errors
