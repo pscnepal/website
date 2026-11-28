@@ -6,6 +6,18 @@ import type {
   QuizQuestion,
 } from '../types/assessment';
 import { NTC_TECH_QUESTIONS } from './quiz/ntcTechQuizQuestions';
+import {
+  EXTRA_LANGUAGE_QUESTIONS,
+  EXTRA_NEPAL_PARICHAYA_QUESTIONS,
+} from './quiz/extraLanguageAndNepalParichayaQuestions';
+import {
+  EXTRA_LAWS_AND_CONSTITUTION_QUESTIONS,
+  EXTRA_PSC_PLANNING_AND_IQ_QUESTIONS,
+} from './quiz/extraLawsAndPlanningQuestions';
+import {
+  EXTRA_CURRENT_AFFAIRS_QUESTIONS,
+  EXTRA_NTC_TECH_QUESTIONS,
+} from './quiz/extraCurrentAffairsAndNtcQuestions';
 
 export type {
   QuizDeck,
@@ -4935,12 +4947,18 @@ export const CURRENT_AFFAIRS_QUESTIONS: QuizQuestion[] = [
  */
 export const ALL_QUIZ_QUESTIONS: QuizQuestion[] = [
   ...LANGUAGE_AND_WRITING_QUESTIONS,
+  ...EXTRA_LANGUAGE_QUESTIONS,
   ...NEPAL_PARICHAYA_QUESTIONS,
+  ...EXTRA_NEPAL_PARICHAYA_QUESTIONS,
   ...LAWS_AND_CONSTITUTION_QUESTIONS,
+  ...EXTRA_LAWS_AND_CONSTITUTION_QUESTIONS,
   ...PSC_AND_PLANNING_QUESTIONS,
+  ...EXTRA_PSC_PLANNING_AND_IQ_QUESTIONS,
   ...COMPREHENSIVE_EXTRA_QUESTIONS,
   ...CURRENT_AFFAIRS_QUESTIONS,
+  ...EXTRA_CURRENT_AFFAIRS_QUESTIONS,
   ...NTC_TECH_QUESTIONS,
+  ...EXTRA_NTC_TECH_QUESTIONS,
 ];
 
 export const QUIZ_DECKS: QuizDeck[] = [
@@ -4986,49 +5004,55 @@ export const QUIZ_DECKS: QuizDeck[] = [
   {
     id: 'current-affairs',
     title: 'Current Affairs & Samasamayik (समसामयिक)',
-    subtitle: '16 Questions · 16-Minute Reverse Countdown',
+    subtitle: '31 Questions · 31-Minute Reverse Countdown',
     description:
       'High-yield daily, weekly, and monthly Lok Sewa Current Affairs MCQs covering Economic Survey, Federal Budget, NRB Monetary Policy, 16th Plan, LDC 2026 Graduation, NLSS-IV Poverty, OAG 63rd & CIAA 35th Reports, COP29, and Foreign Diplomacy.',
-    questions: CURRENT_AFFAIRS_QUESTIONS,
+    questions: [...CURRENT_AFFAIRS_QUESTIONS, ...EXTRA_CURRENT_AFFAIRS_QUESTIONS],
   },
   {
     id: 'language-and-writing',
     title: 'Language & Official Writing (नेपाली र English)',
-    subtitle: '15 Questions · 15-Minute Reverse Countdown',
+    subtitle: '30 Questions · 30-Minute Reverse Countdown',
     description:
-      'Practice Nepali administrative writing (प्रशासनिक लेखन, टिप्पणी, परिपत्र, प्रतिवेदन, संक्षेपीकरण, व्याकरण) and PSC Section Officer English Competence under a strict 15:00 reverse timer.',
-    questions: LANGUAGE_AND_WRITING_QUESTIONS,
+      'Practice Nepali administrative writing (प्रशासनिक लेखन, टिप्पणी, परिपत्र, प्रतिवेदन, संक्षेपीकरण, व्याकरण) and PSC Section Officer English Competence under a strict 30:00 reverse timer.',
+    questions: [...LANGUAGE_AND_WRITING_QUESTIONS, ...EXTRA_LANGUAGE_QUESTIONS],
   },
   {
     id: 'nepal-parichaya',
     title: 'Nepal Parichaya Mastery',
-    subtitle: '20 Questions · 20-Minute Reverse Countdown',
+    subtitle: '40 Questions · 40-Minute Reverse Countdown',
     description:
       'Test your grasp of ecological belts, river basins, Himalayan peaks, lakes, national parks, ancient-to-modern historical milestones, Census 2078 demographics, UNESCO sites, and all 7 provinces & 753 local governments.',
-    questions: NEPAL_PARICHAYA_QUESTIONS,
+    questions: [...NEPAL_PARICHAYA_QUESTIONS, ...EXTRA_NEPAL_PARICHAYA_QUESTIONS],
   },
   {
     id: 'laws-and-constitution',
     title: 'Constitution & Public Laws',
-    subtitle: '20 Questions · 20-Minute Reverse Countdown',
+    subtitle: '40 Questions · 40-Minute Reverse Countdown',
     description:
       'Assess constitutional structure, Fundamental Rights, Supreme Court & 13 Commissions, federal schedules, 45% inclusive civil service rules, probation & tenures, RTI appeals, and Good Governance Act safeguards.',
-    questions: LAWS_AND_CONSTITUTION_QUESTIONS,
+    questions: [
+      ...LAWS_AND_CONSTITUTION_QUESTIONS,
+      ...EXTRA_LAWS_AND_CONSTITUTION_QUESTIONS,
+    ],
   },
   {
     id: 'psc-and-planning',
     title: 'PSC Syllabus, 16th Plan & Aptitude',
-    subtitle: '20 Questions · 20-Minute Reverse Countdown',
+    subtitle: '35 Questions · 35-Minute Reverse Countdown',
     description:
       'Practice Section Officer, Nayab Subba, and Kharidar exam rules, -20% negative marking math, Sixteenth Periodic Plan & LDC graduation priorities, Darta-Chalani, and verbal/quantitative IQ.',
-    questions: PSC_AND_PLANNING_QUESTIONS,
+    questions: [
+      ...PSC_AND_PLANNING_QUESTIONS,
+      ...EXTRA_PSC_PLANNING_AND_IQ_QUESTIONS,
+    ],
   },
   {
     id: 'ntc-computer-engineering',
     title: 'NTC Computer Engineer (Level 7)',
-    subtitle: '15 Questions · 15-Minute Reverse Countdown',
+    subtitle: '30 Questions · 30-Minute Reverse Countdown',
     description:
       'Practice Nepal Telecom Level 7 General & Specialized Computer Engineering MCQs covering Telecom Act 2053, ETA 2063, Networking, Algorithms, OS, DBMS, Architecture, DSP, VLSI, Cryptography, and AI.',
-    questions: NTC_TECH_QUESTIONS,
+    questions: [...NTC_TECH_QUESTIONS, ...EXTRA_NTC_TECH_QUESTIONS],
   },
 ];
